@@ -211,89 +211,55 @@ class OpenRouterProvider extends BaseProvider {
     // Making streaming request with axios
     try {
       const response = await this.client.post('/chat/completions', requestBody, {
-        responseType: 'stream',
-        timeout: this.config.timeout || 60000 // Longer timeout for streaming
+        responseType: 'stream'
       });
       
       // Process the stream
       let buffer = '';
-      let hasEnded = false;
       
       // Set up event listeners for stream processing
       response.data.on('data', (chunk) => {
-        try {
-          // Convert Buffer to string and append to existing buffer
-          const chunkStr = chunk.toString();
-          buffer += chunkStr;
+        // Convert Buffer to string and append to existing buffer
+        const chunkStr = chunk.toString();
+        buffer += chunkStr;
+        
+        // Process any complete SSE messages in the buffer
+        let delimiterIndex;
+        while ((delimiterIndex = buffer.indexOf('\n\n')) !== -1) {
+          // Extract a complete SSE message
+          const sseMessage = buffer.substring(0, delimiterIndex);
+          buffer = buffer.substring(delimiterIndex + 2);
           
-          // Process any complete SSE messages in the buffer
-          let delimiterIndex;
-          while ((delimiterIndex = buffer.indexOf('\n\n')) !== -1) {
-            // Extract a complete SSE message
-            const sseMessage = buffer.substring(0, delimiterIndex);
-            buffer = buffer.substring(delimiterIndex + 2);
-            
-            // Process the SSE message
-            this._processSseMessage(sseMessage, options, onChunk);
-          }
-        } catch (dataError) {
-          console.error('Error processing data chunk:', dataError);
-          // Continue processing despite errors in individual chunks
+          // Process the SSE message
+          this._processSseMessage(sseMessage, options, onChunk);
         }
       });
       
       // Handle stream end
       response.data.on('end', () => {
-        try {
-          hasEnded = true;
-          // Process any remaining data in buffer
-          if (buffer.trim()) {
-            this._processSseMessage(buffer, options, onChunk);
-          }
-          
-          // Send final chunk with finish reason
-          onChunk(this.normalizeStreamChunk({
-            model: options.model,
-            id: `openrouter-chunk-${Date.now()}`,
-            content: '',
-            role: 'assistant',
-            finish_reason: 'stop'
-          }));
-        } catch (endError) {
-          console.error('Error handling stream end:', endError);
+        // Process any remaining data in buffer
+        if (buffer.trim()) {
+          this._processSseMessage(buffer, options, onChunk);
         }
+        
+        // Send final chunk with finish reason
+        onChunk(this.normalizeStreamChunk({
+          model: options.model,
+          id: `openrouter-chunk-${Date.now()}`,
+          content: '',
+          role: 'assistant',
+          finish_reason: 'stop'
+        }));
       });
       
       // Handle errors
       response.data.on('error', (err) => {
         console.error('Stream error:', err);
-        
-        // Only send error if stream hasn't ended yet
-        if (!hasEnded) {
-          onChunk(this.normalizeStreamChunk({
-            model: options.model,
-            id: `openrouter-error-${Date.now()}`,
-            content: `\n\nStreaming error: ${err.message}`,
-            role: 'assistant',
-            finish_reason: 'error'
-          }));
-        }
-        
         throw err;
       });
       
     } catch (error) {
       console.error('Streaming error:', error);
-      
-      // Send error message through the stream
-      onChunk(this.normalizeStreamChunk({
-        model: options.model,
-        id: `openrouter-error-${Date.now()}`,
-        content: `\n\nStreaming error: ${error.message}`,
-        role: 'assistant',
-        finish_reason: 'error'
-      }));
-      
       throw error;
     }
   }
@@ -316,9 +282,9 @@ class OpenRouterProvider extends BaseProvider {
       const data = JSON.parse(dataMatch[1]);
       
       // Extract content from the delta
-      const content = data.choices && data.choices[0]?.delta?.content || '';
-      const role = data.choices && data.choices[0]?.delta?.role || 'assistant';
-      const finishReason = data.choices && data.choices[0]?.finish_reason || null;
+      const content = data.choices[0]?.delta?.content || '';
+      const role = data.choices[0]?.delta?.role || 'assistant';
+      const finishReason = data.choices[0]?.finish_reason || null;
       
       // Only send non-empty chunks or finish chunks
       if (content || finishReason) {
@@ -331,8 +297,7 @@ class OpenRouterProvider extends BaseProvider {
         }));
       }
     } catch (error) {
-      console.error('Error parsing SSE message:', error, 'Message:', sseMessage);
-      // Continue processing despite errors in individual messages
+      console.error('Error parsing SSE message:', error);
     }
   }
   
