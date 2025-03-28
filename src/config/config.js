@@ -54,7 +54,7 @@ module.exports = {
         'gemini-1.0-pro'
       ],
       defaultModel: 'gemini-1.5-flash',
-      dynamicModelLoading: false, // Google API doesn't support model listing
+      dynamicModelLoading: process.env.DYNAMIC_MODEL_LOADING === 'true' || true,
       timeout: parseInt(process.env.RESPONSE_TIMEOUT || '30000', 10),
       maxConnections: 100,
       maxRetries: 3,

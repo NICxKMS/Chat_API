@@ -4,6 +4,9 @@
  */
 const config = require('../config/config');
 const OpenAIProvider = require('./OpenAIProvider');
+const AnthropicProvider = require('./AnthropicProvider');
+const GeminiProvider = require('./GeminiProvider');
+const OpenRouterProvider = require('./OpenRouterProvider');
 const cache = require('../utils/cache');
 
 class ProviderFactory {
@@ -25,8 +28,23 @@ class ProviderFactory {
       console.log('OpenAI provider loaded');
     }
     
-    // Future providers will be loaded here
-    // e.g. Anthropic, Gemini, OpenRouter, etc.
+    // Load Anthropic provider if configured
+    if (providerConfigs.anthropic?.apiKey) {
+      this.providers.anthropic = new AnthropicProvider(providerConfigs.anthropic);
+      console.log('Anthropic provider loaded');
+    }
+    
+    // Load Gemini provider if configured
+    if (providerConfigs.gemini?.apiKey) {
+      this.providers.gemini = new GeminiProvider(providerConfigs.gemini);
+      console.log('Gemini provider loaded');
+    }
+    
+    // Load OpenRouter provider if configured
+    if (providerConfigs.openrouter?.apiKey) {
+      this.providers.openrouter = new OpenRouterProvider(providerConfigs.openrouter);
+      console.log('OpenRouter provider loaded');
+    }
     
     // Update default provider if the configured one isn't available
     if (!this.providers[config.defaultProvider]) {
