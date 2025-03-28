@@ -215,31 +215,63 @@ class OpenAIProvider extends BaseProvider {
    * Raw streaming implementation (used by circuit breaker)
    */
   async _rawStreamChatCompletion(options, onChunk) {
-    // Call OpenAI API with streaming enabled
-    const stream = await this.client.chat.completions.create({
-      model: options.model,
-      messages: options.messages,
-      temperature: options.temperature,
-      max_tokens: options.max_tokens,
-      stream: true
-    });
-    
-    // Process the stream using SDK's event handling
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      const role = chunk.choices[0]?.delta?.role || 'assistant';
-      const finishReason = chunk.choices[0]?.finish_reason || null;
+    try {
+      // Call OpenAI API with streaming enabled
+      const stream = await this.client.chat.completions.create({
+        model: options.model,
+        messages: options.messages,
+        temperature: options.temperature,
+        max_tokens: options.max_tokens,
+        stream: true
+      });
       
-      // Only send non-empty chunks
-      if (content || finishReason) {
-        onChunk(this.normalizeStreamChunk({
-          model: options.model,
-          id: chunk.id,
-          content,
-          role,
-          finish_reason: finishReason
-        }));
+      // Process the stream using SDK's event handling
+      for await (const chunk of stream) {
+        try {
+          const content = chunk.choices[0]?.delta?.content || '';
+          const role = chunk.choices[0]?.delta?.role || 'assistant';
+          const finishReason = chunk.choices[0]?.finish_reason || null;
+          
+          // Send role chunks if present (usually in the first chunk)
+          if (role && role !== 'assistant') {
+            onChunk(this.normalizeStreamChunk({
+              model: options.model,
+              id: chunk.id,
+              content: '',
+              role,
+              finish_reason: null
+            }));
+          }
+          
+          // Always send content chunks, even empty ones
+          // This ensures consistent token delivery timing
+          if (content || finishReason) {
+            onChunk(this.normalizeStreamChunk({
+              model: options.model,
+              id: chunk.id,
+              content,
+              role: 'assistant',
+              finish_reason: finishReason
+            }));
+          }
+        } catch (chunkError) {
+          console.error('Error processing OpenAI stream chunk:', chunkError);
+          // Continue processing despite errors with individual chunks
+        }
       }
+    } catch (error) {
+      console.error('Error in OpenAI stream processing:', error);
+      
+      // Send error notification through the stream
+      onChunk(this.normalizeStreamChunk({
+        model: options.model,
+        id: `openai-error-${Date.now()}`,
+        content: `\n\nStreaming error: ${error.message}`,
+        role: 'assistant',
+        finish_reason: 'error'
+      }));
+      
+      throw error;
     }
   }
   

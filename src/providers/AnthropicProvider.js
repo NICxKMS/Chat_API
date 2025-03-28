@@ -237,36 +237,83 @@ class AnthropicProvider extends BaseProvider {
       requestParams.system = system;
     }
     
-    // Call Anthropic API with streaming enabled
-    const stream = await this.client.messages.create(requestParams);
-    
-    // Process the stream
-    for await (const chunk of stream) {
-      // Process each chunk type
-      if (chunk.type === 'content_block_delta') {
-        // Get the text delta
-        const content = chunk.delta?.text || '';
-        
-        if (content) {
-          // Send content chunk
-          onChunk(this.normalizeStreamChunk({
-            model: options.model,
-            id: `anthropic-chunk-${Date.now()}`,
-            content,
-            role: 'assistant',
-            finish_reason: null
-          }));
+    try {
+      // Call Anthropic API with streaming enabled
+      const stream = await this.client.messages.create(requestParams);
+      
+      // Process the stream
+      for await (const chunk of stream) {
+        try {
+          // Process each chunk type
+          if (chunk.type === 'content_block_delta') {
+            // Get the text delta
+            const content = chunk.delta?.text || '';
+            
+            if (content) {
+              // Send content chunk
+              onChunk(this.normalizeStreamChunk({
+                model: options.model,
+                id: `anthropic-chunk-${Date.now()}`,
+                content,
+                role: 'assistant',
+                finish_reason: null
+              }));
+            }
+          } else if (chunk.type === 'content_block_start') {
+            // Content block start may contain initial content
+            const content = chunk.content_block?.text || '';
+            
+            if (content) {
+              onChunk(this.normalizeStreamChunk({
+                model: options.model,
+                id: `anthropic-chunk-${Date.now()}`,
+                content,
+                role: 'assistant',
+                finish_reason: null
+              }));
+            }
+          } else if (chunk.type === 'message_stop') {
+            // This is the end of the stream
+            onChunk(this.normalizeStreamChunk({
+              model: options.model,
+              id: `anthropic-chunk-${Date.now()}`,
+              content: '',
+              role: 'assistant',
+              finish_reason: chunk.message_stop?.stop_reason || 'stop'
+            }));
+          } else if (chunk.type === 'message_start') {
+            // Message start marker - no action needed
+            continue;
+          } else if (chunk.type === 'error') {
+            // Handle error in the stream
+            console.error('Anthropic stream error:', chunk.error);
+            onChunk(this.normalizeStreamChunk({
+              model: options.model,
+              id: `anthropic-error-${Date.now()}`,
+              content: `\n\nStreaming error: ${chunk.error?.message || 'Unknown error'}`,
+              role: 'assistant',
+              finish_reason: 'error'
+            }));
+          }
+        } catch (chunkError) {
+          console.error('Error processing Anthropic stream chunk:', chunkError);
+          // Continue with next chunk even if this one fails
         }
-      } else if (chunk.type === 'message_stop') {
-        // This is the end of the stream
-        onChunk(this.normalizeStreamChunk({
-          model: options.model,
-          id: `anthropic-chunk-${Date.now()}`,
-          content: '',
-          role: 'assistant',
-          finish_reason: chunk.message_stop?.stop_reason || 'stop'
-        }));
-      } 
+      }
+      
+    } catch (error) {
+      console.error('Error in Anthropic stream processing:', error);
+      
+      // Send error notification through the stream
+      onChunk(this.normalizeStreamChunk({
+        model: options.model,
+        id: `anthropic-error-${Date.now()}`,
+        content: `\n\nStreaming error: ${error.message}`,
+        role: 'assistant',
+        finish_reason: 'error'
+      }));
+      
+      throw error;
     }
   }
   
