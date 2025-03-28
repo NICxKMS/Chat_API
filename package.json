@@ -1,0 +1,42 @@
+{
+  "name": "chat-api",
+  "version": "1.0.0",
+  "description": "Centralized Chat API for multiple LLM providers with performance optimizations",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "load-test": "node scripts/load-test.js"
+  },
+  "keywords": [
+    "chat",
+    "api",
+    "openai",
+    "anthropic",
+    "gemini",
+    "openrouter",
+    "llm"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google/generative-ai": "^0.24.0",
+    "axios": "^1.8.4",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "ioredis": "^5.3.2",
+    "node-cache": "^5.1.2",
+    "openai": "^4.90.0",
+    "prom-client": "^14.2.0",
+    "spdy": "^4.0.2"
+  },
+  "devDependencies": {
+    "autocannon": "^7.10.0",
+    "clinic": "^12.0.0",
+    "nodemon": "^3.1.9"
+  }
+}
