@@ -11,7 +11,6 @@ class AnthropicProvider extends BaseProvider {
   constructor(config) {
     super(config);
     this.name = 'anthropic';
-    this.supportsStreaming = true;
     
     // Initialize Anthropic SDK with custom configuration
     this.client = new Anthropic({
@@ -30,11 +29,6 @@ class AnthropicProvider extends BaseProvider {
       failureThreshold: 3,
       resetTimeout: 30000,
       fallback: this._completionFallback.bind(this)
-    });
-    
-    this.streamingBreaker = createBreaker(`${this.name}-streaming`, this._rawStreamChatCompletion.bind(this), {
-      failureThreshold: 3,
-      resetTimeout: 30000
     });
   }
 
@@ -105,7 +99,7 @@ class AnthropicProvider extends BaseProvider {
         model: modelName
       };
       
-      // Use circuit breaker for resilient API call
+      // Use circuit breaker for API calls
       const response = await this.completionBreaker.exec(apiOptions);
       
       // Record successful API call
@@ -118,50 +112,6 @@ class AnthropicProvider extends BaseProvider {
       return response;
     } catch (error) {
       console.error(`Anthropic chatCompletion error: ${error.message}`);
-      
-      // Record failed API call
-      metrics.providerRequestCounter.inc({
-        provider: this.name,
-        model: options.model,
-        status: 'error'
-      });
-      
-      throw error;
-    }
-  }
-
-  /**
-   * Stream a chat completion from Anthropic
-   */
-  async streamChatCompletion(options, onChunk) {
-    try {
-      // Standardize and validate options
-      const standardOptions = this.standardizeOptions(options);
-      this.validateOptions(standardOptions);
-      
-      // Extract model name (without provider prefix)
-      const modelName = standardOptions.model.includes('/') 
-        ? standardOptions.model.split('/')[1] 
-        : standardOptions.model;
-      
-      // Update options with extracted model name
-      const apiOptions = {
-        ...standardOptions,
-        model: modelName
-      };
-      
-      // Use circuit breaker for resilient API call
-      await this.streamingBreaker.exec(apiOptions, onChunk);
-      
-      // Record successful API call
-      metrics.providerRequestCounter.inc({
-        provider: this.name,
-        model: modelName,
-        status: 'success'
-      });
-      
-    } catch (error) {
-      console.error(`Anthropic streamChatCompletion error: ${error.message}`);
       
       // Record failed API call
       metrics.providerRequestCounter.inc({
@@ -214,60 +164,6 @@ class AnthropicProvider extends BaseProvider {
         total_tokens: (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0)
       }
     });
-  }
-  
-  /**
-   * Raw streaming implementation (used by circuit breaker)
-   */
-  async _rawStreamChatCompletion(options, onChunk) {
-    // Prepare messages for Anthropic API format
-    const { messages, system } = this._prepareMessages(options.messages);
-    
-    // API request parameters
-    const requestParams = {
-      model: options.model,
-      messages,
-      max_tokens: options.max_tokens,
-      temperature: options.temperature,
-      stream: true
-    };
-    
-    // Add system prompt if available
-    if (system) {
-      requestParams.system = system;
-    }
-    
-    // Call Anthropic API with streaming enabled
-    const stream = await this.client.messages.create(requestParams);
-    
-    // Process the stream
-    for await (const chunk of stream) {
-      // Process each chunk type
-      if (chunk.type === 'content_block_delta') {
-        // Get the text delta
-        const content = chunk.delta?.text || '';
-        
-        if (content) {
-          // Send content chunk
-          onChunk(this.normalizeStreamChunk({
-            model: options.model,
-            id: `anthropic-chunk-${Date.now()}`,
-            content,
-            role: 'assistant',
-            finish_reason: null
-          }));
-        }
-      } else if (chunk.type === 'message_stop') {
-        // This is the end of the stream
-        onChunk(this.normalizeStreamChunk({
-          model: options.model,
-          id: `anthropic-chunk-${Date.now()}`,
-          content: '',
-          role: 'assistant',
-          finish_reason: chunk.message_stop?.stop_reason || 'stop'
-        }));
-      } 
-    }
   }
   
   /**

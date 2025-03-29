@@ -10,7 +10,6 @@ class BaseProvider {
     
     this.config = config;
     this.name = 'base';
-    this.supportsStreaming = false;
     this.apiVersionInfo = {
       version: 'unknown',
       lastUpdated: new Date().toISOString()
@@ -43,17 +42,6 @@ class BaseProvider {
   }
 
   /**
-   * Stream a chat completion response from this provider
-   * 
-   * @param {Object} options Request options (same as chatCompletion)
-   * @param {Function} onChunk Callback function for each chunk of the stream
-   * @returns {Promise<void>} Resolves when streaming is complete
-   */
-  async streamChatCompletion(options, onChunk) {
-    throw new Error('streamChatCompletion() method must be implemented by provider classes');
-  }
-
-  /**
    * Get capabilities and info about this provider
    * 
    * @returns {Object} Provider information and capabilities
@@ -63,7 +51,6 @@ class BaseProvider {
       name: this.name,
       models: this.config.models || [],
       defaultModel: this.config.defaultModel,
-      supportsStreaming: this.supportsStreaming,
       apiVersion: this.apiVersionInfo.version,
       lastUpdated: this.apiVersionInfo.lastUpdated
     };
@@ -91,24 +78,6 @@ class BaseProvider {
       finishReason: response.finish_reason || '',
       createdAt: response.created ? new Date(response.created * 1000).toISOString() : new Date().toISOString(),
       id: response.id || `${this.name}-${Date.now()}`
-    };
-  }
-
-  /**
-   * Helper to normalize streaming chunks
-   * 
-   * @param {Object} chunk Provider-specific chunk format
-   * @returns {Object} Normalized chunk format
-   */
-  normalizeStreamChunk(chunk) {
-    // Base implementation, should be overridden by provider classes
-    return {
-      provider: this.name,
-      model: chunk.model || '',
-      content: chunk.content || '',
-      role: chunk.role || 'assistant',
-      finishReason: chunk.finish_reason || null,
-      id: chunk.id || `${this.name}-chunk-${Date.now()}`
     };
   }
 

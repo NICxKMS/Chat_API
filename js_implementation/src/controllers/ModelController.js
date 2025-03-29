@@ -5,6 +5,7 @@
 const providerFactory = require('../providers/ProviderFactory');
 const cache = require('../utils/cache');
 const metrics = require('../utils/metrics');
+const { categorizeModels } = require('../utils/modelCategorizer');
 
 class ModelController {
   /**
@@ -37,6 +38,13 @@ class ModelController {
   }
 
   /**
+   * Alias for getAllModels - For backward compatibility
+   */
+  async getModels(req, res) {
+    return this.getAllModels(req, res);
+  }
+
+  /**
    * Get models for a specific provider
    */
   async getProviderModels(req, res) {
@@ -52,23 +60,17 @@ class ModelController {
         });
       }
       
+      // Special handling for categories and categorized paths
+      if (providerName === 'categories' || providerName === 'categorized') {
+        return this.getCategorizedModels(req, res);
+      }
+      
       try {
         // Get provider from factory
         const provider = providerFactory.getProvider(providerName);
         
-        // Generate cache key for this provider's models
-        const cacheKey = cache.generateKey(`provider-models-${providerName}`);
-        
-        // Try to get from cache first
-        let models = await cache.get(cacheKey, 'model');
-        
-        if (!models) {
-          // If not in cache, fetch models from provider
-          models = await provider.getModels();
-          
-          // Cache for future requests
-          await cache.set(cacheKey, models, 300, 'model'); // Cache for 5 minutes
-        }
+        // Get models from provider
+        const models = await provider.getModels();
         
         // Return formatted response
         res.json({
@@ -115,6 +117,54 @@ class ModelController {
       });
     }
   }
+
+  /**
+   * Get categorized models organized for dropdown UI
+   * Returns a structured hierarchy of providers, families, types, and versions
+   */
+  async getCategorizedModels(req, res) {
+    try {
+      // Record request in metrics
+      metrics.incrementRequestCount();
+      
+      // Include experimental/internal models if requested
+      const includeExperimental = req.query.include_experimental === 'true';
+      
+      // Get all models from all providers
+      const modelsByProvider = await providerFactory.getAllModels();
+      
+      // Process models with the categorizer utility
+      const categorizedModels = categorizeModels(modelsByProvider, includeExperimental);
+      
+      // Add cache control header for client-side caching
+      res.set('Cache-Control', 'public, max-age=120'); // Allow client to cache for 2 minutes
+      
+      res.json(categorizedModels);
+    } catch (error) {
+      console.error(`Error getting categorized models: ${error.message}`);
+      res.status(500).json({ 
+        error: 'Failed to get categorized models', 
+        message: error.message 
+      });
+    }
+  }
+  
+  /**
+   * Get available providers and their capabilities
+   */
+  async getProviders(req, res) {
+    try {
+      const providers = await providerFactory.getProvidersInfo();
+      res.json(providers);
+    } catch (error) {
+      console.error(`Error getting providers: ${error.message}`);
+      res.status(500).json({ 
+        error: 'Failed to get providers', 
+        message: error.message 
+      });
+    }
+  }
 }
 
+// Export singleton instance
 module.exports = new ModelController();

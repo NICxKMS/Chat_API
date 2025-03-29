@@ -11,7 +11,6 @@ class OpenAIProvider extends BaseProvider {
   constructor(config) {
     super(config);
     this.name = 'openai';
-    this.supportsStreaming = true;
     
     // Initialize OpenAI SDK with custom configuration
     this.client = new OpenAI({
@@ -33,11 +32,6 @@ class OpenAIProvider extends BaseProvider {
       resetTimeout: 30000,
       fallback: this._completionFallback.bind(this)
     });
-    
-    this.streamingBreaker = createBreaker(`${this.name}-streaming`, this._rawStreamChatCompletion.bind(this), {
-      failureThreshold: 3,
-      resetTimeout: 30000
-    });
   }
 
   /**
@@ -57,7 +51,7 @@ class OpenAIProvider extends BaseProvider {
           
           // Extract and filter model IDs (only include chat models)
           const dynamicModels = response.data
-            .filter(model => model.id.includes('gpt'))
+            // .filter(model => model.id.includes('gpt'))  filter is off to include O series models like o1 and o1 mini
             .map(model => model.id);
           
           // Combine with hardcoded models, removing duplicates
@@ -112,7 +106,7 @@ class OpenAIProvider extends BaseProvider {
         model: modelName
       };
       
-      // Use circuit breaker for resilient API call
+      // Use circuit breaker for API calls
       const response = await this.completionBreaker.exec(apiOptions);
       
       // Record successful API call
@@ -125,50 +119,6 @@ class OpenAIProvider extends BaseProvider {
       return response;
     } catch (error) {
       console.error(`OpenAI chatCompletion error: ${error.message}`);
-      
-      // Record failed API call
-      metrics.providerRequestCounter.inc({
-        provider: this.name,
-        model: options.model,
-        status: 'error'
-      });
-      
-      throw error;
-    }
-  }
-
-  /**
-   * Stream a chat completion from OpenAI
-   */
-  async streamChatCompletion(options, onChunk) {
-    try {
-      // Standardize and validate options
-      const standardOptions = this.standardizeOptions(options);
-      this.validateOptions(standardOptions);
-      
-      // Extract model name (without provider prefix)
-      const modelName = standardOptions.model.includes('/') 
-        ? standardOptions.model.split('/')[1] 
-        : standardOptions.model;
-      
-      // Update options with extracted model name
-      const apiOptions = {
-        ...standardOptions,
-        model: modelName
-      };
-      
-      // Use circuit breaker for resilient API call
-      await this.streamingBreaker.exec(apiOptions, onChunk);
-      
-      // Record successful API call
-      metrics.providerRequestCounter.inc({
-        provider: this.name,
-        model: modelName,
-        status: 'success'
-      });
-      
-    } catch (error) {
-      console.error(`OpenAI streamChatCompletion error: ${error.message}`);
       
       // Record failed API call
       metrics.providerRequestCounter.inc({
@@ -209,38 +159,6 @@ class OpenAIProvider extends BaseProvider {
       created: response.created,
       usage: response.usage
     });
-  }
-  
-  /**
-   * Raw streaming implementation (used by circuit breaker)
-   */
-  async _rawStreamChatCompletion(options, onChunk) {
-    // Call OpenAI API with streaming enabled
-    const stream = await this.client.chat.completions.create({
-      model: options.model,
-      messages: options.messages,
-      temperature: options.temperature,
-      max_tokens: options.max_tokens,
-      stream: true
-    });
-    
-    // Process the stream using SDK's event handling
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      const role = chunk.choices[0]?.delta?.role || 'assistant';
-      const finishReason = chunk.choices[0]?.finish_reason || null;
-      
-      // Only send non-empty chunks
-      if (content || finishReason) {
-        onChunk(this.normalizeStreamChunk({
-          model: options.model,
-          id: chunk.id,
-          content,
-          role,
-          finish_reason: finishReason
-        }));
-      }
-    }
   }
   
   /**

@@ -1,115 +1,81 @@
-# Centralized Chat API
+# Chat API
 
-A unified API service that provides a consistent interface for interacting with multiple AI chat providers including OpenAI, Anthropic, Google Gemini, and OpenRouter.
+A centralized API that provides access to multiple LLM providers through a single interface.
 
-## Features
-
-- **Multi-Provider Support**: Seamlessly interact with OpenAI, Anthropic, Google Gemini, and OpenRouter APIs through a unified interface
-- **Consistent Request/Response Format**: Standardized format across all providers
-- **Provider-Specific Capabilities**: Access provider-specific features while maintaining a consistent API surface
-- **Dynamic Model Loading**: Automatically discover available models from supported providers
-- **Streaming Support**: Stream responses for real-time interactions
-- **Resilient Design**: Circuit breakers and fallbacks for improved reliability
-- **Performance Monitoring**: Built-in metrics for monitoring API usage and performance
-
-## Supported Providers
-
-The API currently supports the following providers:
-
-- **OpenAI**: Access to GPT models including gpt-4o, gpt-4-turbo, and gpt-3.5-turbo
-- **Anthropic**: Access to Claude models including Claude 3 Opus, Sonnet, and Haiku
-- **Google Gemini**: Access to Gemini 1.5 Pro, Gemini 1.5 Flash, and Gemini 1.0 Pro
-- **OpenRouter**: Gateway to multiple LLM providers through a single interface
-
-## Getting Started
+## Setup
 
 1. Clone this repository
-2. Copy `.env.example` to `.env` and fill in your API keys for the providers you want to use
-3. Install dependencies: `npm install`
-4. Start the server: `npm start`
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Copy the example environment file:
+   ```
+   cp .env.example .env
+   ```
+4. Edit `.env` to add your API keys for the providers you want to use
+
+## OpenRouter Setup
+
+OpenRouter has updated their authentication system to use Clerk. To use OpenRouter with this API:
+
+1. Get your API key from [OpenRouter Dashboard](https://openrouter.ai/keys)
+2. Make sure you're using the new API key format that starts with `sk-or-v1-...`
+3. Set the following environment variables in your `.env` file:
+
+```
+OPENROUTER_API_KEY=sk-or-v1-your-api-key-here
+OPENROUTER_HTTP_REFERER=https://your-app-domain.com  # Required by OpenRouter
+OPENROUTER_TITLE=Your App Name  # Optional but helpful
+```
+
+## Running the Server
+
+Start the API server:
+
+```
+npm start
+```
+
+Or use the provided batch script to start both the API server and test site:
+
+```
+start-servers.bat
+```
+
+The API will be available at http://localhost:3000 and the test site at http://localhost:8080.
+
+## Available Providers
+
+- OpenAI
+- Anthropic
+- Google Gemini
+- OpenRouter (provides access to many different models)
 
 ## API Endpoints
 
-### Chat Completions
+- `GET /models` - List all available models
+- `GET /models/categorized` - Get models organized by provider, family, type, and version
+- `GET /models/providers` - List all available providers
+- `GET /models/:providerName` - List models for a specific provider
+- `POST /chat/completions` - Send a chat completion request
+- `POST /chat/completions/stream` - Stream a chat completion response
 
-```
-POST /chat/completions
-```
+## Error Handling
 
-Request body:
-```json
-{
-  "model": "openai/gpt-4o",  // Format: "provider/model"
-  "messages": [
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "Hello, how are you?"}
-  ],
-  "temperature": 0.7,
-  "max_tokens": 1000
-}
-```
+If you encounter authentication errors with OpenRouter:
+1. Check that your API key is in the correct format (should start with `sk-or-v1-`)
+2. Ensure you've set the correct HTTP referer in your environment variables
+3. Check the OpenRouter dashboard to verify your API key is valid
 
-### Streaming Chat Completions
+## Troubleshooting
 
-```
-POST /chat/completions/stream
-```
+### OpenRouter Streaming Issues
 
-Request body is the same as for non-streaming completions.
-
-### List Available Models
-
-```
-GET /models
-```
-
-Returns a list of all available models across all configured providers.
-
-## Configuration
-
-The system is configured through environment variables. See `.env.example` for available options. Key configuration options:
-
-- `DEFAULT_PROVIDER`: The default provider to use when none is specified
-- `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `OPENROUTER_API_KEY`: API keys for each provider
-- `DYNAMIC_MODEL_LOADING`: Whether to dynamically load models from provider APIs (true/false)
-
-## Implementation Details
-
-### Provider Architecture
-
-The system uses a provider-based architecture with the following components:
-
-- **BaseProvider**: Abstract base class that defines the interface all providers must implement
-- **Provider Implementations**: Concrete implementations for each supported provider
-- **ProviderFactory**: Factory pattern implementation for instantiating and managing providers
-
-### Dynamic Model Loading
-
-For each provider, models can be loaded in two ways:
-
-1. **Static Configuration**: Models defined in the configuration
-2. **Dynamic Discovery**: Models fetched from the provider's API (when supported and enabled)
-
-#### Gemini Model Loading
-
-The Gemini provider supports dynamic model loading via the Google Generative Language API v1beta endpoint. When enabled, it will fetch the most up-to-date list of available models. 
-
-You can also use the provided scripts to list available Gemini models:
-- PowerShell: `scripts/list-gemini-models.ps1`
-- Bash: `scripts/list-gemini-models.sh`
-
-### Adding New Providers
-
-To add a new provider:
-
-1. Create a new provider class that extends `BaseProvider`
-2. Implement required methods: `getModels()`, `chatCompletion()`, and `streamChatCompletion()`
-3. Add the provider to the `ProviderFactory`
-4. Update the configuration in `config.js`
-
-## Test Site
-
-A simple test site is included in the `test-site` directory for demonstrating the API functionality.
+If you encounter circular JSON errors with OpenRouter streaming:
+1. Try the request again - these are often transient network issues
+2. Try a different model from OpenRouter
+3. As a fallback, use non-streaming completion instead
 
 ## License
 

@@ -54,7 +54,9 @@ module.exports = {
         'gemini-1.0-pro'
       ],
       defaultModel: 'gemini-1.5-flash',
-      dynamicModelLoading: process.env.DYNAMIC_MODEL_LOADING === 'true' || true,
+      // Explicitly enable dynamic model loading
+      dynamicModelLoading: true,
+      apiVersion: process.env.GEMINI_API_VERSION || 'v1beta',
       timeout: parseInt(process.env.RESPONSE_TIMEOUT || '30000', 10),
       maxConnections: 100,
       maxRetries: 3,
@@ -64,6 +66,9 @@ module.exports = {
     openrouter: {
       apiKey: process.env.OPENROUTER_API_KEY,
       baseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+      referer: process.env.OPENROUTER_HTTP_REFERER || 'https://localhost:3000',
+      title: process.env.OPENROUTER_TITLE || 'Centralized Chat API',
+      organization: process.env.OPENROUTER_ORGANIZATION || '',
       models: [], // Will be populated dynamically
       defaultModel: 'openai/gpt-3.5-turbo',
       dynamicModelLoading: true, // OpenRouter has many models, always load dynamically
@@ -96,11 +101,30 @@ module.exports = {
   // Concurrent request limiting
   concurrentLimit: parseInt(process.env.CONCURRENT_REQUEST_LIMIT || '20', 10),
   
+  // API endpoints configuration
+  api: {
+    status: '/status',
+    models: '/models',
+    chat: '/chat',
+    providers: '/providers',
+    images: '/images'
+  },
+
+  // API route configuration
+  routes: {
+    status: '/status',
+    models: '/models',
+    modelsList: '/models/list',
+    modelsCategories: '/models/categories',
+    providers: '/providers',
+    chat: '/chat/completions',
+    images: '/images/generate'
+  },
+
   // API path mappings - useful for future versioning
   apiPaths: {
     models: '/models',
     chat: '/chat/completions',
-    streamChat: '/chat/completions/stream',
     capabilities: '/chat/capabilities'
   }
 };
