@@ -4,9 +4,9 @@
  * Organizes AI models from multiple providers into a structured multi-level dropdown format.
  * 
  * - Level 1: Provider (OpenAI, Google, Anthropic, etc.)
- * - Level 2: Model Type (Pro, Flash, Turbo, Vision, etc.)
- * - Level 3: Best Model (Latest/Best Version Per Type)
- * - Level 4: Other Versions (Optional submenu of older versions)
+ * - Level 2: Model Family (GPT-4, Gemini-1.5, Claude-3, etc.)
+ * - Level 3: Model Type (Flash, Pro, Turbo, etc.)
+ * - Level 4: Specific Model Version
  */
 
 // Define TypeScript interfaces for the data structures
@@ -39,6 +39,151 @@ interface StructuredModels {
   };
 }
 
+// Model metadata for consistent categorization
+interface ModelMetadata {
+  family: string;
+  type: string;
+  capabilities: string[];
+  contextSize?: number;
+  releaseDate?: string;
+  isExperimental?: boolean;
+  generation?: number;
+  version?: string;
+}
+
+// Registry of known models and their metadata
+type ModelRegistry = Record<string, Record<string, ModelMetadata>>;
+
+// Define the registry of models with their metadata
+const MODEL_REGISTRY: ModelRegistry = {
+  // OpenAI models
+  'openai': {
+    'gpt-4o': { 
+      family: 'GPT-4', 
+      type: 'GPT-4o', 
+      capabilities: ['vision', 'function-calling'],
+      contextSize: 128000,
+      releaseDate: '2024-05',
+      generation: 4
+    },
+    'gpt-4o-mini': { 
+      family: 'GPT-4', 
+      type: 'GPT-4o Mini', 
+      capabilities: ['vision', 'function-calling'],
+      contextSize: 128000,
+      releaseDate: '2024-05',
+      generation: 4
+    },
+    'gpt-4-turbo': { 
+      family: 'GPT-4', 
+      type: 'Turbo', 
+      capabilities: ['function-calling'],
+      contextSize: 128000,
+      releaseDate: '2023-11',
+      generation: 4
+    },
+    'gpt-4-vision-preview': { 
+      family: 'GPT-4', 
+      type: 'Vision', 
+      capabilities: ['vision'],
+      contextSize: 128000,
+      releaseDate: '2023-10',
+      generation: 4
+    },
+    'gpt-4': { 
+      family: 'GPT-4', 
+      type: 'Standard', 
+      capabilities: ['function-calling'],
+      contextSize: 8192,
+      releaseDate: '2023-03',
+      generation: 4
+    },
+    'gpt-4-32k': { 
+      family: 'GPT-4', 
+      type: '32K Context', 
+      capabilities: ['function-calling'],
+      contextSize: 32768,
+      releaseDate: '2023-03',
+      generation: 4
+    },
+    'gpt-3.5-turbo': { 
+      family: 'GPT-3.5', 
+      type: 'Turbo', 
+      capabilities: ['function-calling'],
+      contextSize: 16385,
+      releaseDate: '2022-11',
+      generation: 3.5
+    },
+    'gpt-3.5-turbo-16k': { 
+      family: 'GPT-3.5', 
+      type: 'Turbo 16K', 
+      capabilities: ['function-calling'],
+      contextSize: 16385,
+      releaseDate: '2023-06',
+      generation: 3.5
+    }
+  },
+  
+  // Gemini models
+  'gemini': {
+    'gemini-1.5-flash': { 
+      family: 'Gemini 1.5', 
+      type: 'Flash', 
+      capabilities: ['vision', 'function-calling'],
+      contextSize: 1000000,
+      releaseDate: '2024-02',
+      generation: 1.5
+    },
+    'gemini-1.5-pro': { 
+      family: 'Gemini 1.5', 
+      type: 'Pro', 
+      capabilities: ['vision', 'function-calling'],
+      contextSize: 1000000,
+      releaseDate: '2024-02',
+      generation: 1.5
+    },
+    'gemini-1.0-pro': { 
+      family: 'Gemini 1.0', 
+      type: 'Pro', 
+      capabilities: ['vision'],
+      contextSize: 32768,
+      releaseDate: '2023-12',
+      generation: 1.0
+    }
+  },
+  
+  // Anthropic models
+  'anthropic': {
+    'claude-3-opus-20240229': { 
+      family: 'Claude 3', 
+      type: 'Opus', 
+      capabilities: ['vision', 'function-calling'],
+      contextSize: 200000,
+      releaseDate: '2024-02',
+      version: '20240229',
+      generation: 3
+    },
+    'claude-3-sonnet-20240229': { 
+      family: 'Claude 3', 
+      type: 'Sonnet', 
+      capabilities: ['vision', 'function-calling'],
+      contextSize: 200000,
+      releaseDate: '2024-02',
+      version: '20240229',
+      generation: 3
+    },
+    'claude-3-haiku-20240307': { 
+      family: 'Claude 3', 
+      type: 'Haiku', 
+      capabilities: ['vision', 'function-calling'],
+      contextSize: 200000,
+      releaseDate: '2024-03',
+      version: '20240307',
+      generation: 3
+    }
+  }
+};
+
 /**
  * Categorize models into a structured hierarchy for dropdown menus
  * 
@@ -57,8 +202,10 @@ export function categorizeModels(
     const models = providerData.models || [];
     if (!models.length) return;
 
+    const normalizedProviderName = normalizeProviderName(providerName);
+    
     // Initialize provider in the structure
-    structuredModels[normalizeProviderName(providerName)] = {};
+    structuredModels[normalizedProviderName] = {};
     
     // Group models by their families/categories
     const modelsByFamily = groupModelsByFamily(models, providerName);
@@ -69,11 +216,35 @@ export function categorizeModels(
       const modelsByType = groupModelsByType(familyModels, providerName);
       
       // Add family to provider
-      structuredModels[normalizeProviderName(providerName)][family] = modelsByType;
+      structuredModels[normalizedProviderName][family] = modelsByType;
     });
   });
 
   return structuredModels;
+}
+
+/**
+ * Get metadata for a model, either from registry or by analyzing the name
+ * 
+ * @param modelName - Model name
+ * @param providerName - Provider name
+ * @returns Model metadata
+ */
+function getModelMetadata(modelName: string, providerName: string): ModelMetadata {
+  const registry = MODEL_REGISTRY[providerName.toLowerCase()];
+  
+  // Check if model exists in registry
+  if (registry && registry[modelName]) {
+    return registry[modelName];
+  }
+  
+  // If not in registry, determine metadata from the model name
+  return {
+    family: determineModelFamily(modelName, providerName),
+    type: determineModelType(modelName, providerName),
+    capabilities: [],
+    isExperimental: modelName.includes('experimental') || modelName.includes('preview')
+  };
 }
 
 /**
@@ -87,7 +258,8 @@ function groupModelsByFamily(models: string[], providerName: string): ModelsByFa
   const modelsByFamily: ModelsByFamily = {};
   
   models.forEach(model => {
-    const family = determineModelFamily(model, providerName);
+    const metadata = getModelMetadata(model, providerName);
+    const family = metadata.family;
     
     if (!modelsByFamily[family]) {
       modelsByFamily[family] = [];
@@ -110,7 +282,8 @@ function groupModelsByType(models: string[], providerName: string): ModelsByType
   const modelsByType: ModelsByType = {};
   
   models.forEach(model => {
-    const type = determineModelType(model, providerName);
+    const metadata = getModelMetadata(model, providerName);
+    const type = metadata.type;
     
     if (!modelsByType[type]) {
       modelsByType[type] = {
@@ -179,6 +352,9 @@ function determineModelFamily(model: string, providerName: string): string {
   
   // Anthropic models
   if (lowerProvider === 'anthropic' || lowerModel.includes('claude')) {
+    if (lowerModel.includes('claude-3')) return 'Claude 3';
+    if (lowerModel.includes('claude-2')) return 'Claude 2';
+    if (lowerModel.includes('claude-1')) return 'Claude 1';
     return 'Claude';
   }
   
@@ -207,7 +383,7 @@ function determineModelFamily(model: string, providerName: string): string {
     }
   }
   
-  // Default to Unknown family
+  // Default to Other family
   return 'Other';
 }
 
@@ -221,6 +397,12 @@ function determineModelFamily(model: string, providerName: string): string {
 function determineModelType(model: string, providerName: string): string {
   const lowerModel = model.toLowerCase();
   const lowerProvider = providerName.toLowerCase();
+  
+  // Check if model is in registry
+  const registry = MODEL_REGISTRY[lowerProvider];
+  if (registry && registry[model]) {
+    return registry[model].type;
+  }
   
   // Google/Gemini models
   if (lowerModel.includes('gemini')) {
@@ -300,12 +482,6 @@ function determineModelType(model: string, providerName: string): string {
     return 'Standard';
   }
   
-  // For other or unclear models, extract numerical information as type
-  const versionMatch = model.match(/\d+(\.\d+)?[b]?/i);
-  if (versionMatch) {
-    return versionMatch[0];
-  }
-  
   // OpenRouter typically exposes models with provider/model pattern
   if (lowerProvider === 'openrouter') {
     const parts = model.split('/');
@@ -315,12 +491,18 @@ function determineModelType(model: string, providerName: string): string {
     }
   }
   
+  // For other or unclear models, extract numerical information as type
+  const versionMatch = model.match(/\d+(\.\d+)?[b]?/i);
+  if (versionMatch) {
+    return versionMatch[0];
+  }
+  
   // Default to the full model name as the type
-  return model;
+  return capitalizeFirstLetter(model.split('-').pop() || 'Standard');
 }
 
 /**
- * Check if one model version is newer than another
+ * Check if one model version is newer than another based on metadata or name analysis
  * 
  * @param model1 - First model to compare
  * @param model2 - Second model to compare
@@ -331,6 +513,35 @@ function isNewerVersion(model1: string, model2: string | null, providerName: str
   // If model2 is null, model1 is newer
   if (model2 === null) return true;
   
+  // Try to get metadata from registry
+  const registry = MODEL_REGISTRY[providerName.toLowerCase()];
+  
+  if (registry) {
+    const meta1 = registry[model1];
+    const meta2 = registry[model2];
+    
+    // If both models are in registry, compare release dates
+    if (meta1 && meta2) {
+      // Compare release dates if available
+      if (meta1.releaseDate && meta2.releaseDate) {
+        return meta1.releaseDate > meta2.releaseDate;
+      }
+      
+      // Compare generation numbers if available
+      if (meta1.generation !== undefined && meta2.generation !== undefined) {
+        if (meta1.generation !== meta2.generation) {
+          return meta1.generation > meta2.generation;
+        }
+      }
+      
+      // Compare version strings if available
+      if (meta1.version && meta2.version) {
+        return meta1.version > meta2.version;
+      }
+    }
+  }
+  
+  // Fall back to heuristic-based comparison
   const lowerModel1 = model1.toLowerCase();
   const lowerModel2 = model2.toLowerCase();
   const lowerProvider = providerName.toLowerCase();
@@ -380,6 +591,18 @@ function isNewerVersion(model1: string, model2: string | null, providerName: str
     if (!lowerModel1.includes('flash') && lowerModel2.includes('flash')) return false;
   }
   
+  // Anthropic Claude models with date-based versioning
+  if ((lowerProvider === 'anthropic' || lowerModel1.includes('claude') || lowerModel2.includes('claude'))) {
+    // Extract date parts from model IDs
+    const dateRegex = /\d{8}/;
+    const date1 = lowerModel1.match(dateRegex)?.[0];
+    const date2 = lowerModel2.match(dateRegex)?.[0];
+    
+    if (date1 && date2) {
+      return date1 > date2;
+    }
+  }
+  
   // If one has "latest" and the other doesn't, the one with "latest" is newer
   if (model1.includes('-latest') && !model2.includes('-latest')) return true;
   if (!model1.includes('-latest') && model2.includes('-latest')) return false;
@@ -413,11 +636,6 @@ function isNewerVersion(model1: string, model2: string | null, providerName: str
     }
   }
   
-  // If one model has more number components, it's likely newer
-  if (allNumbers1.length !== allNumbers2.length) {
-    return allNumbers1.length > allNumbers2.length;
-  }
-  
   // Fallback: alphabetical comparison as a last resort
   return model1.localeCompare(model2) > 0;
 }
@@ -440,7 +658,11 @@ function normalizeProviderName(providerName: string): string {
     'mistral': 'Mistral',
     'cohere': 'Cohere',
     'openrouter': 'OpenRouter',
-    'meta': 'Meta'
+    'meta': 'Meta',
+    'anyscale': 'Anyscale',
+    'replicate': 'Replicate',
+    'groq': 'Groq',
+    'stability': 'Stability AI'
   };
   
   // Return mapped name or capitalized version if not in map
@@ -457,8 +679,42 @@ function capitalizeFirstLetter(string: string): string {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+/**
+ * Add a model to the registry to support dynamic model addition
+ * 
+ * @param provider - Provider name
+ * @param model - Model name
+ * @param metadata - Model metadata
+ */
+export function registerModel(provider: string, model: string, metadata: ModelMetadata): void {
+  const lowerProvider = provider.toLowerCase();
+  
+  // Initialize provider in registry if not exists
+  if (!MODEL_REGISTRY[lowerProvider]) {
+    MODEL_REGISTRY[lowerProvider] = {};
+  }
+  
+  // Add or update model metadata
+  MODEL_REGISTRY[lowerProvider][model] = metadata;
+}
+
+/**
+ * Get capabilities for a specific model
+ * 
+ * @param provider - Provider name
+ * @param model - Model name
+ * @returns Array of capability strings or empty array if not found
+ */
+export function getModelCapabilities(provider: string, model: string): string[] {
+  const metadata = getModelMetadata(model, provider);
+  return metadata.capabilities || [];
+}
+
 export {
   determineModelFamily,
   determineModelType,
-  isNewerVersion
+  isNewerVersion,
+  getModelMetadata,
+  ModelMetadata,
+  ModelRegistry 
 }; 
