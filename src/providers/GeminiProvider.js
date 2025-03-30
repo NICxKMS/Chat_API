@@ -20,11 +20,11 @@ class GeminiProvider extends BaseProvider {
     const keyDebug = config.apiKey ? 
       `${config.apiKey.substring(0, 5)}...${config.apiKey.substring(config.apiKey.length - 4)}` : 
       'missing';
-    console.log(`Gemini provider initializing with API key: ${keyDebug}`);
-    console.log(`API key loaded from env GOOGLE_API_KEY: ${process.env.GOOGLE_API_KEY ? 'yes' : 'no'}`);
+    // console.log(`Gemini provider initializing with API key: ${keyDebug}`);
+    // console.log(`API key loaded from env GOOGLE_API_KEY: ${process.env.GOOGLE_API_KEY ? 'yes' : 'no'}`);
     
     // Validate API key
-    if (!config.apiKey || config.apiKey === 'dummy-key') {
+    if (!config.apiKey) {
       console.warn('Gemini API key is missing or set to dummy-key. Using fallback mode with limited functionality.');
       this.hasValidApiKey = false;
     } else {
@@ -32,7 +32,7 @@ class GeminiProvider extends BaseProvider {
     }
     
     // Store API version from config or environment
-    this.apiVersion = config.apiVersion || process.env.GEMINI_API_VERSION || 'v1';
+    this.apiVersion = config.apiVersion || process.env.GEMINI_API_VERSION || 'v1beta';
     console.log(`Using Gemini API version: ${this.apiVersion}`);
     
     // Initialize Google Generative AI SDK
@@ -57,7 +57,7 @@ class GeminiProvider extends BaseProvider {
     this.availableModels = this.config.models || [];
     
     // Log initialization
-    console.log(`GeminiProvider initialized successfully${!this.hasValidApiKey ? ' (with limited functionality - no API key)' : ''}`);
+    // console.log(`GeminiProvider initialized successfully${!this.hasValidApiKey ? ' (with limited functionality - no API key)' : ''}`);
   }
 
   /**
@@ -67,7 +67,8 @@ class GeminiProvider extends BaseProvider {
     try {
       // Start with hardcoded models for fast initial response
       let modelIds = this.config.models || [
-        'gemini-1.5-flash',
+        'gemini-2.0-flash',
+        'gemini-2.0-pro',
         'gemini-1.5-pro',
         'gemini-1.0-pro'
       ];
@@ -92,7 +93,8 @@ class GeminiProvider extends BaseProvider {
           // Extract model IDs from response
           if (response.data && response.data.models) {
             const dynamicModels = response.data.models
-              .filter((model) => model.name.startsWith('models/gemini'))
+              .filter(model => {let firstChar = model.name?.[7];
+                return firstChar !== 'e' && firstChar !== 't' && firstChar !== 'c';})
               .map((model) => model.name.replace('models/', ''));
               
             // console.log(`Found ${dynamicModels.length} Gemini models from API:`, dynamicModels);

@@ -35,26 +35,60 @@ class OpenAIProvider extends BaseProvider {
       }
     );
     
-    // Initialize empty cached models array
-    this.cachedModels = [];
+    // Initialize with fallback models if specified in config
+    this.cachedModels = this.config.models ? this._createModelObjects(this.config.models) : [];
+    
+    // Track if models were loaded from API (not just config)
+    this.modelsLoadedFromAPI = false;
+    // Track if we have any models (config or API)
+    this.hasModels = this.cachedModels.length > 0;
+    
+    // Log initialization status
+    console.log(`OpenAIProvider initialized with ${this.cachedModels.length} initial models from config`);
   }
 
   /**
    * Get available models from OpenAI
+   * @param {Object} options - Options for fetching models
+   * @param {boolean} options.forceRefresh - Whether to force refresh from API
    */
-  async getModels() {
+  async getModels(options = {}) {
     try {
-      // Check if we have a cached model list first
-      if (this.cachedModels.length > 0) {
+      // Return cache if we have data from API and not forcing refresh
+      if (this.modelsLoadedFromAPI && this.cachedModels.length > 0 && !options.forceRefresh) {
+        console.log(`Using ${this.cachedModels.length} cached OpenAI models from previous API call`);
         return this.cachedModels;
       }
       
-      // Call the OpenAI API to get available models
-      const response = await this.client.models.list();
+      console.log('Fetching models from OpenAI API...');
       
-      // Filter models (optionally)
-      let filteredModels = response.data
-        .filter(model => model.id.startsWith('gpt-'))
+      // Create fallback models in case API call fails
+      const fallbackModels = [
+        'gpt-4',
+        'gpt-4-turbo',
+        'gpt-4o',
+        'gpt-4o-mini',
+        'gpt-3.5-turbo',
+        'gpt-3.5-turbo-16k',
+      ];
+      
+      // Call the OpenAI API to get available models
+      try {
+        // Explicitly call the list method and await the response
+        const response = await this.client.models.list();
+        
+        if (!response || !response.data || !Array.isArray(response.data)) {
+          console.error('Invalid response format from OpenAI API:', response);
+          throw new Error('Invalid response format from OpenAI models API');
+        }
+        
+        console.log(`Received ${response.data.length} models from OpenAI API`);
+        
+        let filteredModels = response.data
+        .filter(model => {
+          let firstChar = model.id?.[0];  // Get first character safely
+          return firstChar !== 't' && firstChar !== 'b'; // Exclude 't' and 'b'
+        })
         .map(model => ({
           id: model.id,
           name: model.id,
@@ -63,29 +97,59 @@ class OpenAIProvider extends BaseProvider {
           features: this._getModelFeatures(model.id)
         }));
       
-      // If specific models were configured, filter to only those
-      if (this.config.models && this.config.models.length > 0) {
-        filteredModels = filteredModels.filter(model => 
-          this.config.models?.includes(model.id)
-        );
+        // Cache all available models from API - no config filtering
+        this.cachedModels = filteredModels;
+        this.modelsLoadedFromAPI = true;
+        this.hasModels = true;
+        
+        console.log(`Successfully loaded ${this.cachedModels.length} models from OpenAI API`);
+        
+        return filteredModels;
+      } catch (error) {
+        console.error('Error fetching OpenAI models from API:', error.message);
+        
+        // If we have previously loaded models from the API, return those
+        if (this.modelsLoadedFromAPI && this.cachedModels.length > 0) {
+          console.log(`Using ${this.cachedModels.length} previously cached models from API due to error`);
+          return this.cachedModels;
+        }
+        
+        // If we have config models, return those
+        if (this.hasModels && this.cachedModels.length > 0) {
+          console.log(`Using ${this.cachedModels.length} models from config due to API error`);
+          return this.cachedModels;
+        }
+        
+        // Otherwise use fallback models
+        console.log(`Using ${fallbackModels.length} hardcoded fallback models due to API error`);
+        const models = this._createModelObjects(fallbackModels);
+        this.cachedModels = models;
+        this.hasModels = true;
+        return models;
+      }
+    } catch (error) {
+      console.error('Error in getModels:', error.message);
+      
+      // Return any models we have or use fallback models
+      if (this.hasModels && this.cachedModels.length > 0) {
+        return this.cachedModels;
       }
       
-      // Cache the models
-      this.cachedModels = filteredModels;
-      
-      return filteredModels;
-    } catch (error) {
-      console.error('Error fetching OpenAI models:', error);
-      
-      // Return empty array or use fallback models from config
-      return this.config.models?.map(id => ({
-        id,
-        name: id,
-        provider: this.name,
-        tokenLimit: this._getTokenLimit(id),
-        features: this._getModelFeatures(id)
-      })) || [];
+      return this._createModelObjects(this.config.models || []);
     }
+  }
+
+  /**
+   * Create model objects from model IDs
+   */
+  _createModelObjects(modelIds) {
+    return modelIds.map(id => ({
+      id,
+      name: id,
+      provider: this.name,
+      tokenLimit: this._getTokenLimit(id),
+      features: this._getModelFeatures(id)
+    }));
   }
 
   /**

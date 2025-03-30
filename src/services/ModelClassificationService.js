@@ -21,142 +21,158 @@ export class ModelClassificationService {
    * @returns {Promise<object>} - A list of all models
    */
   async getAllModelsForProto() {
-    // Get all provider models
-    const providersInfo = await providerFactory.getProvidersInfo();
-    
-    // Convert to proto format
-    const modelList = [];
-    
-    for (const [provider, info] of Object.entries(providersInfo)) {
-      if (info && typeof info === 'object' && 'models' in info && Array.isArray(info.models)) {
-        for (const model of info.models) {
-          // Convert string model IDs to objects, or use existing object
-          const modelObj = typeof model === 'string' 
-            ? { id: model, name: model, provider } 
-            : { ...model, provider, name: model.name || model.id };
-          
-          // Ensure model object has an ID
-          if (!modelObj.id) {
-            console.warn(`Model without ID detected for provider ${provider}, skipping`);
-            continue;
-          }
-          
-          // Enhance with classification properties if available
-          this.enhanceModelWithClassificationProperties(modelObj);
-          
-          // Convert to proto format
-          try {
-            const protoModel = protoUtils.createProtoModel(modelObj);
-            modelList.push(protoModel);
-          } catch (error) {
-            console.error(`Error converting model ${modelObj.id} to proto format: ${error.message}`);
-            // Continue with other models even if one fails
+    try {
+      // Get all provider models
+      const providersInfo = await providerFactory.getProvidersInfo();
+      
+      // Convert to proto format
+      const modelList = [];
+      
+      for (const [provider, info] of Object.entries(providersInfo)) {
+        if (info && typeof info === 'object' && 'models' in info && Array.isArray(info.models)) {
+          for (const model of info.models) {
+            // Convert string model IDs to objects, or use existing object
+            const modelObj = typeof model === 'string' 
+              ? { id: model, name: model, provider } 
+              : { ...model, provider, name: model.name || model.id };
+            
+            // Ensure model object has an ID
+            if (!modelObj.id) {
+              console.warn(`Model without ID detected for provider ${provider}, skipping`);
+              continue;
+            }
+            
+            // Enhance with classification properties if available
+            // this.enhanceModelWithClassificationProperties(modelObj);
+            
+            // Convert to proto format
+            try {
+              const protoModel = protoUtils.createProtoModel(modelObj);
+              modelList.push(protoModel);
+            } catch (error) {
+              console.error(`Error converting model ${modelObj.id} to proto format: ${error.message}`);
+              // Continue with other models even if one fails
+            }
           }
         }
       }
+      
+      // Get default provider safely
+      let defaultProviderName = 'none';
+      let defaultModelName = '';
+      
+      try {
+        const defaultProvider = providerFactory.getProvider();
+        defaultProviderName = defaultProvider?.name || 'none';
+        defaultModelName = defaultProvider?.config?.defaultModel || '';
+      } catch (error) {
+        console.warn(`Error getting default provider: ${error.message}`);
+      }
+      
+      // Create LoadedModelList with proper types
+      return {
+        models: modelList,
+        default_provider: defaultProviderName,
+        default_model: defaultModelName
+      };
+    } catch (error) {
+      console.error(`Error in getAllModelsForProto: ${error.message}`);
+      // Return empty model list on error
+      return {
+        models: [],
+        default_provider: 'none',
+        default_model: ''
+      };
     }
-    
-    // Get default provider
-    const defaultProvider = providerFactory.getProvider();
-    const defaultModel = defaultProvider && 
-      typeof defaultProvider.config === 'object' ? 
-      defaultProvider.config.defaultModel : undefined;
-    
-    // Create LoadedModelList with proper types
-    return {
-      models: modelList,
-      default_provider: defaultProvider?.name || '',
-      default_model: defaultModel || ''
-    };
   }
 
-  /**
-   * Enhances a model object with classification properties
-   * @param {object} model - The model object to enhance
-   */
-  enhanceModelWithClassificationProperties(model) {
-    const modelId = model.id.toLowerCase();
-    const providerName = model.provider.toLowerCase();
+  // /**
+  //  * Enhances a model object with classification properties
+  //  * @param {object} model - The model object to enhance
+  //  */
+  // enhanceModelWithClassificationProperties(model) {
+  //   const modelId = model.id.toLowerCase();
+  //   const providerName = model.provider.toLowerCase();
     
-    // Set default values
-    model.isExperimental = model.isExperimental || 
-                           modelId.includes('experimental') || 
-                           modelId.includes('preview');
+  //   // Set default values
+  //   model.isExperimental = model.isExperimental || 
+  //                          modelId.includes('experimental') || 
+  //                          modelId.includes('preview');
     
-    // Detect if model is a default model
-    model.isDefault = modelId === model.provider.toLowerCase() + '-default' ||
-                      ['gpt-3.5-turbo', 'gpt-4', 'claude-3-sonnet', 'gemini-pro'].includes(modelId);
+  //   // Detect if model is a default model
+  //   model.isDefault = modelId === model.provider.toLowerCase() + '-default' ||
+  //                     ['gpt-3.5-turbo', 'gpt-4', 'claude-3-sonnet', 'gemini-pro'].includes(modelId);
     
-    // Check for multimodal capabilities
-    model.isMultimodal = Boolean(model.capabilities?.includes('vision')) || 
-                         modelId.includes('vision') || 
-                         modelId.includes('gpt-4') || 
-                         modelId.includes('claude-3') || 
-                         modelId.includes('gemini');
+  //   // Check for multimodal capabilities
+  //   model.isMultimodal = Boolean(model.capabilities?.includes('vision')) || 
+  //                        modelId.includes('vision') || 
+  //                        modelId.includes('gpt-4') || 
+  //                        modelId.includes('claude-3') || 
+  //                        modelId.includes('gemini');
     
-    // Determine model family
-    if (!model.family) {
-      if (modelId.includes('gpt-4')) {
-        model.family = 'GPT-4';
-      } else if (modelId.includes('gpt-3.5')) {
-        model.family = 'GPT-3.5';
-      } else if (modelId.includes('claude-3')) {
-        model.family = 'Claude 3';
-      } else if (modelId.includes('claude-2')) {
-        model.family = 'Claude 2';
-      } else if (modelId.includes('gemini-1.5')) {
-        model.family = 'Gemini 1.5';
-      } else if (modelId.includes('gemini-1.0')) {
-        model.family = 'Gemini 1.0';
-      } else if (modelId.includes('gemini')) {
-        model.family = 'Gemini';
-      } else if (modelId.includes('llama')) {
-        model.family = 'Llama';
-      } else if (modelId.includes('mistral')) {
-        model.family = 'Mistral';
-      }
-    }
+  //   // Determine model family
+  //   if (!model.family) {
+  //     if (modelId.includes('gpt-4')) {
+  //       model.family = 'GPT-4';
+  //     } else if (modelId.includes('gpt-3.5')) {
+  //       model.family = 'GPT-3.5';
+  //     } else if (modelId.includes('claude-3')) {
+  //       model.family = 'Claude 3';
+  //     } else if (modelId.includes('claude-2')) {
+  //       model.family = 'Claude 2';
+  //     } else if (modelId.includes('gemini-1.5')) {
+  //       model.family = 'Gemini 1.5';
+  //     } else if (modelId.includes('gemini-1.0')) {
+  //       model.family = 'Gemini 1.0';
+  //     } else if (modelId.includes('gemini')) {
+  //       model.family = 'Gemini';
+  //     } else if (modelId.includes('llama')) {
+  //       model.family = 'Llama';
+  //     } else if (modelId.includes('mistral')) {
+  //       model.family = 'Mistral';
+  //     }
+  //   }
     
-    // Determine model type
-    if (!model.type) {
-      if (modelId.includes('vision')) {
-        model.type = 'Vision';
-      } else if (modelId.includes('embedding')) {
-        model.type = 'Embedding';
-      } else if (modelId.includes('opus')) {
-        model.type = 'Opus';
-      } else if (modelId.includes('sonnet')) {
-        model.type = 'Sonnet';
-      } else if (modelId.includes('haiku')) {
-        model.type = 'Haiku';
-      } else if (modelId.includes('pro')) {
-        model.type = 'Pro';
-      } else if (modelId.includes('flash')) {
-        model.type = 'Flash';
-      } else if (modelId.includes('turbo')) {
-        model.type = 'Turbo';
-      } else {
-        model.type = 'Standard';
-      }
-    }
+  //   // Determine model type
+  //   if (!model.type) {
+  //     if (modelId.includes('vision')) {
+  //       model.type = 'Vision';
+  //     } else if (modelId.includes('embedding')) {
+  //       model.type = 'Embedding';
+  //     } else if (modelId.includes('opus')) {
+  //       model.type = 'Opus';
+  //     } else if (modelId.includes('sonnet')) {
+  //       model.type = 'Sonnet';
+  //     } else if (modelId.includes('haiku')) {
+  //       model.type = 'Haiku';
+  //     } else if (modelId.includes('pro')) {
+  //       model.type = 'Pro';
+  //     } else if (modelId.includes('flash')) {
+  //       model.type = 'Flash';
+  //     } else if (modelId.includes('turbo')) {
+  //       model.type = 'Turbo';
+  //     } else {
+  //       model.type = 'Standard';
+  //     }
+  //   }
     
-    // Set context window size if not provided
-    if (!model.contextSize) {
-      if (modelId.includes('gpt-4-turbo') || modelId.includes('gpt-4o')) {
-        model.contextSize = 128000;
-      } else if (modelId.includes('gpt-4-32k')) {
-        model.contextSize = 32768;
-      } else if (modelId.includes('gpt-4')) {
-        model.contextSize = 8192;
-      } else if (modelId.includes('gpt-3.5-turbo-16k')) {
-        model.contextSize = 16385;
-      } else if (modelId.includes('claude-3')) {
-        model.contextSize = 200000;
-      } else if (modelId.includes('gemini-1.5')) {
-        model.contextSize = 1000000;
-      }
-    }
-  }
+  //   // Set context window size if not provided
+  //   if (!model.contextSize) {
+  //     if (modelId.includes('gpt-4-turbo') || modelId.includes('gpt-4o')) {
+  //       model.contextSize = 128000;
+  //     } else if (modelId.includes('gpt-4-32k')) {
+  //       model.contextSize = 32768;
+  //     } else if (modelId.includes('gpt-4')) {
+  //       model.contextSize = 8192;
+  //     } else if (modelId.includes('gpt-3.5-turbo-16k')) {
+  //       model.contextSize = 16385;
+  //     } else if (modelId.includes('claude-3')) {
+  //       model.contextSize = 200000;
+  //     } else if (modelId.includes('gemini-1.5')) {
+  //       model.contextSize = 1000000;
+  //     }
+  //   }
+  // }
 
   /**
    * Send models to the classification server and return classified models
