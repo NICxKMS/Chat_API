@@ -2,18 +2,14 @@
  * Chat Controller
  * Handles all chat-related API endpoints with optimized performance
  */
-const providerFactory = require('../providers/ProviderFactory');
-const cache = require('../utils/cache');
-const metrics = require('../utils/metrics');
-const { getCircuitBreakerStates } = require('../utils/circuitBreaker');
+import providerFactory from '../providers/ProviderFactory.js';
+import * as cache from '../utils/cache.js';
+import * as metrics from '../utils/metrics.js';
+import { getCircuitBreakerStates } from '../utils/circuitBreaker.js';
 
 class ChatController {
   constructor() {
     console.log('Initializing ChatController...');
-    
-    // Bind methods to ensure 'this' context is preserved
-    this.chatCompletion = this.chatCompletion.bind(this);
-    this.getChatCapabilities = this.getChatCapabilities.bind(this);
     
     // Log initialization
     console.log('ChatController initialized with bound methods');
@@ -33,11 +29,13 @@ class ChatController {
       
       // Check for required parameters
       if (!model) {
-        return res.status(400).json({ error: 'Missing required parameter: model' });
+        res.status(400).json({ error: 'Missing required parameter: model' });
+        return;
       }
       
       if (!Array.isArray(messages) || messages.length === 0) {
-        return res.status(400).json({ error: 'Missing or invalid messages array' });
+        res.status(400).json({ error: 'Missing or invalid messages array' });
+        return;
       }
       
       // Extract provider name and model name
@@ -46,7 +44,9 @@ class ChatController {
       if (model.includes('/')) {
         [providerName, modelName] = model.split('/', 2);
       } else {
-        providerName = providerFactory.getDefaultProvider().name;
+        // Use getProvider without arguments to get the default provider
+        const defaultProvider = providerFactory.getProvider();
+        providerName = defaultProvider.name;
         modelName = model;
       }
       
@@ -54,9 +54,10 @@ class ChatController {
       const provider = providerFactory.getProvider(providerName);
       
       if (!provider) {
-        return res.status(404).json({ 
+        res.status(404).json({ 
           error: `Provider '${providerName}' not found or not configured`
         });
+        return;
       }
       
       console.log(`Processing chat request for ${providerName}/${modelName}`);
@@ -65,13 +66,15 @@ class ChatController {
       try {
         if (typeof cache.isEnabled === 'function' && cache.isEnabled() && !req.body.nocache) {
           try {
-            const cacheKey = cache.generateKey({
+            const cacheKeyData = {
               provider: providerName,
               model: modelName,
               messages: messages,
               temperature,
               max_tokens
-            });
+            };
+            
+            const cacheKey = cache.generateKey(cacheKeyData);
             
             const cachedResponse = await cache.get(cacheKey);
             
@@ -79,7 +82,8 @@ class ChatController {
               console.log(`Cache hit for ${providerName}/${modelName}`);
               // Add cache indicator
               cachedResponse.cached = true;
-              return res.json(cachedResponse);
+              res.json(cachedResponse);
+              return;
             }
           } catch (cacheError) {
             console.warn(`Cache error: ${cacheError.message}. Continuing without cache.`);
@@ -90,20 +94,25 @@ class ChatController {
       }
       
       // Set a timeout for the request
+      const timeoutDuration = 
+        typeof provider.config === 'object' && 
+        typeof provider.config.timeout === 'number' ? 
+        provider.config.timeout : 30000;
+        
       const timeout = setTimeout(() => {
         res.status(504).json({ 
           error: 'Request timeout', 
           message: 'The request took too long to complete'
         });
         // Note: the request will still complete in the background
-      }, provider.config.timeout || 30000);
+      }, timeoutDuration);
       
       // Prepare options for the provider
       const options = {
         model: modelName,
         messages,
-        temperature: parseFloat(temperature),
-        max_tokens: parseInt(max_tokens, 10)
+        temperature: parseFloat(temperature?.toString() || '0.7'),
+        max_tokens: parseInt(max_tokens?.toString() || '1000', 10)
       };
       
       try {
@@ -117,13 +126,15 @@ class ChatController {
         try {
           if (typeof cache.isEnabled === 'function' && cache.isEnabled() && !req.body.nocache) {
             try {
-              const cacheKey = cache.generateKey({
+              const cacheKeyData = {
                 provider: providerName,
                 model: modelName,
                 messages: messages,
                 temperature,
                 max_tokens
-              });
+              };
+              
+              const cacheKey = cache.generateKey(cacheKeyData);
               await cache.set(cacheKey, response);
               console.log(`Cached response for ${providerName}/${modelName}`);
             } catch (cacheError) {
@@ -136,13 +147,13 @@ class ChatController {
         
         // Return the response
         console.log(`Request completed in ${Date.now() - startTime}ms`);
-        return res.json(response);
+        res.json(response);
       } catch (error) {
         // Clear timeout
         clearTimeout(timeout);
         
         console.error(`Provider error: ${error.message}`);
-        return res.status(500).json({
+        res.status(500).json({
           error: `Provider error: ${error.message}`,
           provider: providerName,
           model: modelName
@@ -179,13 +190,17 @@ class ChatController {
       let cacheStats = { enabled: false };
       try {
         if (typeof cache.getStats === 'function') {
-          cacheStats = cache.getStats();
+          const stats = cache.getStats();
+          cacheStats = { 
+            ...stats,
+            enabled: true
+          };
         }
       } catch (cacheError) {
         console.warn(`Failed to get cache stats: ${cacheError.message}`);
         cacheStats = { 
-          error: cacheError.message,
-          enabled: false 
+          enabled: false,
+          error: cacheError.message
         };
       }
       
@@ -215,4 +230,4 @@ class ChatController {
 const controller = new ChatController();
 
 // Export instance
-module.exports = controller;
+export default controller;

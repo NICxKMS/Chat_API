@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  # Go gRPC server service
+  model-categorizer:
+    build:
+      context: ./src/microservices/model-categorizer/go
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chat-api-network
+
+  # Node.js API service (if needed)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - MODEL_CATEGORIZER_ADDRESS=model-categorizer:8080
+    depends_on:
+      model-categorizer:
+        condition: service_healthy
+    networks:
+      - chat-api-network
+
+networks:
+  chat-api-network:
+    driver: bridge 

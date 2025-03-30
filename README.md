@@ -1,81 +1,129 @@
-# Chat API
+# Chat API - Model Categorizer
 
-A centralized API that provides access to multiple LLM providers through a single interface.
+A microservice architecture for categorizing and classifying AI models, with a Go gRPC server and a Node.js client.
 
-## Setup
+## Architecture Overview
 
-1. Clone this repository
-2. Install dependencies:
+This project consists of:
+
+1. **Model Categorization Service (Go)**: A gRPC server that classifies AI models based on various properties
+2. **Client Library (Node.js)**: A JavaScript library for communicating with the gRPC server
+3. **Example Client**: Demonstration of how to use the client library
+
+## Prerequisites
+
+- Go 1.20+
+- Node.js 16+
+- npm 7+
+- Protocol Buffers Compiler (protoc) 3.15+
+- Docker and Docker Compose (optional, for containerized deployment)
+
+## Directory Structure
+
+```
+├── docker-compose.yml          # Docker Compose configuration
+├── Makefile                    # Build automation
+├── README.md                   # This file
+└── src/
+    ├── examples/               # Example client applications
+    │   └── classify-models.js  # Example usage of the client
+    ├── generate-grpc.sh        # Script to generate JS gRPC code
+    ├── microservices/
+    │   └── model-categorizer/
+    │       └── go/             # Go service implementation
+    │           ├── classifiers/    # Model classification logic
+    │           ├── handlers/       # gRPC handlers
+    │           ├── models/         # Data models
+    │           │   └── proto/      # Protocol buffer definitions
+    │           ├── docker-compose.yml
+    │           ├── Dockerfile
+    │           ├── generate.sh     # Generate Go gRPC code
+    │           ├── go.mod
+    │           ├── go.sum
+    │           └── main.go         # Service entry point
+    ├── protos/                 # Protocol buffer definitions
+    │   └── models.proto        # Main proto file
+    ├── types/                  # TypeScript/JS type definitions
+    │   └── proto/              # Generated proto types
+    └── utils/                  # Utility functions
+        └── protoUtils.js       # gRPC client utilities
+```
+
+## Setup Instructions
+
+### 1. Generate Protocol Buffer Code
+
+Generate both JavaScript and Go code from the proto definitions:
+
+```bash
+make generate
+```
+
+### 2. Build the Applications
+
+Build the Go server and install Node.js dependencies:
+
+```bash
+make build
+```
+
+### 3. Run the Applications
+
+#### Start the Go Server
+
+```bash
+make run-server
+```
+
+#### Run the Example Client
+
+In a separate terminal:
+
+```bash
+make run-client
+```
+
+### Using Docker
+
+To start all services using Docker Compose:
+
+```bash
+make docker-up
+```
+
+To stop all services:
+
+```bash
+make docker-down
+```
+
+## Development
+
+### Modifying the Protocol Buffer Definition
+
+1. Edit `src/protos/models.proto`
+2. Run `make generate` to regenerate the code
+3. Rebuild the applications with `make build`
+
+### API Documentation
+
+The service provides two main RPC methods:
+
+1. **ClassifyModels**: Classify a list of models
    ```
-   npm install
+   rpc ClassifyModels(LoadedModelList) returns (ClassifiedModelResponse)
    ```
-3. Copy the example environment file:
+
+2. **ClassifyModelsWithCriteria**: Classify with specific criteria
    ```
-   cp .env.example .env
+   rpc ClassifyModelsWithCriteria(ClassificationCriteria) returns (ClassifiedModelResponse)
    ```
-4. Edit `.env` to add your API keys for the providers you want to use
 
-## OpenRouter Setup
+## Contributing
 
-OpenRouter has updated their authentication system to use Clerk. To use OpenRouter with this API:
-
-1. Get your API key from [OpenRouter Dashboard](https://openrouter.ai/keys)
-2. Make sure you're using the new API key format that starts with `sk-or-v1-...`
-3. Set the following environment variables in your `.env` file:
-
-```
-OPENROUTER_API_KEY=sk-or-v1-your-api-key-here
-OPENROUTER_HTTP_REFERER=https://your-app-domain.com  # Required by OpenRouter
-OPENROUTER_TITLE=Your App Name  # Optional but helpful
-```
-
-## Running the Server
-
-Start the API server:
-
-```
-npm start
-```
-
-Or use the provided batch script to start both the API server and test site:
-
-```
-start-servers.bat
-```
-
-The API will be available at http://localhost:3000 and the test site at http://localhost:8080.
-
-## Available Providers
-
-- OpenAI
-- Anthropic
-- Google Gemini
-- OpenRouter (provides access to many different models)
-
-## API Endpoints
-
-- `GET /models` - List all available models
-- `GET /models/categorized` - Get models organized by provider, family, type, and version
-- `GET /models/providers` - List all available providers
-- `GET /models/:providerName` - List models for a specific provider
-- `POST /chat/completions` - Send a chat completion request
-- `POST /chat/completions/stream` - Stream a chat completion response
-
-## Error Handling
-
-If you encounter authentication errors with OpenRouter:
-1. Check that your API key is in the correct format (should start with `sk-or-v1-`)
-2. Ensure you've set the correct HTTP referer in your environment variables
-3. Check the OpenRouter dashboard to verify your API key is valid
-
-## Troubleshooting
-
-### OpenRouter Streaming Issues
-
-If you encounter circular JSON errors with OpenRouter streaming:
-1. Try the request again - these are often transient network issues
-2. Try a different model from OpenRouter
-3. As a fallback, use non-streaming completion instead
+1. Ensure all tests pass before submitting changes
+2. Update documentation for any changes to the API
+3. Follow the project's coding style and conventions
 
 ## License
 

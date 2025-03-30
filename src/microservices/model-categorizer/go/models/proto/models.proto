@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package modelservice;
 
+option go_package = "github.com/chat-api/model-categorizer/models/proto";
+
 // Model represents a single LLM model
 message Model {
   string id = 1;

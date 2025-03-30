@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"strings"
 
@@ -13,19 +14,52 @@ import (
 // ModelClassificationHandler handles gRPC requests for model classification
 type ModelClassificationHandler struct {
 	proto.UnimplementedModelClassificationServiceServer
-	classifier *classifiers.ModelClassifier
+	classifier    *classifiers.ModelClassifier
+	enableLogging bool
 }
 
 // NewModelClassificationHandler creates a new handler for model classification
-func NewModelClassificationHandler() *ModelClassificationHandler {
+func NewModelClassificationHandler(enableLogging bool) *ModelClassificationHandler {
 	return &ModelClassificationHandler{
-		classifier: classifiers.NewModelClassifier(),
+		classifier:    classifiers.NewModelClassifier(),
+		enableLogging: enableLogging,
 	}
+}
+
+// logRequest logs the request if logging is enabled
+func (h *ModelClassificationHandler) logRequest(method string, req interface{}) {
+	if !h.enableLogging {
+		return
+	}
+
+	requestJSON, err := json.MarshalIndent(req, "", "  ")
+	if err != nil {
+		log.Printf("Error serializing request for logging: %v", err)
+		return
+	}
+
+	log.Printf("REQUEST [%s]:\n%s", method, string(requestJSON))
+}
+
+// logResponse logs the response if logging is enabled
+func (h *ModelClassificationHandler) logResponse(method string, resp interface{}) {
+	if !h.enableLogging {
+		return
+	}
+
+	responseJSON, err := json.MarshalIndent(resp, "", "  ")
+	if err != nil {
+		log.Printf("Error serializing response for logging: %v", err)
+		return
+	}
+
+	log.Printf("RESPONSE [%s]:\n%s", method, string(responseJSON))
 }
 
 // ClassifyModels classifies a list of models
 func (h *ModelClassificationHandler) ClassifyModels(ctx context.Context, req *proto.LoadedModelList) (*proto.ClassifiedModelResponse, error) {
 	log.Printf("Received request to classify %d models", len(req.Models))
+	h.logRequest("ClassifyModels", req)
 
 	// Convert proto models to our internal model representation
 	internalModels := convertProtoModelsToInternal(req.Models)
@@ -48,12 +82,14 @@ func (h *ModelClassificationHandler) ClassifyModels(ctx context.Context, req *pr
 	}
 
 	log.Printf("Returning %d classification groups", len(result.ClassifiedGroups))
+	h.logResponse("ClassifyModels", result)
 	return result, nil
 }
 
 // ClassifyModelsWithCriteria classifies models based on specific criteria
 func (h *ModelClassificationHandler) ClassifyModelsWithCriteria(ctx context.Context, req *proto.ClassificationCriteria) (*proto.ClassifiedModelResponse, error) {
 	log.Printf("Received request to classify models with criteria: %+v", req)
+	h.logRequest("ClassifyModelsWithCriteria", req)
 
 	// Create response
 	result := &proto.ClassifiedModelResponse{
@@ -81,6 +117,7 @@ func (h *ModelClassificationHandler) ClassifyModelsWithCriteria(ctx context.Cont
 
 	log.Printf("Returning %d classification groups with %d models after filtering",
 		len(result.ClassifiedGroups), len(filteredModels))
+	h.logResponse("ClassifyModelsWithCriteria", result)
 	return result, nil
 }
 

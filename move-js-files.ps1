@@ -2,7 +2,7 @@
 Write-Host "Moving JavaScript files to js_implementation directory..."
 
 # Get all JavaScript files in the src directory
-$jsFiles = Get-ChildItem -Path "src" -Filter "*.js" -Recurse
+$jsFiles = Get-ChildItem -Path "src" -Filter "*.ts" -Recurse
 
 # Process each JavaScript file
 foreach ($file in $jsFiles) {
@@ -10,7 +10,7 @@ foreach ($file in $jsFiles) {
     $relativePath = $file.FullName.Substring($file.FullName.IndexOf("src"))
     
     # Create the destination path
-    $destinationPath = $relativePath.Replace("src", "js_implementation\src")
+    $destinationPath = $relativePath.Replace("src", "ts\src")
     
     # Create the directory structure if it doesn't exist
     $destinationDir = Split-Path -Path $destinationPath -Parent
