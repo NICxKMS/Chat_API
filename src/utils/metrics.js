@@ -49,6 +49,10 @@ const memoryGauge = new promClient.Gauge({
   collect() {},
 });
 
+// Dynamic counters and histograms for providers
+const dynamicCounters = new Map();
+const dynamicHistograms = new Map();
+
 // Increment request counter
 function incrementRequestCount() {
   requestCounter.inc();
@@ -79,6 +83,35 @@ function incrementProviderRequestCount(provider, model, status) {
   providerRequestCounter.labels(provider, model, status).inc();
 }
 
+// Increment dynamic counter (used by providers)
+function incrementCounter(name) {
+  if (!dynamicCounters.has(name)) {
+    const counter = new promClient.Counter({
+      name,
+      help: `Counter for ${name}`,
+      registers: [register]
+    });
+    dynamicCounters.set(name, counter);
+  }
+  
+  dynamicCounters.get(name).inc();
+}
+
+// Observe histogram value (used by providers)
+function observeHistogram(name, value) {
+  if (!dynamicHistograms.has(name)) {
+    const histogram = new promClient.Histogram({
+      name,
+      help: `Histogram for ${name}`,
+      buckets: [0.1, 0.5, 1, 2, 5, 10, 30, 60],
+      registers: [register]
+    });
+    dynamicHistograms.set(name, histogram);
+  }
+  
+  dynamicHistograms.get(name).observe(value);
+}
+
 // Start collecting metrics automatically
 updateMemoryMetrics();
 setInterval(updateMemoryMetrics, 10000);
@@ -86,6 +119,8 @@ setInterval(updateMemoryMetrics, 10000);
 // Reset all metrics
 function resetMetrics() {
   register.resetMetrics();
+  dynamicCounters.clear();
+  dynamicHistograms.clear();
 }
 
 // Update circuit breaker gauge method
@@ -107,5 +142,7 @@ export {
   responseTimeHistogram,
   circuitBreakerGauge,
   memoryGauge,
-  incrementProviderRequestCount
+  incrementProviderRequestCount,
+  incrementCounter,
+  observeHistogram
 }; 

@@ -362,7 +362,7 @@ class GeminiProvider extends BaseProvider {
           generationConfig,
           safetySettings,
           history,
-          systemInstruction: systemPrompt
+          systemInstruction: systemPrompt || undefined,
         });
         
         result = await chat.sendMessage(prompt);

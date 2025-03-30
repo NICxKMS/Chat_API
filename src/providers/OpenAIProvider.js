@@ -86,8 +86,16 @@ class OpenAIProvider extends BaseProvider {
         
         let filteredModels = response.data
         .filter(model => {
-          let firstChar = model.id?.[0];  // Get first character safely
-          return firstChar !== 't' && firstChar !== 'b'; // Exclude 't' and 'b'
+          let id = model.id || ""; // Ensure `id` is a string
+          let firstChar = id[0];   // Get the first character safely
+      
+          return !(
+            firstChar === "t" || 
+            firstChar === "b" || 
+            firstChar === "d" || 
+            firstChar === "w" || 
+            (id.length > 1 && id.slice(0, 2) === "om") // Check "om" only if ID has at least 2 chars
+          );
         })
         .map(model => ({
           id: model.id,
@@ -263,7 +271,7 @@ class OpenAIProvider extends BaseProvider {
         model: options.model,
         messages: options.messages,
         temperature: options.temperature,
-        max_tokens: options.max_tokens,
+        max_completion_tokens: options.max_tokens,
         stream: false
       };
       
