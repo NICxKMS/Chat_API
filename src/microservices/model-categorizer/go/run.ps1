@@ -1,60 +1,60 @@
-# PowerShell script to run the Model Categorizer microservice
+#!/usr/bin/env pwsh
+<#
+.SYNOPSIS
+    Run the model categorizer microservice.
+.DESCRIPTION
+    This script provides a convenient way to run the model categorizer microservice
+    either directly or in a Docker container.
+.PARAMETER Docker
+    Run the service in a Docker container.
+.PARAMETER Build
+    Build the service before running.
+.PARAMETER Port
+    The port to run the service on. Default is 8080.
+#>
+param(
+    [switch]$Docker,
+    [switch]$Build,
+    [int]$Port = 8080
+)
 
-# Function to print colored output
-function Write-ColoredMessage {
-    param (
-        [string]$Message
-    )
-    Write-Host ">> $Message" -ForegroundColor Cyan
+$ErrorActionPreference = "Stop"
+$Host.UI.RawUI.WindowTitle = "Model Categorizer Microservice"
+
+function Write-ColorOutput($ForegroundColor) {
+    $fc = $host.UI.RawUI.ForegroundColor
+    $host.UI.RawUI.ForegroundColor = $ForegroundColor
+    if ($args) {
+        Write-Output $args
+    }
+    else {
+        $input | Write-Output
+    }
+    $host.UI.RawUI.ForegroundColor = $fc
 }
 
-# Function to check if a command exists
-function Test-CommandExists {
-    param (
-        [string]$Command
-    )
-    $null -ne (Get-Command $Command -ErrorAction SilentlyContinue)
+Write-ColorOutput Green "=== Model Categorizer Microservice Runner ==="
+
+# If Docker flag is set, run in Docker
+if ($Docker) {
+    Write-ColorOutput Cyan "Running in Docker mode on port $Port..."
+    if ($Build) {
+        Write-ColorOutput Yellow "Building Docker image..."
+        docker build -t model-categorizer:latest .
+    }
+    docker run -p ${Port}:8080 -e PORT=8080 --name model-categorizer model-categorizer:latest
+}
+else {
+    # Running locally
+    Write-ColorOutput Cyan "Running in local mode on port $Port..."
+    if ($Build) {
+        Write-ColorOutput Yellow "Building Go binary..."
+        go build -o model-categorizer.exe
+    }
+    $env:PORT = $Port
+    # Run the Go binary
+    Write-ColorOutput Green "Starting service..."
+    ./model-categorizer.exe
 }
 
-# Ensure we're in the right directory
-$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $scriptPath
-
-# Parse arguments
-$useDocker = $args -contains "--docker" -or $args -contains "-d"
-
-if ($useDocker) {
-    Write-ColoredMessage "Starting Model Categorizer using Docker..."
-    
-    # Check if Docker is available
-    if (-not (Test-CommandExists "docker")) {
-        Write-Host "Error: Docker is not installed or not in PATH" -ForegroundColor Red
-        exit 1
-    }
-    
-    # Build and run with Docker Compose
-    if (Test-CommandExists "docker-compose") {
-        Write-ColoredMessage "Using docker-compose..."
-        docker-compose up --build
-    } else {
-        Write-ColoredMessage "Using docker compose..."
-        docker compose up --build
-    }
-} else {
-    Write-ColoredMessage "Starting Model Categorizer using native Go..."
-    
-    # Check if Go is available
-    if (-not (Test-CommandExists "go")) {
-        Write-Host "Error: Go is not installed or not in PATH" -ForegroundColor Red
-        Write-Host "Install Go or use Docker with: .\run.ps1 --docker" -ForegroundColor Red
-        exit 1
-    }
-    
-    # Download dependencies
-    Write-ColoredMessage "Downloading dependencies..."
-    go mod download
-    
-    # Run the service
-    Write-ColoredMessage "Running service on port 8080..."
-    go run main.go
-} 
+Write-ColorOutput Green "Service stopped." 

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Endpoint Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Dynamic Endpoint</h1>
+    
+    <div>
+        <h2>Test Direct Connection (port 8080)</h2>
+        <button id="testDirect">Test Direct</button>
+        <div id="directResult"></div>
+    </div>
+    
+    <div>
+        <h2>Test Proxy Connection (port 3000)</h2>
+        <button id="testProxy">Test Proxy</button>
+        <div id="proxyResult"></div>
+    </div>
+    
+    <script>
+        // Request body for testing
+        const testRequestBody = {
+            providers: {
+                openai: {
+                    api_key: "test_key_for_debugging"
+                }
+            },
+            query_options: {
+                output_format: "raw",
+                timeout: 5
+            }
+        };
+        
+        // Format JSON for display
+        function formatJSON(json) {
+            return JSON.stringify(json, null, 2);
+        }
+        
+        // Show result
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            if (isError) {
+                element.innerHTML = `<p class="error">Error: ${data}</p>`;
+            } else {
+                element.innerHTML = `<p class="success">Success!</p><pre>${formatJSON(data)}</pre>`;
+            }
+        }
+        
+        // Test direct connection
+        document.getElementById('testDirect').addEventListener('click', async () => {
+            try {
+                document.getElementById('directResult').innerHTML = '<p>Testing...</p>';
+                console.log('Testing direct connection to port 8080');
+                
+                const response = await fetch('http://localhost:8080/dynamic', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(testRequestBody)
+                });
+                
+                console.log('Direct response status:', response.status);
+                
+                // Get response as text first to debug any issues
+                const responseText = await response.text();
+                console.log('Direct response text:', responseText);
+                
+                // Try to parse as JSON
+                try {
+                    const data = JSON.parse(responseText);
+                    showResult('directResult', data);
+                } catch (e) {
+                    showResult('directResult', `Parsing error: ${e.message}\nRaw response: ${responseText}`, true);
+                }
+            } catch (error) {
+                console.error('Direct test error:', error);
+                showResult('directResult', error.message, true);
+            }
+        });
+        
+        // Test proxy connection
+        document.getElementById('testProxy').addEventListener('click', async () => {
+            try {
+                document.getElementById('proxyResult').innerHTML = '<p>Testing...</p>';
+                console.log('Testing proxy connection to port 3000');
+                
+                const response = await fetch('http://localhost:3000/dynamic', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(testRequestBody)
+                });
+                
+                console.log('Proxy response status:', response.status);
+                
+                // Get response as text first to debug any issues
+                const responseText = await response.text();
+                console.log('Proxy response text:', responseText);
+                
+                // Try to parse as JSON
+                try {
+                    const data = JSON.parse(responseText);
+                    showResult('proxyResult', data);
+                } catch (e) {
+                    showResult('proxyResult', `Parsing error: ${e.message}\nRaw response: ${responseText}`, true);
+                }
+            } catch (error) {
+                console.error('Proxy test error:', error);
+                showResult('proxyResult', error.message, true);
+            }
+        });
+    </script>
+</body>
+</html> 

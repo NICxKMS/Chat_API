@@ -7,9 +7,12 @@
     "start": "node dist/index.js",
     "dev": "nodemon --watch src --ext ts,json --exec ts-node src/index.ts",
     "build": "tsc",
+    "postbuild": "powershell -Command \"Copy-Item -Path ./src/protos -Destination ./dist/protos -Recurse -Force\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "load-test": "node scripts/load-test.js",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "proto:generate": "protoc --plugin=protoc-gen-ts=.\\node_modules\\.bin\\protoc-gen-ts.cmd --ts_out=.\\src\\types\\proto --proto_path=.\\src\\protos .\\src\\protos\\*.proto",
+    "proto:watch": "nodemon --watch src/protos --ext proto --exec npm run proto:generate"
   },
   "keywords": [
     "chat",
@@ -25,6 +28,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@google/generative-ai": "^0.24.0",
+    "@grpc/grpc-js": "^1.13.2",
+    "@grpc/proto-loader": "^0.7.13",
     "axios": "^1.8.4",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
@@ -34,6 +39,7 @@
     "node-cache": "^5.1.2",
     "openai": "^4.90.0",
     "prom-client": "^14.2.0",
+    "protobufjs": "^7.4.0",
     "rate-limiter-flexible": "^6.2.1",
     "spdy": "^4.0.2",
     "winston": "^3.17.0"
@@ -42,6 +48,7 @@
     "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/google-protobuf": "^3.15.12",
     "@types/helmet": "^0.0.48",
     "@types/node": "^20.17.28",
     "@types/spdy": "^3.4.9",
@@ -50,7 +57,9 @@
     "clinic": "^12.0.0",
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.9",
+    "protobufjs-cli": "^1.1.3",
     "ts-node": "^10.9.2",
+    "ts-proto": "^2.7.0",
     "typescript": "^5.8.2"
   }
 }

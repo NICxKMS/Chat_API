@@ -22,6 +22,12 @@ router.get('/providers', modelController.getProviders.bind(modelController));
 // GET /models/capabilities/all - Get provider capabilities and model info
 router.get('/capabilities/all', modelController.getProviderCapabilities.bind(modelController));
 
+// GET /models/classified - Get models classified by external service
+router.get('/classified', modelController.getClassifiedModels.bind(modelController));
+
+// GET /models/classified/criteria - Get models classified with specific criteria
+router.get('/classified/criteria', modelController.getClassifiedModelsWithCriteria.bind(modelController));
+
 // GET /models/:providerName - Get models for a specific provider (must be last)
 router.get('/:providerName', modelController.getProviderModels.bind(modelController));
 
