@@ -86,94 +86,7 @@ export class ModelClassificationService {
     }
   }
 
-  // /**
-  //  * Enhances a model object with classification properties
-  //  * @param {object} model - The model object to enhance
-  //  */
-  // enhanceModelWithClassificationProperties(model) {
-  //   const modelId = model.id.toLowerCase();
-  //   const providerName = model.provider.toLowerCase();
-    
-  //   // Set default values
-  //   model.isExperimental = model.isExperimental || 
-  //                          modelId.includes('experimental') || 
-  //                          modelId.includes('preview');
-    
-  //   // Detect if model is a default model
-  //   model.isDefault = modelId === model.provider.toLowerCase() + '-default' ||
-  //                     ['gpt-3.5-turbo', 'gpt-4', 'claude-3-sonnet', 'gemini-pro'].includes(modelId);
-    
-  //   // Check for multimodal capabilities
-  //   model.isMultimodal = Boolean(model.capabilities?.includes('vision')) || 
-  //                        modelId.includes('vision') || 
-  //                        modelId.includes('gpt-4') || 
-  //                        modelId.includes('claude-3') || 
-  //                        modelId.includes('gemini');
-    
-  //   // Determine model family
-  //   if (!model.family) {
-  //     if (modelId.includes('gpt-4')) {
-  //       model.family = 'GPT-4';
-  //     } else if (modelId.includes('gpt-3.5')) {
-  //       model.family = 'GPT-3.5';
-  //     } else if (modelId.includes('claude-3')) {
-  //       model.family = 'Claude 3';
-  //     } else if (modelId.includes('claude-2')) {
-  //       model.family = 'Claude 2';
-  //     } else if (modelId.includes('gemini-1.5')) {
-  //       model.family = 'Gemini 1.5';
-  //     } else if (modelId.includes('gemini-1.0')) {
-  //       model.family = 'Gemini 1.0';
-  //     } else if (modelId.includes('gemini')) {
-  //       model.family = 'Gemini';
-  //     } else if (modelId.includes('llama')) {
-  //       model.family = 'Llama';
-  //     } else if (modelId.includes('mistral')) {
-  //       model.family = 'Mistral';
-  //     }
-  //   }
-    
-  //   // Determine model type
-  //   if (!model.type) {
-  //     if (modelId.includes('vision')) {
-  //       model.type = 'Vision';
-  //     } else if (modelId.includes('embedding')) {
-  //       model.type = 'Embedding';
-  //     } else if (modelId.includes('opus')) {
-  //       model.type = 'Opus';
-  //     } else if (modelId.includes('sonnet')) {
-  //       model.type = 'Sonnet';
-  //     } else if (modelId.includes('haiku')) {
-  //       model.type = 'Haiku';
-  //     } else if (modelId.includes('pro')) {
-  //       model.type = 'Pro';
-  //     } else if (modelId.includes('flash')) {
-  //       model.type = 'Flash';
-  //     } else if (modelId.includes('turbo')) {
-  //       model.type = 'Turbo';
-  //     } else {
-  //       model.type = 'Standard';
-  //     }
-  //   }
-    
-  //   // Set context window size if not provided
-  //   if (!model.contextSize) {
-  //     if (modelId.includes('gpt-4-turbo') || modelId.includes('gpt-4o')) {
-  //       model.contextSize = 128000;
-  //     } else if (modelId.includes('gpt-4-32k')) {
-  //       model.contextSize = 32768;
-  //     } else if (modelId.includes('gpt-4')) {
-  //       model.contextSize = 8192;
-  //     } else if (modelId.includes('gpt-3.5-turbo-16k')) {
-  //       model.contextSize = 16385;
-  //     } else if (modelId.includes('claude-3')) {
-  //       model.contextSize = 200000;
-  //     } else if (modelId.includes('gemini-1.5')) {
-  //       model.contextSize = 1000000;
-  //     }
-  //   }
-  // }
-
+  
   /**
    * Send models to the classification server and return classified models
    * @returns {Promise<object>} - Classified models
@@ -193,6 +106,7 @@ export class ModelClassificationService {
       console.log(`Connecting to classification server at ${this.serverAddress}`);
       console.log(`Number of models to classify: ${modelList.models.length}`);
       
+
       // Return a Promise that will resolve with the classified models
       return new Promise((resolve, reject) => {
         // Set a timeout for the gRPC call
@@ -235,12 +149,12 @@ export class ModelClassificationService {
                 return;
               }
 
-              // Log the raw response object for inspection
-              try {
-                console.log("--- RAW gRPC Response ---:", JSON.stringify(response, null, 2));
-              } catch (stringifyError) {
-                console.log("--- RAW gRPC Response (Stringify Failed) ---", response);
-              }
+              // // Log the raw response object for inspection
+              // try {
+              //   console.log("--- RAW gRPC Response ---:", JSON.stringify(response, null, 2));
+              // } catch (stringifyError) {
+              //   console.log("--- RAW gRPC Response (Stringify Failed) ---", response);
+              // }
               
               // Log the number of HIERARCHICAL groups received
               console.log(`Successfully classified models, received ${response.hierarchical_groups?.length || 0} hierarchical groups`);

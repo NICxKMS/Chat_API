@@ -22,20 +22,21 @@ const (
 	SeriesClaude1 = "Claude 1"
 
 	// OpenAI Types
-	TypeO    = "O"
-	Type35   = "3.5"
-	Type4    = "4"
-	Type45   = "4.5"
+	TypeO    = "O Series"
+	Type35   = "GPT 3.5"
+	Type4    = "GPT 4"
+	Type45   = "GPT 4.5"
 	TypeMini = "Mini"
 
 	// Other Types
 	TypeOpus      = "Opus"
 	TypeSonnet    = "Sonnet"
 	TypeHaiku     = "Haiku"
-	TypePro       = "Pro"
-	TypeFlash     = "Flash"
-	TypeFlashLite = "Flash Lite"
 	TypeThinking  = "Thinking"
+	TypePro       = "Pro"
+	TypeGemma     = "Gemma"
+	TypeFlashLite = "Flash Lite"
+	TypeFlash     = "Flash"
 	TypeVision    = "Vision"
 	TypeStandard  = "Standard"
 	TypeEmbedding = "Embedding"
@@ -294,10 +295,9 @@ func (mc *ModelClassifier) isEmbeddingModel(modelName string) bool {
 func (mc *ModelClassifier) isImageGenerationModel(modelName string) bool {
 	modelLower := strings.ToLower(modelName)
 	return strings.Contains(modelLower, "dall-e") ||
-		strings.Contains(modelLower, "imagen") ||
+		strings.Contains(modelLower, "image") ||
 		strings.Contains(modelLower, "midjourney") ||
-		strings.Contains(modelLower, "stable-diffusion") ||
-		(strings.Contains(modelLower, "image") && strings.Contains(modelLower, "generat"))
+		strings.Contains(modelLower, "stable-diffusion")
 }
 
 // isMultimodal determines if a model has multimodal capabilities

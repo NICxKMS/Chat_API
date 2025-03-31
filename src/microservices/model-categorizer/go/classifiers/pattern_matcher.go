@@ -204,19 +204,21 @@ func (pm *PatternMatcher) matchAnthropicType(modelName string) string {
 
 // matchGeminiType matches Gemini model types
 func (pm *PatternMatcher) matchGeminiType(modelName string) string {
-	if strings.Contains(modelName, "flash-lite") {
+	if strings.Contains(modelName, "flash-lite") || strings.Contains(modelName, "flash lite") {
 		return TypeFlashLite
-	}
-	if strings.Contains(modelName, "flash") {
-		return TypeFlash
 	}
 	if strings.Contains(modelName, "thinking") {
 		return TypeThinking
 	}
+	if strings.Contains(modelName, "flash") {
+		return TypeFlash
+	}
 	if strings.Contains(modelName, "pro") {
 		return TypePro
 	}
-
+	if strings.Contains(modelName, "gemma") {
+		return TypeGemma
+	}
 	return TypeStandard
 }
 
@@ -286,12 +288,12 @@ func (pm *PatternMatcher) buildGeminiVariant(modelName string) string {
 	}
 
 	type_ := ""
-	if strings.Contains(modelName, "flash-lite") {
+	if strings.Contains(modelName, "flash-lite") || strings.Contains(modelName, "flash lite") {
 		type_ = "Flash Lite"
-	} else if strings.Contains(modelName, "flash") {
-		type_ = "Flash"
 	} else if strings.Contains(modelName, "thinking") {
 		type_ = "Thinking"
+	} else if strings.Contains(modelName, "flash") {
+		type_ = "Flash"
 	} else if strings.Contains(modelName, "pro") {
 		type_ = "Pro"
 	}

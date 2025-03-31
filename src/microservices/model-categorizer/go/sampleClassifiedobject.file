@@ -82,7 +82,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4",
+                                    "type": "GPT 4",
                                     "series": "GPT",
                                     "variant": "GPT-4o",
                                     "is_default": false,
@@ -92,9 +92,9 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "vision",
                                         "function-calling",
-                                        "chat"
+                                        "chat",
+                                        "vision"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-4o-transcribe",
@@ -106,7 +106,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4",
+                                    "type": "GPT 4",
                                     "series": "GPT",
                                     "variant": "GPT-4o",
                                     "is_default": false,
@@ -116,9 +116,9 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "chat",
                                         "vision",
-                                        "function-calling"
+                                        "function-calling",
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-4o-audio-preview",
@@ -130,7 +130,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4",
+                                    "type": "GPT 4",
                                     "series": "GPT",
                                     "variant": "GPT-4o",
                                     "is_default": false,
@@ -154,7 +154,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4",
+                                    "type": "GPT 4",
                                     "series": "GPT",
                                     "variant": "GPT-4o",
                                     "is_default": false,
@@ -164,9 +164,9 @@
                                 },
                                 {
                                     "capabilities": [
+                                        "vision",
                                         "function-calling",
-                                        "chat",
-                                        "vision"
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-4o-2024-05-13",
@@ -178,7 +178,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4",
+                                    "type": "GPT 4",
                                     "series": "GPT",
                                     "variant": "GPT-4o",
                                     "is_default": false,
@@ -202,7 +202,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4",
+                                    "type": "GPT 4",
                                     "series": "GPT",
                                     "variant": "GPT-4o",
                                     "is_default": false,
@@ -212,9 +212,9 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "vision",
                                         "function-calling",
-                                        "chat"
+                                        "chat",
+                                        "vision"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-4o-search-preview-2025-03-11",
@@ -226,7 +226,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4",
+                                    "type": "GPT 4",
                                     "series": "GPT",
                                     "variant": "GPT-4o",
                                     "is_default": false,
@@ -250,7 +250,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4",
+                                    "type": "GPT 4",
                                     "series": "GPT",
                                     "variant": "GPT-4o",
                                     "is_default": true,
@@ -274,7 +274,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4",
+                                    "type": "GPT 4",
                                     "series": "GPT",
                                     "variant": "GPT-4o",
                                     "is_default": false,
@@ -289,7 +289,7 @@
                         }
                     ],
                     "group_name": "type",
-                    "group_value": "4"
+                    "group_value": "GPT 4"
                 },
                 {
                     "models": [],
@@ -369,7 +369,7 @@
                                     "metadata": {},
                                     "id": "gpt-4o-mini-search-preview",
                                     "name": "gpt-4o-mini-search-preview",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -553,7 +553,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "O",
+                                    "type": "O Series",
                                     "series": "GPT",
                                     "variant": "O1",
                                     "is_default": false,
@@ -577,7 +577,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "O",
+                                    "type": "O Series",
                                     "series": "GPT",
                                     "variant": "O1",
                                     "is_default": false,
@@ -592,7 +592,7 @@
                         }
                     ],
                     "group_name": "type",
-                    "group_value": "O"
+                    "group_value": "O Series"
                 },
                 {
                     "models": [],
@@ -605,36 +605,6 @@
                                         "chat"
                                     ],
                                     "metadata": {},
-                                    "id": "gpt-3.5-turbo-instruct-0914",
-                                    "name": "gpt-3.5-turbo-instruct-0914",
-                                    "context_size": 4096,
-                                    "max_tokens": 0,
-                                    "provider": "openai",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "GPT",
-                                    "type": "3.5",
-                                    "series": "GPT",
-                                    "variant": "GPT 3.5.0914",
-                                    "is_default": false,
-                                    "is_multimodal": false,
-                                    "is_experimental": false,
-                                    "version": ""
-                                }
-                            ],
-                            "children": [],
-                            "group_name": "version",
-                            "group_value": "GPT 3.5.0914"
-                        },
-                        {
-                            "models": [
-                                {
-                                    "capabilities": [
-                                        "chat",
-                                        "function-calling"
-                                    ],
-                                    "metadata": {},
                                     "id": "gpt-3.5-turbo-1106",
                                     "name": "gpt-3.5-turbo-1106",
                                     "context_size": 4096,
@@ -644,7 +614,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "3.5",
+                                    "type": "GPT 3.5",
                                     "series": "GPT",
                                     "variant": "GPT 3.5.1106",
                                     "is_default": false,
@@ -674,7 +644,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "3.5",
+                                    "type": "GPT 3.5",
                                     "series": "GPT",
                                     "variant": "GPT 3.5",
                                     "is_default": false,
@@ -684,8 +654,8 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "function-calling",
-                                        "chat"
+                                        "chat",
+                                        "function-calling"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-3.5-turbo",
@@ -697,7 +667,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "3.5",
+                                    "type": "GPT 3.5",
                                     "series": "GPT",
                                     "variant": "GPT 3.5",
                                     "is_default": true,
@@ -727,7 +697,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "3.5",
+                                    "type": "GPT 3.5",
                                     "series": "GPT",
                                     "variant": "GPT 3.5.0125",
                                     "is_default": false,
@@ -757,7 +727,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "3.5",
+                                    "type": "GPT 3.5",
                                     "series": "GPT",
                                     "variant": "GPT 3.5.16",
                                     "is_default": false,
@@ -769,10 +739,40 @@
                             "children": [],
                             "group_name": "version",
                             "group_value": "GPT 3.5.16"
+                        },
+                        {
+                            "models": [
+                                {
+                                    "capabilities": [
+                                        "function-calling",
+                                        "chat"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gpt-3.5-turbo-instruct-0914",
+                                    "name": "gpt-3.5-turbo-instruct-0914",
+                                    "context_size": 4096,
+                                    "max_tokens": 0,
+                                    "provider": "openai",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "GPT",
+                                    "type": "GPT 3.5",
+                                    "series": "GPT",
+                                    "variant": "GPT 3.5.0914",
+                                    "is_default": false,
+                                    "is_multimodal": false,
+                                    "is_experimental": false,
+                                    "version": ""
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "GPT 3.5.0914"
                         }
                     ],
                     "group_name": "type",
-                    "group_value": "3.5"
+                    "group_value": "GPT 3.5"
                 },
                 {
                     "models": [],
@@ -781,9 +781,9 @@
                             "models": [
                                 {
                                     "capabilities": [
-                                        "vision",
                                         "function-calling",
-                                        "chat"
+                                        "chat",
+                                        "vision"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-4.5-preview",
@@ -795,7 +795,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4.5",
+                                    "type": "GPT 4.5",
                                     "series": "GPT",
                                     "variant": "GPT-4.5",
                                     "is_default": false,
@@ -819,7 +819,7 @@
                                     "description": "",
                                     "cost_per_token": 0,
                                     "family": "GPT",
-                                    "type": "4.5",
+                                    "type": "GPT 4.5",
                                     "series": "GPT",
                                     "variant": "GPT-4.5",
                                     "is_default": false,
@@ -834,7 +834,7 @@
                         }
                     ],
                     "group_name": "type",
-                    "group_value": "4.5"
+                    "group_value": "GPT 4.5"
                 }
             ],
             "group_name": "provider",
@@ -850,9 +850,225 @@
                             "models": [
                                 {
                                     "capabilities": [
-                                        "chat",
+                                        "Image Generation"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-2.0-flash-exp-image-generation",
+                                    "name": "Gemini 2.0 Flash Exp Image Generation",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Image Generation",
+                                    "type": "Image Generation",
+                                    "series": "Image Generation",
+                                    "variant": "Image Generation",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                },
+                                {
+                                    "capabilities": [
+                                        "Image Generation"
+                                    ],
+                                    "metadata": {},
+                                    "id": "imagen-3.0-generate-002",
+                                    "name": "Imagen 3.0 Generate 002",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Image Generation",
+                                    "type": "Image Generation",
+                                    "series": "Image Generation",
+                                    "variant": "Image Generation",
+                                    "is_default": false,
+                                    "is_multimodal": false,
+                                    "is_experimental": false,
+                                    "version": ""
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "Image Generation"
+                        }
+                    ],
+                    "group_name": "type",
+                    "group_value": "Image Generation"
+                },
+                {
+                    "models": [],
+                    "children": [
+                        {
+                            "models": [
+                                {
+                                    "capabilities": [
                                         "vision",
-                                        "function-calling"
+                                        "function-calling",
+                                        "chat"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemma-3-27b-it",
+                                    "name": "Gemma 3 27b It",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini",
+                                    "type": "Standard",
+                                    "series": "Gemini",
+                                    "variant": "Gemini 3.27",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "Gemini 3.27"
+                        },
+                        {
+                            "models": [
+                                {
+                                    "capabilities": [
+                                        "function-calling",
+                                        "chat",
+                                        "vision"
+                                    ],
+                                    "metadata": {},
+                                    "id": "aqa",
+                                    "name": "Aqa",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini",
+                                    "type": "Standard",
+                                    "series": "Gemini",
+                                    "variant": "Gemini",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "Gemini"
+                        },
+                        {
+                            "models": [
+                                {
+                                    "capabilities": [
+                                        "vision",
+                                        "function-calling",
+                                        "chat"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-exp-1206",
+                                    "name": "Gemini exp 1206",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini",
+                                    "type": "Standard",
+                                    "series": "Gemini",
+                                    "variant": "Gemini 1206",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "Gemini 1206"
+                        }
+                    ],
+                    "group_name": "type",
+                    "group_value": "Standard"
+                },
+                {
+                    "models": [],
+                    "children": [
+                        {
+                            "models": [
+                                {
+                                    "capabilities": [
+                                        "embedding"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-embedding-exp-03-07",
+                                    "name": "Gemini embedding Exp 03 07",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Embedding",
+                                    "type": "Embedding",
+                                    "series": "Embedding",
+                                    "variant": "Embedding",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                },
+                                {
+                                    "capabilities": [
+                                        "embedding"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-embedding-exp",
+                                    "name": "Gemini embedding Exp",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Embedding",
+                                    "type": "Embedding",
+                                    "series": "Embedding",
+                                    "variant": "Embedding",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "Embedding"
+                        }
+                    ],
+                    "group_name": "type",
+                    "group_value": "Embedding"
+                },
+                {
+                    "models": [],
+                    "children": [
+                        {
+                            "models": [
+                                {
+                                    "capabilities": [
+                                        "function-calling",
+                                        "chat",
+                                        "vision"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-1.5-flash",
@@ -994,9 +1210,9 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "vision",
                                         "function-calling",
-                                        "chat"
+                                        "chat",
+                                        "vision"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-1.5-flash-8b-001",
@@ -1121,9 +1337,9 @@
                                 },
                                 {
                                     "capabilities": [
+                                        "chat",
                                         "vision",
-                                        "function-calling",
-                                        "chat"
+                                        "function-calling"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-2.0-flash",
@@ -1193,9 +1409,9 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "chat",
                                         "vision",
-                                        "function-calling"
+                                        "function-calling",
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-2.0-flash-lite",
@@ -1217,9 +1433,9 @@
                                 },
                                 {
                                     "capabilities": [
+                                        "vision",
                                         "function-calling",
-                                        "chat",
-                                        "vision"
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-2.0-flash-lite-preview-02-05",
@@ -1313,9 +1529,9 @@
                                 },
                                 {
                                     "capabilities": [
+                                        "vision",
                                         "function-calling",
-                                        "chat",
-                                        "vision"
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-2.0-flash-thinking-exp-1219",
@@ -1399,9 +1615,9 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "vision",
                                         "function-calling",
-                                        "chat"
+                                        "chat",
+                                        "vision"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-1.5-pro-001",
@@ -1423,9 +1639,9 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "vision",
                                         "function-calling",
-                                        "chat"
+                                        "chat",
+                                        "vision"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-1.5-pro-002",
@@ -1564,9 +1780,9 @@
                             "models": [
                                 {
                                     "capabilities": [
+                                        "chat",
                                         "vision",
-                                        "function-calling",
-                                        "chat"
+                                        "function-calling"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-2.0-pro-exp",
@@ -1588,9 +1804,9 @@
                                 },
                                 {
                                     "capabilities": [
+                                        "vision",
                                         "function-calling",
-                                        "chat",
-                                        "vision"
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-2.0-pro-exp-02-05",
@@ -1618,222 +1834,6 @@
                     ],
                     "group_name": "type",
                     "group_value": "Pro"
-                },
-                {
-                    "models": [],
-                    "children": [
-                        {
-                            "models": [
-                                {
-                                    "capabilities": [
-                                        "Image Generation"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-2.0-flash-exp-image-generation",
-                                    "name": "Gemini 2.0 Flash Exp Image Generation",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Image Generation",
-                                    "type": "Image Generation",
-                                    "series": "Image Generation",
-                                    "variant": "Image Generation",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "Image Generation"
-                                    ],
-                                    "metadata": {},
-                                    "id": "imagen-3.0-generate-002",
-                                    "name": "Imagen 3.0 Generate 002",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Image Generation",
-                                    "type": "Image Generation",
-                                    "series": "Image Generation",
-                                    "variant": "Image Generation",
-                                    "is_default": false,
-                                    "is_multimodal": false,
-                                    "is_experimental": false,
-                                    "version": ""
-                                }
-                            ],
-                            "children": [],
-                            "group_name": "version",
-                            "group_value": "Image Generation"
-                        }
-                    ],
-                    "group_name": "type",
-                    "group_value": "Image Generation"
-                },
-                {
-                    "models": [],
-                    "children": [
-                        {
-                            "models": [
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-exp-1206",
-                                    "name": "Gemini exp 1206",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini",
-                                    "type": "Standard",
-                                    "series": "Gemini",
-                                    "variant": "Gemini 1206",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                }
-                            ],
-                            "children": [],
-                            "group_name": "version",
-                            "group_value": "Gemini 1206"
-                        },
-                        {
-                            "models": [
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemma-3-27b-it",
-                                    "name": "Gemma 3 27b It",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini",
-                                    "type": "Standard",
-                                    "series": "Gemini",
-                                    "variant": "Gemini 3.27",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                }
-                            ],
-                            "children": [],
-                            "group_name": "version",
-                            "group_value": "Gemini 3.27"
-                        },
-                        {
-                            "models": [
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "aqa",
-                                    "name": "Aqa",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini",
-                                    "type": "Standard",
-                                    "series": "Gemini",
-                                    "variant": "Gemini",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                }
-                            ],
-                            "children": [],
-                            "group_name": "version",
-                            "group_value": "Gemini"
-                        }
-                    ],
-                    "group_name": "type",
-                    "group_value": "Standard"
-                },
-                {
-                    "models": [],
-                    "children": [
-                        {
-                            "models": [
-                                {
-                                    "capabilities": [
-                                        "embedding"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-embedding-exp-03-07",
-                                    "name": "Gemini embedding Exp 03 07",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Embedding",
-                                    "type": "Embedding",
-                                    "series": "Embedding",
-                                    "variant": "Embedding",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "embedding"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-embedding-exp",
-                                    "name": "Gemini embedding Exp",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Embedding",
-                                    "type": "Embedding",
-                                    "series": "Embedding",
-                                    "variant": "Embedding",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                }
-                            ],
-                            "children": [],
-                            "group_name": "version",
-                            "group_value": "Embedding"
-                        }
-                    ],
-                    "group_name": "type",
-                    "group_value": "Embedding"
                 }
             ],
             "group_name": "provider",
@@ -1849,7 +1849,8 @@
                 "meta",
                 "mistral",
                 "cohere",
-                "openrouter"
+                "openrouter",
+                "other"
             ],
             "name": "provider",
             "display_name": "Provider",
@@ -1880,7 +1881,15 @@
                 "Opus",
                 "Sonnet",
                 "Haiku",
-                "Embedding"
+                "Embedding",
+                "O Series",
+                "GPT 3.5",
+                "GPT 4",
+                "GPT 4.5",
+                "Mini",
+                "Flash Lite",
+                "Thinking",
+                "Image Generation"
             ],
             "name": "type",
             "display_name": "Model Type",
@@ -1903,12 +1912,13 @@
                 "function-calling",
                 "embedding",
                 "streaming",
-                "chat"
+                "chat",
+                "audio"
             ],
             "name": "capability",
             "display_name": "Capabilities",
             "description": "Special model capabilities"
         }
     ],
-    "timestamp": "2025-03-31T12:45:35.774Z"
+    "timestamp": "2025-03-31T13:25:19.861Z"
 }

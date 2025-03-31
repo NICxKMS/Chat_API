@@ -55,21 +55,21 @@ async function listAvailableModels() {
     if (data.models.length === 0) {
         console.log("No models found.");
     } else {
-        data.models.forEach((model) => {
-          console.log(`\nModel Name: ${model.name}`);
-          console.log(`Display Name: ${model.displayName}`);
-          console.log(`Description: ${model.description}`);
-          console.log(`Version: ${model.version}`);
-          console.log(`Supported Generation Methods: ${model.supportedGenerationMethods.join(', ')}`);
-          // Add other relevant fields if needed (e.g., input/output token limits)
-          if (model.inputTokenLimit) {
-            console.log(`Input Token Limit: ${model.inputTokenLimit}`);
-          }
-           if (model.outputTokenLimit) {
-            console.log(`Output Token Limit: ${model.outputTokenLimit}`);
-          }
+        console.log(data);
+        // data.models.forEach((model) => {
+        //   console.log(`\nModel Name: ${model.name}`);
+        //   console.log(`Display Name: ${model.displayName}`);
+        //   console.log(`Description: ${model.description}`);
+        //   console.log(`Version: ${model.version}`);
+        //   console.log(`Supported Generation Methods: ${model.supportedGenerationMethods.join(', ')}`);
+        //   // Add other relevant fields if needed (e.g., input/output token limits)
+        //   if (model.inputTokenLimit) {
+        //     console.log(`Input Token Limit: ${model.inputTokenLimit}`);
+        //   }
+        //    if (model.outputTokenLimit) {
+        //     console.log(`Output Token Limit: ${model.outputTokenLimit}`);
+          // }
           console.log('---------------------------------');
-        });
     }
 
   } catch (error) {

@@ -102,6 +102,7 @@ func (cr *ContextResolver) getContextSizeByFamily(modelLower string) int {
 	}
 
 	if strings.Contains(modelLower, "gemini-1.5") || strings.Contains(modelLower, "gemini-2.0") {
+		// Check for flash-lite first to ensure proper handling
 		if strings.Contains(modelLower, "flash-lite") {
 			return 1000000
 		}

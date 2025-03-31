@@ -68,7 +68,7 @@ func AvailableClassificationProperties() []*ClassificationProperty {
 			DisplayName: "Provider",
 			Description: "The AI provider that offers the model",
 			PossibleValues: []string{
-				"openai", "anthropic", "gemini", "meta", "mistral", "cohere", "openrouter",
+				"openai", "anthropic", "gemini", "meta", "mistral", "cohere", "openrouter", "other",
 			},
 		},
 		{
@@ -84,7 +84,7 @@ func AvailableClassificationProperties() []*ClassificationProperty {
 			DisplayName: "Model Type",
 			Description: "The specific type or version of the model",
 			PossibleValues: []string{
-				"Vision", "Standard", "Turbo", "Pro", "Flash", "Opus", "Sonnet", "Haiku", "Embedding",
+				"Vision", "Standard", "Turbo", "Pro", "Flash","Gemma", "Opus", "Sonnet", "Haiku", "Embedding", "O Series", "GPT 3.5", "GPT 4", "GPT 4.5", "Mini", "Flash Lite", "Thinking", "Image Generation",
 			},
 		},
 		{
@@ -100,7 +100,7 @@ func AvailableClassificationProperties() []*ClassificationProperty {
 			DisplayName: "Capabilities",
 			Description: "Special model capabilities",
 			PossibleValues: []string{
-				"vision", "function-calling", "embedding", "streaming", "chat",
+				"vision", "function-calling", "embedding", "streaming", "chat", "audio",
 			},
 		},
 	}

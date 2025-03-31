@@ -220,27 +220,16 @@ func (h *ModelClassificationHandler) enhanceModels(modelsList []*models.Model) [
 
 // applyModelMetadata applies the classification metadata to a model
 func (h *ModelClassificationHandler) applyModelMetadata(model *models.Model, metadata classifiers.ModelMetadata) {
-	// Set family if not already set
-	if model.Family == "" {
-		model.Family = metadata.Series
-	}
+	// Always overwrite with classifier results to ensure consistency
+	model.Provider = metadata.Provider // Also ensure provider is consistent
+	model.Family = metadata.Series
+	model.Type = metadata.Type
+	model.Series = metadata.Series // Assuming Family and Series are the same here based on previous logic
+	model.Variant = metadata.Variant
+	model.ContextSize = int32(metadata.Context)
+	model.Capabilities = metadata.Capabilities
 
-	// Set type if not already set
-	if model.Type == "" {
-		model.Type = metadata.Type
-	}
-
-	// Set context size if not already set
-	if model.ContextSize == 0 {
-		model.ContextSize = int32(metadata.Context)
-	}
-
-	// Set capabilities if not already set
-	if len(model.Capabilities) == 0 {
-		model.Capabilities = metadata.Capabilities
-	}
-
-	// Set multimodal flag
+	// Set multimodal flag based on metadata and other checks
 	model.IsMultimodal = metadata.IsMultimodal ||
 		containsAny(model.Capabilities, []string{"vision", "multimodal"}) ||
 		strings.Contains(strings.ToLower(model.Name), "vision") ||
@@ -248,22 +237,13 @@ func (h *ModelClassificationHandler) applyModelMetadata(model *models.Model, met
 		strings.Contains(strings.ToLower(model.Name), "claude-3") ||
 		strings.Contains(strings.ToLower(model.Name), "gemini")
 
-	// Set experimental flag
-	model.IsExperimental = metadata.IsExperimental ||
-		model.IsExperimental ||
-		strings.Contains(strings.ToLower(model.Name), "experimental") ||
-		strings.Contains(strings.ToLower(model.Name), "preview")
+	// Set experimental flag based on metadata and name patterns
+	model.IsExperimental = metadata.IsExperimental || // Base on classifier result first
+		strings.Contains(strings.ToLower(model.Name), "preview") ||
+		strings.Contains(strings.ToLower(model.Name), "experimental")
 
 	// Check if model is a default one
 	model.IsDefault = h.classifier.IsDefaultModelName(model.Name)
-
-	// Determine series and variant if not set
-	if model.Series == "" {
-		model.Series = metadata.Series
-	}
-	if model.Variant == "" {
-		model.Variant = metadata.Variant
-	}
 }
 
 // classifyModelsByProperty classifies models based on a specific property
