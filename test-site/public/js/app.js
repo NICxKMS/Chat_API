@@ -98,40 +98,21 @@ async function initializeModelDropdown() {
     modelDropdown = new ModelDropdown({
       container: modelContainer,
       includeExperimentalToggle: experimentalToggleElement || true,
-      showExperimentalByDefault: false,
-      includeEmbeddings: false,
       onChange: handleModelSelect
     });
     
-    const success = await modelDropdown.initialize();
+    await modelDropdown.initialize();
     
-    if (success) {
-      console.log('Model dropdown initialized successfully');
-      
-      // Get the default model, if any
-      const selectedModelData = modelDropdown.getSelectedModel();
-      
-      if (selectedModelData) {
-        console.log('Default model selected:', selectedModelData);
-        selectedModel = selectedModelData;
-        document.getElementById('selected-model-display').innerText = selectedModelData.displayName || selectedModelData.name;
-        modelLoadedSuccessfully = true;
-        
-        // Enable send button if there's text in the chat input
-        if (sendButton && chatInput && chatInput.value.trim()) {
-          sendButton.disabled = false;
-        }
-      } else {
-        console.warn('No model automatically selected');
-      }
+    // Get the default model, if any
+    const selectedModelData = modelDropdown.getSelectedModel();
+    
+    if (selectedModelData) {
+      console.log('Default model selected:', selectedModelData);
+      selectedModel = selectedModelData.name;
+      document.getElementById('selected-model-display').innerText = selectedModelData.displayName;
+      modelLoadedSuccessfully = true;
     } else {
-      console.error('Failed to initialize model dropdown');
-      modelContainer.innerHTML = `
-        <div class="error-message">
-          <p>Failed to load models</p>
-          <p>Could not connect to API. Please check your connection and try again.</p>
-        </div>
-      `;
+      console.warn('No model automatically selected');
     }
   } catch (error) {
     console.error('Failed to initialize model dropdown:', error);
@@ -476,7 +457,7 @@ async function getCompletionResponse(selectedModel, typingElement) {
   try {
     // Normalize the provider name and model to ensure consistent format
     const providerName = selectedModel.provider.toLowerCase().trim();
-    const modelName = selectedModel.originalData.name || selectedModel.name.trim();
+    const modelName = selectedModel.name.trim();
     const fullModelName = `${providerName}/${modelName}`;
     
     console.log(`Sending request for ${fullModelName}`);
@@ -771,11 +752,6 @@ function checkWindowSizeForSidebar() {
  * Handle model selection
  */
 function handleModelSelect(model) {
-  if (!model || !model.isSelectable) {
-    console.warn('Attempted to select invalid or non-selectable model');
-    return;
-  }
-  
   selectedModel = model;
   document.getElementById('selected-model-display').innerText = model.displayName || model.name;
   console.log('Model selected:', model);

@@ -1,26 +1,4 @@
 /**
- * ProcessedDropdownNode - A unified interface for model dropdown items
- */
-class ProcessedDropdownNode {
-  constructor(options) {
-    this.id = options.id;
-    this.name = options.name;
-    this.type = options.type;
-    this.level = options.level || 0;
-    this.parentId = options.parentId || null;
-    this.isSelectable = options.isSelectable || false;
-    this.isDisabled = options.isDisabled || false;
-    this.isExpanded = options.isExpanded !== undefined ? options.isExpanded : true;
-    this.originalData = options.originalData || {};
-    this.category = options.category || null;
-    this.provider = options.provider || null;
-    this.isExperimental = options.isExperimental || false;
-    this.groupingKey = options.groupingKey || null;
-    this.displayName = options.displayName || options.name; // Added displayName
-  }
-}
-
-/**
  * ModelDropdown - A class that manages a hierarchical model dropdown UI
  */
 class ModelDropdown {
@@ -53,14 +31,6 @@ class ModelDropdown {
     this.embeddingFilterCheckbox = document.getElementById('filter-embedding');
     this.nameFilterInput = document.getElementById('model-name-filter');
     
-    // List of recognized model types from API
-    this.knownModelTypes = [
-      'Vision', 'Standard', 'Turbo', 'Pro', 'Flash',
-      'Gemma', 'Opus', 'Sonnet', 'Haiku', 'Embedding',
-      'O Series', 'GPT 3.5', 'GPT 4', 'GPT 4.5',
-      'Mini', 'Flash Lite', 'Thinking', 'Image Generation'
-    ];
-    
     // If includeExperimentalToggle is a DOM element, initialize it
     if (this.includeExperimentalToggle && this.includeExperimentalToggle instanceof HTMLElement) {
       this.includeExperimentalToggle.checked = this.showExperimentalByDefault;
@@ -79,7 +49,7 @@ class ModelDropdown {
     this.renderFilteredModels = this.renderFilteredModels.bind(this);
     this.matchesNameFilter = this.matchesNameFilter.bind(this);
     this.sortModelsByProvider = this.sortModelsByProvider.bind(this);
-    this._sortModelTypes = this._sortModelTypes.bind(this);
+    this.sortModelTypes = this.sortModelTypes.bind(this);
     this.normalizeModelName = this.normalizeModelName.bind(this);
     
     // Create debounced versions of expensive functions
@@ -106,99 +76,96 @@ class ModelDropdown {
    */
   async initialize() {
     try {
-      // Setup event listeners
-      this._setupEventListeners();
+      const cachedModels = this.getCachedModels();
       
-      // Try to load from cache first
-      const cachedData = this._loadFromCache();
-      
-      if (cachedData) {
-        console.log('Using cached data');
-        this.flatNodes = cachedData.flatNodes;
-        this.nodeMap = new Map(cachedData.nodeMap);
-        this.hierarchyMap = new Map(cachedData.hierarchyMap);
-        this.allModels = cachedData.allModels;
-        
-        // Render the UI
+      if (cachedModels) {
+        console.log('Using cached processed models');
+        this.processedModels = cachedModels.processed;
+        this.allModels = cachedModels.all;
+        this.experimentalModels = cachedModels.experimental;
         this.render();
-        
-        // Try to select first model if none selected
-        if (!this.selectedModel && this.allModels.length > 0) {
+        if (this.allModels.length > 0 && !this.selectedModel) {
           this.handleModelSelect(this.allModels[0]);
         }
-        
-        return true;
-      }
-      
-      // Fetch fresh data if no cache
-      console.log('Fetching fresh data');
-      const success = await this._fetchModels();
+      } else {
+        console.log('No valid cache, fetching fresh models...');
+        const success = await this.fetchModels();
         
         if (success) {
-        // Save to cache
-        this._saveToCache();
-        
-        // Render the UI
+          console.log('Models fetched and processed successfully.');
+          this.cacheModels();
           this.render();
-        
-        // Try to select first model if none selected
-        if (!this.selectedModel && this.allModels.length > 0) {
+          if (this.allModels.length > 0 && !this.selectedModel) {
             this.handleModelSelect(this.allModels[0]);
+          }
+        } else {
+          console.error('Failed to fetch models from API');
+          this.container.innerHTML = `
+            <div class="error-message">
+              Failed to load models from API. Please try refreshing the page or contact support.
+            </div>
+          `;
         }
+      }
+      
+      // Set up filter event listeners using debounced version for text input
+      this.setupEventListeners();
+      
+      // Setup experimental toggle if enabled
+      this.setupExperimentalToggle();
       
       return true;
-      } else {
-        this._showError('Failed to fetch models');
-        return false;
-      }
     } catch (error) {
-      console.error('Error initializing dropdown:', error);
-      this._showError(`Error: ${error.message}`);
+      console.error('Error initializing model dropdown:', error);
+      this.container.innerHTML = `
+        <div class="error-message">
+          Failed to load models: ${error.message}
+        </div>
+      `;
       return false;
     }
   }
   
   /**
-   * Set up event listeners
-   * @private
+   * Set up all event listeners for filters and toggles
    */
-  _setupEventListeners() {
-    // Set up experimental toggle if enabled
-    if (this.includeExperimentalToggle) {
-      if (this.includeExperimentalToggle instanceof HTMLElement) {
-        this.includeExperimentalToggle.addEventListener('change', this.toggleExperimentalModels);
-      } else if (this.includeExperimentalToggle === true) {
-        // Create toggle if it's just a boolean flag
-        this._createExperimentalToggle();
-      }
+  setupEventListeners() {
+    if (this.textFilterCheckbox) {
+      this.textFilterCheckbox.addEventListener('change', this.applyFilters);
     }
     
-    // Window resize listener for virtualization
-    window.addEventListener('resize', this._handleResize.bind(this));
-  }
-  
-  /**
-   * Handle window resize
-   * @private
-   */
-  _handleResize() {
-    // Update virtualization parameters
-    if (this.modelListElement && this.virtualization) {
-      // Recalculate visible items based on container height
-      const containerHeight = this.modelListElement.clientHeight;
-      this.virtualization.visibleItems = Math.ceil(containerHeight / this.virtualization.itemHeight);
-      this.virtualization.endIndex = this.virtualization.startIndex + this.virtualization.visibleItems + this.virtualization.buffer;
-      
-      // Rerender with new parameters
-      this.debouncedRenderFilteredModels(this._getLastFilteredModels());
+    if (this.imageFilterCheckbox) {
+      this.imageFilterCheckbox.addEventListener('change', this.applyFilters);
+    }
+    
+    if (this.embeddingFilterCheckbox) {
+      this.embeddingFilterCheckbox.addEventListener('change', this.applyFilters);
+    }
+    
+    if (this.nameFilterInput) {
+      // Use debounced version for text input to avoid excessive filtering
+      this.nameFilterInput.addEventListener('input', this.debouncedApplyFilters);
     }
   }
   
   /**
-   * Create experimental toggle element
-   * @private
+   * Set up the experimental toggle checkbox if needed
    */
-  _createExperimentalToggle() {
+  setupExperimentalToggle() {
+    // Check if toggle is already a DOM element, add event listener if it is
+    if (this.includeExperimentalToggle && this.includeExperimentalToggle instanceof HTMLElement) {
+      this.includeExperimentalToggle.addEventListener('change', this.toggleExperimentalModels);
+      return;
+    }
+    
+    // Skip if there are no experimental models or if toggle is explicitly disabled
+    if (this.includeExperimentalToggle !== true || 
+        !this.experimentalModels || 
+        this.experimentalModels.length === 0) {
+      return;
+    }
+    
+    // Create a container for the toggle only once
     const toggleContainer = document.createElement('div');
     toggleContainer.className = 'experimental-toggle-container';
     
@@ -211,118 +178,298 @@ class ModelDropdown {
     toggleLabel.htmlFor = 'show-experimental-toggle';
     toggleLabel.textContent = 'Show Experimental Models';
     
+    // Build the DOM structure
     toggleContainer.appendChild(this.includeExperimentalToggle);
     toggleContainer.appendChild(toggleLabel);
     
-    // Insert at beginning of container
-    if (this.container.firstChild) {
-      this.container.insertBefore(toggleContainer, this.container.firstChild);
+    // Find where to insert the toggle only once
+    const insertBefore = this.container.querySelector('.model-dropdown');
+    if (insertBefore) {
+      this.container.insertBefore(toggleContainer, insertBefore);
     } else {
       this.container.appendChild(toggleContainer);
     }
     
-    // Add event listener
     this.includeExperimentalToggle.addEventListener('change', this.toggleExperimentalModels);
+    
+    console.log(`Added experimental toggle for ${this.experimentalModels.length} experimental models`);
   }
   
   /**
-   * Toggle experimental models visibility
+   * Apply all filters and redraw model list
    */
-  toggleExperimentalModels() {
-    console.log('Toggling experimental models');
-    this.applyFilters();
+  applyFilters() {
+    const showText = this.textFilterCheckbox ? this.textFilterCheckbox.checked : true;
+    const showImage = this.imageFilterCheckbox ? this.imageFilterCheckbox.checked : true;
+    const showEmbedding = this.embeddingFilterCheckbox ? this.embeddingFilterCheckbox.checked : false;
+    const nameFilter = this.nameFilterInput ? this.nameFilterInput.value.toLowerCase().trim() : '';
+    
+    // Determine if we should show experimental models
+    const showExperimental = this.includeExperimentalToggle instanceof HTMLElement 
+      ? this.includeExperimentalToggle.checked 
+      : (typeof this.includeExperimentalToggle === 'boolean' ? this.includeExperimentalToggle : true);
+    
+    console.log('Filters applied:', { 
+      showText, 
+      showImage,
+      showEmbedding: showEmbedding || '(disabled)', 
+      nameFilter: nameFilter || '(none)', 
+      showExperimental 
+    });
+    
+    // Create filter function for better performance than filtering multiple times
+    const filterFn = model => {
+      if (!showText && model.category === 'Chat') return false;
+      if (!showImage && model.category === 'Image') return false;
+      if (!showEmbedding && model.category === 'Embedding') return false;
+      if (!showExperimental && model.isExperimental) return false;
+      if (nameFilter && !this.matchesNameFilter(model, nameFilter)) return false;
+      return true;
+    };
+    
+    // Use filter function in a single pass
+    const filteredModels = this.allModels.filter(filterFn);
+    
+    console.log(`Filtered models: ${filteredModels.length} of ${this.allModels.length}`);
+    
+    if (nameFilter) {
+      this.renderSearchResultsList(filteredModels, nameFilter);
+    } else {
+      this.renderFilteredModels(filteredModels, showText, showImage, showEmbedding);
+    }
   }
   
   /**
-   * Handle model selection
-   * @param {ProcessedDropdownNode} model - The selected model node
+   * Check if model matches the name filter
+   * Optimized to exit early on matches
    */
-  handleModelSelect(model) {
-    if (!model || !model.isSelectable) {
-      console.warn('Attempted to select invalid or non-selectable model', model);
+  matchesNameFilter(model, filter) {
+    if (!filter) return true;
+    
+    // Check name first as it's most likely to match
+    if (model.displayName && model.displayName.toLowerCase().includes(filter)) return true;
+    if (model.name && model.name.toLowerCase().includes(filter)) return true;
+    
+    // Then check other fields
+    if (model.provider && model.provider.toLowerCase().includes(filter)) return true;
+    if (model.family && model.family.toLowerCase().includes(filter)) return true;
+    if (model.series && model.series.toLowerCase().includes(filter)) return true;
+    if (model.groupingKey && model.groupingKey.toLowerCase().includes(filter)) return true;
+    
+    // No match found
+    return false;
+  }
+  
+  /**
+   * Render models filtered by type, potentially rebuilding the hierarchy.
+   * This version handles the Provider -> Type Group -> Model structure.
+   */
+  renderFilteredModels(filteredModels, showText, showImage, showEmbedding) {
+    if (!this.modelListElement) return;
+    this.modelListElement.innerHTML = '';
+    
+    if (filteredModels.length === 0) {
+      this.modelListElement.innerHTML = '<div class="no-results">No models match the current filters.</div>';
       return;
     }
     
-    // Update selected model
-    this.selectedModel = model;
+    // Create a document fragment to batch DOM operations
+    const fragment = document.createDocumentFragment();
     
-    // Update UI to reflect selection
-    if (this.modelListElement) {
-      // Remove selected class from all options
-      const options = this.modelListElement.querySelectorAll('.model-option');
-      options.forEach(option => {
-        option.classList.remove('selected');
-        option.setAttribute('aria-selected', 'false');
-      });
-      
-      // Add selected class to matching option
-      const selector = `.model-option[data-model-key="${model.provider}:::${model.id}"]`;
-      const selectedOption = this.modelListElement.querySelector(selector);
-      if (selectedOption) {
-        selectedOption.classList.add('selected');
-        selectedOption.setAttribute('aria-selected', 'true');
-        
-        // Ensure selected option is visible
-        this._scrollToSelectedOption(selectedOption);
+    // Group models first by Provider, then by Type Group (which is the `groupingKey`)
+    const groupedByProvider = {};
+    filteredModels.forEach(model => {
+      const cat = model.category;
+      // Skip if category is filtered out
+      if ((cat === 'Chat' && !showText) || 
+          (cat === 'Image' && !showImage) || 
+          (cat === 'Embedding' && !showEmbedding)) {
+        return;
       }
-    }
+
+      const prov = model.provider;
+      const typeGroupKey = model.groupingKey || 'General Models'; // Use groupingKey which corresponds to the type group
+
+      if (!groupedByProvider[prov]) {
+        groupedByProvider[prov] = { Chat: {}, Image: {}, Embedding: {} };
+      }
+      if (!groupedByProvider[prov][cat]) {
+        groupedByProvider[prov][cat] = {};
+      }
+      if (!groupedByProvider[prov][cat][typeGroupKey]) {
+        groupedByProvider[prov][cat][typeGroupKey] = [];
+      }
+      groupedByProvider[prov][cat][typeGroupKey].push(model);
+    });
     
-    // Announce selection to screen readers
-    this._announceStateChange(`Selected model: ${model.displayName}`);
+    const sortedProviderNames = Object.keys(groupedByProvider).sort((a, b) => a.localeCompare(b));
+
+    sortedProviderNames.forEach(providerName => {
+      const providerData = groupedByProvider[providerName];
+
+      const providerElement = document.createElement('div');
+      providerElement.className = 'model-provider';
     
-    // Call onChange callback
-    if (typeof this.onChange === 'function') {
-      this.onChange(model);
+      const providerHeader = document.createElement('div');
+      providerHeader.className = 'provider-header';
+      providerHeader.innerHTML = `
+        <span class="provider-name">${providerName}</span>
+        <i class="ri-arrow-down-s-line"></i>
+      `;
+      providerElement.appendChild(providerHeader);
+    
+      const typesContainer = document.createElement('div');
+      typesContainer.className = 'provider-types'; // Renamed class for clarity
+      typesContainer.style.display = 'block'; // Start expanded
+      providerElement.appendChild(typesContainer);
+
+      // Create a local fragment for each provider's type groups
+      const typeGroupsFragment = document.createDocumentFragment();
+      let hasAddedTypeGroups = false;
+
+      ['Chat', 'Image', 'Embedding'].forEach(categoryName => {
+        if (!providerData[categoryName] || Object.keys(providerData[categoryName]).length === 0) {
+          return; // Skip empty categories for this provider
+        }
+        
+        const typeGroups = providerData[categoryName];
+        const sortedTypeGroupNames = Object.keys(typeGroups).sort((a, b) => {
+           // Add custom sorting logic for type groups if needed, similar to previous family logic
+           // Example: Prioritize 'Pro' > 'Flash' > 'Standard' etc.
+          return this.sortModelTypes(a, b, providerName);
+        });
+
+        sortedTypeGroupNames.forEach(typeGroupName => {
+          const groupModels = typeGroups[typeGroupName];
+          if (!groupModels || groupModels.length === 0) return;
+        
+          const typeGroupElement = document.createElement('div');
+          typeGroupElement.className = 'model-type-group'; // Renamed class
+        
+          const typeGroupHeader = document.createElement('div');
+          typeGroupHeader.className = 'type-group-header'; // Renamed class
+          typeGroupHeader.innerHTML = `
+            <span class="type-group-name">${typeGroupName}</span>
+            <i class="ri-arrow-down-s-line"></i>
+          `;
+          typeGroupElement.appendChild(typeGroupHeader);
+        
+          const modelsContainer = document.createElement('div');
+          modelsContainer.className = 'type-group-models'; // Renamed class
+          modelsContainer.style.display = 'block'; // Start expanded
+          
+          // Create a local fragment for the models within this group
+          const modelsFragment = document.createDocumentFragment();
+
+          // Sort models within the type group (e.g., by variant or display name)
+          const sortedModels = groupModels.sort((a, b) => {
+              // Sort by variant ('Default' last), then display name
+              const variantA = a.variant || 'z'; // 'z' to push Default/Unknown last
+              const variantB = b.variant || 'z';
+              if (variantA !== variantB) {
+                  if (variantA === 'Default') return 1;
+                  if (variantB === 'Default') return -1;
+                  return variantA.localeCompare(variantB);
+              }
+              return a.displayName.localeCompare(b.displayName);
+          });
+
+          sortedModels.forEach(model => {
+            const modelElement = document.createElement('div');
+            modelElement.className = 'model-option';
+            // Use a unique key combining provider and model id
+            modelElement.setAttribute('data-model-key', `${model.provider}:::${model.id}`); 
+          
+            if (this.selectedModel && this.selectedModel.id === model.id && this.selectedModel.provider === model.provider) {
+              modelElement.classList.add('selected');
+            }
+            
+            modelElement.innerHTML = `
+                <span class="model-name">${model.displayName}</span>
+                ${model.isExperimental ? '<span class="experimental-tag">Exp</span>' : ''}
+            `;
+            
+            modelElement.addEventListener('click', () => this.handleModelSelect(model));
+            modelsFragment.appendChild(modelElement);
+          });
+        
+          // Add all models at once to the container
+          modelsContainer.appendChild(modelsFragment);
+          typeGroupElement.appendChild(modelsContainer);
+        
+          // Click listener for type group header to toggle visibility
+          typeGroupHeader.addEventListener('click', function() {
+            const container = this.nextElementSibling;
+            const icon = this.querySelector('i');
+            const isExpanded = container.style.display !== 'none';
+            container.style.display = isExpanded ? 'none' : 'block';
+            icon.className = isExpanded ? 'ri-arrow-right-s-line' : 'ri-arrow-down-s-line';
+          });
+
+          typeGroupsFragment.appendChild(typeGroupElement);
+          hasAddedTypeGroups = true;
+        });
+      }); 
+      
+      // Add all type groups at once to the provider's types container
+      typesContainer.appendChild(typeGroupsFragment);
+      
+      // Click listener for provider header to toggle visibility
+      providerHeader.addEventListener('click', function() {
+          const container = this.nextElementSibling;
+          const icon = this.querySelector('i');
+          const isExpanded = container.style.display !== 'none';
+          container.style.display = isExpanded ? 'none' : 'block';
+          icon.className = isExpanded ? 'ri-arrow-right-s-line' : 'ri-arrow-down-s-line';
+      });
+
+      // Only add the provider element if it contains any type groups
+      if (hasAddedTypeGroups) {
+          fragment.appendChild(providerElement);
+      }
+    });
+    
+    // Add all provider elements to the model list at once
+    this.modelListElement.appendChild(fragment);
+      
+    // Apply syntax highlighting if hljs is available
+    if (typeof hljs !== 'undefined') {
+      this.modelListElement.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightBlock(block);
+      });
     }
   }
   
   /**
-   * Scroll to ensure selected option is visible
-   * @private
+   * Fetch models from the API endpoint
+   * Returns true on success, false on failure.
    */
-  _scrollToSelectedOption(selectedOption) {
-    if (!selectedOption || !this.modelListElement) return;
-    
-    const containerRect = this.modelListElement.getBoundingClientRect();
-    const optionRect = selectedOption.getBoundingClientRect();
-    
-    // Check if option is not fully visible
-    if (optionRect.top < containerRect.top || optionRect.bottom > containerRect.bottom) {
-      // Determine scroll position to center the option
-      const scrollOffset = selectedOption.offsetTop - (this.modelListElement.clientHeight / 2) + (selectedOption.clientHeight / 2);
-      this.modelListElement.scrollTop = Math.max(0, scrollOffset);
-    }
-  }
-  
-  /**
-   * Get the currently selected model
-   * @returns {ProcessedDropdownNode|null} The selected model or null
-   */
-  getSelectedModel() {
-    return this.selectedModel || null;
-  }
-  
-  /**
-   * Fetch models from API
-   * @private
-   */
-  async _fetchModels() {
+  async fetchModels() {
+    this.allModels = [];
+    this.experimentalModels = [];
+    this.processedModels = { Chat: [], Image: [], Embedding: [] };
+
     try {
+      console.log('Fetching models...');
       const response = await fetch(this.API_MODELS_URL);
       
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        console.error('Failed to fetch models from API');
+        return false;
       }
       
       const data = await response.json();
       
-      if (!data.hierarchical_groups || !Array.isArray(data.hierarchical_groups)) {
-        throw new Error('Invalid data format: missing hierarchical_groups');
+      // Log the full received object
+      console.log('Full object received from API:', data);
+      console.log('Raw classification data received:', JSON.stringify(data, null, 2)); // Log the raw data
+      
+      if (!data.hierarchical_groups || data.hierarchical_groups.length === 0) {
+        console.error('Invalid or empty model data received (expected hierarchical_groups)');
+        return false;
       }
       
-      // Process the hierarchical groups
-      this.processHierarchicalGroups(data.hierarchical_groups);
-      
+      this.processedModels = this.processModels(data.hierarchical_groups);
       return true;
     } catch (error) {
       console.error('Error fetching models:', error);
@@ -331,651 +478,788 @@ class ModelDropdown {
   }
   
   /**
-   * Save processed data to cache
-   * @private
+   * Process models data into the hierarchical structure.
+   * Populates this.allModels and this.experimentalModels as a side effect.
    */
-  _saveToCache() {
+  processModels(hierarchicalGroups) {
+    if (!hierarchicalGroups || !Array.isArray(hierarchicalGroups)) {
+      console.error('Invalid hierarchical model data received');
+      return { Chat: [], Image: [], Embedding: [] };
+    }
+    
+    console.log('Processing pre-classified hierarchical models...');
+    
+    // Pre-allocate all arrays and objects
+    const structured = { Chat: {}, Image: {}, Embedding: {} };
+    this.allModels = [];
+    this.experimentalModels = [];
+
+    const processGroup = (group, currentProvider, currentType) => {
+      const groupName = group.group_name;
+      const groupValue = group.group_value;
+
+      // Update context information
+      if (groupName === 'provider') {
+        currentProvider = groupValue;
+      }
+      if (groupName === 'type') {
+        currentType = groupValue;
+      }
+
+      // Process models directly attached to this group (expected at version level)
+      if (group.models && group.models.length > 0) {
+        for (let i = 0; i < group.models.length; i++) {
+          const model = group.models[i];
+          if (!model || !model.id) continue; // Skip invalid models
+
+          // Use the category directly from the model or determine from capabilities
+          let categoryName;
+          if (model.type === 'Image Generation' || 
+              (model.capabilities && model.capabilities.includes('Image Generation'))) {
+            categoryName = 'Image'; 
+          } else if (model.type === 'Embedding' || 
+              (model.capabilities && model.capabilities.includes('embedding'))) {
+            categoryName = 'Embedding';
+          } else {
+            categoryName = 'Chat'; // Default to Chat
+          }
+          
+          // Skip embedding models unless specifically configured to show them
+          if (categoryName === 'Embedding' && !this.includeEmbeddings) {
+            continue;
+          }
+          
+          // Use the pre-classified experimental flag directly
+          const isExperimental = model.is_experimental === true;
+          
+          // Get display name or normalize it if not provided
+          const displayName = model.display_name || this.normalizeModelName(model);
+          
+          // Use the pre-classified model type directly
+          const type = model.type || currentType || 'Standard';
+          
+          // Use group value as groupingKey (already classified in hierarchy)
+          const groupingKey = currentType || 'General Models';
+
+          const processedModel = {
+            id: model.id,
+            name: model.name || model.id,
+            provider: currentProvider || model.provider || 'UnknownProvider',
+            category: categoryName,
+            type: type,
+            family: model.family || 'Unknown Family',
+            series: model.series || 'Unknown Series',
+            variant: model.variant || 'Default',
+            groupingKey: groupingKey,
+            displayName: displayName,
+            isExperimental: isExperimental,
+            isMultimodal: model.is_multimodal || (model.capabilities || []).includes('vision') || false,
+            capabilities: model.capabilities || [],
+            contextSize: model.context_size || 0,
+            version: model.version || ''
+          };
+
+          // Add to structured data
+          if (!structured[categoryName][processedModel.provider]) {
+            structured[categoryName][processedModel.provider] = {};
+          }
+          if (!structured[categoryName][processedModel.provider][processedModel.groupingKey]) {
+            structured[categoryName][processedModel.provider][processedModel.groupingKey] = [];
+          }
+          structured[categoryName][processedModel.provider][processedModel.groupingKey].push(processedModel);
+
+          // Add to flat lists
+          this.allModels.push(processedModel);
+          if (processedModel.isExperimental) {
+            this.experimentalModels.push(processedModel);
+          }
+        }
+      }
+
+      // Recursively process children
+      if (group.children && group.children.length > 0) {
+        for (let i = 0; i < group.children.length; i++) {
+          processGroup(group.children[i], currentProvider, currentType);
+        }
+      }
+    };
+
+    // Start processing from the root (provider) groups
+    hierarchicalGroups.forEach(rootGroup => processGroup(rootGroup, null, null));
+
+    // Convert the structured map into the final array format expected by rendering
+    const finalStructure = { Chat: [], Image: [], Embedding: [] };
+    
+    // Pre-calculate provider comparisons
+    const sortProviderFn = (a, b) => a.localeCompare(b);
+    
+    Object.keys(structured).forEach(catName => {
+      const providers = structured[catName];
+      const sortedProviderNames = Object.keys(providers).sort(sortProviderFn);
+
+      sortedProviderNames.forEach(provName => {
+        const groups = providers[provName];
+
+        const sortedGroupNames = Object.keys(groups).sort((a, b) => {
+          // Use custom sorting function for model types
+          return this.sortModelTypes(a, b, provName);
+        });
+
+        const groupsList = [];
+        for (let i = 0; i < sortedGroupNames.length; i++) {
+          const groupName = sortedGroupNames[i];
+          const models = groups[groupName];
+          if (models.length > 0) {
+            // Sort models only once per group
+            const sortedModels = models.sort(this.sortModelsByProvider);
+            groupsList.push({ name: groupName, models: sortedModels });
+          }
+        }
+
+        if (groupsList.length > 0) {
+          finalStructure[catName].push({ name: provName, families: groupsList });
+        }
+      });
+    });
+
+    return finalStructure;
+  }
+  
+  /**
+   * Cache the processed model structure and flat lists
+   */
+  cacheModels() {
     try {
-      // Convert Map objects to array for serialization
-      const cacheData = {
+      localStorage.setItem('modelDropdownCache', JSON.stringify({
         timestamp: Date.now(),
-        flatNodes: this.flatNodes,
-        nodeMap: Array.from(this.nodeMap.entries()),
-        hierarchyMap: Array.from(this.hierarchyMap.entries()),
-        allModels: this.allModels
-      };
-      
-      localStorage.setItem('modelDropdownCache', JSON.stringify(cacheData));
-      console.log('Model data cached successfully');
-    } catch (error) {
-      console.warn('Failed to cache model data:', error);
+        processed: this.processedModels,
+        all: this.allModels,
+        experimental: this.experimentalModels
+      }));
+    } catch (e) {
+      console.warn('Failed to cache models:', e);
     }
   }
   
   /**
-   * Load data from cache
-   * @private
-   * @returns {Object|null} Cached data or null if invalid/expired
+   * Get cached models if available and not expired
    */
-  _loadFromCache() {
+  getCachedModels() {
     try {
       const cache = localStorage.getItem('modelDropdownCache');
       if (!cache) return null;
       
-      const data = JSON.parse(cache);
-      
-      // Validate cache
-      if (!data.timestamp || !data.flatNodes || !data.nodeMap || !data.allModels) {
-        console.warn('Invalid cache structure');
+      const parsedCache = JSON.parse(cache);
+      if (!parsedCache.timestamp || !parsedCache.processed || !parsedCache.all) {
+          console.warn('Invalid cache structure found.');
           localStorage.removeItem('modelDropdownCache');
           return null;
       }
 
-      // Check expiry
-      const now = Date.now();
-      if (now - data.timestamp > this.cacheExpiryTime) {
-        console.log('Cache expired');
-        return null;
-      }
+      const { timestamp, processed, all, experimental } = parsedCache;
+      const cacheAge = Date.now() - timestamp;
       
-      return data;
-    } catch (error) {
-      console.warn('Error loading cache:', error);
+      return cacheAge < this.cacheExpiryTime ? { 
+        processed, 
+        all, 
+        experimental: experimental || []
+      } : null;
+    } catch (e) {
+      console.warn('Failed to retrieve or parse cached models:', e);
       localStorage.removeItem('modelDropdownCache');
       return null;
     }
   }
   
   /**
-   * Show error message in container
-   * @private
-   */
-  _showError(message) {
-    if (!this.container) return;
-    
-    this.container.innerHTML = `
-      <div class="error-message" role="alert">
-        <p>${message}</p>
-        <button class="retry-button">Retry</button>
-      </div>
-    `;
-    
-    const retryButton = this.container.querySelector('.retry-button');
-    if (retryButton) {
-      retryButton.addEventListener('click', () => {
-        this.initialize();
-      });
-    }
-  }
-  
-  /**
-   * Render the dropdown UI with optimized DOM operations
+   * Render the dropdown UI
    */
   render() {
-    if (!this.container) {
-      console.error('Container element is missing');
-      return;
-    }
-
-    // Clear container
     this.container.innerHTML = '';
     
     // Create filter UI if needed
-    this._createFilterUI();
+    this.createFilterUI();
     
-    // Create main dropdown container
-    this._createDropdownUI();
+    // Create main dropdown
+    this.createDropdownUI();
     
     // Apply filters to populate the dropdown
     this.applyFilters();
   }
   
   /**
-   * Create the filter UI elements
-   * @private
+   * Create the filter UI elements if needed
    */
-  _createFilterUI() {
-    // Create container once
+  createFilterUI() {
+    if (!this.textFilterCheckbox && !this.imageFilterCheckbox && !this.nameFilterInput) {
       const filterContainer = document.createElement('div');
       filterContainer.className = 'model-filters';
-    
-    // Create document fragment for better performance
-    const fragment = document.createDocumentFragment();
       
       // Create category filters
       const categoryFilters = document.createElement('div');
       categoryFilters.className = 'category-filters';
       
-    // Build filter options with a helper method
-    this._appendFilterOption(categoryFilters, 'filter-text', 'Text Models', true);
-    this._appendFilterOption(categoryFilters, 'filter-image', 'Image Models', true);
-    
+      // Text models filter
+      const textFilter = document.createElement('div');
+      textFilter.className = 'filter-option';
+      this.textFilterCheckbox = document.createElement('input');
+      this.textFilterCheckbox.type = 'checkbox';
+      this.textFilterCheckbox.id = 'filter-text';
+      this.textFilterCheckbox.checked = true;
+      const textLabel = document.createElement('label');
+      textLabel.htmlFor = 'filter-text';
+      textLabel.textContent = 'Text Models';
+      textFilter.appendChild(this.textFilterCheckbox);
+      textFilter.appendChild(textLabel);
+      
+      // Image models filter
+      const imageFilter = document.createElement('div');
+      imageFilter.className = 'filter-option';
+      this.imageFilterCheckbox = document.createElement('input');
+      this.imageFilterCheckbox.type = 'checkbox';
+      this.imageFilterCheckbox.id = 'filter-image';
+      this.imageFilterCheckbox.checked = true;
+      const imageLabel = document.createElement('label');
+      imageLabel.htmlFor = 'filter-image';
+      imageLabel.textContent = 'Image Models';
+      imageFilter.appendChild(this.imageFilterCheckbox);
+      imageFilter.appendChild(imageLabel);
+      
+      categoryFilters.appendChild(textFilter);
+      categoryFilters.appendChild(imageFilter);
+      
+      // Only add embedding filter if we support embeddings
       if (this.includeEmbeddings) {
-      this._appendFilterOption(categoryFilters, 'filter-embedding', 'Embedding Models', false);
-    }
-    
-    fragment.appendChild(categoryFilters);
+        const embeddingFilter = document.createElement('div');
+        embeddingFilter.className = 'filter-option';
+        this.embeddingFilterCheckbox = document.createElement('input');
+        this.embeddingFilterCheckbox.type = 'checkbox';
+        this.embeddingFilterCheckbox.id = 'filter-embedding';
+        this.embeddingFilterCheckbox.checked = false;
+        const embeddingLabel = document.createElement('label');
+        embeddingLabel.htmlFor = 'filter-embedding';
+        embeddingLabel.textContent = 'Embedding Models';
+        embeddingFilter.appendChild(this.embeddingFilterCheckbox);
+        embeddingFilter.appendChild(embeddingLabel);
+        categoryFilters.appendChild(embeddingFilter);
+      }
       
       // Create search filter
       const searchFilter = document.createElement('div');
       searchFilter.className = 'search-filter';
-    
       const searchLabel = document.createElement('label');
       searchLabel.htmlFor = 'model-name-filter';
       searchLabel.textContent = 'Search Models: ';
-    
       this.nameFilterInput = document.createElement('input');
       this.nameFilterInput.type = 'text';
       this.nameFilterInput.id = 'model-name-filter';
       this.nameFilterInput.placeholder = 'Type to search...';
-    this.nameFilterInput.setAttribute('aria-label', 'Search for models');
-    
       searchFilter.appendChild(searchLabel);
       searchFilter.appendChild(this.nameFilterInput);
-    fragment.appendChild(searchFilter);
       
-    // Add the fragment to the container
-    filterContainer.appendChild(fragment);
-    this.container.appendChild(filterContainer);
+      filterContainer.appendChild(categoryFilters);
+      filterContainer.appendChild(searchFilter);
       
       // Add event listeners
-    this._attachFilterEventListeners();
-  }
-  
-  /**
-   * Helper to create a filter option
-   * @private
-   */
-  _appendFilterOption(container, id, labelText, checked) {
-    const filterOption = document.createElement('div');
-    filterOption.className = 'filter-option';
-    
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = id;
-    checkbox.checked = checked;
-    
-    // Store reference for later use
-    this[`${id}Checkbox`] = checkbox;
-    
-    const label = document.createElement('label');
-    label.htmlFor = id;
-    label.textContent = labelText;
-    
-    filterOption.appendChild(checkbox);
-    filterOption.appendChild(label);
-    container.appendChild(filterOption);
-  }
-  
-  /**
-   * Attach event listeners to filters
-   * @private
-   */
-  _attachFilterEventListeners() {
-    // Use event delegation for category filters
-    const categoryFilters = this.container.querySelector('.category-filters');
-    if (categoryFilters) {
-      categoryFilters.addEventListener('change', this.applyFilters);
-    }
-    
-    // Debounce text input for performance
-    if (this.nameFilterInput) {
-      this.nameFilterInput.addEventListener('input', this.debouncedApplyFilters);
+      this.textFilterCheckbox.addEventListener('change', this.applyFilters);
+      this.imageFilterCheckbox.addEventListener('change', this.applyFilters);
+      if (this.embeddingFilterCheckbox) {
+        this.embeddingFilterCheckbox.addEventListener('change', this.applyFilters);
+      }
+      this.nameFilterInput.addEventListener('input', this.applyFilters);
       
-      // Add keyboard navigation for search results
-      this.nameFilterInput.addEventListener('keydown', this._handleSearchKeyboardNavigation.bind(this));
+      this.container.appendChild(filterContainer);
     }
   }
   
   /**
-   * Create the main dropdown UI container with proper ARIA attributes
-   * @private
+   * Create the dropdown UI elements
    */
-  _createDropdownUI() {
+  createDropdownUI() {
     this.dropdownElement = document.createElement('div');
     this.dropdownElement.className = 'model-dropdown';
-    this.dropdownElement.setAttribute('role', 'listbox');
-    this.dropdownElement.setAttribute('aria-label', 'Available Models');
-    
-    // Create the model list container
-    this.modelListElement = document.createElement('div');
-    this.modelListElement.className = 'model-list';
-    this.modelListElement.setAttribute('tabindex', '0'); // Make focusable for keyboard navigation
-    
-    // Set up event delegation for better performance
-    this._setupEventDelegation();
-    
-    this.dropdownElement.appendChild(this.modelListElement);
     this.container.appendChild(this.dropdownElement);
     
-    // Add scroll event listener for virtualization
-    if (this.modelListElement) {
-      this.modelListElement.addEventListener('scroll', this._handleScroll.bind(this));
-    }
+    this.modelListElement = document.createElement('div');
+    this.modelListElement.className = 'model-list';
+    this.dropdownElement.appendChild(this.modelListElement);
   }
   
   /**
-   * Setup event delegation for the entire model list
-   * @private
+   * Handle model selection
    */
-  _setupEventDelegation() {
-    if (!this.modelListElement) return;
-    
-    // Single event listener for all clicks using event delegation
-    this.modelListElement.addEventListener('click', (e) => {
-      // Handle clicks on model options
-      const modelOption = e.target.closest('.model-option');
-      if (modelOption) {
-        const modelId = modelOption.getAttribute('data-model-key');
-        const modelNode = this.nodeMap.get(modelId);
-        if (modelNode && modelNode.isSelectable) {
-          this.handleModelSelect(modelNode);
-        }
+  handleModelSelect(model) {
+    if (!model || !model.provider || !model.id) {
+        console.warn("Invalid model object passed to handleModelSelect:", model);
         return;
     }
-      
-      // Handle clicks on group headers
-      const groupHeader = e.target.closest('.provider-header, .type-group-header');
-      if (groupHeader) {
-        this._toggleGroupExpansion(groupHeader);
-      }
-    });
+    console.log("Model selected:", model);
+
+    const allOptions = this.modelListElement.querySelectorAll('.model-option');
+    allOptions.forEach(el => el.classList.remove('selected'));
     
-    // Keyboard navigation
-    this.modelListElement.addEventListener('keydown', this._handleKeyboardNavigation.bind(this));
-  }
-  
-  /**
-   * Toggle group expansion state
-   * @private
-   */
-  _toggleGroupExpansion(groupHeader) {
-    if (!groupHeader) return;
-    
-    const container = groupHeader.nextElementSibling;
-    const icon = groupHeader.querySelector('i');
-    if (!container || !icon) return;
-    
-    const isExpanded = container.style.display !== 'none';
-    
-    // Toggle display with animation class instead of direct style changes
-    if (isExpanded) {
-      container.classList.add('collapsing');
-      // Use transitionend to remove classes and set final state
-      const onTransitionEnd = () => {
-        container.style.display = 'none';
-        container.classList.remove('collapsing');
-        container.removeEventListener('transitionend', onTransitionEnd);
-      };
-      container.addEventListener('transitionend', onTransitionEnd);
+    // Use the unique key format for the selector
+    const modelKey = `${model.provider}:::${model.id}`;
+    const selector = `.model-option[data-model-key="${modelKey}"]`;
+    const selectedElement = this.modelListElement.querySelector(selector);
+    if (selectedElement) {
+      selectedElement.classList.add('selected');
     } else {
-      container.style.display = 'block';
-      container.classList.add('expanding');
-      // Wait for next frame to apply transitions properly
-      requestAnimationFrame(() => {
-        const onTransitionEnd = () => {
-          container.classList.remove('expanding');
-          container.removeEventListener('transitionend', onTransitionEnd);
-        };
-        container.addEventListener('transitionend', onTransitionEnd);
-      });
+        console.warn(`Could not find model element for key ${modelKey} to mark as selected.`);
     }
     
-    // Update icon
-    icon.className = isExpanded ? 'ri-arrow-right-s-line' : 'ri-arrow-down-s-line';
+    this.selectedModel = model;
     
-    // Update node state
-    const groupId = groupHeader.getAttribute('data-group-id');
-    if (groupId) {
-      const groupNode = this.nodeMap.get(groupId);
-      if (groupNode) {
-        groupNode.isExpanded = !isExpanded;
-      }
+    const displayElement = document.getElementById('selected-model-display');
+    if (displayElement) {
+      displayElement.innerText = model.displayName || model.name;
     }
     
-    // Announce to screen readers
-    this._announceStateChange(
-      `Group ${groupHeader.textContent.trim()} ${isExpanded ? 'collapsed' : 'expanded'}`
-    );
+    this.onChange(model);
   }
   
   /**
-   * Render filtered models with virtualization
+   * Toggle showing/hiding experimental models by re-applying filters
    */
-  renderFilteredModels(filteredModels, showText, showImage, showEmbedding) {
+  toggleExperimentalModels() {
+    if (this.includeExperimentalToggle && this.includeExperimentalToggle instanceof HTMLElement) {
+      console.log('Toggling experimental models visibility. New state:', this.includeExperimentalToggle.checked);
+    }
+    this.applyFilters();
+  }
+  
+  /**
+   * Get the currently selected model
+   */
+  getSelectedModel() {
+    return this.selectedModel;
+  }
+  
+  /**
+   * Render a flat list of models that match the search filter
+   */
+  renderSearchResultsList(filteredModels, nameFilter) {
     if (!this.modelListElement) return;
-    
-    // Clear existing content
     this.modelListElement.innerHTML = '';
     
-    // Show message if no models match filters
     if (filteredModels.length === 0) {
-      this.modelListElement.innerHTML = '<div class="no-results" role="alert">No models match the current filters.</div>';
+      this.modelListElement.innerHTML = `<div class="no-results">No models match the search term "${nameFilter}".</div>`;
       return;
     }
     
-    // Group models by provider and type
-    const groupedByProvider = this._groupModelsByProviderAndType(filteredModels, showText, showImage, showEmbedding);
-    
-    // Get sorted provider names
-    const sortedProviderNames = Object.keys(groupedByProvider).sort((a, b) => a.localeCompare(b));
-    
-    // Create document fragment for batched DOM operations
+    // Use DocumentFragment for better performance
     const fragment = document.createDocumentFragment();
     
-    // Create virtualization state if needed
-    if (!this.virtualization) {
-      this.virtualization = {
-        itemHeight: 30,  // Estimated average height of each item
-        visibleItems: 20, // Number of items visible in viewport
-        buffer: 10,      // Buffer items above and below viewport
-        startIndex: 0,   // First visible item index
-        endIndex: 30     // Last visible item index (visibleItems + buffer*2)
-      };
-    }
-    
-    // Track total items and visible range
-    let totalItems = 0;
-    let visibleStart = this.virtualization.startIndex;
-    let visibleEnd = this.virtualization.endIndex;
-    
-    // Process each provider
-    for (let providerIndex = 0; providerIndex < sortedProviderNames.length; providerIndex++) {
-      const providerName = sortedProviderNames[providerIndex];
-      const providerData = groupedByProvider[providerName];
-      
-      // Skip rendering if provider is outside visible range
-      if (totalItems > visibleEnd) {
-        // Just count items without rendering
-        totalItems += this._countProviderItems(providerData);
-        continue;
+    // Group by category
+    const groupedByCategory = { Chat: [], Image: [], Embedding: [] };
+    filteredModels.forEach(model => {
+      if (model.category in groupedByCategory) {
+        groupedByCategory[model.category].push(model);
       }
+    });
+    
+    // Create search results container
+    const searchResultsContainer = document.createElement('div');
+    searchResultsContainer.className = 'search-results';
+    
+    const searchHeader = document.createElement('div');
+    searchHeader.className = 'search-header';
+    searchHeader.innerHTML = `<h3>Search results for "${nameFilter}"</h3>`;
+    searchResultsContainer.appendChild(searchHeader);
+    
+    ['Chat', 'Image', 'Embedding'].forEach(category => {
+      const models = groupedByCategory[category];
+      if (models.length === 0) return;
       
-      // Create provider element
-      const providerElement = document.createElement('div');
-      providerElement.className = 'model-provider';
-      providerElement.dataset.providerIndex = providerIndex;
+      const categoryElement = document.createElement('div');
+      categoryElement.className = 'search-category';
       
-      // Create provider header
-      const providerHeader = this._createProviderHeader(providerName);
-      providerElement.appendChild(providerHeader);
+      const categoryHeader = document.createElement('div');
+      categoryHeader.className = 'search-category-header';
+      categoryHeader.innerHTML = `<h4>${category} Models (${models.length})</h4>`;
+      categoryElement.appendChild(categoryHeader);
       
-      // Create types container
-      const typesContainer = document.createElement('div');
-      typesContainer.className = 'provider-types';
-      typesContainer.style.display = 'block'; // Start expanded
+      const modelsList = document.createElement('div');
+      modelsList.className = 'search-models-list';
       
-      // Create local fragment for type groups
-      const typeGroupsFragment = document.createDocumentFragment();
-      let hasAddedTypeGroups = false;
+      // Use a local fragment for the models in this category
+      const modelsFragment = document.createDocumentFragment();
       
-      // Process each category (Chat, Image, Embedding)
-      ['Chat', 'Image', 'Embedding'].forEach(categoryName => {
-        if (!providerData[categoryName] || Object.keys(providerData[categoryName]).length === 0) {
-          return; // Skip empty categories
-        }
-        
-        // Get type groups for this category
-        const typeGroups = providerData[categoryName];
-        const sortedTypeGroupNames = Object.keys(typeGroups).sort((a, b) => {
-          return this._sortModelTypes(a, b, providerName);
-        });
-        
-        // Process each type group
-        sortedTypeGroupNames.forEach(typeGroupName => {
-          const groupModels = typeGroups[typeGroupName];
-          if (!groupModels || groupModels.length === 0) return;
-          
-          // Skip if entire group is before visible range
-          totalItems++; // Count the group header
-          const groupStartIndex = totalItems;
-          
-          // Always render the group header if its models might be visible
-          const typeGroupElement = document.createElement('div');
-          typeGroupElement.className = 'model-type-group';
-          
-          const typeGroupHeader = this._createTypeGroupHeader(typeGroupName);
-          typeGroupElement.appendChild(typeGroupHeader);
-          
-          const modelsContainer = document.createElement('div');
-          modelsContainer.className = 'type-group-models';
-          modelsContainer.style.display = 'block'; // Start expanded
-          
-          // Sort and process models in this group
-          const sortedModels = groupModels.sort(this._sortModelsByVariantAndName);
-          
-          // Check if any models are in visible range
-          const modelCount = sortedModels.length;
-          if (groupStartIndex + modelCount < visibleStart) {
-            // Skip rendering this group's models
-            totalItems += modelCount;
-          } else {
-            // Create models with virtualization
-            this._createModelElements(modelsContainer, sortedModels, totalItems, visibleStart, visibleEnd);
-            totalItems += modelCount;
-          }
-          
-          // Add models container to type group
-          typeGroupElement.appendChild(modelsContainer);
-          typeGroupsFragment.appendChild(typeGroupElement);
-          hasAddedTypeGroups = true;
-        });
+      // Sort models by provider and name
+      const sortedModels = models.sort((a, b) => {
+        const providerCompare = a.provider.localeCompare(b.provider);
+        if (providerCompare !== 0) return providerCompare;
+        return a.displayName.localeCompare(b.displayName);
       });
       
-      // Add all type groups to provider
-      typesContainer.appendChild(typeGroupsFragment);
-      providerElement.appendChild(typesContainer);
-      
-      // Only add provider if it has type groups
-      if (hasAddedTypeGroups) {
-        fragment.appendChild(providerElement);
-      }
-    }
-    
-    // Add spacer elements for virtualization
-    this._addVirtualizationSpacers(fragment, totalItems);
-    
-    // Add all elements to DOM in one operation
-    this.modelListElement.appendChild(fragment);
-    
-    // Update virtualization state
-    this.virtualization.totalItems = totalItems;
-    
-    // Apply ARIA attributes for accessibility
-    this._applyAriaAttributes();
-  }
-  
-  /**
-   * Create model elements with virtualization
-   * @private
-   */
-  _createModelElements(container, models, startIndex, visibleStart, visibleEnd) {
-    // Use document fragment for batch insertion
-    const fragment = document.createDocumentFragment();
-    
-    // Only create elements within the visible range
-    models.forEach((model, index) => {
-      const itemIndex = startIndex + index;
-      
-      // Skip if outside visible range
-      if (itemIndex < visibleStart || itemIndex > visibleEnd) {
-        return;
-      }
-      
-      // Create model element
-      const modelElement = document.createElement('div');
-      modelElement.className = 'model-option';
-      modelElement.setAttribute('role', 'option');
-      modelElement.setAttribute('data-model-key', `${model.provider}:::${model.id}`);
-      modelElement.setAttribute('tabindex', '0');
-      modelElement.dataset.index = itemIndex;
-      
-      // Mark as selected if it matches current selection
-      if (this.selectedModel && 
-          this.selectedModel.id === model.id && 
-          this.selectedModel.provider === model.provider) {
-        modelElement.classList.add('selected');
-        modelElement.setAttribute('aria-selected', 'true');
-      } else {
-        modelElement.setAttribute('aria-selected', 'false');
-      }
-      
-      // Create content with optimized innerHTML assignment
-      modelElement.innerHTML = `
-        <span class="model-name">${model.displayName}</span>
-        ${model.isExperimental ? '<span class="experimental-tag" aria-label="Experimental">Exp</span>' : ''}
-      `;
-      
-      fragment.appendChild(modelElement);
-    });
-    
-    // Add all models at once
-    container.appendChild(fragment);
-  }
-  
-  /**
-   * Add spacers for virtualization
-   * @private
-   */
-  _addVirtualizationSpacers(fragment, totalItems) {
-    // Top spacer to push content down
-    const topSpacer = document.createElement('div');
-    topSpacer.className = 'virtualization-spacer top-spacer';
-    const topSpacerHeight = Math.max(0, this.virtualization.startIndex * this.virtualization.itemHeight);
-    topSpacer.style.height = `${topSpacerHeight}px`;
-    fragment.insertBefore(topSpacer, fragment.firstChild);
-    
-    // Bottom spacer
-    const bottomSpacer = document.createElement('div');
-    bottomSpacer.className = 'virtualization-spacer bottom-spacer';
-    const itemsAfterVisible = Math.max(0, totalItems - this.virtualization.endIndex);
-    const bottomSpacerHeight = itemsAfterVisible * this.virtualization.itemHeight;
-    bottomSpacer.style.height = `${bottomSpacerHeight}px`;
-    fragment.appendChild(bottomSpacer);
-  }
-  
-  /**
-   * Handle scroll events for virtualization
-   * @private
-   */
-  _handleScroll() {
-    if (!this.modelListElement || !this.virtualization) return;
-    
-    // Request animation frame for better performance
-    if (this._scrollRAF) {
-      cancelAnimationFrame(this._scrollRAF);
-    }
-    
-    this._scrollRAF = requestAnimationFrame(() => {
-      const scrollTop = this.modelListElement.scrollTop;
-      const estimatedStartIndex = Math.floor(scrollTop / this.virtualization.itemHeight);
-      
-      // Only update if scrolled enough to change the visible range
-      if (Math.abs(estimatedStartIndex - this.virtualization.startIndex) >= this.virtualization.buffer / 2) {
-        this.virtualization.startIndex = Math.max(0, estimatedStartIndex - this.virtualization.buffer);
-        this.virtualization.endIndex = estimatedStartIndex + this.virtualization.visibleItems + this.virtualization.buffer;
+      sortedModels.forEach(model => {
+        const modelElement = document.createElement('div');
+        modelElement.className = 'model-option search-result-model';
+        modelElement.setAttribute('data-model-key', `${model.provider}:::${model.id}`);
         
-        // Re-render with updated range
-        this.debouncedRenderFilteredModels(this._getLastFilteredModels());
+        if (this.selectedModel && this.selectedModel.id === model.id && this.selectedModel.provider === model.provider) {
+          modelElement.classList.add('selected');
+        }
+        
+        modelElement.innerHTML = `
+          <span class="model-name">${model.displayName}</span>
+          <span class="model-provider">${model.provider}</span>
+          ${model.isExperimental ? '<span class="experimental-tag">Exp</span>' : ''}
+        `;
+        
+        modelElement.addEventListener('click', () => this.handleModelSelect(model));
+        modelsFragment.appendChild(modelElement);
+      });
+      
+      // Add all models to the category list at once
+      modelsList.appendChild(modelsFragment);
+      categoryElement.appendChild(modelsList);
+      searchResultsContainer.appendChild(categoryElement);
+    });
+    
+    // Add the entire search results to the main fragment
+    fragment.appendChild(searchResultsContainer);
+    
+    // Add everything to the DOM in one operation
+    this.modelListElement.appendChild(fragment);
+  }
+  
+  /**
+   * Normalize model name for display purposes with regex caching
+   */
+  normalizeModelName(model) {
+    let displayName = model.display_name || model.name || model.id || 'Unknown Model';
+    
+    // Return early if already has a display_name
+    if (model.display_name) {
+      return displayName;
+    }
+    
+    // Basic cleanup - replace underscores with spaces and capitalize first letter of each word
+    displayName = displayName.replace(/_/g, ' ')
+                            .replace(/\b\w/g, l => l.toUpperCase());
+    
+    // Format specific model patterns
+    const idLower = displayName.toLowerCase();
+    
+    // Format GPT models 
+    if (idLower.includes('gpt-')) {
+      // Use simple if-statements to avoid expensive regex operations if possible
+      
+      // Handle versioned GPT models - use cached RegExp object for repeated operations
+      if (idLower.match(/gpt-\d/)) {
+        displayName = displayName.replace(/gpt-(\d+)(?:-(\d+))?(?:-(\d+))?/i, (match, major, minor, date) => {
+          if (date) {
+            return `GPT-${major}${minor ? `.${minor}` : ''} (${date})`;
+          } else if (minor) {
+            return `GPT-${major}.${minor}`;
+          }
+          return `GPT-${major}`;
+        });
       }
-    });
+      
+      // Handle common suffixes - avoid regex when possible
+      if (displayName.includes('-preview')) {
+        displayName = displayName.replace(/-preview/i, ' Preview');
+      }
+      if (displayName.includes('-vision')) {
+        displayName = displayName.replace(/-vision/i, ' Vision');
+      }
+      if (displayName.includes('-turbo')) {
+        displayName = displayName.replace(/-turbo/i, ' Turbo');
+      }
+    }
+    
+    // Format Gemini models - also use direct string checks when possible
+    if (idLower.includes('gemini-')) {
+      displayName = displayName.replace(/gemini-(\d+\.\d+)-([a-z]+)/i, 'Gemini $1 $2');
+    }
+    
+    return displayName.trim();
   }
   
   /**
-   * Get last filtered models result (cache for re-rendering)
-   * @private
+   * Sort model types in a provider-specific manner
+   * Optimized with Maps for faster lookups
    */
-  _getLastFilteredModels() {
-    if (!this._lastFilteredModels) {
-      // Default to all models if no filter has been applied yet
-      return this.allModels;
-    }
-    return this._lastFilteredModels;
-  }
-  
-  /**
-   * Apply ARIA attributes for accessibility
-   * @private
-   */
-  _applyAriaAttributes() {
-    if (!this.modelListElement) return;
+  sortModelTypes(typeA, typeB, provider) {
+    // Fast path for simple string comparison
+    if (typeA === typeB) return 0;
     
-    // Set roles on containers
-    this.modelListElement.setAttribute('role', 'listbox');
-    this.modelListElement.setAttribute('aria-multiselectable', 'false');
-    
-    // Set expanded state on group headers
-    const groupHeaders = this.modelListElement.querySelectorAll('.provider-header, .type-group-header');
-    groupHeaders.forEach(header => {
-      const container = header.nextElementSibling;
-      const isExpanded = container && container.style.display !== 'none';
-      header.setAttribute('aria-expanded', isExpanded.toString());
-      header.setAttribute('role', 'button');
-    });
-    
-    // Set proper attributes on model options
-    const modelOptions = this.modelListElement.querySelectorAll('.model-option');
-    modelOptions.forEach((option, index) => {
-      option.setAttribute('role', 'option');
-      option.setAttribute('aria-posinset', (index + 1).toString());
-      option.setAttribute('aria-setsize', modelOptions.length.toString());
-    });
-  }
-  
-  /**
-   * Create a screen reader announcement element
-   * @private
-   */
-  _announceStateChange(message) {
-    if (!this._ariaLiveRegion) {
-      this._ariaLiveRegion = document.createElement('div');
-      this._ariaLiveRegion.setAttribute('aria-live', 'polite');
-      this._ariaLiveRegion.setAttribute('class', 'sr-only');
-      document.body.appendChild(this._ariaLiveRegion);
+    // Use a static Map for type priorities (initialized once)
+    if (!this._typePriorityMap) {
+      this._typePriorityMap = new Map([
+        ['Mini', 1],
+        ['O Series', 2],
+        ['GPT 4.5', 3],
+        ['GPT 4', 4],
+        ['GPT 3.5', 5],
+        ['Flash Lite', 1],
+        ['Flash', 2],
+        ['Pro', 3], 
+        ['Thinking', 4],
+        ['Gemma', 5],
+        ['Standard', 6],
+        ['Sonnet', 1],
+        ['Opus', 2],
+        ['Haiku', 3],
+        ['Image Generation', 90],
+        ['Embedding', 100]
+      ]);
+      
+      // Provider-specific priority maps
+      this._openaiPriorityMap = new Map([
+        ['Mini', 1],
+        ['O Series', 2],
+        ['GPT 4.5', 3],
+        ['GPT 4', 4],
+        ['GPT 3.5', 5],
+        ['Image Generation', 90]
+      ]);
+      
+      this._geminiPriorityMap = new Map([
+        ['Flash Lite', 1],
+        ['Flash', 2],
+        ['Pro', 3],
+        ['Thinking', 4],
+        ['Gemma', 5],
+        ['Standard', 6],
+        ['Image Generation', 90]
+      ]);
+      
+      this._anthropicPriorityMap = new Map([
+        ['Sonnet', 1],
+        ['Opus', 2],
+        ['Haiku', 3]
+      ]);
     }
     
-    this._ariaLiveRegion.textContent = message;
+    // Account for provider-specific ordering
+    if (provider) {
+      const providerLower = provider.toLowerCase();
+      
+      if (providerLower === 'openai') {
+        const priorityA = this._openaiPriorityMap.get(typeA) || 50;
+        const priorityB = this._openaiPriorityMap.get(typeB) || 50;
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+      } 
+      else if (providerLower === 'gemini') {
+        const priorityA = this._geminiPriorityMap.get(typeA) || 50;
+        const priorityB = this._geminiPriorityMap.get(typeB) || 50;
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+      }
+      else if (providerLower === 'anthropic') {
+        const priorityA = this._anthropicPriorityMap.get(typeA) || 50;
+        const priorityB = this._anthropicPriorityMap.get(typeB) || 50;
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+      }
+    }
     
-    // Clear after announcement
-    setTimeout(() => {
-      this._ariaLiveRegion.textContent = '';
-    }, 3000);
-  }
-  
-  /**
-   * Sort model types based on predefined order or alphabetically.
-   * @param {string} typeA - First type name
-   * @param {string} typeB - Second type name
-   * @param {string} [providerName] - Optional provider context (unused here but matches call signature)
-   * @returns {number} Sort order (-1, 0, 1)
-   * @private
-   */
-  _sortModelTypes(typeA, typeB, providerName) {
-    const indexA = this.knownModelTypes.indexOf(typeA);
-    const indexB = this.knownModelTypes.indexOf(typeB);
-
-    // If both types are known, sort by their index in knownModelTypes
-    if (indexA !== -1 && indexB !== -1) {
-      return indexA - indexB;
+    // Use general priorities if no provider-specific order was applied
+    const priorityA = this._typePriorityMap.get(typeA) || 50;
+    const priorityB = this._typePriorityMap.get(typeB) || 50;
+    
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
     }
-    // If only typeA is known, it comes first
-    if (indexA !== -1) {
-      return -1;
-    }
-    // If only typeB is known, it comes first
-    if (indexB !== -1) {
-      return 1;
-    }
-    // If neither type is known, sort alphabetically
+    
+    // Alphabetical if same priority
     return typeA.localeCompare(typeB);
   }
-
+  
   /**
-   * Normalize model name for display (e.g., remove provider prefix)
-   * @param {string} name - Original model name
+   * Helper method to sort models based on their provider and model family/type
+   * Optimized with early returns and caching for repeated patterns
    */
-  normalizeModelName(name) {
-    // Implementation of normalizeModelName method
+  sortModelsByProvider(a, b) {
+    // Cache common properties to avoid repeated property access
+    const aProvider = a.provider && a.provider.toLowerCase();
+    const bProvider = b.provider && b.provider.toLowerCase();
+    const aDisplayName = a.displayName && a.displayName.toLowerCase();
+    const bDisplayName = b.displayName && b.displayName.toLowerCase();
+    
+    // If providers are different, we don't need special sorting
+    if (aProvider !== bProvider) {
+      return aDisplayName.localeCompare(bDisplayName);
+    }
+    
+    // For OpenAI models, prioritize Mini models first 
+    if (aProvider === 'openai') {      
+      // Mini models come before everything else
+      const isAMini = a.groupingKey === 'Mini' || aDisplayName.includes('mini');
+      const isBMini = b.groupingKey === 'Mini' || bDisplayName.includes('mini');
+      
+      if (isAMini !== isBMini) return isAMini ? -1 : 1; // Mini first
+      
+      // O Series comes second
+      const isAOSeries = a.groupingKey === 'O Series' || /^o\d/.test(aDisplayName);
+      const isBOSeries = b.groupingKey === 'O Series' || /^o\d/.test(bDisplayName);
+      
+      if (isAOSeries !== isBOSeries) return isAOSeries ? -1 : 1; // O Series second
+      
+      // GPT models internal sorting
+      if (a.groupingKey === b.groupingKey) {
+        if (a.groupingKey === 'GPT 4') {
+          // Order: GPT-4o, GPT-4 Turbo, GPT-4 Vision, GPT-4
+          const aName = aDisplayName;
+          const bName = bDisplayName;
+          
+          const isA4o = aName.includes('gpt-4o');
+          const isB4o = bName.includes('gpt-4o');
+          if (isA4o !== isB4o) return isA4o ? -1 : 1;
+          
+          const isATurbo = aName.includes('turbo');
+          const isBTurbo = bName.includes('turbo');
+          if (isATurbo !== isBTurbo) return isATurbo ? -1 : 1;
+          
+          const isAVision = aName.includes('vision');
+          const isBVision = bName.includes('vision');
+          if (isAVision !== isBVision) return isAVision ? -1 : 1;
+        }
+        
+        // O Series internal sorting
+        if (a.groupingKey === 'O Series') {
+          const getOVersion = (modelName) => {
+            const match = modelName.match(/O(\d+)/i);
+            return match ? parseInt(match[1]) : 0;
+          };
+          
+          const oVersionA = getOVersion(aDisplayName);
+          const oVersionB = getOVersion(bDisplayName);
+          
+          if (oVersionA !== oVersionB) {
+            return oVersionA - oVersionB; // Lower O numbers first
+          }
+        }
+        
+        // DALL-E sorting
+        if (a.groupingKey === 'Image Generation') {
+          const getDalleVersion = (modelName) => {
+            const match = modelName.match(/DALL-E\s*(\d+)/i);
+            return match ? parseInt(match[1]) : 0;
+          };
+          
+          const versionA = getDalleVersion(aDisplayName);
+          const versionB = getDalleVersion(bDisplayName);
+          
+          if (versionA !== versionB) {
+            return versionB - versionA; // Higher versions first
+          }
+        }
+      }
+      
+      // GPT 4.5 should come before GPT 4
+      if (a.groupingKey === 'GPT 4.5' && b.groupingKey === 'GPT 4') {
+        return -1;
+      }
+      if (a.groupingKey === 'GPT 4' && b.groupingKey === 'GPT 4.5') {
+        return 1;
+      }
+    }
+    
+    // For Gemini models, prioritize sorting by version numbers
+    if (aProvider === 'gemini') {
+      // Extract version numbers (cache for better performance)
+      if (!this._geminiVersionMap) {
+        this._geminiVersionMap = new Map();
+      }
+      
+      // Get version from cache or calculate
+      const getVersion = (model) => {
+        const cacheKey = model.id || model.name;
+        
+        if (this._geminiVersionMap.has(cacheKey)) {
+          return this._geminiVersionMap.get(cacheKey);
+        }
+        
+        let version = 0;
+        // Try from display name first
+        const displayMatch = model.displayName.match(/(\d+\.\d+)/);
+        if (displayMatch) {
+          version = parseFloat(displayMatch[1]);
+        }
+        // Try from series next if no match in display name
+        else if (model.series) {
+          const seriesMatch = model.series.match(/(\d+\.\d+)/);
+          if (seriesMatch) {
+            version = parseFloat(seriesMatch[1]);
+          }
+        }
+        
+        this._geminiVersionMap.set(cacheKey, version);
+        return version;
+      };
+      
+      const versionA = getVersion(a);
+      const versionB = getVersion(b);
+      
+      // Higher versions first (2.0 before 1.5 before 1.0)
+      if (versionA !== versionB) {
+        return versionB - versionA;
+      }
+      
+      // For same versions, order by type
+      if (!this._geminiTypeOrderMap) {
+        this._geminiTypeOrderMap = new Map([
+          ['Flash Lite', 1], 
+          ['Flash', 2], 
+          ['Pro', 3], 
+          ['Thinking', 4], 
+          ['Gemma', 5], 
+          ['Standard', 6]
+        ]);
+      }
+      
+      const typeA = this._geminiTypeOrderMap.get(a.type) || 10;
+      const typeB = this._geminiTypeOrderMap.get(b.type) || 10;
+      
+      if (typeA !== typeB) {
+        return typeA - typeB;
+      }
+    }
+    
+    // For Anthropic models, use Sonnet > Opus > Haiku ordering
+    if (aProvider === 'anthropic') {
+      if (!this._anthropicTypeMap) {
+        this._anthropicTypeMap = new Map([
+          ['Sonnet', 1], 
+          ['Opus', 2], 
+          ['Haiku', 3]
+        ]);
+      }
+      
+      const getClaudeType = (model) => {
+        const name = model.displayName.toLowerCase();
+        if (name.includes('sonnet')) return 'Sonnet';
+        if (name.includes('opus')) return 'Opus';
+        if (name.includes('haiku')) return 'Haiku';
+        return model.type || 'Other';
+      };
+      
+      const typeA = this._anthropicTypeMap.get(getClaudeType(a)) || 10;
+      const typeB = this._anthropicTypeMap.get(getClaudeType(b)) || 10;
+      
+      if (typeA !== typeB) {
+        return typeA - typeB;
+      }
+    }
+    
+    // Sort by timestamp (newer first)
+    const timestampA = a.displayName.match(/\d{4}-\d{2}-\d{2}/);
+    const timestampB = b.displayName.match(/\d{4}-\d{2}-\d{2}/);
+    
+    if (timestampA && timestampB && timestampA[0] !== timestampB[0]) {
+      return timestampB[0].localeCompare(timestampA[0]);
+    }
+    
+    // Finally, default to display name
+    return aDisplayName.localeCompare(bDisplayName);
   }
 }
 
