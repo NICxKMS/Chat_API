@@ -64,7 +64,7 @@ const defaultConfig = {
     }
   },
   cache: {
-    enabled: process.env.CACHE_ENABLED === 'true',
+    enabled: process.env.CACHE_ENABLED === 'false',
     ttl: parseInt(process.env.CACHE_TTL || '300', 10),
     maxSize: parseInt(process.env.CACHE_MAX_SIZE || '100', 10)
   },

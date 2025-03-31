@@ -40,7 +40,7 @@ function deserialize_modelservice_LoadedModelList(buffer_arg) {
 
 // The ModelClassificationService definition
 var ModelClassificationServiceService = exports.ModelClassificationServiceService = {
-  // Sends a list of models to be classified
+  // Classify a list of models
 classifyModels: {
     path: '/modelservice.ModelClassificationService/ClassifyModels',
     requestStream: false,
@@ -52,7 +52,8 @@ classifyModels: {
     responseSerialize: serialize_modelservice_ClassifiedModelResponse,
     responseDeserialize: deserialize_modelservice_ClassifiedModelResponse,
   },
-  // Classifies models with specific criteria
+  // Classify models with criteria
+// Use hierarchical=true in ClassificationCriteria to get hierarchical grouping
 classifyModelsWithCriteria: {
     path: '/modelservice.ModelClassificationService/ClassifyModelsWithCriteria',
     requestStream: false,

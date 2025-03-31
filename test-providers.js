@@ -4,7 +4,7 @@ import factory from './src/providers/ProviderFactory.js';
 async function testOpenAIProvider() {
   try {
     console.log('=== Testing OpenAI Provider Model Loading ===');
-    const provider = factory.getProvider('gemini');
+    const provider = factory.getProvider('openai');
     
     if (!provider) {
       console.log('OpenAI provider not available');
@@ -24,7 +24,7 @@ async function testOpenAIProvider() {
     console.log(`Got ${apiModels.length} models from OpenAI API:`);
     if (apiModels.length > 0) {
       console.log('First 10 API models:');
-      apiModels.slice(0, 10).forEach(model => {
+      apiModels.slice(0, 43).forEach(model => {
         console.log(`- ${model.id} (Token limit: ${model.tokenLimit})`);
       });
       

@@ -50,6 +50,7 @@ type ClassificationCriteria struct {
 	IncludeExperimental bool     `json:"include_experimental,omitempty"`
 	IncludeDeprecated   bool     `json:"include_deprecated,omitempty"`
 	MinContextSize      int32    `json:"min_context_size,omitempty"`
+	Hierarchical        bool     `json:"hierarchical,omitempty"`
 }
 
 // ClassifiedModelResponse represents the response from the classification server
@@ -103,4 +104,12 @@ func AvailableClassificationProperties() []*ClassificationProperty {
 			},
 		},
 	}
+}
+
+// HierarchicalModelGroup represents a hierarchical grouping of models
+type HierarchicalModelGroup struct {
+	GroupName  string                    `json:"group_name"`
+	GroupValue string                    `json:"group_value"`
+	Models     []*Model                  `json:"models,omitempty"`
+	Children   []*HierarchicalModelGroup `json:"children,omitempty"`
 }

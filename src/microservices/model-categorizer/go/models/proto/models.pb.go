@@ -402,6 +402,7 @@ type ClassificationCriteria struct {
 	IncludeExperimental bool                   `protobuf:"varint,2,opt,name=include_experimental,json=includeExperimental,proto3" json:"include_experimental,omitempty"`
 	IncludeDeprecated   bool                   `protobuf:"varint,3,opt,name=include_deprecated,json=includeDeprecated,proto3" json:"include_deprecated,omitempty"`
 	MinContextSize      int32                  `protobuf:"varint,4,opt,name=min_context_size,json=minContextSize,proto3" json:"min_context_size,omitempty"`
+	Hierarchical        bool                   `protobuf:"varint,5,opt,name=hierarchical,proto3" json:"hierarchical,omitempty"` // When true, returns hierarchical structure instead of flat groups
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -464,12 +465,20 @@ func (x *ClassificationCriteria) GetMinContextSize() int32 {
 	return 0
 }
 
+func (x *ClassificationCriteria) GetHierarchical() bool {
+	if x != nil {
+		return x.Hierarchical
+	}
+	return false
+}
+
 // ClassifiedModelResponse represents the response from the classification server
 type ClassifiedModelResponse struct {
 	state               protoimpl.MessageState    `protogen:"open.v1"`
 	ClassifiedGroups    []*ClassifiedModelGroup   `protobuf:"bytes,1,rep,name=classified_groups,json=classifiedGroups,proto3" json:"classified_groups,omitempty"`
 	AvailableProperties []*ClassificationProperty `protobuf:"bytes,2,rep,name=available_properties,json=availableProperties,proto3" json:"available_properties,omitempty"`
 	ErrorMessage        string                    `protobuf:"bytes,3,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+	HierarchicalGroups  []*HierarchicalModelGroup `protobuf:"bytes,4,rep,name=hierarchical_groups,json=hierarchicalGroups,proto3" json:"hierarchical_groups,omitempty"` // Populated when hierarchical=true in request
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -525,6 +534,82 @@ func (x *ClassifiedModelResponse) GetErrorMessage() string {
 	return ""
 }
 
+func (x *ClassifiedModelResponse) GetHierarchicalGroups() []*HierarchicalModelGroup {
+	if x != nil {
+		return x.HierarchicalGroups
+	}
+	return nil
+}
+
+// HierarchicalModelGroup represents a hierarchical grouping of models
+type HierarchicalModelGroup struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	GroupName     string                    `protobuf:"bytes,1,opt,name=group_name,json=groupName,proto3" json:"group_name,omitempty"`
+	GroupValue    string                    `protobuf:"bytes,2,opt,name=group_value,json=groupValue,proto3" json:"group_value,omitempty"`
+	Models        []*Model                  `protobuf:"bytes,3,rep,name=models,proto3" json:"models,omitempty"`
+	Children      []*HierarchicalModelGroup `protobuf:"bytes,4,rep,name=children,proto3" json:"children,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HierarchicalModelGroup) Reset() {
+	*x = HierarchicalModelGroup{}
+	mi := &file_models_proto_models_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HierarchicalModelGroup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HierarchicalModelGroup) ProtoMessage() {}
+
+func (x *HierarchicalModelGroup) ProtoReflect() protoreflect.Message {
+	mi := &file_models_proto_models_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HierarchicalModelGroup.ProtoReflect.Descriptor instead.
+func (*HierarchicalModelGroup) Descriptor() ([]byte, []int) {
+	return file_models_proto_models_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *HierarchicalModelGroup) GetGroupName() string {
+	if x != nil {
+		return x.GroupName
+	}
+	return ""
+}
+
+func (x *HierarchicalModelGroup) GetGroupValue() string {
+	if x != nil {
+		return x.GroupValue
+	}
+	return ""
+}
+
+func (x *HierarchicalModelGroup) GetModels() []*Model {
+	if x != nil {
+		return x.Models
+	}
+	return nil
+}
+
+func (x *HierarchicalModelGroup) GetChildren() []*HierarchicalModelGroup {
+	if x != nil {
+		return x.Children
+	}
+	return nil
+}
+
 var File_models_proto_models_proto protoreflect.FileDescriptor
 
 const file_models_proto_models_proto_rawDesc = "" +
@@ -567,18 +652,27 @@ const file_models_proto_models_proto_rawDesc = "" +
 	"\x14ClassifiedModelGroup\x12#\n" +
 	"\rproperty_name\x18\x01 \x01(\tR\fpropertyName\x12%\n" +
 	"\x0eproperty_value\x18\x02 \x01(\tR\rpropertyValue\x12+\n" +
-	"\x06models\x18\x03 \x03(\v2\x13.modelservice.ModelR\x06models\"\xc4\x01\n" +
+	"\x06models\x18\x03 \x03(\v2\x13.modelservice.ModelR\x06models\"\xe8\x01\n" +
 	"\x16ClassificationCriteria\x12\x1e\n" +
 	"\n" +
 	"properties\x18\x01 \x03(\tR\n" +
 	"properties\x121\n" +
 	"\x14include_experimental\x18\x02 \x01(\bR\x13includeExperimental\x12-\n" +
 	"\x12include_deprecated\x18\x03 \x01(\bR\x11includeDeprecated\x12(\n" +
-	"\x10min_context_size\x18\x04 \x01(\x05R\x0eminContextSize\"\xe8\x01\n" +
+	"\x10min_context_size\x18\x04 \x01(\x05R\x0eminContextSize\x12\"\n" +
+	"\fhierarchical\x18\x05 \x01(\bR\fhierarchical\"\xbf\x02\n" +
 	"\x17ClassifiedModelResponse\x12O\n" +
 	"\x11classified_groups\x18\x01 \x03(\v2\".modelservice.ClassifiedModelGroupR\x10classifiedGroups\x12W\n" +
 	"\x14available_properties\x18\x02 \x03(\v2$.modelservice.ClassificationPropertyR\x13availableProperties\x12#\n" +
-	"\rerror_message\x18\x03 \x01(\tR\ferrorMessage2\xe3\x01\n" +
+	"\rerror_message\x18\x03 \x01(\tR\ferrorMessage\x12U\n" +
+	"\x13hierarchical_groups\x18\x04 \x03(\v2$.modelservice.HierarchicalModelGroupR\x12hierarchicalGroups\"\xc7\x01\n" +
+	"\x16HierarchicalModelGroup\x12\x1d\n" +
+	"\n" +
+	"group_name\x18\x01 \x01(\tR\tgroupName\x12\x1f\n" +
+	"\vgroup_value\x18\x02 \x01(\tR\n" +
+	"groupValue\x12+\n" +
+	"\x06models\x18\x03 \x03(\v2\x13.modelservice.ModelR\x06models\x12@\n" +
+	"\bchildren\x18\x04 \x03(\v2$.modelservice.HierarchicalModelGroupR\bchildren2\xe3\x01\n" +
 	"\x1aModelClassificationService\x12X\n" +
 	"\x0eClassifyModels\x12\x1d.modelservice.LoadedModelList\x1a%.modelservice.ClassifiedModelResponse\"\x00\x12k\n" +
 	"\x1aClassifyModelsWithCriteria\x12$.modelservice.ClassificationCriteria\x1a%.modelservice.ClassifiedModelResponse\"\x00B4Z2github.com/chat-api/model-categorizer/models/protob\x06proto3"
@@ -595,7 +689,7 @@ func file_models_proto_models_proto_rawDescGZIP() []byte {
 	return file_models_proto_models_proto_rawDescData
 }
 
-var file_models_proto_models_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_models_proto_models_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_models_proto_models_proto_goTypes = []any{
 	(*Model)(nil),                   // 0: modelservice.Model
 	(*LoadedModelList)(nil),         // 1: modelservice.LoadedModelList
@@ -603,23 +697,27 @@ var file_models_proto_models_proto_goTypes = []any{
 	(*ClassifiedModelGroup)(nil),    // 3: modelservice.ClassifiedModelGroup
 	(*ClassificationCriteria)(nil),  // 4: modelservice.ClassificationCriteria
 	(*ClassifiedModelResponse)(nil), // 5: modelservice.ClassifiedModelResponse
-	nil,                             // 6: modelservice.Model.MetadataEntry
+	(*HierarchicalModelGroup)(nil),  // 6: modelservice.HierarchicalModelGroup
+	nil,                             // 7: modelservice.Model.MetadataEntry
 }
 var file_models_proto_models_proto_depIdxs = []int32{
-	6, // 0: modelservice.Model.metadata:type_name -> modelservice.Model.MetadataEntry
-	0, // 1: modelservice.LoadedModelList.models:type_name -> modelservice.Model
-	0, // 2: modelservice.ClassifiedModelGroup.models:type_name -> modelservice.Model
-	3, // 3: modelservice.ClassifiedModelResponse.classified_groups:type_name -> modelservice.ClassifiedModelGroup
-	2, // 4: modelservice.ClassifiedModelResponse.available_properties:type_name -> modelservice.ClassificationProperty
-	1, // 5: modelservice.ModelClassificationService.ClassifyModels:input_type -> modelservice.LoadedModelList
-	4, // 6: modelservice.ModelClassificationService.ClassifyModelsWithCriteria:input_type -> modelservice.ClassificationCriteria
-	5, // 7: modelservice.ModelClassificationService.ClassifyModels:output_type -> modelservice.ClassifiedModelResponse
-	5, // 8: modelservice.ModelClassificationService.ClassifyModelsWithCriteria:output_type -> modelservice.ClassifiedModelResponse
-	7, // [7:9] is the sub-list for method output_type
-	5, // [5:7] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	7,  // 0: modelservice.Model.metadata:type_name -> modelservice.Model.MetadataEntry
+	0,  // 1: modelservice.LoadedModelList.models:type_name -> modelservice.Model
+	0,  // 2: modelservice.ClassifiedModelGroup.models:type_name -> modelservice.Model
+	3,  // 3: modelservice.ClassifiedModelResponse.classified_groups:type_name -> modelservice.ClassifiedModelGroup
+	2,  // 4: modelservice.ClassifiedModelResponse.available_properties:type_name -> modelservice.ClassificationProperty
+	6,  // 5: modelservice.ClassifiedModelResponse.hierarchical_groups:type_name -> modelservice.HierarchicalModelGroup
+	0,  // 6: modelservice.HierarchicalModelGroup.models:type_name -> modelservice.Model
+	6,  // 7: modelservice.HierarchicalModelGroup.children:type_name -> modelservice.HierarchicalModelGroup
+	1,  // 8: modelservice.ModelClassificationService.ClassifyModels:input_type -> modelservice.LoadedModelList
+	4,  // 9: modelservice.ModelClassificationService.ClassifyModelsWithCriteria:input_type -> modelservice.ClassificationCriteria
+	5,  // 10: modelservice.ModelClassificationService.ClassifyModels:output_type -> modelservice.ClassifiedModelResponse
+	5,  // 11: modelservice.ModelClassificationService.ClassifyModelsWithCriteria:output_type -> modelservice.ClassifiedModelResponse
+	10, // [10:12] is the sub-list for method output_type
+	8,  // [8:10] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_models_proto_models_proto_init() }
@@ -633,7 +731,7 @@ func file_models_proto_models_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_models_proto_models_proto_rawDesc), len(file_models_proto_models_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

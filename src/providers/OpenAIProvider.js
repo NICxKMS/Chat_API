@@ -92,9 +92,9 @@ class OpenAIProvider extends BaseProvider {
           return !(
             firstChar === "t" || 
             firstChar === "b" || 
-            firstChar === "d" || 
             firstChar === "w" || 
-            (id.length > 1 && id.slice(0, 2) === "om") // Check "om" only if ID has at least 2 chars
+            (id.length > 1 && id.slice(0, 2) === "om") || // Check "om" only if ID has at least 2 chars
+            (id.length > 2 && id.slice(0, 3) === "dav")  // Check "dav" only if ID has at least 3 chars
           );
         })
         .map(model => ({
@@ -104,6 +104,7 @@ class OpenAIProvider extends BaseProvider {
           tokenLimit: this._getTokenLimit(model.id),
           features: this._getModelFeatures(model.id)
         }));
+      
       
         // Cache all available models from API - no config filtering
         this.cachedModels = filteredModels;

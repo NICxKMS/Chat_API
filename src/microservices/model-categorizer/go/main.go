@@ -71,6 +71,7 @@ func main() {
 		log.Printf("Detailed request/response logging is enabled")
 	}
 	log.Printf("The service will classify models according to: provider, family, type, capabilities")
+	log.Printf("Models are organized hierarchically by provider > type > version by default. Set hierarchical=false to use flat classification.")
 
 	// Handle graceful shutdown
 	go func() {

@@ -234,8 +234,16 @@ export class ModelClassificationService {
                 reject(new Error('Received empty response from classification server'));
                 return;
               }
+
+              // Log the raw response object for inspection
+              try {
+                console.log("--- RAW gRPC Response ---:", JSON.stringify(response, null, 2));
+              } catch (stringifyError) {
+                console.log("--- RAW gRPC Response (Stringify Failed) ---", response);
+              }
               
-              console.log(`Successfully classified models, received ${response.classified_groups?.length || 0} classification groups`);
+              // Log the number of HIERARCHICAL groups received
+              console.log(`Successfully classified models, received ${response.hierarchical_groups?.length || 0} hierarchical groups`);
               
               // Resolve the promise with the response
               resolve(response);

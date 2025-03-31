@@ -29,9 +29,10 @@ const (
 //
 // The ModelClassificationService definition
 type ModelClassificationServiceClient interface {
-	// Sends a list of models to be classified
+	// Classify a list of models
 	ClassifyModels(ctx context.Context, in *LoadedModelList, opts ...grpc.CallOption) (*ClassifiedModelResponse, error)
-	// Classifies models with specific criteria
+	// Classify models with criteria
+	// Use hierarchical=true in ClassificationCriteria to get hierarchical grouping
 	ClassifyModelsWithCriteria(ctx context.Context, in *ClassificationCriteria, opts ...grpc.CallOption) (*ClassifiedModelResponse, error)
 }
 
@@ -69,9 +70,10 @@ func (c *modelClassificationServiceClient) ClassifyModelsWithCriteria(ctx contex
 //
 // The ModelClassificationService definition
 type ModelClassificationServiceServer interface {
-	// Sends a list of models to be classified
+	// Classify a list of models
 	ClassifyModels(context.Context, *LoadedModelList) (*ClassifiedModelResponse, error)
-	// Classifies models with specific criteria
+	// Classify models with criteria
+	// Use hierarchical=true in ClassificationCriteria to get hierarchical grouping
 	ClassifyModelsWithCriteria(context.Context, *ClassificationCriteria) (*ClassifiedModelResponse, error)
 	mustEmbedUnimplementedModelClassificationServiceServer()
 }
