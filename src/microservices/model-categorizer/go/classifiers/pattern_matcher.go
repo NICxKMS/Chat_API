@@ -129,7 +129,10 @@ func (pm *PatternMatcher) matchClaudeVersion(modelName string) string {
 // matchGeminiVersion matches Gemini version series
 func (pm *PatternMatcher) matchGeminiVersion(modelName string) string {
 	modelLower := strings.ToLower(modelName)
-
+	
+	if strings.Contains(modelLower, "2.5") {
+		return "Gemini 2.5"
+	}
 	if strings.Contains(modelLower, "2.0") {
 		return "Gemini 2.0"
 	}
@@ -279,7 +282,9 @@ func (pm *PatternMatcher) matchAnthropicVariant(modelName string) string {
 func (pm *PatternMatcher) buildGeminiVariant(modelName string) string {
 	// Combine version with type
 	version := ""
-	if strings.Contains(modelName, "2.0") {
+	if strings.Contains(modelName, "2.5") {
+		version = "2.5"
+	} else if strings.Contains(modelName, "2.0") {
 		version = "2.0"
 	} else if strings.Contains(modelName, "1.5") {
 		version = "1.5"

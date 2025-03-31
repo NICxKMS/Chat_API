@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Interface</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/highlight.min.js"></script>
+</head>
+<body class="dark-mode">
+    <div class="app-container">
+        <div id="overlay" class="overlay"></div>
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="api-status-container">
+                    <span id="api-status" class="status-indicator offline">Connecting...</span>
+                    <span id="api-url" class="api-url"></span>
+                </div>
+                <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Sidebar">
+                    <i class="ri-menu-line" aria-hidden="true"></i>
+                    <span class="sr-only">Toggle Sidebar</span>
+                </button>
+            </div>
+            
+            <div class="model-selection-section">
+                <h3>Select Model</h3>
+                
+                <div class="model-filters">
+                    <div class="model-filter">
+                        <input type="checkbox" id="filter-text" checked>
+                        <label for="filter-text">Text Models</label>
+                    </div>
+                    <div class="model-filter">
+                        <input type="checkbox" id="filter-image">
+                        <label for="filter-image">Image Models</label>
+                    </div>
+                    <div class="model-filter">
+                        <input type="checkbox" id="filter-embedding" class="settings-input">
+                        <label for="filter-embedding">Embedding Models</label>
+                    </div>
+                    <div class="model-search">
+                        <input type="text" id="model-name-filter" placeholder="Search models...">
+                    </div>
+                </div>
+                
+                <div class="experimental-toggle-container">
+                    <input type="checkbox" id="show-experimental" checked>
+                    <label for="show-experimental">Show Experimental Models</label>
+                </div>
+                
+                <div id="model-dropdown-container" class="model-dropdown-container">
+                    <div class="loading">Loading models...</div>
+                </div>
+                
+                <div class="selected-model-display">
+                    <span>Selected Model:</span>
+                    <strong id="selected-model-display">None</strong>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="chat-header">
+                <h1>AI Chat Interface</h1>
+                <div class="header-actions">
+                    <button id="settings-toggle" class="settings-toggle" aria-label="Toggle Advanced Settings">
+                        <i class="ri-settings-line" aria-hidden="true"></i>
+                        <span class="sr-only">Settings</span>
+                    </button>
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark/Light Mode">
+                        <i class="ri-moon-line" aria-hidden="true"></i>
+                        <span class="sr-only">Toggle Theme</span>
+                    </button>
+                    <button id="download-chat" class="download-button" aria-label="Download Chat">
+                        <i class="ri-download-line" aria-hidden="true"></i>
+                        <span class="sr-only">Download Chat</span>
+                    </button>
+                    <button id="reset-button" class="reset-button" aria-label="Reset Chat">
+                        <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                        <span class="sr-only">Reset Chat</span>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Advanced Settings Panel -->
+            <div id="settings-panel" class="settings-panel hidden">
+                <h3>Advanced Settings</h3>
+                <div class="settings-grid">
+                    <div class="setting">
+                        <label for="temperature">Temperature: <span id="temperature-value">0.7</span></label>
+                        <input type="range" id="temperature" class="settings-input" min="0" max="2" step="0.1" value="0.7">
+                    </div>
+                    
+                    <div class="setting">
+                        <label for="top_p">Top P:</label>
+                        <input type="number" id="top_p" class="settings-input" min="0" max="1" step="0.05" value="1">
+                    </div>
+                    
+                    <div class="setting">
+                        <label for="max_tokens">Max Tokens:</label>
+                        <input type="number" id="max_tokens" class="settings-input" min="50" max="4096" step="1" value="800">
+                    </div>
+                    
+                    <div class="setting">
+                        <label for="frequency_penalty">Frequency Penalty:</label>
+                        <input type="number" id="frequency_penalty" class="settings-input" min="-2" max="2" step="0.1" value="0">
+                    </div>
+                    
+                    <div class="setting">
+                        <label for="presence_penalty">Presence Penalty:</label>
+                        <input type="number" id="presence_penalty" class="settings-input" min="-2" max="2" step="0.1" value="0">
+                    </div>
+                    
+                    <div class="setting checkbox-setting">
+                        <label for="stream">Stream Response:</label>
+                        <input type="checkbox" id="stream" class="settings-input" checked>
+                    </div>
+                </div>
+                <div id="performance-info" class="performance-info">
+                    <div id="response-time">Response time: -</div>
+                    <div id="token-usage">Tokens: -</div>
+                </div>
+            </div>
+            
+            <!-- Chat Messages -->
+            <div id="chat-messages" class="chat-messages">
+                <div class="message system">
+                    <div class="message-content">
+                        <p>Welcome to the AI Chat Interface.</p>
+                        <p>Please select a model from the sidebar to begin chatting.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <textarea id="chat-input" class="chat-input" placeholder="Type a message..." rows="1"></textarea>
+                <button id="send-button" class="send-button" aria-label="Send message">
+                    <i class="ri-send-plane-fill" aria-hidden="true"></i>
+                    <span class="sr-only">Send</span>
+                </button>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/model-dropdown.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

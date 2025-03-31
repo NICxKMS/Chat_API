@@ -56,7 +56,6 @@ out/
 .nuxt/
 dist/
 .cache/
-public/
 .vuepress/dist
 .temp
 .docusaurus/

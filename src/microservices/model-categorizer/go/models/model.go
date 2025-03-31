@@ -84,7 +84,7 @@ func AvailableClassificationProperties() []*ClassificationProperty {
 			DisplayName: "Model Type",
 			Description: "The specific type or version of the model",
 			PossibleValues: []string{
-				"Vision", "Standard", "Turbo", "Pro", "Flash","Gemma", "Opus", "Sonnet", "Haiku", "Embedding", "O Series", "GPT 3.5", "GPT 4", "GPT 4.5", "Mini", "Flash Lite", "Thinking", "Image Generation",
+				"Vision", "Standard", "Pro", "Flash","Gemma", "Opus", "Sonnet", "Haiku", "Embedding", "O Series", "GPT 3.5", "GPT 4", "GPT 4.5", "Mini", "Flash Lite", "Thinking", "Image Generation",
 			},
 		},
 		{
