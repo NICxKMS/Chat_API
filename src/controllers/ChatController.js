@@ -47,7 +47,11 @@ class ChatController {
         // Use getProvider without arguments to get the default provider
         const defaultProvider = providerFactory.getProvider();
         providerName = defaultProvider.name;
-        modelName = model;
+        if (providerName === 'gemini') {
+          modelName = model;
+        } else {
+          modelName = model;
+        }
       }
       
       // Get the appropriate provider
@@ -68,6 +72,7 @@ class ChatController {
           try {
             const cacheKeyData = {
               provider: providerName,
+              
               model: modelName,
               messages: messages,
               temperature,

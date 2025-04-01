@@ -30,16 +30,16 @@ func NewPatternMatcher() *PatternMatcher {
 
 	// Initialize series detection patterns
 	seriesPatterns := map[string][]string{
-		SeriesClaude3: {"claude-3", "claude3", "claude-3.5", "claude-3.7"},
-		SeriesClaude2: {"claude-2", "claude2"},
-		SeriesClaude1: {"claude-1", "claude1", "claude-instant"},
-		"Gemini 1.0":  {"gemini-1.0", "gemini-1.0-pro"},
-		"Gemini 1.5":  {"gemini-1.5", "gemini-1.5-pro", "gemini-1.5-flash"},
-		"Gemini 2.0":  {"gemini-2.0", "gemini-2.0-pro", "gemini-2.0-flash"},
-		"Gemini 2.5":  {"gemini-2.5", "gemini-2.5-pro", "gemini-2.5-flash"},
-		"Gemma 2":     {"gemma-2"},
-		TypeImage:     {"dall-e", "imagen", "midjourney", "stable-diffusion"},
-		TypeEmbedding: {"embedding", "text-embedding", "embed"},
+		SeriesClaude3:         {"claude-3", "claude3", "claude-3.5", "claude-3.7"},
+		SeriesClaude2:         {"claude-2", "claude2"},
+		SeriesClaude1:         {"claude-1", "claude1", "claude-instant"},
+		"Gemini " + Version10: {"gemini-1.0", "gemini-1.0-pro"},
+		"Gemini " + Version15: {"gemini-1.5", "gemini-1.5-pro", "gemini-1.5-flash"},
+		"Gemini " + Version20: {"gemini-2.0", "gemini-2.0-pro", "gemini-2.0-flash"},
+		"Gemini " + Version25: {"gemini-2.5", "gemini-2.5-pro", "gemini-2.5-flash"},
+		"Gemma 2":             {"gemma-2"},
+		TypeImage:             {"dall-e", "imagen", "midjourney", "stable-diffusion"},
+		TypeEmbedding:         {"embedding", "text-embedding", "embed"},
 	}
 
 	// Initialize type detection patterns
@@ -129,18 +129,18 @@ func (pm *PatternMatcher) matchClaudeVersion(modelName string) string {
 // matchGeminiVersion matches Gemini version series
 func (pm *PatternMatcher) matchGeminiVersion(modelName string) string {
 	modelLower := strings.ToLower(modelName)
-	
+
 	if strings.Contains(modelLower, "2.5") {
-		return "Gemini 2.5"
+		return "Gemini " + Version25
 	}
 	if strings.Contains(modelLower, "2.0") {
-		return "Gemini 2.0"
+		return "Gemini " + Version20
 	}
 	if strings.Contains(modelLower, "1.5") {
-		return "Gemini 1.5"
+		return "Gemini " + Version15
 	}
 	if strings.Contains(modelLower, "1.0") {
-		return "Gemini 1.0"
+		return "Gemini " + Version10
 	}
 
 	return "Gemini"
@@ -163,27 +163,29 @@ func (pm *PatternMatcher) matchSeriesByPattern(modelName string) string {
 
 // matchOpenAIType matches OpenAI model types
 func (pm *PatternMatcher) matchOpenAIType(modelName string) string {
-	if strings.Contains(modelName, "mini") {
+	modelLower := strings.ToLower(modelName)
+
+	if strings.Contains(modelLower, "mini") {
 		return TypeMini
 	}
 
 	// Handle O series models
-	if strings.Contains(modelName, "o1") || strings.Contains(modelName, "o3") {
+	if strings.Contains(modelLower, "o1") || strings.Contains(modelLower, "o3") {
 		return TypeO
 	}
 
 	// Handle GPT-4.5 models
-	if strings.Contains(modelName, "gpt-4.5") || strings.Contains(modelName, "gpt4.5") {
+	if strings.Contains(modelLower, "gpt-4.5") || strings.Contains(modelLower, "gpt4.5") {
 		return Type45
 	}
 
 	// Handle GPT-4 models
-	if strings.Contains(modelName, "gpt-4") || strings.Contains(modelName, "gpt4") {
+	if strings.Contains(modelLower, "gpt-4") || strings.Contains(modelLower, "gpt4") {
 		return Type4
 	}
 
 	// Handle GPT-3.5 models
-	if strings.Contains(modelName, "gpt-3.5") || strings.Contains(modelName, "gpt3.5") {
+	if strings.Contains(modelLower, "gpt-3.5") || strings.Contains(modelLower, "gpt3.5") {
 		return Type35
 	}
 
@@ -240,20 +242,22 @@ func (pm *PatternMatcher) matchTypeByPattern(modelName string) string {
 
 // matchOpenAIVariant matches OpenAI variant names
 func (pm *PatternMatcher) matchOpenAIVariant(modelName string) string {
+	modelLower := strings.ToLower(modelName)
+
 	switch {
-	case strings.Contains(modelName, "gpt-4.5"):
-		return "GPT-4.5"
-	case strings.Contains(modelName, "gpt-4o-mini"):
+	case strings.Contains(modelLower, "gpt-4.5"):
+		return "GPT-" + Version45
+	case strings.Contains(modelLower, "gpt-4o-mini"):
 		return "GPT-4o Mini"
-	case strings.Contains(modelName, "gpt-4o"):
+	case strings.Contains(modelLower, "gpt-4o"):
 		return "GPT-4o"
-	case strings.Contains(modelName, "gpt-4-turbo"):
+	case strings.Contains(modelLower, "gpt-4-turbo"):
 		return "GPT-4 Turbo"
-	case strings.Contains(modelName, "gpt-4-vision"):
+	case strings.Contains(modelLower, "gpt-4-vision"):
 		return "GPT-4 Vision"
-	case strings.Contains(modelName, "o1-mini"):
+	case strings.Contains(modelLower, "o1-mini"):
 		return "O1 Mini"
-	case strings.Contains(modelName, "o1"):
+	case strings.Contains(modelLower, "o1"):
 		return "O1"
 	default:
 		return ""
@@ -262,16 +266,18 @@ func (pm *PatternMatcher) matchOpenAIVariant(modelName string) string {
 
 // matchAnthropicVariant matches Anthropic variant names
 func (pm *PatternMatcher) matchAnthropicVariant(modelName string) string {
+	modelLower := strings.ToLower(modelName)
+
 	switch {
-	case strings.Contains(modelName, "claude-3.7"):
-		return "Claude 3.7"
-	case strings.Contains(modelName, "claude-3.5"):
-		return "Claude 3.5"
-	case strings.Contains(modelName, "claude-3"):
-		return "Claude 3"
-	case strings.Contains(modelName, "claude-2"):
-		return "Claude 2"
-	case strings.Contains(modelName, "claude-instant"):
+	case strings.Contains(modelLower, "claude-3.7"):
+		return "Claude " + Version37
+	case strings.Contains(modelLower, "claude-3.5"):
+		return "Claude " + Version35
+	case strings.Contains(modelLower, "claude-3"):
+		return "Claude " + Version30
+	case strings.Contains(modelLower, "claude-2"):
+		return "Claude " + Version20
+	case strings.Contains(modelLower, "claude-instant"):
 		return "Claude Instant"
 	default:
 		return ""
@@ -280,27 +286,29 @@ func (pm *PatternMatcher) matchAnthropicVariant(modelName string) string {
 
 // buildGeminiVariant builds Gemini variant string
 func (pm *PatternMatcher) buildGeminiVariant(modelName string) string {
+	modelLower := strings.ToLower(modelName)
+
 	// Combine version with type
 	version := ""
-	if strings.Contains(modelName, "2.5") {
-		version = "2.5"
-	} else if strings.Contains(modelName, "2.0") {
-		version = "2.0"
-	} else if strings.Contains(modelName, "1.5") {
-		version = "1.5"
-	} else if strings.Contains(modelName, "1.0") {
-		version = "1.0"
+	if strings.Contains(modelLower, "2.5") {
+		version = Version25
+	} else if strings.Contains(modelLower, "2.0") {
+		version = Version20
+	} else if strings.Contains(modelLower, "1.5") {
+		version = Version15
+	} else if strings.Contains(modelLower, "1.0") {
+		version = Version10
 	}
 
 	type_ := ""
-	if strings.Contains(modelName, "flash-lite") || strings.Contains(modelName, "flash lite") {
-		type_ = "Flash Lite"
-	} else if strings.Contains(modelName, "thinking") {
-		type_ = "Thinking"
-	} else if strings.Contains(modelName, "flash") {
-		type_ = "Flash"
-	} else if strings.Contains(modelName, "pro") {
-		type_ = "Pro"
+	if strings.Contains(modelLower, "flash-lite") || strings.Contains(modelLower, "flash lite") {
+		type_ = TypeFlashLite
+	} else if strings.Contains(modelLower, "thinking") {
+		type_ = TypeThinking
+	} else if strings.Contains(modelLower, "flash") {
+		type_ = TypeFlash
+	} else if strings.Contains(modelLower, "pro") {
+		type_ = TypePro
 	}
 
 	if version != "" && type_ != "" {

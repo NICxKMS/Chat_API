@@ -42,6 +42,17 @@ const (
 	TypeEmbedding = "Embedding"
 	TypeImage     = "Image Generation"
 
+	// Version constants for improved consistency
+	Version10 = "1.0"
+	Version15 = "1.5"
+	Version20 = "2.0"
+	Version25 = "2.5"
+	Version30 = "3.0"
+	Version35 = "3.5"
+	Version37 = "3.7"
+	Version40 = "4.0"
+	Version45 = "4.5"
+
 	// Capabilities
 	CapVision          = "vision"
 	CapFunctionCalling = "function-calling"
@@ -184,8 +195,15 @@ func (mc *ModelClassifier) determineSeries(modelName, provider string) string {
 	// Provider-specific series determination
 	switch provider {
 	case ProviderOpenAI:
-		return "GPT"
-
+		if modelName[0] == 'o' {
+			return "O"
+		}
+		if modelName[0] == 'g' {
+			return "GPT"
+		}
+		if modelName[0] == 'd' {
+			return "DALL-E"
+		}
 	case ProviderAnthropicA:
 		if series := mc.patterns.matchClaudeVersion(modelName); series != "" {
 			return series
@@ -466,4 +484,34 @@ func IsNewerVersion(a, b string) bool {
 
 	// Fallback to string comparison
 	return a > b
+}
+
+// GetStandardizedVersion returns a standardized version string from a model name
+func (mc *ModelClassifier) GetStandardizedVersion(modelName string) string {
+	// Convert to lowercase for consistent matching
+	modelLower := strings.ToLower(modelName)
+
+	// Check for specific version numbers
+	if strings.Contains(modelLower, "4.5") {
+		return Version45
+	} else if strings.Contains(modelLower, "4.0") || strings.Contains(modelLower, "4o") {
+		return Version40
+	} else if strings.Contains(modelLower, "3.7") {
+		return Version37
+	} else if strings.Contains(modelLower, "3.5") {
+		return Version35
+	} else if strings.Contains(modelLower, "3.0") {
+		return Version30
+	} else if strings.Contains(modelLower, "2.5") {
+		return Version25
+	} else if strings.Contains(modelLower, "2.0") {
+		return Version20
+	} else if strings.Contains(modelLower, "1.5") {
+		return Version15
+	} else if strings.Contains(modelLower, "1.0") {
+		return Version10
+	}
+
+	// If no version is identified, return empty string
+	return ""
 }

@@ -75,7 +75,7 @@
                                     "metadata": {},
                                     "id": "gpt-4o-audio-preview-2024-10-01",
                                     "name": "gpt-4o-audio-preview-2024-10-01",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -92,14 +92,14 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "function-calling",
                                         "chat",
-                                        "vision"
+                                        "vision",
+                                        "function-calling"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-4o-transcribe",
                                     "name": "gpt-4o-transcribe",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -116,14 +116,14 @@
                                 },
                                 {
                                     "capabilities": [
+                                        "chat",
                                         "vision",
-                                        "function-calling",
-                                        "chat"
+                                        "function-calling"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-4o-audio-preview",
                                     "name": "gpt-4o-audio-preview",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -147,7 +147,7 @@
                                     "metadata": {},
                                     "id": "gpt-4o-2024-11-20",
                                     "name": "gpt-4o-2024-11-20",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -188,14 +188,14 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "vision",
                                         "function-calling",
-                                        "chat"
+                                        "chat",
+                                        "vision"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-4o-search-preview",
                                     "name": "gpt-4o-search-preview",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -212,9 +212,9 @@
                                 },
                                 {
                                     "capabilities": [
+                                        "vision",
                                         "function-calling",
-                                        "chat",
-                                        "vision"
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-4o-search-preview-2025-03-11",
@@ -267,7 +267,7 @@
                                     "metadata": {},
                                     "id": "gpt-4o-2024-08-06",
                                     "name": "gpt-4o-2024-08-06",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -325,7 +325,7 @@
                                     "metadata": {},
                                     "id": "gpt-4o-mini-tts",
                                     "name": "gpt-4o-mini-tts",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -369,7 +369,7 @@
                                     "metadata": {},
                                     "id": "gpt-4o-mini-search-preview",
                                     "name": "gpt-4o-mini-search-preview",
-                                    "context_size": 8192,
+                                    "context_size": 128000,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -391,7 +391,7 @@
                                     "metadata": {},
                                     "id": "gpt-4o-mini-search-preview-2025-03-11",
                                     "name": "gpt-4o-mini-search-preview-2025-03-11",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -435,7 +435,7 @@
                                     "metadata": {},
                                     "id": "gpt-4o-mini-2024-07-18",
                                     "name": "gpt-4o-mini-2024-07-18",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -457,7 +457,7 @@
                                     "metadata": {},
                                     "id": "gpt-4o-mini-audio-preview-2024-12-17",
                                     "name": "gpt-4o-mini-audio-preview-2024-12-17",
-                                    "context_size": 128000,
+                                    "context_size": 8192,
                                     "max_tokens": 0,
                                     "provider": "openai",
                                     "display_name": "",
@@ -654,8 +654,8 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "chat",
-                                        "function-calling"
+                                        "function-calling",
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-3.5-turbo",
@@ -781,9 +781,9 @@
                             "models": [
                                 {
                                     "capabilities": [
+                                        "vision",
                                         "function-calling",
-                                        "chat",
-                                        "vision"
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gpt-4.5-preview",
@@ -850,21 +850,23 @@
                             "models": [
                                 {
                                     "capabilities": [
-                                        "Image Generation"
+                                        "vision",
+                                        "function-calling",
+                                        "chat"
                                     ],
                                     "metadata": {},
-                                    "id": "gemini-2.0-flash-exp-image-generation",
-                                    "name": "Gemini 2.0 Flash Exp Image Generation",
+                                    "id": "gemini-2.0-flash-lite-001",
+                                    "name": "Gemini 2.0 Flash Lite 001",
                                     "context_size": 0,
                                     "max_tokens": 0,
                                     "provider": "gemini",
                                     "display_name": "",
                                     "description": "",
                                     "cost_per_token": 0,
-                                    "family": "Image Generation",
-                                    "type": "Image Generation",
-                                    "series": "Image Generation",
-                                    "variant": "Image Generation",
+                                    "family": "Gemini 2.0",
+                                    "type": "Flash Lite",
+                                    "series": "Gemini 2.0",
+                                    "variant": "Gemini 2.0 Flash Lite",
                                     "is_default": false,
                                     "is_multimodal": true,
                                     "is_experimental": false,
@@ -872,34 +874,84 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "Image Generation"
+                                        "vision",
+                                        "function-calling",
+                                        "chat"
                                     ],
                                     "metadata": {},
-                                    "id": "imagen-3.0-generate-002",
-                                    "name": "Imagen 3.0 Generate 002",
+                                    "id": "gemini-2.0-flash-lite",
+                                    "name": "Gemini 2.0 Flash Lite",
                                     "context_size": 0,
                                     "max_tokens": 0,
                                     "provider": "gemini",
                                     "display_name": "",
                                     "description": "",
                                     "cost_per_token": 0,
-                                    "family": "Image Generation",
-                                    "type": "Image Generation",
-                                    "series": "Image Generation",
-                                    "variant": "Image Generation",
+                                    "family": "Gemini 2.0",
+                                    "type": "Flash Lite",
+                                    "series": "Gemini 2.0",
+                                    "variant": "Gemini 2.0 Flash Lite",
                                     "is_default": false,
-                                    "is_multimodal": false,
+                                    "is_multimodal": true,
                                     "is_experimental": false,
+                                    "version": ""
+                                },
+                                {
+                                    "capabilities": [
+                                        "vision",
+                                        "function-calling",
+                                        "chat"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-2.0-flash-lite-preview-02-05",
+                                    "name": "Gemini 2.0 Flash Lite Preview 02 05",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini 2.0",
+                                    "type": "Flash Lite",
+                                    "series": "Gemini 2.0",
+                                    "variant": "Gemini 2.0 Flash Lite",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": true,
+                                    "version": ""
+                                },
+                                {
+                                    "capabilities": [
+                                        "vision",
+                                        "function-calling",
+                                        "chat"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-2.0-flash-lite-preview",
+                                    "name": "Gemini 2.0 Flash Lite Preview",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini 2.0",
+                                    "type": "Flash Lite",
+                                    "series": "Gemini 2.0",
+                                    "variant": "Gemini 2.0 Flash Lite",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": true,
                                     "version": ""
                                 }
                             ],
                             "children": [],
                             "group_name": "version",
-                            "group_value": "Image Generation"
+                            "group_value": "Gemini 2.0 Flash Lite"
                         }
                     ],
                     "group_name": "type",
-                    "group_value": "Image Generation"
+                    "group_value": "Flash Lite"
                 },
                 {
                     "models": [],
@@ -913,61 +965,23 @@
                                         "chat"
                                     ],
                                     "metadata": {},
-                                    "id": "gemma-3-27b-it",
-                                    "name": "Gemma 3 27b It",
+                                    "id": "gemini-2.0-flash-thinking-exp-01-21",
+                                    "name": "Gemini 2.0 Flash Thinking Exp 01 21",
                                     "context_size": 0,
                                     "max_tokens": 0,
                                     "provider": "gemini",
                                     "display_name": "",
                                     "description": "",
                                     "cost_per_token": 0,
-                                    "family": "Gemini",
-                                    "type": "Standard",
-                                    "series": "Gemini",
-                                    "variant": "Gemini 3.27",
+                                    "family": "Gemini 2.0",
+                                    "type": "Thinking",
+                                    "series": "Gemini 2.0",
+                                    "variant": "Gemini 2.0 Thinking",
                                     "is_default": false,
                                     "is_multimodal": true,
                                     "is_experimental": false,
                                     "version": ""
-                                }
-                            ],
-                            "children": [],
-                            "group_name": "version",
-                            "group_value": "Gemini 3.27"
-                        },
-                        {
-                            "models": [
-                                {
-                                    "capabilities": [
-                                        "function-calling",
-                                        "chat",
-                                        "vision"
-                                    ],
-                                    "metadata": {},
-                                    "id": "aqa",
-                                    "name": "Aqa",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini",
-                                    "type": "Standard",
-                                    "series": "Gemini",
-                                    "variant": "Gemini",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                }
-                            ],
-                            "children": [],
-                            "group_name": "version",
-                            "group_value": "Gemini"
-                        },
-                        {
-                            "models": [
+                                },
                                 {
                                     "capabilities": [
                                         "vision",
@@ -975,18 +989,42 @@
                                         "chat"
                                     ],
                                     "metadata": {},
-                                    "id": "gemini-exp-1206",
-                                    "name": "Gemini exp 1206",
+                                    "id": "gemini-2.0-flash-thinking-exp",
+                                    "name": "Gemini 2.0 Flash Thinking Exp",
                                     "context_size": 0,
                                     "max_tokens": 0,
                                     "provider": "gemini",
                                     "display_name": "",
                                     "description": "",
                                     "cost_per_token": 0,
-                                    "family": "Gemini",
-                                    "type": "Standard",
-                                    "series": "Gemini",
-                                    "variant": "Gemini 1206",
+                                    "family": "Gemini 2.0",
+                                    "type": "Thinking",
+                                    "series": "Gemini 2.0",
+                                    "variant": "Gemini 2.0 Thinking",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                },
+                                {
+                                    "capabilities": [
+                                        "chat",
+                                        "vision",
+                                        "function-calling"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-2.0-flash-thinking-exp-1219",
+                                    "name": "Gemini 2.0 Flash Thinking Exp 1219",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini 2.0",
+                                    "type": "Thinking",
+                                    "series": "Gemini 2.0",
+                                    "variant": "Gemini 2.0 Thinking",
                                     "is_default": false,
                                     "is_multimodal": true,
                                     "is_experimental": false,
@@ -995,11 +1033,11 @@
                             ],
                             "children": [],
                             "group_name": "version",
-                            "group_value": "Gemini 1206"
+                            "group_value": "Gemini 2.0 Thinking"
                         }
                     ],
                     "group_name": "type",
-                    "group_value": "Standard"
+                    "group_value": "Thinking"
                 },
                 {
                     "models": [],
@@ -1066,9 +1104,88 @@
                             "models": [
                                 {
                                     "capabilities": [
+                                        "vision",
+                                        "function-calling",
+                                        "chat"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-2.0-flash-exp",
+                                    "name": "Gemini 2.0 Flash Exp",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini 2.0",
+                                    "type": "Flash",
+                                    "series": "Gemini 2.0",
+                                    "variant": "Gemini 2.0 Flash",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                },
+                                {
+                                    "capabilities": [
                                         "function-calling",
                                         "chat",
                                         "vision"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-2.0-flash",
+                                    "name": "Gemini 2.0 Flash",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini 2.0",
+                                    "type": "Flash",
+                                    "series": "Gemini 2.0",
+                                    "variant": "Gemini 2.0 Flash",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                },
+                                {
+                                    "capabilities": [
+                                        "chat",
+                                        "vision",
+                                        "function-calling"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-2.0-flash-001",
+                                    "name": "Gemini 2.0 Flash 001",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini 2.0",
+                                    "type": "Flash",
+                                    "series": "Gemini 2.0",
+                                    "variant": "Gemini 2.0 Flash",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "Gemini 2.0 Flash"
+                        },
+                        {
+                            "models": [
+                                {
+                                    "capabilities": [
+                                        "vision",
+                                        "function-calling",
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-1.5-flash",
@@ -1162,9 +1279,9 @@
                                 },
                                 {
                                     "capabilities": [
-                                        "vision",
                                         "function-calling",
-                                        "chat"
+                                        "chat",
+                                        "vision"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-1.5-flash-002",
@@ -1258,9 +1375,9 @@
                                 },
                                 {
                                     "capabilities": [
+                                        "chat",
                                         "vision",
-                                        "function-calling",
-                                        "chat"
+                                        "function-calling"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-1.5-flash-8b-exp-0827",
@@ -1308,6 +1425,102 @@
                             "children": [],
                             "group_name": "version",
                             "group_value": "Gemini 1.5 Flash"
+                        }
+                    ],
+                    "group_name": "type",
+                    "group_value": "Flash"
+                },
+                {
+                    "models": [],
+                    "children": [
+                        {
+                            "models": [
+                                {
+                                    "capabilities": [
+                                        "Image Generation"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-2.0-flash-exp-image-generation",
+                                    "name": "Gemini 2.0 Flash Exp Image Generation",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Image Generation",
+                                    "type": "Image Generation",
+                                    "series": "Image Generation",
+                                    "variant": "Image Generation",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                },
+                                {
+                                    "capabilities": [
+                                        "Image Generation"
+                                    ],
+                                    "metadata": {},
+                                    "id": "imagen-3.0-generate-002",
+                                    "name": "Imagen 3.0 Generate 002",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Image Generation",
+                                    "type": "Image Generation",
+                                    "series": "Image Generation",
+                                    "variant": "Image Generation",
+                                    "is_default": false,
+                                    "is_multimodal": false,
+                                    "is_experimental": false,
+                                    "version": ""
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "Image Generation"
+                        }
+                    ],
+                    "group_name": "type",
+                    "group_value": "Image Generation"
+                },
+                {
+                    "models": [],
+                    "children": [
+                        {
+                            "models": [
+                                {
+                                    "capabilities": [
+                                        "vision",
+                                        "function-calling",
+                                        "chat"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemini-exp-1206",
+                                    "name": "Gemini exp 1206",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini",
+                                    "type": "Standard",
+                                    "series": "Gemini",
+                                    "variant": "Gemini 1206",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "Gemini 1206"
                         },
                         {
                             "models": [
@@ -1318,234 +1531,18 @@
                                         "chat"
                                     ],
                                     "metadata": {},
-                                    "id": "gemini-2.0-flash-exp",
-                                    "name": "Gemini 2.0 Flash Exp",
+                                    "id": "aqa",
+                                    "name": "Aqa",
                                     "context_size": 0,
                                     "max_tokens": 0,
                                     "provider": "gemini",
                                     "display_name": "",
                                     "description": "",
                                     "cost_per_token": 0,
-                                    "family": "Gemini 2.0",
-                                    "type": "Flash",
-                                    "series": "Gemini 2.0",
-                                    "variant": "Gemini 2.0 Flash",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "chat",
-                                        "vision",
-                                        "function-calling"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-2.0-flash",
-                                    "name": "Gemini 2.0 Flash",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini 2.0",
-                                    "type": "Flash",
-                                    "series": "Gemini 2.0",
-                                    "variant": "Gemini 2.0 Flash",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-2.0-flash-001",
-                                    "name": "Gemini 2.0 Flash 001",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini 2.0",
-                                    "type": "Flash",
-                                    "series": "Gemini 2.0",
-                                    "variant": "Gemini 2.0 Flash",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-2.0-flash-lite-001",
-                                    "name": "Gemini 2.0 Flash Lite 001",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini 2.0",
-                                    "type": "Flash",
-                                    "series": "Gemini 2.0",
-                                    "variant": "Gemini 2.0 Flash",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-2.0-flash-lite",
-                                    "name": "Gemini 2.0 Flash Lite",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini 2.0",
-                                    "type": "Flash",
-                                    "series": "Gemini 2.0",
-                                    "variant": "Gemini 2.0 Flash",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-2.0-flash-lite-preview-02-05",
-                                    "name": "Gemini 2.0 Flash Lite Preview 02 05",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini 2.0",
-                                    "type": "Flash",
-                                    "series": "Gemini 2.0",
-                                    "variant": "Gemini 2.0 Flash",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": true,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-2.0-flash-lite-preview",
-                                    "name": "Gemini 2.0 Flash Lite Preview",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini 2.0",
-                                    "type": "Flash",
-                                    "series": "Gemini 2.0",
-                                    "variant": "Gemini 2.0 Flash",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": true,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-2.0-flash-thinking-exp-01-21",
-                                    "name": "Gemini 2.0 Flash Thinking Exp 01 21",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini 2.0",
-                                    "type": "Flash",
-                                    "series": "Gemini 2.0",
-                                    "variant": "Gemini 2.0 Flash",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-2.0-flash-thinking-exp",
-                                    "name": "Gemini 2.0 Flash Thinking Exp",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini 2.0",
-                                    "type": "Flash",
-                                    "series": "Gemini 2.0",
-                                    "variant": "Gemini 2.0 Flash",
-                                    "is_default": false,
-                                    "is_multimodal": true,
-                                    "is_experimental": false,
-                                    "version": ""
-                                },
-                                {
-                                    "capabilities": [
-                                        "vision",
-                                        "function-calling",
-                                        "chat"
-                                    ],
-                                    "metadata": {},
-                                    "id": "gemini-2.0-flash-thinking-exp-1219",
-                                    "name": "Gemini 2.0 Flash Thinking Exp 1219",
-                                    "context_size": 0,
-                                    "max_tokens": 0,
-                                    "provider": "gemini",
-                                    "display_name": "",
-                                    "description": "",
-                                    "cost_per_token": 0,
-                                    "family": "Gemini 2.0",
-                                    "type": "Flash",
-                                    "series": "Gemini 2.0",
-                                    "variant": "Gemini 2.0 Flash",
+                                    "family": "Gemini",
+                                    "type": "Standard",
+                                    "series": "Gemini",
+                                    "variant": "Gemini",
                                     "is_default": false,
                                     "is_multimodal": true,
                                     "is_experimental": false,
@@ -1554,11 +1551,49 @@
                             ],
                             "children": [],
                             "group_name": "version",
-                            "group_value": "Gemini 2.0 Flash"
+                            "group_value": "Gemini"
                         }
                     ],
                     "group_name": "type",
-                    "group_value": "Flash"
+                    "group_value": "Standard"
+                },
+                {
+                    "models": [],
+                    "children": [
+                        {
+                            "models": [
+                                {
+                                    "capabilities": [
+                                        "vision",
+                                        "function-calling",
+                                        "chat"
+                                    ],
+                                    "metadata": {},
+                                    "id": "gemma-3-27b-it",
+                                    "name": "Gemma 3 27b It",
+                                    "context_size": 0,
+                                    "max_tokens": 0,
+                                    "provider": "gemini",
+                                    "display_name": "",
+                                    "description": "",
+                                    "cost_per_token": 0,
+                                    "family": "Gemini",
+                                    "type": "Gemma",
+                                    "series": "Gemini",
+                                    "variant": "Gemini 3.27",
+                                    "is_default": false,
+                                    "is_multimodal": true,
+                                    "is_experimental": false,
+                                    "version": ""
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "Gemini 3.27"
+                        }
+                    ],
+                    "group_name": "type",
+                    "group_value": "Gemma"
                 },
                 {
                     "models": [],
@@ -1615,9 +1650,9 @@
                                 },
                                 {
                                     "capabilities": [
+                                        "vision",
                                         "function-calling",
-                                        "chat",
-                                        "vision"
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-1.5-pro-001",
@@ -1639,9 +1674,9 @@
                                 },
                                 {
                                     "capabilities": [
+                                        "vision",
                                         "function-calling",
-                                        "chat",
-                                        "vision"
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-1.5-pro-002",
@@ -1746,7 +1781,14 @@
                                     "is_multimodal": true,
                                     "is_experimental": false,
                                     "version": ""
-                                },
+                                }
+                            ],
+                            "children": [],
+                            "group_name": "version",
+                            "group_value": "Gemini Pro"
+                        },
+                        {
+                            "models": [
                                 {
                                     "capabilities": [
                                         "vision",
@@ -1762,10 +1804,10 @@
                                     "display_name": "",
                                     "description": "",
                                     "cost_per_token": 0,
-                                    "family": "Gemini",
+                                    "family": "Gemini 2.5",
                                     "type": "Pro",
-                                    "series": "Gemini",
-                                    "variant": "Gemini Pro",
+                                    "series": "Gemini 2.5",
+                                    "variant": "Gemini 2.5 Pro",
                                     "is_default": false,
                                     "is_multimodal": true,
                                     "is_experimental": false,
@@ -1774,15 +1816,15 @@
                             ],
                             "children": [],
                             "group_name": "version",
-                            "group_value": "Gemini Pro"
+                            "group_value": "Gemini 2.5 Pro"
                         },
                         {
                             "models": [
                                 {
                                     "capabilities": [
-                                        "chat",
                                         "vision",
-                                        "function-calling"
+                                        "function-calling",
+                                        "chat"
                                     ],
                                     "metadata": {},
                                     "id": "gemini-2.0-pro-exp",
@@ -1875,9 +1917,9 @@
             "possible_values": [
                 "Vision",
                 "Standard",
-                "Turbo",
                 "Pro",
                 "Flash",
+                "Gemma",
                 "Opus",
                 "Sonnet",
                 "Haiku",
@@ -1920,5 +1962,5 @@
             "description": "Special model capabilities"
         }
     ],
-    "timestamp": "2025-03-31T13:25:19.861Z"
+    "timestamp": "2025-03-31T19:49:06.018Z"
 }

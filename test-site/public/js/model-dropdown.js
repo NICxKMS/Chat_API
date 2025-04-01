@@ -363,7 +363,21 @@ class ModelDropdown {
 
           // Sort models within the type group (e.g., by variant or display name)
           const sortedModels = groupModels.sort((a, b) => {
-              // Sort by variant ('Default' last), then display name
+              // Special handling for Gemini provider - sort by version within each type group
+              if (a.provider.toLowerCase() === 'gemini' && b.provider.toLowerCase() === 'gemini') {
+                  // First parse versions as floats, defaulting to 0 if not present
+                  const aVersion = parseFloat(a.version || '0');
+                  const bVersion = parseFloat(b.version || '0');
+                  
+                  // If versions are different, sort by higher version first
+                  if (aVersion !== bVersion) {
+                      return bVersion - aVersion; // Higher versions first (2.5 before 2.0)
+                  }
+                  
+                  // If versions are the same, fall back to variant/display name sorting
+              }
+              
+              // Original sorting logic for non-Gemini or same-version Gemini models
               const variantA = a.variant || 'z'; // 'z' to push Default/Unknown last
               const variantB = b.variant || 'z';
               if (variantA !== variantB) {
@@ -462,7 +476,6 @@ class ModelDropdown {
       
       // Log the full received object
       console.log('Full object received from API:', data);
-      console.log('Raw classification data received:', JSON.stringify(data, null, 2)); // Log the raw data
       
       if (!data.hierarchical_groups || data.hierarchical_groups.length === 0) {
         console.error('Invalid or empty model data received (expected hierarchical_groups)');
@@ -1083,6 +1096,8 @@ class ModelDropdown {
     const bProvider = b.provider && b.provider.toLowerCase();
     const aDisplayName = a.displayName && a.displayName.toLowerCase();
     const bDisplayName = b.displayName && b.displayName.toLowerCase();
+    const aId = a.id && a.id.toLowerCase();
+    const bId = b.id && b.id.toLowerCase();
     
     // If providers are different, we don't need special sorting
     if (aProvider !== bProvider) {
@@ -1096,6 +1111,28 @@ class ModelDropdown {
       const isBMini = b.groupingKey === 'Mini' || bDisplayName.includes('mini');
       
       if (isAMini !== isBMini) return isAMini ? -1 : 1; // Mini first
+      
+      // Special ordering for Mini models
+      if (isAMini && isBMini) {
+        // Define mini model priorities - higher number = higher priority
+        const getMiniPriority = (modelId) => {
+          if (modelId === 'gpt-4o-mini') return 3;   // Exact gpt-4o-mini first
+          if (modelId.includes('o1-mini')) return 2; // o1-mini second
+          if (modelId.includes('4o-mini')) return 1; // Other 4o-mini variants third
+          return 0;                                  // All other minis last
+        };
+        
+        const aPriority = getMiniPriority(aId);
+        const bPriority = getMiniPriority(bId);
+        
+        // Sort by priority (higher numbers first)
+        if (aPriority !== bPriority) {
+          return bPriority - aPriority;
+        }
+        
+        // If same priority, sort alphabetically
+        return aId.localeCompare(bId);
+      }
       
       // O Series comes second
       const isAOSeries = a.groupingKey === 'O Series' || /^o\d/.test(aDisplayName);
@@ -1152,6 +1189,14 @@ class ModelDropdown {
             return versionB - versionA; // Higher versions first
           }
         }
+        
+        // For all OpenAI model groups, sort by name length (shortest first)
+        const aNameLength = aId.length;
+        const bNameLength = bId.length;
+        
+        if (aNameLength !== bNameLength) {
+          return aNameLength - bNameLength; // Shorter names first
+        }
       }
       
       // GPT 4.5 should come before GPT 4
@@ -1161,50 +1206,14 @@ class ModelDropdown {
       if (a.groupingKey === 'GPT 4' && b.groupingKey === 'GPT 4.5') {
         return 1;
       }
+      
+      // If everything else is equal for OpenAI models, prioritize shorter names
+      return aId.length - bId.length;
     }
     
-    // For Gemini models, prioritize sorting by version numbers
+    // For Gemini models, prioritize sorting by type first, then by version within each type
     if (aProvider === 'gemini') {
-      // Extract version numbers (cache for better performance)
-      if (!this._geminiVersionMap) {
-        this._geminiVersionMap = new Map();
-      }
-      
-      // Get version from cache or calculate
-      const getVersion = (model) => {
-        const cacheKey = model.id || model.name;
-        
-        if (this._geminiVersionMap.has(cacheKey)) {
-          return this._geminiVersionMap.get(cacheKey);
-        }
-        
-        let version = 0;
-        // Try from display name first
-        const displayMatch = model.displayName.match(/(\d+\.\d+)/);
-        if (displayMatch) {
-          version = parseFloat(displayMatch[1]);
-        }
-        // Try from series next if no match in display name
-        else if (model.series) {
-          const seriesMatch = model.series.match(/(\d+\.\d+)/);
-          if (seriesMatch) {
-            version = parseFloat(seriesMatch[1]);
-          }
-        }
-        
-        this._geminiVersionMap.set(cacheKey, version);
-        return version;
-      };
-      
-      const versionA = getVersion(a);
-      const versionB = getVersion(b);
-      
-      // Higher versions first (2.0 before 1.5 before 1.0)
-      if (versionA !== versionB) {
-        return versionB - versionA;
-      }
-      
-      // For same versions, order by type
+      // Create type order map if not already created
       if (!this._geminiTypeOrderMap) {
         this._geminiTypeOrderMap = new Map([
           ['Flash Lite', 1], 
@@ -1219,8 +1228,24 @@ class ModelDropdown {
       const typeA = this._geminiTypeOrderMap.get(a.type) || 10;
       const typeB = this._geminiTypeOrderMap.get(b.type) || 10;
       
+      // If types are different, sort by type
       if (typeA !== typeB) {
         return typeA - typeB;
+      }
+      
+      // If types are the same, sort by version (higher versions first)
+      const aVersion = parseFloat(a.version || 0);
+      const bVersion = parseFloat(b.version || 0);
+      
+      if (aVersion !== bVersion) {
+        return bVersion - aVersion; // Higher versions first (2.5 before 2.0 before 1.5)
+      }
+      
+      // For same version and type, prioritize models with 'latest' in the name
+      const isALatest = aId.includes('latest');
+      const isBLatest = bId.includes('latest');
+      if (isALatest !== isBLatest) {
+        return isALatest ? -1 : 1; // Latest versions first
       }
     }
     

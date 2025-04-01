@@ -457,7 +457,8 @@ async function getCompletionResponse(selectedModel, typingElement) {
   try {
     // Normalize the provider name and model to ensure consistent format
     const providerName = selectedModel.provider.toLowerCase().trim();
-    const modelName = selectedModel.name.trim();
+    
+    const modelName = selectedModel.id.trim();
     const fullModelName = `${providerName}/${modelName}`;
     
     console.log(`Sending request for ${fullModelName}`);
@@ -467,6 +468,7 @@ async function getCompletionResponse(selectedModel, typingElement) {
       headers: {
         'Content-Type': 'application/json'
       },
+      
       body: JSON.stringify({
         model: fullModelName,
         messages: chatHistory,
@@ -475,7 +477,7 @@ async function getCompletionResponse(selectedModel, typingElement) {
         stream: false
       })
     });
-    
+    console.log(response);
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Error response:', errorText);
@@ -755,6 +757,24 @@ function handleModelSelect(model) {
   selectedModel = model;
   document.getElementById('selected-model-display').innerText = model.displayName || model.name;
   console.log('Model selected:', model);
+  
+  // Check if the model name or series starts with 'o'
+  if (model.name && (model.name.startsWith('o') || (model.series && model.series === 'o'))) {
+    // Set temperature to 1 and disable the slider
+    if (temperatureSlider) {
+      temperatureSlider.value = 1;
+      temperatureSlider.disabled = true;
+      // Update the display value
+      if (temperatureValue) {
+        temperatureValue.textContent = '1';
+      }
+    }
+  } else {
+    // Enable the slider for other models
+    if (temperatureSlider) {
+      temperatureSlider.disabled = false;
+    }
+  }
   
   // Enable send button if there's text in the input
   if (sendButton && chatInput && chatInput.value.trim()) {

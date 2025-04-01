@@ -229,6 +229,15 @@ func (h *ModelClassificationHandler) applyModelMetadata(model *models.Model, met
 	model.ContextSize = int32(metadata.Context)
 	model.Capabilities = metadata.Capabilities
 
+	// Set version information if it's not already set
+	if model.Version == "" {
+		// Extract standardized version number from model name and variant
+		standardizedVersion := h.classifier.GetStandardizedVersion(model.Name)
+		if standardizedVersion != "" {
+			model.Version = standardizedVersion
+		}
+	}
+
 	// Set multimodal flag based on metadata and other checks
 	model.IsMultimodal = metadata.IsMultimodal ||
 		containsAny(model.Capabilities, []string{"vision", "multimodal"}) ||
