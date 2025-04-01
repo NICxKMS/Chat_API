@@ -139,9 +139,6 @@ func (pm *PatternMatcher) matchGeminiVersion(modelName string) string {
 	if strings.Contains(modelLower, "1.5") {
 		return "Gemini " + Version15
 	}
-	if strings.Contains(modelLower, "1.0") {
-		return "Gemini " + Version10
-	}
 
 	return "Gemini " + Version10
 }

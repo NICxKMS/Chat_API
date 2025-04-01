@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/chat-api/model-categorizer/classifiers"
@@ -356,80 +358,321 @@ func (h *ModelClassificationHandler) filterModelsByCriteria(modelsList []*models
 	return result
 }
 
-// buildModelHierarchy creates a hierarchical grouping of models by provider, type, and version
+// sortModels sorts a list of models according to specified provider and model hierarchy
+func (h *ModelClassificationHandler) sortModels(modelsList []*models.Model) {
+	// Pre-parse models to avoid redundant computations
+	type modelInfo struct {
+		model      *models.Model
+		lowerName  string
+		priority   int // Combined priority for efficient sorting
+		provider   string
+		modelType  string
+		version    string
+		versionNum float64 // Numeric version for comparison
+	}
+
+	// Provider priority map
+	providerPriority := map[string]int{
+		"gemini":    0,
+		"openai":    1,
+		"anthropic": 2,
+		"claude":    2, // Treat claude same as anthropic
+	}
+
+	// Type priority maps for each provider
+	geminiTypePriority := map[string]int{
+		classifiers.TypeFlashLite: 0,
+		classifiers.TypeFlash:     1,
+		classifiers.TypePro:       2,
+		classifiers.TypeThinking:  3,
+		classifiers.TypeGemma:     4,
+		classifiers.TypeStandard:  5,
+	}
+
+	openaiTypePriority := map[string]int{
+		classifiers.TypeMini: 0, // Mini series
+		classifiers.TypeO:    1, // O series
+		classifiers.Type45:   2, // 4.5 series
+		classifiers.Type4:    3, // GPT-4 series
+		classifiers.Type35:   4, // GPT-3.5 series
+		"other":              5, // Other OpenAI models
+	}
+
+	claudeTypePriority := map[string]int{
+		classifiers.TypeSonnet: 0,
+		classifiers.TypeOpus:   1,
+		classifiers.TypeHaiku:  2,
+		"other":                3,
+	}
+
+	// Parse each model once
+	modelInfos := make([]modelInfo, len(modelsList))
+	for i, model := range modelsList {
+		lowerName := strings.ToLower(model.Name)
+		provider := strings.ToLower(model.Provider)
+		modelType := model.Type
+
+		// Extract version as float for comparison
+		versionNum := 0.0
+		if model.Version != "" {
+			// Extract numbers from version string
+			nums := make([]string, 0)
+			for _, r := range model.Version {
+				if r >= '0' && r <= '9' || r == '.' {
+					nums = append(nums, string(r))
+				}
+			}
+			versionStr := strings.Join(nums, "")
+			if versionFloat, err := strconv.ParseFloat(versionStr, 64); err == nil {
+				versionNum = versionFloat
+			}
+		}
+
+		// Special cases for OpenAI mini series
+		if provider == "openai" {
+			if strings.Contains(lowerName, "mini") {
+				modelType = classifiers.TypeMini
+			} else if lowerName[0] == 'o' {
+				modelType = classifiers.TypeO
+			}
+		}
+
+		modelInfos[i] = modelInfo{
+			model:      model,
+			lowerName:  lowerName,
+			provider:   provider,
+			modelType:  modelType,
+			version:    model.Version,
+			versionNum: versionNum,
+		}
+	}
+
+	// Sort the models
+	sort.SliceStable(modelInfos, func(i, j int) bool {
+		a, b := modelInfos[i], modelInfos[j]
+
+		// 1. Primary sort: Provider
+		provPriorityA := providerPriority[a.provider]
+		provPriorityB := providerPriority[b.provider]
+
+		// If provider not in map, assign a high value (lower priority)
+		if _, exists := providerPriority[a.provider]; !exists {
+			provPriorityA = 100
+		}
+		if _, exists := providerPriority[b.provider]; !exists {
+			provPriorityB = 100
+		}
+
+		if provPriorityA != provPriorityB {
+			return provPriorityA < provPriorityB
+		}
+
+		// 2. Secondary sort: Model type/hierarchy (within each provider)
+		switch a.provider {
+		case "gemini":
+			typeA := geminiTypePriority[a.modelType]
+			typeB := geminiTypePriority[b.modelType]
+
+			// Handle missing types
+			if _, exists := geminiTypePriority[a.modelType]; !exists {
+				typeA = geminiTypePriority[classifiers.TypeStandard]
+			}
+			if _, exists := geminiTypePriority[b.modelType]; !exists {
+				typeB = geminiTypePriority[classifiers.TypeStandard]
+			}
+
+			if typeA != typeB {
+				return typeA < typeB
+			}
+
+		case "openai":
+			// Special handling for 4o-mini and o1-mini
+			aIs4oMini := strings.Contains(a.lowerName, "4o-mini")
+			bIs4oMini := strings.Contains(b.lowerName, "4o-mini")
+			aIsO1Mini := strings.Contains(a.lowerName, "o1-mini")
+			bIsO1Mini := strings.Contains(b.lowerName, "o1-mini")
+
+			// Mini series special ordering
+			if a.modelType == "mini" && b.modelType == "mini" {
+				// Exact hardcoded ordering: 4o-mini first, o1-mini second
+				if a.lowerName == "4o-mini" || a.lowerName == "gpt-4o-mini" {
+					return true
+				}
+				if b.lowerName == "4o-mini" || b.lowerName == "gpt-4o-mini" {
+					return false
+				}
+				if a.lowerName == "o1-mini" || a.lowerName == "gpt-o1-mini" {
+					return true
+				}
+				if b.lowerName == "o1-mini" || b.lowerName == "gpt-o1-mini" {
+					return false
+				}
+
+				// For other 4o-mini variants that aren't exact matches
+				if aIs4oMini && !bIs4oMini {
+					return true
+				}
+				if !aIs4oMini && bIs4oMini {
+					return false
+				}
+				// For other o1-mini variants that aren't exact matches
+				if aIsO1Mini && !bIsO1Mini {
+					return true
+				}
+				if !aIsO1Mini && bIsO1Mini {
+					return false
+				}
+			}
+
+			typeA := openaiTypePriority[a.modelType]
+			typeB := openaiTypePriority[b.modelType]
+
+			// Handle missing types
+			if _, exists := openaiTypePriority[a.modelType]; !exists {
+				typeA = openaiTypePriority["other"]
+			}
+			if _, exists := openaiTypePriority[b.modelType]; !exists {
+				typeB = openaiTypePriority["other"]
+			}
+
+			if typeA != typeB {
+				return typeA < typeB
+			}
+
+			// Special handling for GPT-4 series
+			if a.modelType == classifiers.Type4 && b.modelType == classifiers.Type4 {
+				// Base 4o model first, then other 4o variants, then other gpt-4 models
+				aIs4o := strings.Contains(a.lowerName, "4o") && !strings.Contains(a.lowerName, "4o-mini")
+				bIs4o := strings.Contains(b.lowerName, "4o") && !strings.Contains(b.lowerName, "4o-mini")
+
+				aIsBase4o := a.lowerName == "gpt-4o" || a.lowerName == "4o"
+				bIsBase4o := b.lowerName == "gpt-4o" || b.lowerName == "4o"
+
+				if aIsBase4o && !bIsBase4o {
+					return true
+				}
+				if !aIsBase4o && bIsBase4o {
+					return false
+				}
+				if aIs4o && !bIs4o {
+					return true
+				}
+				if !aIs4o && bIs4o {
+					return false
+				}
+			}
+
+			// For the "other" category, sort by shortest name first
+			if typeA == openaiTypePriority["other"] && typeB == openaiTypePriority["other"] {
+				return len(a.lowerName) < len(b.lowerName)
+			}
+
+		case "anthropic", "claude":
+			typeA := claudeTypePriority[a.modelType]
+			typeB := claudeTypePriority[b.modelType]
+
+			// Handle missing types
+			if _, exists := claudeTypePriority[a.modelType]; !exists {
+				typeA = claudeTypePriority["other"]
+			}
+			if _, exists := claudeTypePriority[b.modelType]; !exists {
+				typeB = claudeTypePriority["other"]
+			}
+
+			if typeA != typeB {
+				return typeA < typeB
+			}
+		}
+
+		// 3. Tertiary sort: Version number (highest first)
+		if a.versionNum != b.versionNum {
+			return a.versionNum > b.versionNum // Descending order
+		}
+
+		// 4. Quaternary sort: Model name (tie-breaker)
+		return a.lowerName < b.lowerName
+	})
+
+	// Reorder the original slice
+	for i, info := range modelInfos {
+		modelsList[i] = info.model
+	}
+}
+
+// buildModelHierarchy creates a hierarchical grouping of models by provider, type, and version,
+// preserving the order established by sortModels.
 func (h *ModelClassificationHandler) buildModelHierarchy(modelsList []*models.Model) []*models.HierarchicalModelGroup {
 	log.Printf("[DEBUG] buildModelHierarchy: Received %d models to build hierarchy.", len(modelsList))
-	// First, group by provider
-	providerGroups := make(map[string][]*models.Model)
 
-	for _, model := range modelsList {
+	// 1. Sort models according to the specified criteria FIRST.
+	h.sortModels(modelsList)
+	log.Printf("[DEBUG] buildModelHierarchy: Finished sorting %d models.", len(modelsList))
+
+	// 2. Build the hierarchy in a single pass over the sorted list.
+	var rootGroups []*models.HierarchicalModelGroup
+	if len(modelsList) == 0 {
+		log.Printf("[DEBUG] buildModelHierarchy: No models to build hierarchy for.")
+		return rootGroups
+	}
+
+	var currentProviderGroup *models.HierarchicalModelGroup
+	var currentTypeGroup *models.HierarchicalModelGroup
+	var currentVersionGroup *models.HierarchicalModelGroup
+
+	for i, model := range modelsList {
+		// Determine provider, type, and version/variant for the current model
 		provider := model.Provider
 		if provider == "" {
 			provider = "Other"
 		}
-		providerGroups[provider] = append(providerGroups[provider], model)
-	}
-	log.Printf("[DEBUG] buildModelHierarchy: Created %d provider groups.", len(providerGroups))
-
-	// Build the hierarchy
-	var rootGroups []*models.HierarchicalModelGroup
-
-	for provider, providerModels := range providerGroups {
-		log.Printf("[DEBUG] buildModelHierarchy: Processing provider group '%s' with %d models.", provider, len(providerModels))
-		// Create the provider group
-		providerGroup := &models.HierarchicalModelGroup{
-			GroupName:  "provider",
-			GroupValue: provider,
+		modelType := model.Type
+		if modelType == "" {
+			modelType = classifiers.TypeStandard // Default if empty
+		}
+		version := model.Variant // Use Variant for the lowest level grouping
+		if version == "" {
+			version = "Default"
 		}
 
-		// Group by type within this provider
-		typeGroups := make(map[string][]*models.Model)
-		for _, model := range providerModels {
-			modelType := model.Type
-			if modelType == "" {
-				// Default to "Standard" as per classifier logic if empty after enhancement
-				modelType = classifiers.TypeStandard
+		// Check if Provider changed or if it's the first model
+		if i == 0 || currentProviderGroup == nil || provider != currentProviderGroup.GroupValue {
+			log.Printf("[DEBUG] buildModelHierarchy: Creating new provider group: %s", provider)
+			currentProviderGroup = &models.HierarchicalModelGroup{
+				GroupName:  "provider",
+				GroupValue: provider,
+				Children:   []*models.HierarchicalModelGroup{},
 			}
-			typeGroups[modelType] = append(typeGroups[modelType], model)
+			rootGroups = append(rootGroups, currentProviderGroup)
+			currentTypeGroup = nil    // Reset type group when provider changes
+			currentVersionGroup = nil // Reset version group when provider changes
 		}
-		log.Printf("[DEBUG] buildModelHierarchy: Provider '%s' has %d type groups.", provider, len(typeGroups))
 
-		// Add type groups as children to provider group
-		for modelType, typeModels := range typeGroups {
-			log.Printf("[DEBUG] buildModelHierarchy:   Processing type group '%s' with %d models.", modelType, len(typeModels))
-			typeGroup := &models.HierarchicalModelGroup{
+		// Check if Type changed or if it's the first model in this provider group
+		if currentTypeGroup == nil || modelType != currentTypeGroup.GroupValue {
+			log.Printf("[DEBUG] buildModelHierarchy:   Creating new type group: %s (under %s)", modelType, provider)
+			currentTypeGroup = &models.HierarchicalModelGroup{
 				GroupName:  "type",
 				GroupValue: modelType,
+				Children:   []*models.HierarchicalModelGroup{},
 			}
-
-			// Group by version/variant within this type
-			versionGroups := make(map[string][]*models.Model)
-			for _, model := range typeModels {
-				// Use Variant if available, otherwise default
-				version := model.Variant
-				if version == "" {
-					version = "Default" // Consistent default
-				}
-				versionGroups[version] = append(versionGroups[version], model)
-			}
-			log.Printf("[DEBUG] buildModelHierarchy:     Type '%s' has %d version groups.", modelType, len(versionGroups))
-
-			// Add version groups as children to type group
-			for version, versionModels := range versionGroups {
-				log.Printf("[DEBUG] buildModelHierarchy:       Adding version group '%s' with %d models.", version, len(versionModels))
-				versionGroup := &models.HierarchicalModelGroup{
-					GroupName:  "version",
-					GroupValue: version,
-					Models:     versionModels, // Assign actual models here
-				}
-				// Ensure Models field is populated in the proto conversion later
-				typeGroup.Children = append(typeGroup.Children, versionGroup)
-			}
-
-			providerGroup.Children = append(providerGroup.Children, typeGroup)
+			currentProviderGroup.Children = append(currentProviderGroup.Children, currentTypeGroup)
+			currentVersionGroup = nil // Reset version group when type changes
 		}
 
-		rootGroups = append(rootGroups, providerGroup)
+		// Check if Version/Variant changed or if it's the first model in this type group
+		if currentVersionGroup == nil || version != currentVersionGroup.GroupValue {
+			log.Printf("[DEBUG] buildModelHierarchy:     Creating new version group: %s (under %s > %s)", version, provider, modelType)
+			currentVersionGroup = &models.HierarchicalModelGroup{
+				GroupName:  "version", // Corresponds to Variant in the model
+				GroupValue: version,
+				Models:     []*models.Model{}, // Initialize empty model slice
+			}
+			currentTypeGroup.Children = append(currentTypeGroup.Children, currentVersionGroup)
+		}
+
+		// Add the model to the current version group
+		// log.Printf("[DEBUG] buildModelHierarchy:       Adding model '%s' to version group '%s'", model.Name, version)
+		currentVersionGroup.Models = append(currentVersionGroup.Models, model)
 	}
 
 	log.Printf("[DEBUG] buildModelHierarchy: Finished building hierarchy, returning %d root groups.", len(rootGroups))
