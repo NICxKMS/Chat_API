@@ -1,6 +1,6 @@
 .themeToggle {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background-color: var(--hover);
   border: none;
@@ -8,25 +8,48 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: all 0.3s ease;
   color: var(--text);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.themeToggle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-primary);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 50%;
 }
 
 .themeToggle:hover {
-  background-color: var(--button-bg);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   color: var(--button-text);
+  transform: translateY(-2px);
+}
+
+.themeToggle:hover::before {
+  opacity: 1;
 }
 
 .themeToggle:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
 }
 
 .icon {
-  width: 20px;
-  height: 20px;
-  transition: transform 0.3s ease;
+  width: 22px;
+  height: 22px;
+  transition: transform 0.5s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .themeToggle:hover .icon {
-  transform: rotate(15deg);
+  transform: rotate(30deg);
 } 

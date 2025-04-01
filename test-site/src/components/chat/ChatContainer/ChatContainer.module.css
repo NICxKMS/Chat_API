@@ -4,6 +4,10 @@
   height: 100%;
   width: 100%;
   background-color: var(--chat-bg);
+  overflow: hidden;
+  position: relative;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
 }
 
 .chatArea {
@@ -12,16 +16,38 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
 }
 
 .inputArea {
-  border-top: 1px solid var(--border);
-  padding: 1rem;
+  padding: 0;
   background-color: var(--chat-bg);
   position: relative;
+  z-index: 10;
 }
 
-/* Placeholder styles for Suspense fallbacks */
+/* Placeholder styles with shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.placeholder {
+  background: linear-gradient(
+    to right,
+    var(--hover) 8%,
+    var(--card-bg) 18%,
+    var(--hover) 33%
+  );
+  background-size: 800px 104px;
+  animation: shimmer 1.5s infinite linear;
+}
+
 .messagePlaceholder {
   flex-grow: 1;
   background-color: var(--chat-bg);
@@ -33,29 +59,53 @@
 
 .metricsPlaceholder {
   height: 30px;
-  background-color: var(--hover);
-  border-radius: 4px;
-  margin: 0.5rem 1rem;
+  border-radius: 8px;
+  margin: 0.75rem 1rem;
+  overflow: hidden;
 }
 
 .inputPlaceholder {
   height: 60px;
-  background-color: var(--hover);
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
+  border-radius: 12px;
+  margin: 0 1rem 0.75rem;
+  overflow: hidden;
 }
 
 .controlsPlaceholder {
   height: 40px;
-  background-color: var(--hover);
   border-radius: 8px;
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
+  margin: 0 1rem 1rem;
+  overflow: hidden;
+}
+
+.controlsPlaceholder::before,
+.controlsPlaceholder::after {
+  content: '';
+  width: 80px;
+  height: 100%;
+  background-color: var(--hover);
+  border-radius: 8px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .inputArea {
-    padding: 0.75rem;
+  .chatContainer {
+    border-radius: 0;
+    box-shadow: none;
+  }
+  
+  .metricsPlaceholder {
+    margin: 0.5rem 0.75rem;
+  }
+  
+  .inputPlaceholder {
+    margin: 0 0.75rem 0.5rem;
+  }
+  
+  .controlsPlaceholder {
+    margin: 0 0.75rem 0.75rem;
   }
 } 

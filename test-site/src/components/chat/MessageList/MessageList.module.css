@@ -3,11 +3,34 @@
   height: 100%;
   width: 100%;
   overflow: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+.messageListContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: linear-gradient(to bottom, var(--chat-bg) 0%, transparent 100%);
+  z-index: 2;
+  pointer-events: none;
 }
 
 .messageRow {
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.25rem;
   box-sizing: border-box;
+  transition: background-color 0.2s ease;
+}
+
+.messageRow:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+body.dark-mode .messageRow:hover {
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .typingIndicatorContainer {
@@ -22,50 +45,125 @@
   position: absolute;
   bottom: 1.5rem;
   right: 1.5rem;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background-color: var(--button-bg);
+  background: var(--gradient-primary);
   border: none;
   color: var(--button-text);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
   z-index: 3;
+  opacity: 0.9;
+  overflow: hidden;
+}
+
+.scrollToBottomButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-accent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .scrollToBottomButton:hover {
-  background-color: var(--button-hover);
-  transform: scale(1.05);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+  opacity: 1;
+}
+
+.scrollToBottomButton:hover::before {
+  opacity: 1;
 }
 
 .scrollToBottomButton:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .scrollIcon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.scrollToBottomButton:hover .scrollIcon {
+  transform: translateY(-3px);
+}
+
+/* Empty state styles */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  color: var(--secondary-text);
+  text-align: center;
+}
+
+.emptyStateIcon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1.5rem;
+  opacity: 0.7;
+}
+
+.emptyStateTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.emptyStateText {
+  font-size: 1rem;
+  max-width: 500px;
+  line-height: 1.5;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .messageRow {
-    padding: 0.5rem;
+    padding: 0.75rem 1rem;
   }
   
   .scrollToBottomButton {
-    width: 36px;
-    height: 36px;
-    bottom: 1rem;
-    right: 1rem;
+    width: 40px;
+    height: 40px;
+    bottom: 1.25rem;
+    right: 1.25rem;
   }
   
   .scrollIcon {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
+  }
+  
+  .emptyStateIcon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .emptyStateTitle {
+    font-size: 1.25rem;
+  }
+  
+  .emptyStateText {
+    font-size: 0.9rem;
   }
 } 

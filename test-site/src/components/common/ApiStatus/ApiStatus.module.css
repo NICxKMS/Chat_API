@@ -1,22 +1,44 @@
 .container {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .status {
   display: flex;
   align-items: center;
   background-color: var(--hover);
-  border-radius: 12px;
-  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.status:hover {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
 .indicator {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   margin-right: 0.5rem;
+  position: relative;
+}
+
+.indicator::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
+  z-index: 0;
+  opacity: 0.4;
+  animation: ripple 2s infinite ease-out;
 }
 
 .online {
@@ -24,45 +46,69 @@
   box-shadow: 0 0 5px var(--status-online);
 }
 
+.online::after {
+  background-color: var(--status-online);
+}
+
 .offline {
   background-color: var(--status-offline);
   box-shadow: 0 0 5px var(--status-offline);
 }
 
+.offline::after {
+  background-color: var(--status-offline);
+}
+
 .checking {
   animation: pulse 1.5s infinite;
+  background-color: rgba(var(--warning-rgb), 1);
+  box-shadow: 0 0 5px rgba(var(--warning-rgb), 1);
+}
+
+.checking::after {
+  background-color: rgba(var(--warning-rgb), 1);
 }
 
 .text {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 500;
   color: var(--text);
 }
 
 .refreshButton {
-  background: none;
-  border: none;
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: 50%;
   cursor: pointer;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--secondary-text);
-  transition: color 0.2s, transform 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .refreshButton:hover {
   color: var(--text);
+  background-color: var(--card-bg);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .refreshButton:active {
-  transform: scale(0.9);
+  transform: scale(0.92);
 }
 
 .refreshIcon {
   width: 16px;
   height: 16px;
+  transition: transform 0.3s ease;
+}
+
+.refreshButton:hover .refreshIcon {
+  transform: rotate(30deg);
 }
 
 @keyframes pulse {
@@ -74,5 +120,16 @@
   }
   100% {
     opacity: 1;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
   }
 } 

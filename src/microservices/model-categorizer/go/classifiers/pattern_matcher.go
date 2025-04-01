@@ -143,7 +143,7 @@ func (pm *PatternMatcher) matchGeminiVersion(modelName string) string {
 		return "Gemini " + Version10
 	}
 
-	return "Gemini"
+	return "Gemini " + Version10
 }
 
 // matchSeriesByPattern matches model series by patterns

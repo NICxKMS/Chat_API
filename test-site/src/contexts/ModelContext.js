@@ -220,12 +220,12 @@ export const ModelProvider = ({ children }) => {
               type: model.type || type, // Prefer model.type if present
               version: model.version || version, // Prefer model.version if present
               category,
-              groupingKey: model.type || groupingKey, // Use model.family if present, fallback to type
+              groupingKey: model.type || groupingKey, 
               is_experimental: model.is_experimental,
               is_multimodal: model.is_multimodal,
               capabilities: model.capabilities,
               // Get family and series directly from the model
-              family: model.family || type, // Fallback to type if family is missing
+              family: model.family || type, 
               series: model.series || version // Fallback to version if series is missing
             };
             

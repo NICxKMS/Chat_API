@@ -1,68 +1,101 @@
 .message {
   display: flex;
   gap: 1rem;
-  padding: 0.5rem;
+  padding: 1rem;
   animation: fadeIn 0.3s ease-in-out;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+  max-width: 92%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.message:last-child {
+  margin-bottom: 0;
 }
 
 /* Message variants based on role */
 .userMessage {
   background-color: var(--message-user-bg);
-  align-self: flex-start;
+  align-self: flex-end;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
 }
 
 .assistantMessage {
   background-color: var(--message-assistant-bg);
   align-self: flex-start;
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--border);
 }
 
 .systemMessage {
   background-color: var(--hover);
   align-self: center;
+  max-width: 85%;
+  font-style: italic;
+  opacity: 0.9;
 }
 
 .errorMessage {
-  background-color: rgba(var(--status-offline), 0.1);
-  color: var(--status-offline);
+  background-color: rgba(var(--error-rgb), 0.1);
+  color: rgb(var(--error-rgb));
   align-self: center;
+  border: 1px solid rgba(var(--error-rgb), 0.3);
+  max-width: 85%;
 }
 
 /* Avatar styles */
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   color: var(--text);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.avatar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.8;
 }
 
 .avatar svg {
   width: 20px;
   height: 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .userMessage .avatar {
-  background-color: var(--button-bg);
+  background: var(--gradient-primary);
   color: var(--button-text);
 }
 
 .assistantMessage .avatar {
-  background-color: var(--secondary-text);
-  color: var(--bg);
+  background: var(--gradient-accent);
+  color: white;
 }
 
 .systemMessage .avatar {
   background-color: var(--hover);
   color: var(--secondary-text);
+  border: 1px solid var(--border);
 }
 
 .errorMessage .avatar {
-  background-color: var(--status-offline);
+  background-color: rgb(var(--error-rgb));
   color: white;
 }
 
@@ -71,6 +104,7 @@
   flex-grow: 1;
   overflow-wrap: break-word;
   word-break: break-word;
+  line-height: 1.6;
 }
 
 /* Streaming effect for assistant messages */
@@ -84,67 +118,78 @@
   bottom: 0;
   right: 0;
   width: 3px;
-  height: 16px;
-  background-color: var(--button-bg);
+  height: 18px;
+  background: var(--gradient-primary);
   animation: blink 1s infinite;
+  border-radius: 2px;
 }
 
 /* Code block styles */
 .codeBlock {
   margin: 1rem 0;
   background-color: var(--code-bg);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .codeHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem;
+  padding: 0.75rem 1rem;
   background-color: rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid var(--border);
 }
 
 .language {
-  font-size: 0.8rem;
-  font-weight: bold;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--secondary-text);
+  text-transform: uppercase;
 }
 
 .copyButton {
-  background: none;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   color: var(--secondary-text);
   font-size: 0.8rem;
   cursor: pointer;
-  padding: 0.2rem 0.5rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .copyButton:hover {
-  background-color: var(--hover);
-  color: var(--text);
+  background-color: var(--button-bg);
+  color: var(--button-text);
+}
+
+.copyIcon {
+  width: 14px;
+  height: 14px;
 }
 
 .pre {
   margin: 0;
-  padding: 1rem;
+  padding: 1.25rem;
   overflow-x: auto;
 }
 
 .code {
-  font-family: 'Fira Code', monospace;
+  font-family: var(--code-font-family);
   font-size: 0.9rem;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* General text content */
 .messageContent p {
-  margin: 0.5rem 0;
-  line-height: 1.5;
+  margin: 0.75rem 0;
+  line-height: 1.6;
 }
 
 .messageContent p:first-child {
@@ -156,12 +201,33 @@
 }
 
 .messageContent a {
-  color: var(--button-bg);
+  color: rgb(var(--primary-rgb));
   text-decoration: none;
+  position: relative;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.messageContent a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: rgb(var(--primary-rgb));
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
 }
 
 .messageContent a:hover {
-  text-decoration: underline;
+  text-decoration: none;
+}
+
+.messageContent a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
 }
 
 /* Animations */
@@ -188,28 +254,34 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .message {
-    gap: 0.5rem;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    max-width: 95%;
   }
   
   .avatar {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
   
   .avatar svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
   
   .codeBlock {
-    margin: 0.5rem 0;
+    margin: 0.75rem 0;
+  }
+  
+  .codeHeader {
+    padding: 0.5rem 0.75rem;
   }
   
   .pre {
-    padding: 0.5rem;
+    padding: 0.75rem;
   }
   
   .code {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 } 

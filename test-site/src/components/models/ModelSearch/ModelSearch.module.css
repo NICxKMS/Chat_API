@@ -1,6 +1,7 @@
 .searchContainer {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid rgba(var(--primary-rgb), 0.1);
+  background: color-mix(in srgb, var(--sidebar-bg) 97%, var(--hover) 3%);
 }
 
 .inputWrapper {
@@ -11,27 +12,35 @@
 
 .searchIcon {
   position: absolute;
-  left: 10px;
+  left: 12px;
   width: 16px;
   height: 16px;
-  color: var(--secondary-text);
+  color: color-mix(in srgb, var(--secondary-text) 90%, rgb(var(--primary-rgb)));
+  transition: color 0.2s ease;
+  z-index: 1;
 }
 
 .searchInput {
   width: 100%;
-  padding: 0.5rem 0.5rem 0.5rem 2rem;
-  background-color: var(--hover);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  padding: 0.6rem 0.75rem 0.6rem 2.25rem;
+  background-color: color-mix(in srgb, var(--input-bg) 97%, rgb(var(--primary-rgb)));
+  border: 1px solid rgba(var(--primary-rgb), 0.15);
+  border-radius: 6px;
   color: var(--text);
   font-size: 0.9rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: var(--button-bg);
-  box-shadow: 0 0 0 1px var(--button-bg);
+  border-color: rgba(var(--primary-rgb), 0.5);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.15);
+  background-color: var(--input-bg);
+}
+
+.searchInput:focus + .searchIcon {
+  color: rgb(var(--primary-rgb));
 }
 
 .searchInput::placeholder {
@@ -44,19 +53,21 @@
   right: 8px;
   background: none;
   border: none;
-  padding: 2px;
+  padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--secondary-text);
   border-radius: 50%;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  z-index: 1;
 }
 
 .clearButton:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: var(--text);
+  background-color: rgba(var(--primary-rgb), 0.1);
+  color: rgb(var(--primary-rgb));
+  transform: scale(1.1);
 }
 
 .clearIcon {
@@ -65,8 +76,10 @@
 }
 
 .results {
-  margin-top: 0.5rem;
+  margin-top: 0.65rem;
   font-size: 0.8rem;
   color: var(--secondary-text);
   text-align: right;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
 } 

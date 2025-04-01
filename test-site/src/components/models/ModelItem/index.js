@@ -6,15 +6,15 @@ import styles from './ModelItem.module.css';
  * Component for displaying a single model
  * @param {Object} props - Component props
  * @param {Object} props.model - Model data
- * @param {boolean} props.isSelected - Whether the model is currently selected
- * @param {Function} props.onSelect - Function to handle model selection
+ * @param {boolean} props.selected - Whether the model is currently selected
+ * @param {Function} props.onClick - Function to handle model selection
  * @param {string} props.searchTerm - Current search term for highlighting
  * @returns {JSX.Element} - Rendered component
  */
 const ModelItem = memo(({ 
   model, 
-  isSelected, 
-  onSelect,
+  selected, 
+  onClick,
   searchTerm
 }) => {
   // Highlight matching text if searchTerm is provided
@@ -39,10 +39,10 @@ const ModelItem = memo(({
   
   return (
     <div 
-      className={`${styles.modelItem} ${isSelected ? styles.selected : ''}`}
-      onClick={onSelect}
+      className={`${styles.modelItem} ${selected ? styles.selected : ''}`}
+      onClick={() => onClick(model)}
       role="option"
-      aria-selected={isSelected}
+      aria-selected={selected}
     >
       <div className={styles.modelIcon}>
         {model.series?.charAt(0) || model.name.charAt(0)}
@@ -80,7 +80,7 @@ const ModelItem = memo(({
         )}
       </div>
       
-      {isSelected && (
+      {selected && (
         <div className={styles.selectedIndicator}>
           <CheckIcon className={styles.checkIcon} />
         </div>
@@ -112,10 +112,12 @@ ModelItem.propTypes = {
     name: PropTypes.string.isRequired,
     description: PropTypes.string,
     series: PropTypes.string,
+    providerName: PropTypes.string,
+    typeGroupName: PropTypes.string,
     tags: PropTypes.arrayOf(PropTypes.string)
   }).isRequired,
-  isSelected: PropTypes.bool.isRequired,
-  onSelect: PropTypes.func.isRequired,
+  selected: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
   searchTerm: PropTypes.string
 };
 
