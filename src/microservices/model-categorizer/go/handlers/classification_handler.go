@@ -364,7 +364,6 @@ func (h *ModelClassificationHandler) sortModels(modelsList []*models.Model) {
 	type modelInfo struct {
 		model      *models.Model
 		lowerName  string
-		priority   int // Combined priority for efficient sorting
 		provider   string
 		modelType  string
 		version    string
@@ -486,44 +485,42 @@ func (h *ModelClassificationHandler) sortModels(modelsList []*models.Model) {
 			}
 
 		case "openai":
-			// Special handling for 4o-mini and o1-mini
-			aIs4oMini := strings.Contains(a.lowerName, "4o-mini")
-			bIs4oMini := strings.Contains(b.lowerName, "4o-mini")
-			aIsO1Mini := strings.Contains(a.lowerName, "o1-mini")
-			bIsO1Mini := strings.Contains(b.lowerName, "o1-mini")
-
-			// Mini series special ordering
-			if a.modelType == "mini" && b.modelType == "mini" {
-				// Exact hardcoded ordering: 4o-mini first, o1-mini second
+			// --- Begin replacement of OpenAI mini sorting block ---
+			if strings.ToLower(a.modelType) == "mini" && strings.ToLower(b.modelType) == "mini" {
+				var priorityA, priorityB int
 				if a.lowerName == "4o-mini" || a.lowerName == "gpt-4o-mini" {
-					return true
+					priorityA = 0
+				} else if a.lowerName == "o1-mini" || a.lowerName == "gpt-o1-mini" {
+					priorityA = 1
+				} else if strings.Contains(a.lowerName, "4o-mini") {
+					priorityA = 2
+				} else if strings.Contains(a.lowerName, "o1-mini") {
+					priorityA = 3
+				} else {
+					priorityA = 4
 				}
 				if b.lowerName == "4o-mini" || b.lowerName == "gpt-4o-mini" {
-					return false
+					priorityB = 0
+				} else if b.lowerName == "o1-mini" || b.lowerName == "gpt-o1-mini" {
+					priorityB = 1
+				} else if strings.Contains(b.lowerName, "4o-mini") {
+					priorityB = 2
+				} else if strings.Contains(b.lowerName, "o1-mini") {
+					priorityB = 3
+				} else {
+					priorityB = 4
 				}
-				if a.lowerName == "o1-mini" || a.lowerName == "gpt-o1-mini" {
-					return true
+				if priorityA != priorityB {
+					return priorityA < priorityB
 				}
-				if b.lowerName == "o1-mini" || b.lowerName == "gpt-o1-mini" {
-					return false
+				if a.versionNum != b.versionNum {
+					return a.versionNum > b.versionNum
 				}
-
-				// For other 4o-mini variants that aren't exact matches
-				if aIs4oMini && !bIs4oMini {
-					return true
-				}
-				if !aIs4oMini && bIs4oMini {
-					return false
-				}
-				// For other o1-mini variants that aren't exact matches
-				if aIsO1Mini && !bIsO1Mini {
-					return true
-				}
-				if !aIsO1Mini && bIsO1Mini {
-					return false
-				}
+				return a.lowerName < b.lowerName
 			}
+			// --- End replacement of OpenAI mini sorting block ---
 
+			// --- Handle non-Mini types ---
 			typeA := openaiTypePriority[a.modelType]
 			typeB := openaiTypePriority[b.modelType]
 
