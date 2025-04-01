@@ -1,0 +1,28 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sidebarPlaceholder {
+  width: 300px;
+  background-color: var(--sidebar-bg);
+  flex-shrink: 0;
+}
+
+.contentPlaceholder {
+  flex-grow: 1;
+  background-color: var(--bg);
+}
+
+.hiddenMobile {
+  display: none;
+}
+
+/* Responsive styles */
+@media (min-width: 1024px) {
+  .hiddenMobile {
+    display: block;
+  }
+} 

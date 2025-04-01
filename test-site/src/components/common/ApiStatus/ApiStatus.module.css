@@ -1,0 +1,78 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  background-color: var(--hover);
+  border-radius: 12px;
+  padding: 0.25rem 0.75rem;
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.online {
+  background-color: var(--status-online);
+  box-shadow: 0 0 5px var(--status-online);
+}
+
+.offline {
+  background-color: var(--status-offline);
+  box-shadow: 0 0 5px var(--status-offline);
+}
+
+.checking {
+  animation: pulse 1.5s infinite;
+}
+
+.text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.refreshButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary-text);
+  transition: color 0.2s, transform 0.2s;
+}
+
+.refreshButton:hover {
+  color: var(--text);
+}
+
+.refreshButton:active {
+  transform: scale(0.9);
+}
+
+.refreshIcon {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+} 

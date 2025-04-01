@@ -1,0 +1,66 @@
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.controlButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background-color: var(--hover);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.controlButton:hover:not(:disabled) {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+}
+
+.controlButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.controlButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.controlIcon {
+  width: 16px;
+  height: 16px;
+  margin-right: 0.25rem;
+}
+
+/* Specific button styles */
+.stopButton {
+  background-color: var(--status-offline);
+  color: white;
+  border-color: var(--status-offline);
+}
+
+.stopButton:hover {
+  background-color: #d32f2f; /* Darker red */
+}
+
+/* Hide text on small screens */
+@media (max-width: 480px) {
+  .controlText {
+    display: none;
+  }
+  
+  .controlIcon {
+    margin-right: 0;
+  }
+  
+  .controlButton {
+    padding: 0.5rem;
+  }
+} 

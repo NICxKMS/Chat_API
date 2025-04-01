@@ -1,0 +1,61 @@
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--chat-bg);
+}
+
+.chatArea {
+  flex-grow: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.inputArea {
+  border-top: 1px solid var(--border);
+  padding: 1rem;
+  background-color: var(--chat-bg);
+  position: relative;
+}
+
+/* Placeholder styles for Suspense fallbacks */
+.messagePlaceholder {
+  flex-grow: 1;
+  background-color: var(--chat-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.metricsPlaceholder {
+  height: 30px;
+  background-color: var(--hover);
+  border-radius: 4px;
+  margin: 0.5rem 1rem;
+}
+
+.inputPlaceholder {
+  height: 60px;
+  background-color: var(--hover);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.controlsPlaceholder {
+  height: 40px;
+  background-color: var(--hover);
+  border-radius: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .inputArea {
+    padding: 0.75rem;
+  }
+} 

@@ -1,0 +1,215 @@
+.message {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem;
+  animation: fadeIn 0.3s ease-in-out;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+/* Message variants based on role */
+.userMessage {
+  background-color: var(--message-user-bg);
+  align-self: flex-start;
+}
+
+.assistantMessage {
+  background-color: var(--message-assistant-bg);
+  align-self: flex-start;
+}
+
+.systemMessage {
+  background-color: var(--hover);
+  align-self: center;
+}
+
+.errorMessage {
+  background-color: rgba(var(--status-offline), 0.1);
+  color: var(--status-offline);
+  align-self: center;
+}
+
+/* Avatar styles */
+.avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text);
+}
+
+.avatar svg {
+  width: 20px;
+  height: 20px;
+}
+
+.userMessage .avatar {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+}
+
+.assistantMessage .avatar {
+  background-color: var(--secondary-text);
+  color: var(--bg);
+}
+
+.systemMessage .avatar {
+  background-color: var(--hover);
+  color: var(--secondary-text);
+}
+
+.errorMessage .avatar {
+  background-color: var(--status-offline);
+  color: white;
+}
+
+/* Message content */
+.messageContent {
+  flex-grow: 1;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Streaming effect for assistant messages */
+.streaming {
+  position: relative;
+}
+
+.streaming::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 3px;
+  height: 16px;
+  background-color: var(--button-bg);
+  animation: blink 1s infinite;
+}
+
+/* Code block styles */
+.codeBlock {
+  margin: 1rem 0;
+  background-color: var(--code-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.codeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--border);
+}
+
+.language {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--secondary-text);
+}
+
+.copyButton {
+  background: none;
+  border: none;
+  color: var(--secondary-text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.copyButton:hover {
+  background-color: var(--hover);
+  color: var(--text);
+}
+
+.pre {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.code {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* General text content */
+.messageContent p {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.messageContent p:first-child {
+  margin-top: 0;
+}
+
+.messageContent p:last-child {
+  margin-bottom: 0;
+}
+
+.messageContent a {
+  color: var(--button-bg);
+  text-decoration: none;
+}
+
+.messageContent a:hover {
+  text-decoration: underline;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .message {
+    gap: 0.5rem;
+  }
+  
+  .avatar {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .avatar svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .codeBlock {
+    margin: 0.5rem 0;
+  }
+  
+  .pre {
+    padding: 0.5rem;
+  }
+  
+  .code {
+    font-size: 0.8rem;
+  }
+} 

@@ -1,0 +1,71 @@
+.messageListContainer {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.messageRow {
+  padding: 0.5rem 1rem;
+  box-sizing: border-box;
+}
+
+.typingIndicatorContainer {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.scrollToBottomButton {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--button-bg);
+  border: none;
+  color: var(--button-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  z-index: 3;
+}
+
+.scrollToBottomButton:hover {
+  background-color: var(--button-hover);
+  transform: scale(1.05);
+}
+
+.scrollToBottomButton:active {
+  transform: scale(0.95);
+}
+
+.scrollIcon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .messageRow {
+    padding: 0.5rem;
+  }
+  
+  .scrollToBottomButton {
+    width: 36px;
+    height: 36px;
+    bottom: 1rem;
+    right: 1rem;
+  }
+  
+  .scrollIcon {
+    width: 16px;
+    height: 16px;
+  }
+} 

@@ -1,0 +1,174 @@
+/* CSS Variables for theming */
+:root {
+  /* Base colors */
+  --primary-rgb: 0, 122, 255;
+  --error-rgb: 255, 59, 48;
+  --success-rgb: 52, 199, 89;
+  --warning-rgb: 255, 204, 0;
+  
+  /* Font settings */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --code-font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  
+  /* Light theme variables */
+  --light-bg: #f5f5f5;
+  --light-chat-bg: #ffffff;
+  --light-sidebar-bg: #e8e8e8;
+  --light-text: #333333;
+  --light-secondary-text: #666666;
+  --light-border: #dddddd;
+  --light-input-bg: #ffffff;
+  --light-button-bg: #007bff;
+  --light-button-hover: #0069d9;
+  --light-button-text: #ffffff;
+  --light-message-user-bg: #e1f5fe;
+  --light-message-assistant-bg: #ffffff;
+  --light-code-bg: #f8f8f8;
+  --light-settings-bg: #f0f0f0;
+  --light-hover: rgba(0, 0, 0, 0.05);
+  --light-scroll-track: #f0f0f0;
+  --light-scroll-thumb: #cccccc;
+  --light-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --light-toggle-bg: #dddddd;
+  --light-toggle-button: #ffffff;
+  --light-status-online: #4caf50;
+  --light-status-offline: #f44336;
+  
+  /* Dark theme variables */
+  --dark-bg: #121212;
+  --dark-chat-bg: #1e1e1e;
+  --dark-sidebar-bg: #252525;
+  --dark-text: #e0e0e0;
+  --dark-secondary-text: #a0a0a0;
+  --dark-border: #424242;
+  --dark-input-bg: #2d2d2d;
+  --dark-button-bg: #0066cc;
+  --dark-button-hover: #0055b3;
+  --dark-button-text: #ffffff;
+  --dark-message-user-bg: #193954;
+  --dark-message-assistant-bg: #2d2d2d;
+  --dark-code-bg: #2b2b2b;
+  --dark-settings-bg: #303030;
+  --dark-hover: rgba(255, 255, 255, 0.1);
+  --dark-scroll-track: #2d2d2d;
+  --dark-scroll-thumb: #555555;
+  --dark-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --dark-toggle-bg: #555555;
+  --dark-toggle-button: #ffffff;
+  --dark-status-online: #4caf50;
+  --dark-status-offline: #f44336;
+}
+
+/* Apply theme based on body class */
+body.light-mode {
+  --bg: var(--light-bg);
+  --chat-bg: var(--light-chat-bg);
+  --sidebar-bg: var(--light-sidebar-bg);
+  --text: var(--light-text);
+  --secondary-text: var(--light-secondary-text);
+  --border: var(--light-border);
+  --input-bg: var(--light-input-bg);
+  --button-bg: var(--light-button-bg);
+  --button-hover: var(--light-button-hover);
+  --button-text: var(--light-button-text);
+  --message-user-bg: var(--light-message-user-bg);
+  --message-assistant-bg: var(--light-message-assistant-bg);
+  --code-bg: var(--light-code-bg);
+  --settings-bg: var(--light-settings-bg);
+  --hover: var(--light-hover);
+  --scroll-track: var(--light-scroll-track);
+  --scroll-thumb: var(--light-scroll-thumb);
+  --shadow: var(--light-shadow);
+  --toggle-bg: var(--light-toggle-bg);
+  --toggle-button: var(--light-toggle-button);
+  --status-online: var(--light-status-online);
+  --status-offline: var(--light-status-offline);
+}
+
+body.dark-mode {
+  --bg: var(--dark-bg);
+  --chat-bg: var(--dark-chat-bg);
+  --sidebar-bg: var(--dark-sidebar-bg);
+  --text: var(--dark-text);
+  --secondary-text: var(--dark-secondary-text);
+  --border: var(--dark-border);
+  --input-bg: var(--dark-input-bg);
+  --button-bg: var(--dark-button-bg);
+  --button-hover: var(--dark-button-hover);
+  --button-text: var(--dark-button-text);
+  --message-user-bg: var(--dark-message-user-bg);
+  --message-assistant-bg: var(--dark-message-assistant-bg);
+  --code-bg: var(--dark-code-bg);
+  --settings-bg: var(--dark-settings-bg);
+  --hover: var(--dark-hover);
+  --scroll-track: var(--dark-scroll-track);
+  --scroll-thumb: var(--dark-scroll-thumb);
+  --shadow: var(--dark-shadow);
+  --toggle-bg: var(--dark-toggle-bg);
+  --toggle-button: var(--dark-toggle-button);
+  --status-online: var(--dark-status-online);
+  --status-offline: var(--dark-status-offline);
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+body {
+  overflow-x: hidden;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-text);
+}
+
+/* Loading screen */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.loading-screen p {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+} 
