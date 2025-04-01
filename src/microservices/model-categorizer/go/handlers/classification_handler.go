@@ -255,6 +255,11 @@ func (h *ModelClassificationHandler) applyModelMetadata(model *models.Model, met
 
 	// Check if model is a default one
 	model.IsDefault = h.classifier.IsDefaultModelName(model.Name)
+	if metadata.DisplayName != "" {
+		model.DisplayName = metadata.DisplayName
+	} else {
+		model.DisplayName = strings.ReplaceAll(model.Name, "-", " ")
+	}
 }
 
 // classifyModelsByProperty classifies models based on a specific property

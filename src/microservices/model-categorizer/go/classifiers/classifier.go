@@ -70,6 +70,7 @@ type ModelMetadata struct {
 	Capabilities   []string
 	IsMultimodal   bool
 	IsExperimental bool
+	DisplayName    string
 }
 
 // ModelClassifier helps efficiently classify models
@@ -90,19 +91,17 @@ func NewModelClassifier() *ModelClassifier {
 
 // ClassifyModel takes a model name and returns a structured metadata object
 func (mc *ModelClassifier) ClassifyModel(modelName, providerHint string) ModelMetadata {
+	origName := modelName
 	modelLower := strings.ToLower(modelName)
-
-	// Check for special model types first
+	var metadata ModelMetadata
 	if mc.isImageGenerationModel(modelLower) {
-		return mc.createImageGenerationMetadata(modelLower, providerHint)
+		metadata = mc.createImageGenerationMetadata(modelLower, providerHint)
+	} else if mc.isEmbeddingModel(modelLower) {
+		metadata = mc.createEmbeddingModelMetadata(modelLower, providerHint)
+	} else {
+		metadata = mc.buildStandardModelMetadata(modelLower, providerHint)
 	}
-
-	if mc.isEmbeddingModel(modelLower) {
-		return mc.createEmbeddingModelMetadata(modelLower, providerHint)
-	}
-
-	// For regular models, build metadata step by step
-	metadata := mc.buildStandardModelMetadata(modelLower, providerHint)
+	metadata.DisplayName = strings.ReplaceAll(origName, "-", " ")
 	return metadata
 }
 

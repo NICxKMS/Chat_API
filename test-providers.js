@@ -4,7 +4,7 @@ import factory from './src/providers/ProviderFactory.js';
 async function testOpenAIProvider() {
   try {
     console.log('=== Testing OpenAI Provider Model Loading ===');
-    const provider = factory.getProvider('openai');
+    const provider = factory.getProvider('gemini');
     
     if (!provider) {
       console.log('OpenAI provider not available');
@@ -15,7 +15,7 @@ async function testOpenAIProvider() {
     console.log('\n1. Getting initial models from config...');
     const initialModels = await provider.getModels();
     console.log(`Got ${initialModels.length} initial models loaded from config:`);
-    console.log(initialModels.map(m => m.id).join(', '));
+    console.log(initialModels);
     
     // Now force refresh from API
     console.log('\n2. Now forcing model refresh from the OpenAI API...');
