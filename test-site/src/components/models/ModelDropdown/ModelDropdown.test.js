@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import ModelDropdown from './index'; // Assuming index.js is the main export
 
 // --- MOCK SETUP ---
@@ -84,8 +84,8 @@ describe('ModelSelection Component (formerly ModelDropdown tests)', () => {
     expect(screen.queryByPlaceholderText('Search models...')).not.toBeInTheDocument();
     expect(screen.queryByText('Chat')).not.toBeInTheDocument(); // Capability tab
 
-    // Click the selected model area to open
-    const selectedModelDisplay = screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]');
+    // Click the selected model area to open - Use description text for unique targeting
+    const selectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
     expect(selectedModelDisplay).toBeInTheDocument();
     fireEvent.click(selectedModelDisplay);
 
@@ -108,41 +108,49 @@ describe('ModelSelection Component (formerly ModelDropdown tests)', () => {
 
   test('displays capability tabs and filters models when tab is clicked', () => {
     render(<ModelDropdown />);
-    const selectedModelDisplay = screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]');
+    const selectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
     fireEvent.click(selectedModelDisplay); // Open dropdown
 
-    // Initially 'Chat' is active
+    // Find the scrollable list container
+    const listContainer = screen.getByRole('listbox'); // The dropdown has role="listbox"
+
+    // Initially 'Chat' is active - Assertions based on list content
     expect(screen.getByText('Chat')).toHaveClass('active');
-    expect(screen.getByText('GPT-4')).toBeInTheDocument();
-    expect(screen.getByText('Claude 3')).toBeInTheDocument();
-    expect(screen.queryByText('DALL-E 3')).not.toBeInTheDocument();
+    expect(within(listContainer).getByText('GPT-4')).toBeInTheDocument(); // Check within list
+    expect(within(listContainer).getByText('Claude 3')).toBeInTheDocument(); // Check within list
+    expect(within(listContainer).queryByText('DALL-E 3')).not.toBeInTheDocument(); // Check within list
 
     // Click 'Image' tab
     fireEvent.click(screen.getByText('Image'));
 
-    // Now 'Image' should be active
+    // Now 'Image' should be active - Assertions based on list content
     expect(screen.getByText('Image')).toHaveClass('active');
-    expect(screen.getByText('DALL-E 3')).toBeInTheDocument(); // Image model visible
-    expect(screen.queryByText('GPT-4')).not.toBeInTheDocument(); // Chat model hidden
-    expect(screen.queryByText('Claude 3')).not.toBeInTheDocument(); // Chat model hidden
+    expect(within(listContainer).getByText('DALL-E 3')).toBeInTheDocument(); // Check within list
+    expect(within(listContainer).queryByText('GPT-4')).not.toBeInTheDocument(); // Check within list
+    expect(within(listContainer).queryByText('Claude 3')).not.toBeInTheDocument(); // Check within list
   });
 
     test('displays "No models available" message for empty categories', () => {
         render(<ModelDropdown />);
-        const selectedModelDisplay = screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]');
+        const selectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
         fireEvent.click(selectedModelDisplay); // Open dropdown
+
+        // Find the scrollable list container
+        const listContainer = screen.getByRole('listbox'); 
 
         // Click 'Embedding' tab (which is empty in mock data)
         fireEvent.click(screen.getByText('Embedding'));
 
-        expect(screen.getByText('No embedding models available')).toBeInTheDocument();
-        expect(screen.queryByText('GPT-4')).not.toBeInTheDocument();
-        expect(screen.queryByText('DALL-E 3')).not.toBeInTheDocument();
+        // Check message and absence of items within the list container
+        expect(within(listContainer).getByText('No embedding models available')).toBeInTheDocument();
+        expect(within(listContainer).queryByText('GPT-4')).not.toBeInTheDocument();
+        expect(within(listContainer).queryByText('DALL-E 3')).not.toBeInTheDocument();
     });
 
   test('calls toggleExperimentalModels when the toggle is clicked', () => {
     render(<ModelDropdown />);
-    const selectedModelDisplay = screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]');
+    // Use description text for unique targeting
+    const selectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
     fireEvent.click(selectedModelDisplay); // Open dropdown
 
     // Find the toggle by its label text
@@ -153,28 +161,43 @@ describe('ModelSelection Component (formerly ModelDropdown tests)', () => {
   });
 
    test('filters experimental models based on showExperimental state', () => {
-        render(<ModelDropdown />);
-        const selectedModelDisplay = screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]');
+        // Initial render
+        const { unmount, rerender } = render(<ModelDropdown />); 
+        const selectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
         fireEvent.click(selectedModelDisplay); // Open dropdown
 
-        // Initially, experimental GPT-3.5 is hidden
-        expect(screen.getByText('GPT-4')).toBeInTheDocument(); // Non-experimental shown
-        expect(screen.queryByText('GPT-3.5 Turbo')).not.toBeInTheDocument();
+        const listContainer = screen.getByRole('listbox');
 
-        // Simulate toggling ON experimental models in context state and re-render
+        // Initially, experimental GPT-3.5 is hidden - Check within list
+        expect(within(listContainer).getByText('GPT-4')).toBeInTheDocument(); // Non-experimental shown
+        expect(within(listContainer).queryByText('GPT-3.5 Turbo')).not.toBeInTheDocument();
+
+        // Simulate toggling ON experimental models in context state
         mockState.showExperimental = true;
         mockState.isExperimentalModelsEnabled = true; // Sync toggle state
-        render(<ModelDropdown />);
-        fireEvent.click(screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]')); // Re-open dropdown
+        
+        // Unmount the previous instance before rendering again with updated state
+        unmount();
+        render(<ModelDropdown />); 
 
-        // Now experimental model should be visible
-        expect(screen.getByText('GPT-4')).toBeInTheDocument();
-        expect(screen.getByText('GPT-3.5 Turbo')).toBeInTheDocument(); // Experimental shown
+        // Use description text for unique targeting again after re-render
+        // Need to re-query the element after re-render
+        const newSelectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
+        fireEvent.click(newSelectedModelDisplay); // Re-open dropdown
+        
+        // Re-find list container after re-render
+        const newListContainer = screen.getByRole('listbox');
+
+        // Now experimental model should be visible - Check within list
+        expect(within(newListContainer).getByText('GPT-4')).toBeInTheDocument();
+        // Check for the actual rendered name, not the displayName
+        expect(within(newListContainer).getByText('GPT-3.5')).toBeInTheDocument(); // Experimental shown (using rendered name)
     });
 
   test('calls updateSearchFilter when search input changes', () => {
     render(<ModelDropdown />);
-    const selectedModelDisplay = screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]');
+    // Use description text for unique targeting
+    const selectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
     fireEvent.click(selectedModelDisplay); // Open dropdown
 
     const searchInput = screen.getByPlaceholderText('Search models...');
@@ -187,8 +210,10 @@ describe('ModelSelection Component (formerly ModelDropdown tests)', () => {
     test('displays "No models found matching..." message when search yields no results', () => {
         // Simulate a state where search term doesn't match anything
         mockState.processedModels = { Chat: {}, Image: {}, Embedding: {} }; // Empty data for simplicity
-        render(<ModelDropdown />);
-        const selectedModelDisplay = screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]');
+        // First render to get unmount
+        const { unmount } = render(<ModelDropdown />); 
+        // Use description text for unique targeting
+        const selectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
         fireEvent.click(selectedModelDisplay); // Open dropdown
 
         // Simulate search input change that calls the filter update
@@ -199,11 +224,11 @@ describe('ModelSelection Component (formerly ModelDropdown tests)', () => {
           mockUpdateSearchFilter('nomatch');
         });
 
-       // Since the component uses the state *after* updateSearchFilter is called,
-       // we need to ensure the component re-renders with the filtered (empty) state
-       // For this test, we assume the search term 'nomatch' is active and processedModels is empty
+       // Unmount the previous instance before re-rendering with the empty state
+       unmount();
        render(<ModelDropdown />); // Re-render with empty data
-       fireEvent.click(screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]')); // Re-open
+       // Use description text for unique targeting again after re-render
+       fireEvent.click(screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]')); // Re-open
        fireEvent.change(screen.getByPlaceholderText('Search models...'), { target: { value: 'nomatch' } }); // Set search term in UI
 
         // Check for the no results message
@@ -213,11 +238,12 @@ describe('ModelSelection Component (formerly ModelDropdown tests)', () => {
 
     test('calls selectModel and clears search when a model item is clicked', () => {
         render(<ModelDropdown />);
-        const selectedModelDisplay = screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]');
+        // Use description text for unique targeting
+        const selectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
         fireEvent.click(selectedModelDisplay); // Open dropdown
 
-        // Find and click 'Claude 3' model item
-        const claudeModelItem = screen.getByText('Claude 3 Opus').closest('div[class*="modelItem"]'); // Find by display name
+        // Find and click 'Claude 3' model item - Use the name rendered by ModelItem
+        const claudeModelItem = screen.getByText('Claude 3').closest('div[class*="modelItem"]'); // Find by name, not displayName
         expect(claudeModelItem).toBeInTheDocument();
         fireEvent.click(claudeModelItem);
 
@@ -235,7 +261,8 @@ describe('ModelSelection Component (formerly ModelDropdown tests)', () => {
   test('shows loading indicator when isLoading is true', () => {
     mockState.isLoading = true;
     render(<ModelDropdown />);
-    const selectedModelDisplay = screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]');
+    // Use description text for unique targeting
+    const selectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
     fireEvent.click(selectedModelDisplay); // Open dropdown
 
     expect(screen.getByText('Loading models...')).toBeInTheDocument();
@@ -253,8 +280,8 @@ describe('ModelSelection Component (formerly ModelDropdown tests)', () => {
       </div>
     );
 
-    // Open dropdown
-    const selectedModelDisplay = screen.getByText('GPT-4').closest('div[class*="selectedModelContainer"]');
+    // Open dropdown - Use description text for unique targeting
+    const selectedModelDisplay = screen.getByText('OpenAI - Chat').closest('div[class*="selectedModelContainer"]');
     fireEvent.click(selectedModelDisplay);
     expect(screen.getByPlaceholderText('Search models...')).toBeInTheDocument(); // Check if open
 

@@ -104,4 +104,3 @@ describe('SettingsGroup', () => {
     expect(screen.getByText('Test Group')).toBeInTheDocument(); 
   });
 }); 
-}); 

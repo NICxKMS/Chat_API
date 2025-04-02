@@ -55,6 +55,10 @@ const SettingsSlider = memo(({
   
   // Handle slider change
   const handleChange = (e) => {
+    // Explicitly check disabled state before calling onChange
+    if (disabled) {
+      return;
+    }
     const newValue = parseFloat(e.target.value);
     onChange(newValue);
   };

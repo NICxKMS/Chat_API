@@ -67,7 +67,7 @@ const CapabilityTabs = ({ capabilities, activeCapability, onSelectCapability }) 
  * ModelList component showing the filtered and grouped models
  */
 const ModelList = ({ isLoading, groupedModels, selectedModel, onSelectModel, searchTerm, totalCount, activeCapability, onClearSearch }) => (
-  <div className={styles.modelList}>
+  <div className={styles.modelList} role="listbox">
     {isLoading ? (
       <div className={styles.loading}>Loading models...</div>
     ) : groupedModels.length > 0 ? (
@@ -161,7 +161,65 @@ function isTypeMatch(model, searchLower) {
 }
 
 /**
- * Main ModelSelection component that contains all model selection UI
+ * SearchContainer component for model searching
+ */
+const SearchContainer = ({ searchTerm, onSearchChange, totalCount }) => (
+  <div className={styles.searchContainer}>
+    <ModelSearch 
+      searchTerm={searchTerm}
+      onSearchChange={onSearchChange}
+      resultCount={totalCount} 
+    />
+  </div>
+);
+
+/**
+ * ModelSelectionPanel component for selecting models from a filterable list
+ */
+const ModelSelectionPanel = React.forwardRef(({ 
+  isExperimentalModelsEnabled, 
+  toggleExperimentalModels, 
+  capabilitiesWithCounts, 
+  activeCapability, 
+  setActiveCapability,
+  isLoading,
+  groupedModels,
+  selectedModel,
+  handleSelectModel,
+  searchTerm,
+  totalCount,
+  handleClearSearch 
+}, ref) => (
+  <div className={styles.modelsContainer} ref={ref}>
+    <div className={styles.fixedHeader}>
+      <ExperimentalToggle 
+        isEnabled={isExperimentalModelsEnabled} 
+        onToggle={toggleExperimentalModels} 
+      />
+      <CapabilityTabs 
+        capabilities={capabilitiesWithCounts} 
+        activeCapability={activeCapability} 
+        onSelectCapability={setActiveCapability} 
+      />
+    </div>
+    
+    <div className={styles.scrollableModelList}>
+      <ModelList 
+        isLoading={isLoading}
+        groupedModels={groupedModels}
+        selectedModel={selectedModel}
+        onSelectModel={handleSelectModel}
+        searchTerm={searchTerm}
+        totalCount={totalCount}
+        activeCapability={activeCapability}
+        onClearSearch={handleClearSearch}
+      />
+    </div>
+  </div>
+));
+
+/**
+ * Main ModelSelection component that orchestrates all model selection UI
  * @returns {JSX.Element} - Rendered component
  */
 const ModelSelection = () => {
@@ -178,6 +236,7 @@ const ModelSelection = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCapability, setActiveCapability] = useState('Chat');
+  const modelSelectorRef = useRef(null);
   
   // Handle selecting a model
   const handleSelectModel = useCallback((model) => {
@@ -194,179 +253,107 @@ const ModelSelection = () => {
   
   // Clear search handler
   const handleClearSearch = useCallback(() => {
-          setSearchTerm('');
-          updateSearchFilter('');
+    setSearchTerm('');
+    updateSearchFilter('');
   }, [updateSearchFilter]);
   
-  // Filter and categorize models based on search term
-  const filteredAndCategorizedModels = useMemo(() => {
-    if (!processedModels || isLoading) {
-      return { capabilities: { Chat: [], Image: [], Embedding: [] }, totalCount: 0 };
+  // Filter and categorize models based on search term and active capability
+  const { groupedModels, totalCount } = useMemo(() => {
+    if (!processedModels || isLoading || !processedModels[activeCapability]) {
+      return { groupedModels: [], totalCount: 0 };
     }
     
-    const typeMatchModels = { Chat: [], Image: [], Embedding: [] };
-    const capabilities = { Chat: [], Image: [], Embedding: [] };
-    let totalCount = 0;
+    const categoryModels = processedModels[activeCapability];
+    let count = 0;
+    const groups = [];
 
-    // Convert the nested processedModels object structure to a flat array of models
-    const flatModels = [];
-    Object.entries(processedModels).forEach(([category, providers]) => {
-      Object.entries(providers).forEach(([provider, typeGroups]) => {
-        Object.entries(typeGroups).forEach(([typeGroup, models]) => {
-          models.forEach(model => {
-            // Add additional properties needed for display
-            flatModels.push({
-              ...model,
-              category,
-              providerName: provider,
-              typeGroupName: typeGroup
-            });
-          });
+    Object.entries(categoryModels).forEach(([provider, typeGroups]) => {
+      Object.entries(typeGroups).forEach(([typeGroup, models]) => {
+        const filteredModels = models.filter(model => {
+          // Skip experimental models if not showing them
+          if (model.is_experimental && !showExperimental) {
+            return false;
+          }
+          
+          // Filter by search term (case-insensitive)
+          if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            const nameMatch = (model.name && model.name.toLowerCase().includes(searchLower)) ||
+                             (model.displayName && model.displayName.toLowerCase().includes(searchLower));
+            const providerMatch = provider.toLowerCase().includes(searchLower);
+            const typeMatch = typeGroup.toLowerCase().includes(searchLower);
+            const tagMatch = model.tags && model.tags.some(tag => tag.toLowerCase().includes(searchLower));
+            
+            if (!(nameMatch || providerMatch || typeMatch || tagMatch)) {
+              return false; // Exclude if no field matches the search term
+            }
+          }
+          return true; // Include if no search term or if it matches
         });
+
+        if (filteredModels.length > 0) {
+          groups.push({
+            provider: provider,
+            type: typeGroup,
+            models: filteredModels
+          });
+          count += filteredModels.length;
+        }
       });
     });
-    
-    // Now process the flat array of models
-    flatModels.forEach(model => {
-      // Skip experimental models if not showing them
-      if (model.is_experimental && !showExperimental) {
-        return;
-      }
-      
-      // Search implementation (fast path for empty search)
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        
-        // If direct type match, prioritize in results
-        if (isTypeMatch(model, searchLower)) {
-          typeMatchModels[model.category].push(model);
-          totalCount++;
-          return;
-        }
-        
-        // Otherwise check other fields
-        const nameMatch = (model.name && model.name.toLowerCase().includes(searchLower)) ||
-                         (model.displayName && model.displayName.toLowerCase().includes(searchLower));
-        
-        const providerMatch = model.providerName && model.providerName.toLowerCase().includes(searchLower);
-        
-        const descriptionMatch = model.description && model.description.toLowerCase().includes(searchLower);
-        
-        // Include if any field matches
-        if (nameMatch || providerMatch || descriptionMatch) {
-          capabilities[model.category].push(model);
-          totalCount++;
-        }
-      } else {
-        // No search term, include all models
-        capabilities[model.category].push(model);
-        totalCount++;
-      }
-    });
 
-    // Merge type matches at the beginning of each category
-    Object.keys(capabilities).forEach(capability => {
-      // Don't sort, keep type matches in their original order
-      
-      // Don't sort other matches either, keep original order
-      
-      // Prepend type matches to the capability array
-      capabilities[capability] = [...typeMatchModels[capability], ...capabilities[capability]];
-    });
+    return { groupedModels: groups, totalCount: count };
 
-    return { capabilities, totalCount };
-  }, [processedModels, searchTerm, showExperimental, isLoading]);
-
-  const { capabilities, totalCount: filteredModelCount } = filteredAndCategorizedModels;
-
-  // Group models by provider and type for the active capability
-  const groupedModels = useMemo(() => {
-    if (!capabilities || !capabilities[activeCapability]) {
-      return [];
-    }
-
-    const models = capabilities[activeCapability];
-    const groups = [];
-    
-    let currentProvider = null;
-    let currentType = null;
-    let currentGroup = null;
-    
-    models.forEach(model => {
-      // Start a new group when provider or type changes - use direct identity comparison
-      if (currentProvider !== model.providerName || currentType !== model.typeGroupName) {
-        if (currentGroup) {
-          groups.push(currentGroup);
-        }
-        
-        currentProvider = model.providerName;
-        currentType = model.typeGroupName;
-        currentGroup = {
-          provider: currentProvider,
-          type: currentType,
-          models: []
-        };
-      }
-      
-      currentGroup.models.push(model);
-    });
-    
-    // Add the last group
-    if (currentGroup) {
-      groups.push(currentGroup);
-    }
-    
-    return groups;
-  }, [capabilities, activeCapability]);
-
-  // --- End Filtering Logic ---
+  }, [processedModels, isLoading, activeCapability, showExperimental, searchTerm]);
   
+  // Prepare capabilities for tabs, including counts
+  const capabilitiesWithCounts = useMemo(() => {
+    const caps = {};
+    if (processedModels) {
+      Object.keys(processedModels).forEach(cap => {
+        let modelCount = 0;
+        if(processedModels[cap]) {
+          Object.values(processedModels[cap]).forEach(provider => {
+            Object.values(provider).forEach(typeGroup => {
+              modelCount += typeGroup.filter(model => !(model.is_experimental && !showExperimental)).length;
+            });
+          });
+        }
+        caps[cap] = modelCount > 0 ? [{length: modelCount}] : []; // Store count info simply
+      });
+    }
+    return caps;
+  }, [processedModels, showExperimental]);
+
+
   return (
     <div className={styles.modelSelectionContainer}>
-      {/* 1. Selected model display */}
+      {/* Current model display */}
       <SelectedModelDisplay selectedModel={selectedModel} />
+
+      {/* Search container */}
+      <SearchContainer 
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        totalCount={totalCount}
+      />
       
-      {/* 2. Search container */}
-      <div className={styles.searchContainer}>
-          <ModelSearch 
-            searchTerm={searchTerm} 
-            onSearchChange={handleSearchChange} 
-            resultCount={filteredModelCount}
-          />
-      </div>
-          
-      {/* 3. Models container */}
-      <div className={styles.modelsContainer}>
-        {/* Fixed header with experimental toggle and tabs */}
-        <div className={styles.fixedHeader}>
-          {/* Experimental toggle */}
-          <ExperimentalToggle 
-            isEnabled={isExperimentalModelsEnabled}
-            onToggle={toggleExperimentalModels}
-          />
-          
-          {/* Capability tabs */}
-          <CapabilityTabs 
-            capabilities={capabilities}
-            activeCapability={activeCapability}
-            onSelectCapability={setActiveCapability}
-          />
-        </div>
-        
-        {/* Scrollable model list */}
-        <div className={styles.scrollableModelList}>
-          <ModelList 
-            isLoading={isLoading}
-            groupedModels={groupedModels}
-            selectedModel={selectedModel}
-                   onSelectModel={handleSelectModel}
-                   searchTerm={searchTerm} 
-            totalCount={filteredModelCount}
-            activeCapability={activeCapability}
-            onClearSearch={handleClearSearch}
-          />
-        </div>
-      </div>
+      {/* Model selection list panel */}
+      <ModelSelectionPanel
+        ref={modelSelectorRef}
+        isExperimentalModelsEnabled={isExperimentalModelsEnabled}
+        toggleExperimentalModels={toggleExperimentalModels}
+        capabilitiesWithCounts={capabilitiesWithCounts}
+        activeCapability={activeCapability}
+        setActiveCapability={setActiveCapability}
+        isLoading={isLoading}
+        groupedModels={groupedModels}
+        selectedModel={selectedModel}
+        handleSelectModel={handleSelectModel}
+        searchTerm={searchTerm}
+        totalCount={totalCount}
+        handleClearSearch={handleClearSearch}
+      />
     </div>
   );
 };

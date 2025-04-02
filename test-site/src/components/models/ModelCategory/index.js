@@ -46,8 +46,8 @@ const TypeGroup = ({ typeGroupName, models, onSelectModel, selectedModelId, sear
             <ModelItem
               key={model.id}
               model={model}
-              isSelected={model.id === selectedModelId}
-              onSelect={() => onSelectModel(model)}
+              selected={model.id === selectedModelId}
+              onClick={() => onSelectModel(model)}
               searchTerm={searchTerm}
               showExperimental={showExperimental}
             />

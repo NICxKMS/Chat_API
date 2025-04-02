@@ -19,6 +19,9 @@ const SettingsSelect = ({
   const selectedOption = options.find(option => option.value === value);
   const displayText = selectedOption ? selectedOption.label : '';
   
+  // Generate a unique ID for the label to use with aria-labelledby
+  const labelId = `${id}-label`;
+  
   const toggleDropdown = () => {
     if (!disabled) {
       setIsOpen(!isOpen);
@@ -85,7 +88,12 @@ const SettingsSelect = ({
 
   return (
     <div className={`${styles.selectContainer} ${disabled ? styles.disabled : ''}`}>
-      <label htmlFor={id} className={styles.label} title={tooltip || ''}>
+      <label 
+        htmlFor={id} 
+        className={styles.label} 
+        title={tooltip || ''}
+        id={labelId}
+      >
         {label}
       </label>
       
@@ -99,6 +107,7 @@ const SettingsSelect = ({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-disabled={disabled}
+        aria-labelledby={labelId}
         id={id}
       >
         <div className={styles.selectedValue}>

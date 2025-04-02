@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import ModelCategory from './index';
 
 // Remove the ModelItem mock to test integration
@@ -174,14 +174,24 @@ describe('ModelCategory', () => {
   });
 
   test('passes searchTerm down to ModelItem (verified by highlighting)', () => {
-    // Render with a search term that should highlight part of a model name
-    render(<ModelCategory {...defaultProps} searchTerm="Opus" />);
-    
-    // Check for the highlighted span within the relevant model item
-    const highlightedText = screen.getByText('Opus', { selector: 'span[class*="highlight"]' });
+    render(<ModelCategory {...defaultProps} searchTerm="Opus" />); // Search for Opus
+
+    // Find the highlighted part within the model item for Claude 3 Opus
+    const claudeModelItem = screen.getByText((content, element) => 
+        element.tagName.toLowerCase() === 'span' && 
+        content.startsWith('Claude 3') && 
+        element.closest('div[class*="modelItem"]')
+    ).closest('div[class*="modelItem"]'); // Find the container
+
+    expect(claudeModelItem).toBeInTheDocument();
+
+    // Within this item, find the highlighted span
+    const highlightedText = within(claudeModelItem).getByText('Opus', { selector: 'span[class*="highlight"]' });
     expect(highlightedText).toBeInTheDocument();
-    // Ensure it's part of the correct model name
-    expect(screen.getByText('Claude 3 Opus')).toContainElement(highlightedText);
+    // Ensure it's part of the correct model name container
+    expect(highlightedText.closest('div[class*="modelName"]')).toBeInTheDocument();
+    // Optionally, check that the non-highlighted part exists too
+    expect(within(claudeModelItem).getByText(/Claude 3/)).toBeInTheDocument(); 
   });
 
   test('returns null if the total number of models in providers is zero', () => {

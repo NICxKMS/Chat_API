@@ -43,9 +43,9 @@ describe('ModelItem', () => {
   test('uses name initial for icon when series is undefined or null', () => {
     const modelWithoutSeries = {
       ...mockModel,
-      series: undefined // Explicitly test undefined
+      series: undefined // Test undefined first
     };
-    render(<ModelItem {...defaultProps} model={modelWithoutSeries} />);
+    const { unmount, rerender } = render(<ModelItem {...defaultProps} model={modelWithoutSeries} />); // Get unmount
     expect(screen.getByText('G')).toBeInTheDocument(); // G from GPT-4
     expect(screen.getByText('G').closest(`div[class*="modelIcon"]`)).toBeInTheDocument();
 
@@ -53,8 +53,9 @@ describe('ModelItem', () => {
       ...mockModel,
       series: null // Explicitly test null
     };
-    // Use rerender for efficiency
-    render(<ModelItem {...defaultProps} model={modelWithNullSeries} />);
+    // Unmount the previous instance before rendering again
+    unmount(); 
+    render(<ModelItem {...defaultProps} model={modelWithNullSeries} />); // Use render, not rerender
     expect(screen.getByText('G')).toBeInTheDocument(); // G from GPT-4
     expect(screen.getByText('G').closest(`div[class*="modelIcon"]`)).toBeInTheDocument();
   });
@@ -142,13 +143,15 @@ describe('ModelItem', () => {
 
   test('applies correct ARIA role and selected state', () => {
     // Test unselected state
-    const { rerender } = render(<ModelItem {...defaultProps} selected={false} />);
+    const { rerender: rerenderAria, unmount: unmountAria } = render(<ModelItem {...defaultProps} selected={false} />); // Alias rerender/unmount
     let item = screen.getByRole('option');
     expect(item).toHaveAttribute('aria-selected', 'false');
 
     // Test selected state
-    rerender(<ModelItem {...defaultProps} selected={true} />);
+    // Rerender is appropriate here as we are changing a prop on the same component instance
+    rerenderAria(<ModelItem {...defaultProps} selected={true} />); 
     item = screen.getByRole('option'); // Re-query after rerender
     expect(item).toHaveAttribute('aria-selected', 'true');
+    unmountAria(); // Clean up
   });
 }); 
