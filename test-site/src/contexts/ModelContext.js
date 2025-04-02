@@ -94,71 +94,6 @@ export const ModelProvider = ({ children }) => {
     return name.split('/').pop() || name;
   }, []);
   
-  // Sort models based on provider-specific rules
-  const sortModelsByProvider = useCallback((provider, models) => {
-    if (!models || !Array.isArray(models)) return [];
-    
-    const providerLower = provider.toLowerCase();
-    
-    // OpenAI sorting logic
-    if (providerLower === 'openai') {
-      return models.sort((a, b) => {
-        // Mini comes before O series
-        const aIsMini = a.name.toLowerCase().includes('mini');
-        const bIsMini = b.name.toLowerCase().includes('mini');
-        
-        if (aIsMini && !bIsMini) return -1;
-        if (!aIsMini && bIsMini) return 1;
-        
-        // Shorter names come first
-        return a.name.length - b.name.length;
-      });
-    }
-    
-    // Gemini sorting logic
-    if (providerLower === 'gemini') {
-      return models.sort((a, b) => {
-        // 'latest' versions first
-        const aIsLatest = a.version.toLowerCase().includes('latest');
-        const bIsLatest = b.version.toLowerCase().includes('latest');
-        
-        if (aIsLatest && !bIsLatest) return -1;
-        if (!aIsLatest && bIsLatest) return 1;
-        
-        // Sort by version descending
-        return b.version.localeCompare(a.version);
-      });
-    }
-    
-    // Anthropic sorting logic
-    if (providerLower === 'anthropic') {
-      return models.sort((a, b) => {
-        const modelTiers = {
-          'sonnet': 1,
-          'opus': 2,
-          'haiku': 3
-        };
-        
-        // Get model tiers from name
-        const getModelTier = (model) => {
-          const nameLower = model.name.toLowerCase();
-          for (const [tier, value] of Object.entries(modelTiers)) {
-            if (nameLower.includes(tier)) return value;
-          }
-          return 999; // Unknown tier
-        };
-        
-        const aTier = getModelTier(a);
-        const bTier = getModelTier(b);
-        
-        return aTier - bTier;
-      });
-    }
-    
-    // Default sorting for other providers
-    return models.sort((a, b) => a.name.localeCompare(b.name));
-  }, []);
-  
   // Process hierarchical model groups
   const processModels = useCallback((data) => {
     if (!data || !data.hierarchical_groups) {
@@ -255,53 +190,7 @@ export const ModelProvider = ({ children }) => {
             processedModels[category][provider][currentTypeKey].push(processedModel);
           });
           
-          // --- Start: Simplified Sorting Logic within Version Group ---
-          // Get all categories populated by models in this version group
-          const populatedCategories = new Set();
-          if (versionGroup.models && Array.isArray(versionGroup.models)) {
-            versionGroup.models.forEach(model => {
-               let category = 'Chat';
-               if (model.type && model.type.toLowerCase() === 'image generation') {
-                 category = 'Image';
-               } else if (model.type && model.type.toLowerCase() === 'embedding') {
-                  category = 'Embedding';
-               } else if (model.capabilities && model.capabilities.includes('embedding')) {
-                  category = 'Embedding';
-               } else if (model.capabilities && model.capabilities.includes('Image Generation')) {
-                 category = 'Image';
-               }
-               populatedCategories.add(category);
-            });
-          }
-
-          // Sort models within each relevant category/provider/groupingKey combination
-          populatedCategories.forEach(category => {
-            // Iterate through the grouping keys actually populated within this category/provider
-             if (processedModels[category]?.[provider]) {
-               // Use the type keys (e.g., 'GPT 4', 'GPT 3.5') instead of groupingKey
-               Object.keys(processedModels[category][provider]).forEach(currentTypeKey => { 
-                   // Check if this specific group was populated by the current versionGroup's models
-                   // We need to filter the models in the group to see if any came from this versionGroup iteration.
-                   // A simpler approach might be to sort *after* all models are processed, but let's try adapting this.
-
-                   // Find the models just added in *this* iteration for sorting
-                   const modelsToSort = processedModels[category][provider][currentTypeKey].filter(pm => 
-                      versionGroup.models.some(m => m.id === pm.id)
-                   );
-
-                   // Only sort if there are models from this iteration in the group
-                   if (modelsToSort.length > 0) {
-                      // Sort the *entire* group, as models from different versions might be in the same group now
-                      processedModels[category][provider][currentTypeKey] = 
-                         sortModelsByProvider(
-                           provider, 
-                           processedModels[category][provider][currentTypeKey] // Sort the whole group based on its type key
-                         );
-                   }
-                });
-             }
-          });
-           // --- End: Simplified Sorting Logic within Version Group ---
+          // No longer needed - don't sort models, keep them in original order
         });
       });
     });
@@ -311,7 +200,7 @@ export const ModelProvider = ({ children }) => {
       processedModels,
       experimentalModels
     };
-  }, [normalizeModelName, sortModelsByProvider]);
+  }, [normalizeModelName]);
   
   // Update category filter
   const updateCategoryFilter = useCallback((category, isChecked) => {

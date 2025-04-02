@@ -76,44 +76,15 @@ const ProviderGroup = ({ providerName, typeGroups, onSelectModel, selectedModelI
   const totalModelsInProvider = typeGroups.reduce((count, group) => count + group.models.length, 0);
   if (totalModelsInProvider === 0) return null;
 
-  // --- Sort Type Groups --- 
-  const providerLower = providerName.toLowerCase();
+  // Don't sort type groups, use them in the order they're received
   let sortedTypeGroups = [...typeGroups];
-  if (providerLower === 'openai') {
-    const openAIOrder = ['mini', 'o series', 'gpt 4.5', 'gpt 4', 'gpt 3.5', 'image generation']; 
-    sortedTypeGroups.sort((a, b) => {
-      const aTypeLower = a.typeGroupName.toLowerCase();
-      const bTypeLower = b.typeGroupName.toLowerCase();
-      const aIndex = openAIOrder.indexOf(aTypeLower);
-      const bIndex = openAIOrder.indexOf(bTypeLower);
-      const finalAIndex = aIndex === -1 ? Infinity : aIndex;
-      const finalBIndex = bIndex === -1 ? Infinity : bIndex;
-      if (finalAIndex !== finalBIndex) return finalAIndex - finalBIndex;
-      return a.typeGroupName.localeCompare(b.typeGroupName);
-    });
-  } else if (providerLower === 'gemini') {
-    const geminiOrder = ['flash lite', 'flash', 'pro', 'thinking', 'gemma', 'standard', 'embedding', 'image generation']; 
-    sortedTypeGroups.sort((a, b) => {
-      const aTypeLower = a.typeGroupName.toLowerCase();
-      const bTypeLower = b.typeGroupName.toLowerCase();
-      const aIndex = geminiOrder.indexOf(aTypeLower);
-      const bIndex = geminiOrder.indexOf(bTypeLower);
-      const finalAIndex = aIndex === -1 ? Infinity : aIndex;
-      const finalBIndex = bIndex === -1 ? Infinity : bIndex;
-      if (finalAIndex !== finalBIndex) return finalAIndex - finalBIndex;
-      return a.typeGroupName.localeCompare(b.typeGroupName);
-    });
-  } else {
-    sortedTypeGroups.sort((a,b) => a.typeGroupName.localeCompare(b.typeGroupName));
-  }
-  // --- End Sort --- 
 
   const providerGroupId = providerName.replace(/\s+/g, '-').toLowerCase();
 
   return (
     <div className={styles.providerGroup}>
        <div
-          className={styles.providerHeader} // Use distinct style if needed
+          className={styles.providerHeader}
           onClick={toggleExpanded}
           role="button"
           tabIndex={0}
@@ -141,7 +112,7 @@ const ProviderGroup = ({ providerName, typeGroups, onSelectModel, selectedModelI
         <div id={`provider-content-${providerGroupId}`} className={styles.providerContent}>
           {sortedTypeGroups.map(({ typeGroupName, models }) => (
             <TypeGroup
-              key={typeGroupName} // Key should be unique within the provider
+              key={typeGroupName}
               typeGroupName={typeGroupName}
               models={models}
               onSelectModel={onSelectModel}
