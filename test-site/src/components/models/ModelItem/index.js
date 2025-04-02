@@ -81,7 +81,7 @@ const ModelItem = memo(({
       </div>
       
       {selected && (
-        <div className={styles.selectedIndicator}>
+        <div className={styles.selectedIndicator} data-testid="check-icon">
           <CheckIcon className={styles.checkIcon} />
         </div>
       )}

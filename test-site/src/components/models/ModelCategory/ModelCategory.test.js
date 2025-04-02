@@ -2,136 +2,199 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ModelCategory from './index';
 
-// Mock the ModelItem component
-jest.mock('../ModelItem', () => {
-  return jest.fn(({ model, isSelected, onSelect, searchTerm }) => (
-    <div data-testid={`model-item-${model.id}`}>
-      <span>{model.name}</span>
-      <button onClick={onSelect}>Select</button>
-      <span data-testid="search-term">{searchTerm}</span>
-      <span data-testid="is-selected">{isSelected.toString()}</span>
-    </div>
-  ));
-});
+// Remove the ModelItem mock to test integration
+// jest.mock('../ModelItem', ...);
 
 describe('ModelCategory', () => {
-  const mockModels = [
+  // Realistic mock data matching the component's expected props structure
+  const mockProviders = [
     {
-      id: 'model1',
-      name: 'GPT-4',
-      description: 'Latest version'
+      providerName: 'OpenAI',
+      typeGroups: [
+        {
+          typeGroupName: 'GPT Models',
+          models: [
+            { id: 'model-gpt4', name: 'GPT-4', series: 'GPT' },
+            { id: 'model-gpt35', name: 'GPT-3.5 Turbo', series: 'GPT' }
+          ]
+        },
+        {
+          typeGroupName: 'DALL-E',
+          models: [
+            { id: 'model-dalle3', name: 'DALL-E 3', series: 'DALL-E' }
+          ]
+        }
+      ]
     },
     {
-      id: 'model2',
-      name: 'Claude 3',
-      series: 'Claude',
-      description: 'By Anthropic'
-    },
-    {
-      id: 'model3',
-      name: 'Llama 2',
-      tags: ['opensource', 'meta']
+      providerName: 'Anthropic',
+      typeGroups: [
+        {
+          typeGroupName: 'Claude Models',
+          models: [
+            { id: 'model-claude3', name: 'Claude 3 Opus', series: 'Claude' }
+          ]
+        }
+      ]
     }
   ];
-  
+
   const defaultProps = {
-    category: {
-      id: 'chat-models',
-      name: 'Chat Models',
-      models: mockModels
-    },
+    categoryName: 'Chat & Image', // Example category name
+    providers: mockProviders,
     onSelectModel: jest.fn(),
-    selectedModelId: 'model1',
-    searchTerm: ''
+    selectedModelId: 'model-gpt4', // GPT-4 is initially selected
+    searchTerm: '',
+    showExperimental: false
   };
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
-  
-  test('renders category name and model count', () => {
+
+  test('renders category name and total model count', () => {
     render(<ModelCategory {...defaultProps} />);
-    
-    expect(screen.getByText('Chat Models')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument(); // Model count badge
+    // Check category header
+    const categoryHeader = screen.getByRole('button', { name: /Chat & Image/i });
+    expect(categoryHeader).toBeInTheDocument();
+    // Check total count (2 + 1 + 1 = 4)
+    expect(categoryHeader.querySelector('span[class*="modelCount"]')).toHaveTextContent('4');
   });
-  
-  test('renders all models in the category', () => {
+
+  test('renders provider groups with names and counts', () => {
     render(<ModelCategory {...defaultProps} />);
-    
-    expect(screen.getByTestId('model-item-model1')).toBeInTheDocument();
-    expect(screen.getByTestId('model-item-model2')).toBeInTheDocument();
-    expect(screen.getByTestId('model-item-model3')).toBeInTheDocument();
+    // Check OpenAI provider
+    const openaiHeader = screen.getByRole('button', { name: /OpenAI/i });
+    expect(openaiHeader).toBeInTheDocument();
+    expect(openaiHeader.querySelector('span[class*="modelCount"]')).toHaveTextContent('3'); // 2 GPT + 1 DALL-E
+
+    // Check Anthropic provider
+    const anthropicHeader = screen.getByRole('button', { name: /Anthropic/i });
+    expect(anthropicHeader).toBeInTheDocument();
+    expect(anthropicHeader.querySelector('span[class*="modelCount"]')).toHaveTextContent('1');
   });
-  
-  test('toggles expansion when header is clicked', () => {
+
+  test('renders type groups with names and counts', () => {
     render(<ModelCategory {...defaultProps} />);
-    
-    // Initially expanded
-    expect(screen.getByTestId('model-item-model1')).toBeInTheDocument();
-    
-    // Click header to collapse
-    fireEvent.click(screen.getByText('Chat Models'));
-    
-    // Models should no longer be visible
-    expect(screen.queryByTestId('model-item-model1')).not.toBeInTheDocument();
-    
-    // Click header again to expand
-    fireEvent.click(screen.getByText('Chat Models'));
-    
-    // Models should be visible again
-    expect(screen.getByTestId('model-item-model1')).toBeInTheDocument();
+    // Check GPT Models type group
+    const gptHeader = screen.getByRole('button', { name: /GPT Models/i });
+    expect(gptHeader).toBeInTheDocument();
+    expect(gptHeader.querySelector('span[class*="modelCount"]')).toHaveTextContent('2');
+
+    // Check DALL-E type group
+    const dalleHeader = screen.getByRole('button', { name: /DALL-E/i });
+    expect(dalleHeader).toBeInTheDocument();
+    expect(dalleHeader.querySelector('span[class*="modelCount"]')).toHaveTextContent('1');
+
+    // Check Claude Models type group
+    const claudeHeader = screen.getByRole('button', { name: /Claude Models/i });
+    expect(claudeHeader).toBeInTheDocument();
+    expect(claudeHeader.querySelector('span[class*="modelCount"]')).toHaveTextContent('1');
   });
-  
-  test('passes selected model ID to ModelItem', () => {
+
+  test('renders ModelItems for each model', () => {
     render(<ModelCategory {...defaultProps} />);
-    
-    // Selected model should have isSelected=true
-    expect(screen.getByTestId('model-item-model1').querySelector('[data-testid="is-selected"]'))
-      .toHaveTextContent('true');
-    
-    // Non-selected models should have isSelected=false
-    expect(screen.getByTestId('model-item-model2').querySelector('[data-testid="is-selected"]'))
-      .toHaveTextContent('false');
-    expect(screen.getByTestId('model-item-model3').querySelector('[data-testid="is-selected"]'))
-      .toHaveTextContent('false');
+    expect(screen.getByText('GPT-4')).toBeInTheDocument();
+    expect(screen.getByText('GPT-3.5 Turbo')).toBeInTheDocument();
+    expect(screen.getByText('DALL-E 3')).toBeInTheDocument();
+    expect(screen.getByText('Claude 3 Opus')).toBeInTheDocument();
   });
-  
-  test('filters models based on search term', () => {
-    // With a search term that matches only one model
-    render(<ModelCategory {...defaultProps} searchTerm="claude" />);
-    
-    // Only Claude 3 should be visible
-    expect(screen.queryByTestId('model-item-model1')).not.toBeInTheDocument();
-    expect(screen.getByTestId('model-item-model2')).toBeInTheDocument();
-    expect(screen.queryByTestId('model-item-model3')).not.toBeInTheDocument();
-    
-    // Count should reflect the filtered models
-    expect(screen.getByText('1')).toBeInTheDocument();
-  });
-  
-  test('passes search term to ModelItem components', () => {
-    render(<ModelCategory {...defaultProps} searchTerm="gpt" />);
-    
-    const searchTermElement = screen.getByTestId('model-item-model1')
-      .querySelector('[data-testid="search-term"]');
-    expect(searchTermElement).toHaveTextContent('gpt');
-  });
-  
-  test('calls onSelectModel when a model is selected', () => {
+
+  test('toggles category expansion on header click', () => {
     render(<ModelCategory {...defaultProps} />);
-    
-    // Click the select button in the first model
-    fireEvent.click(screen.getByTestId('model-item-model1').querySelector('button'));
-    
-    // onSelectModel should be called with the model object
-    expect(defaultProps.onSelectModel).toHaveBeenCalledWith(mockModels[0]);
+    const categoryHeader = screen.getByRole('button', { name: /Chat & Image/i });
+
+    // Initially expanded, providers should be visible
+    expect(screen.getByRole('button', { name: /OpenAI/i })).toBeVisible();
+
+    // Click to collapse
+    fireEvent.click(categoryHeader);
+    expect(screen.queryByRole('button', { name: /OpenAI/i })).not.toBeInTheDocument(); // Content removed from DOM
+
+    // Click to expand
+    fireEvent.click(categoryHeader);
+    expect(screen.getByRole('button', { name: /OpenAI/i })).toBeVisible();
   });
-  
-  test('returns null when no models match search term', () => {
-    const { container } = render(<ModelCategory {...defaultProps} searchTerm="nonexistent" />);
+
+  test('toggles provider expansion on header click', () => {
+    render(<ModelCategory {...defaultProps} />);
+    const openaiHeader = screen.getByRole('button', { name: /OpenAI/i });
+
+    // Initially expanded, type groups should be visible
+    expect(screen.getByRole('button', { name: /GPT Models/i })).toBeVisible();
+
+    // Click to collapse
+    fireEvent.click(openaiHeader);
+    expect(screen.queryByRole('button', { name: /GPT Models/i })).not.toBeInTheDocument();
+
+    // Click to expand
+    fireEvent.click(openaiHeader);
+    expect(screen.getByRole('button', { name: /GPT Models/i })).toBeVisible();
+  });
+
+  test('toggles type group expansion on header click', () => {
+    render(<ModelCategory {...defaultProps} />);
+    const gptHeader = screen.getByRole('button', { name: /GPT Models/i });
+
+    // Initially expanded, models should be visible
+    expect(screen.getByText('GPT-4')).toBeVisible();
+
+    // Click to collapse
+    fireEvent.click(gptHeader);
+    expect(screen.queryByText('GPT-4')).not.toBeInTheDocument();
+
+    // Click to expand
+    fireEvent.click(gptHeader);
+    expect(screen.getByText('GPT-4')).toBeVisible();
+  });
+
+  test('marks the correct ModelItem as selected', () => {
+    render(<ModelCategory {...defaultProps} selectedModelId="model-claude3" />);
+
+    // Find the selected item (Claude 3) - check for the selection indicator
+    const selectedItem = screen.getByText('Claude 3 Opus').closest('div[role="option"]');
+    expect(selectedItem).toHaveClass('selected');
+    expect(screen.getByTestId('check-icon')).toBeInTheDocument(); // Assuming ModelItem still uses this
+
+    // Check another item is not selected
+    const unselectedItem = screen.getByText('GPT-4').closest('div[role="option"]');
+    expect(unselectedItem).not.toHaveClass('selected');
+  });
+
+  test('calls onSelectModel with the correct model when a ModelItem is clicked', () => {
+    render(<ModelCategory {...defaultProps} />);
+
+    // Find and click the DALL-E 3 model item
+    const dalleItem = screen.getByText('DALL-E 3').closest('div[role="option"]');
+    fireEvent.click(dalleItem);
+
+    expect(defaultProps.onSelectModel).toHaveBeenCalledTimes(1);
+    // Expect it to be called with the corresponding model object from the mock data
+    expect(defaultProps.onSelectModel).toHaveBeenCalledWith(mockProviders[0].typeGroups[1].models[0]);
+  });
+
+  test('passes searchTerm down to ModelItem (verified by highlighting)', () => {
+    // Render with a search term that should highlight part of a model name
+    render(<ModelCategory {...defaultProps} searchTerm="Opus" />);
     
-    // No elements should be rendered
+    // Check for the highlighted span within the relevant model item
+    const highlightedText = screen.getByText('Opus', { selector: 'span[class*="highlight"]' });
+    expect(highlightedText).toBeInTheDocument();
+    // Ensure it's part of the correct model name
+    expect(screen.getByText('Claude 3 Opus')).toContainElement(highlightedText);
+  });
+
+  test('returns null if the total number of models in providers is zero', () => {
+    const emptyProviders = [
+      { providerName: 'Test', typeGroups: [{ typeGroupName: 'Group', models: [] }] }
+    ];
+    const { container } = render(<ModelCategory {...defaultProps} providers={emptyProviders} />);
+    // The component should render nothing
     expect(container.firstChild).toBeNull();
   });
+  
+  // Note: Testing `showExperimental` propagation would likely require 
+  // modifying the mock data to include experimental models and then 
+  // verifying their presence/absence or specific props passed to a 
+  // (potentially minimally mocked) ModelItem. For now, assuming it's passed down.
 }); 
