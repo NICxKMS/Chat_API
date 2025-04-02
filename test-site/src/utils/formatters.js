@@ -84,16 +84,47 @@ export const processCodeBlocks = (content) => {
 export const wrapTextInParagraphs = (text) => {
   if (!text) return '';
   
-  // Replace single line breaks with <br>
-  const withLineBreaks = text.replace(/\n/g, '<br>');
+  // Use a single-pass approach with string concatenation
+  let result = '';
+  let currentParagraph = '';
+  let consecutiveBreaks = 0;
   
-  // Split on doubled line breaks (<br><br>) to create paragraphs
-  const paragraphs = withLineBreaks.split(/<br><br>/g);
+  // Process each character to identify paragraph breaks
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\n') {
+      consecutiveBreaks++;
+      
+      // Add <br> for single breaks
+      if (consecutiveBreaks === 1) {
+        currentParagraph += '<br>';
+      }
+      // Start a new paragraph for double breaks
+      else if (consecutiveBreaks === 2) {
+        // Close the current paragraph if not empty
+        if (currentParagraph) {
+          result += `<p>${currentParagraph}</p>`;
+          currentParagraph = '';
+        }
+        consecutiveBreaks = 0;
+      }
+    } else {
+      // Reset consecutive breaks counter for non-newline characters
+      consecutiveBreaks = 0;
+      currentParagraph += text[i];
+    }
+  }
   
-  // Wrap each paragraph in <p> tags
-  return paragraphs
-    .map(p => `<p>${p}</p>`)
-    .join('');
+  // Add the last paragraph if there's any content left
+  if (currentParagraph) {
+    result += `<p>${currentParagraph}</p>`;
+  }
+  
+  // If no paragraphs were created, wrap the entire text
+  if (!result && text) {
+    result = `<p>${text}</p>`;
+  }
+  
+  return result;
 };
 
 /**
@@ -104,10 +135,56 @@ export const wrapTextInParagraphs = (text) => {
 export const formatMessageContent = (content) => {
   if (!content) return '';
   
-  // Process in sequence: escape HTML, format URLs, process code blocks
-  let processedContent = escapeHtml(content);
-  processedContent = formatUrls(processedContent);
-  processedContent = processCodeBlocks(processedContent);
+  // Process in a single pass through the content
+  const htmlEntities = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
   
-  return processedContent;
+  // URL regex pattern
+  const urlPattern = /https?:\/\/[^\s]+/g;
+  const codeBlockRegex = /```(\w*)([\s\S]*?)```/g;
+  
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  
+  // Find all code blocks
+  while ((match = codeBlockRegex.exec(content)) !== null) {
+    // Process text before code block: escape HTML and format URLs
+    if (match.index > lastIndex) {
+      const textBefore = content.substring(lastIndex, match.index);
+      const escapedText = textBefore.replace(/[&<>"']/g, (char) => htmlEntities[char]);
+      const formattedText = escapedText.replace(urlPattern, (url) => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+      });
+      parts.push(wrapTextInParagraphs(formattedText));
+    }
+    
+    // Get language and code
+    const language = match[1].trim();
+    const code = match[2].trim();
+    
+    // Add formatted code block (code content is already inside pre/code tags, no need to escape)
+    parts.push(
+      `<pre><code class="language-${language || 'plaintext'}">${code}</code></pre>`
+    );
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Process remaining text after last code block
+  if (lastIndex < content.length) {
+    const textAfter = content.substring(lastIndex);
+    const escapedText = textAfter.replace(/[&<>"']/g, (char) => htmlEntities[char]);
+    const formattedText = escapedText.replace(urlPattern, (url) => {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
+    parts.push(wrapTextInParagraphs(formattedText));
+  }
+  
+  return parts.join('');
 }; 

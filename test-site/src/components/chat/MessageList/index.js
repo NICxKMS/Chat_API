@@ -1,9 +1,10 @@
 import React, { forwardRef, useEffect, useState, useRef, useMemo } from 'react';
-import { FixedSizeList as List, VariableSizeList } from 'react-window';
+import { VariableSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import ChatMessage from '../ChatMessage';
 import TypingIndicator from '../../common/TypingIndicator';
 import styles from './MessageList.module.css';
+import { ArrowDownIcon } from '@primer/octicons-react';
 
 /**
  * Virtualized list of chat messages with optimized rendering
@@ -45,17 +46,7 @@ const MessageList = forwardRef(({ messages, streamContent, isStreaming, error },
     return result;
   }, [messages, streamContent, isStreaming, error]);
   
-  // Add System welcome message if no messages
-  const finalMessages = useMemo(() => {
-    if (displayMessages.length === 0) {
-      return [{
-        role: 'system',
-        content: 'Welcome to AI Chat! Select a model from the sidebar and start chatting.',
-        timestamp: Date.now()
-      }];
-    }
-    return displayMessages;
-  }, [displayMessages]);
+  const finalMessages = displayMessages;
   
   // Set ref to the current list instance
   useEffect(() => {
@@ -107,7 +98,11 @@ const MessageList = forwardRef(({ messages, streamContent, isStreaming, error },
   };
   
   return (
-    <div className={styles.messageListContainer}>
+    <div 
+      className={styles.messageListContainer} 
+      aria-live="polite"
+      aria-relevant="additions text"
+    >
       {/* Virtualized message list */}
       <AutoSizer>
         {({ height, width }) => (
@@ -120,6 +115,7 @@ const MessageList = forwardRef(({ messages, streamContent, isStreaming, error },
             itemSize={getItemHeight}
             onScroll={handleScroll}
             overscanCount={3}
+            aria-label="Chat messages"
           >
             {renderRow}
           </VariableSizeList>
@@ -128,7 +124,11 @@ const MessageList = forwardRef(({ messages, streamContent, isStreaming, error },
       
       {/* Typing indicator shown during streaming */}
       {isStreaming && !streamContent && (
-        <div className={styles.typingIndicatorContainer}>
+        <div 
+          className={styles.typingIndicatorContainer} 
+          role="status"
+          aria-live="polite"
+        >
           <TypingIndicator />
         </div>
       )}
@@ -147,32 +147,13 @@ const MessageList = forwardRef(({ messages, streamContent, isStreaming, error },
           aria-label="Scroll to bottom"
           title="Scroll to bottom"
         >
-          <ArrowDownIcon className={styles.scrollIcon} />
+          <ArrowDownIcon size={16} className={styles.scrollIcon} />
         </button>
       )}
     </div>
   );
 });
 
-// SVG Arrow Down icon
-const ArrowDownIcon = ({ className }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-    aria-hidden="true"
-  >
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <polyline points="19 12 12 19 5 12" />
-  </svg>
-);
-
-// Display name for debugging
 MessageList.displayName = 'MessageList';
 
 export default MessageList; 

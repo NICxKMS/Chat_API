@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react';
 import { useApi } from './ApiContext';
 import { useModel } from './ModelContext';
 import { useSettings } from './SettingsContext';
@@ -21,8 +21,8 @@ export const ChatProvider = ({ children }) => {
   const { selectedModel } = useModel();
   const { settings, getModelAdjustedSettings } = useSettings();
   
-  // State for chat
-  const [chatHistory, setChatHistory] = useState([]);
+  // State for chat - Initialize as empty
+  const [chatHistory, setChatHistory] = useState([]); // Reverted to empty array
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const [error, setError] = useState(null);
   
@@ -372,10 +372,10 @@ export const ChatProvider = ({ children }) => {
   
   // Reset chat history
   const resetChat = useCallback(() => {
-    setChatHistory([]);
+    setChatHistory([]); // Reverted to empty array
     resetPerformanceMetrics();
     setError(null);
-  }, [resetPerformanceMetrics]);
+  }, [resetPerformanceMetrics]); // Removed sampleHistory dependency
   
   // Download chat history as JSON
   const downloadChatHistory = useCallback(() => {
@@ -424,8 +424,8 @@ export const ChatProvider = ({ children }) => {
     }
   }, []);
   
-  // Context value
-  const value = {
+  // Memoize the context value
+  const contextValue = useMemo(() => ({
     chatHistory,
     isWaitingForResponse,
     error,
@@ -435,10 +435,20 @@ export const ChatProvider = ({ children }) => {
     stopStreaming,
     resetChat,
     downloadChatHistory
-  };
+  }), [
+    chatHistory,
+    isWaitingForResponse,
+    error,
+    metrics,
+    sendMessage,
+    sendMessageStreaming,
+    stopStreaming,
+    resetChat,
+    downloadChatHistory
+  ]);
   
   return (
-    <ChatContext.Provider value={value}>
+    <ChatContext.Provider value={contextValue}>
       {children}
     </ChatContext.Provider>
   );

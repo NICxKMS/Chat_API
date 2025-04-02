@@ -6,38 +6,77 @@
   background-color: var(--bg);
   color: var(--text);
   transition: background-color 0.3s ease, color 0.3s ease;
+  position: relative;
+}
+
+/* Define sidebar widths */
+:root {
+  --sidebar-width-full: 300px;
+  --sidebar-width-compact: 80px;
+}
+
+.sidebarContainer { /* New container for sidebar */
+  flex-shrink: 0;
+  position: relative; /* Context for absolute mobile sidebar */
+  z-index: 50; /* Above content, below modals */
+  transition: width 0.3s ease; /* Transition width */
+  width: var(--sidebar-width-full); /* Default full width */
 }
 
 .sidebarPlaceholder {
-  width: 300px;
+  /* Inherit width from container */
+  width: 100%; 
+  height: 100%; /* Take full height */
   background-color: var(--sidebar-bg);
-  flex-shrink: 0;
+  /* Keep other styles if needed for placeholder appearance */
   border-right: 1px solid var(--border);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-  z-index: 10;
-  transition: width 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.contentPlaceholder {
+.mainContentContainer { /* New container for main content */
   flex-grow: 1;
-  background-color: var(--bg);
-  overflow-y: auto;
-  transition: background-color 0.3s ease;
-  position: relative;
+  overflow: hidden; /* Prevent layout shifts from scrollbars */
+  position: relative; /* Context for fixed/absolute elements inside */
   display: flex;
   flex-direction: column;
 }
 
-.hiddenMobile {
-  display: none;
+.contentPlaceholder {
+  /* Take full space of container */
+  flex-grow: 1; 
+  width: 100%;
+  background-color: var(--bg);
+  /* Keep other styles */
+  display: flex;
+  flex-direction: column;
 }
 
-/* Mobile sidebar styles */
-.sidebarCollapsed {
-  transform: translateX(-100%);
-  position: absolute;
-  height: 100%;
-  z-index: 100;
+/* Sidebar States (Desktop) */
+@media (min-width: 1024px) {
+  .layout.sidebarCompact .sidebarContainer { /* Apply to container */
+    width: var(--sidebar-width-compact);
+  }
+}
+
+/* Sidebar States (Mobile) */
+@media (max-width: 1023px) {
+  .sidebarContainer {
+    position: absolute; /* Take out of flow */
+    height: 100%;
+    transform: translateX(-100%); /* Hidden by default */
+    width: var(--sidebar-width-full); /* Always full width when shown */
+    border-right: 1px solid var(--border); /* Keep border */
+    box-shadow: var(--shadow-lg); /* Add shadow for mobile */
+  }
+
+  .layout.sidebarOpenMobile .sidebarContainer {
+    transform: translateX(0); /* Slide in */
+  }
+  
+  .mainContentContainer {
+     /* Ensure main content takes full width */
+    width: 100%; 
+  }
 }
 
 .overlay {
@@ -58,18 +97,52 @@
   opacity: 1;
 }
 
-/* Responsive styles */
-@media (min-width: 1024px) {
-  .hiddenMobile {
-    display: block;
-  }
-  
-  .sidebarCollapsed {
-    transform: none;
-    position: relative;
-  }
-  
-  .compactSidebar {
-    width: 80px;
-  }
+/* Container for the model selector button */
+.modelSelectorContainer {
+  position: absolute;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+}
+
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed; 
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  opacity: 0;
+  animation: fadeIn 0.2s ease forwards;
+}
+
+/* Modal Content Wrapper */
+.modalContent {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--shadow-xl);
+  padding: 1rem;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  transform: scale(0.95);
+  animation: scaleIn 0.2s ease forwards;
+}
+
+/* Simple fade-in animation */
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* Simple scale-in animation */
+@keyframes scaleIn {
+  to { transform: scale(1); }
 } 

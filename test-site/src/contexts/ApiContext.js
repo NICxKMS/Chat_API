@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 // Create API context
 const ApiContext = createContext();
 
-// API status check interval in milliseconds
-const STATUS_CHECK_INTERVAL = 30000; // 30 seconds
+// Default API status check interval in milliseconds (30 seconds)
+const DEFAULT_STATUS_CHECK_INTERVAL = 30000;
 
 // Custom hook for using API context
 export const useApi = () => {
@@ -16,7 +16,10 @@ export const useApi = () => {
 };
 
 // API provider component
-export const ApiProvider = ({ children }) => {
+export const ApiProvider = ({ children, statusCheckInterval }) => {
+  // Get configurable interval or use default
+  const STATUS_CHECK_INTERVAL = statusCheckInterval || DEFAULT_STATUS_CHECK_INTERVAL;
+  
   const [apiStatus, setApiStatus] = useState({
     online: false,
     checking: true,
@@ -67,14 +70,15 @@ export const ApiProvider = ({ children }) => {
     
     // Clean up interval on unmount
     return () => clearInterval(intervalId);
-  }, [checkApiStatus]);
+  }, [checkApiStatus, STATUS_CHECK_INTERVAL]);
 
-  // Context value
-  const value = {
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({
     apiStatus,
     checkApiStatus,
-    apiUrl
-  };
+    apiUrl,
+    statusCheckInterval: STATUS_CHECK_INTERVAL
+  }), [apiStatus, checkApiStatus, apiUrl, STATUS_CHECK_INTERVAL]);
 
   return (
     <ApiContext.Provider value={value}>

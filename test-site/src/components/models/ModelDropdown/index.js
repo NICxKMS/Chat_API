@@ -1,5 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useModel } from '../../../contexts/ModelContext';
+import React, { 
+  useEffect, 
+  useRef, 
+  useCallback, 
+  useMemo, 
+  useState
+} from 'react';
+import { useModel, useModelFilter } from '../../../contexts/ModelContext';
 import ModelItem from '../ModelItem';
 import ModelSearch from '../ModelSearch';
 import styles from './ModelDropdown.module.css';
@@ -7,7 +13,7 @@ import styles from './ModelDropdown.module.css';
 /**
  * SelectedModelDisplay component showing the currently selected model
  */
-const SelectedModelDisplay = ({ selectedModel }) => (
+const SelectedModelDisplay = React.memo(({ selectedModel }) => (
   <div className={styles.selectedModelContainer}>
     <div className={styles.selectedModelLabel}>Current Model:</div>
     <div className={styles.selectedModelInfo}>
@@ -21,12 +27,12 @@ const SelectedModelDisplay = ({ selectedModel }) => (
       )}
     </div>
   </div>
-);
+));
 
 /**
  * ExperimentalToggle component for showing/hiding experimental models
  */
-const ExperimentalToggle = ({ isEnabled, onToggle }) => (
+const ExperimentalToggle = React.memo(({ isEnabled, onToggle }) => (
   <div className={styles.experimentalToggle}>
     <label className={styles.toggleLabel}>
       <input 
@@ -41,32 +47,55 @@ const ExperimentalToggle = ({ isEnabled, onToggle }) => (
       <span className={styles.toggleText}>Show experimental models</span>
     </label>
   </div>
-);
+));
 
 /**
  * CapabilityTabs component for selecting model categories
  */
-const CapabilityTabs = ({ capabilities, activeCapability, onSelectCapability }) => (
-  <div className={styles.capabilityTabs}>
-    {Object.keys(capabilities).map(capability => (
-      <button
-        key={capability}
-        className={`${styles.capabilityTab} ${activeCapability === capability ? styles.active : ''}`}
-        onClick={() => onSelectCapability(capability)}
-      >
-        {capability}
-        {capabilities[capability]?.length > 0 && (
-          <span> ({capabilities[capability].length})</span>
-        )}
-      </button>
-    ))}
-  </div>
-);
+const CapabilityTabs = React.memo(({ capabilities, activeCapability, onSelectCapability }) => {
+  const tabsRef = useRef(null);
+  
+  // Scroll the selected tab into view when it changes
+  useEffect(() => {
+    if (tabsRef.current) {
+      const activeTab = tabsRef.current.querySelector(`.${styles.active}`);
+      if (activeTab) {
+        // Calculate position to center the tab in the container
+        const container = tabsRef.current;
+        const containerWidth = container.offsetWidth;
+        const tabWidth = activeTab.offsetWidth;
+        const tabLeft = activeTab.offsetLeft;
+        
+        // Center the tab
+        const scrollPosition = tabLeft - (containerWidth / 2) + (tabWidth / 2);
+        container.scrollTo({
+          left: Math.max(0, scrollPosition),
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [activeCapability]);
+  
+  return (
+    <div className={styles.capabilityTabs} ref={tabsRef}>
+      {Object.keys(capabilities).map(capability => (
+        <button
+          key={capability}
+          className={`${styles.capabilityTab} ${activeCapability === capability ? styles.active : ''}`}
+          onClick={() => onSelectCapability(capability)}
+        >
+          {capability}
+          <span> ({capabilities[capability]})</span>
+        </button>
+      ))}
+    </div>
+  );
+});
 
 /**
  * ModelList component showing the filtered and grouped models
  */
-const ModelList = ({ isLoading, groupedModels, selectedModel, onSelectModel, searchTerm, totalCount, activeCapability, onClearSearch }) => (
+const ModelList = React.memo(({ isLoading, groupedModels, selectedModel, onSelectModel, searchTerm, totalCount, activeCapability, onClearSearch }) => (
   <div className={styles.modelList} role="listbox">
     {isLoading ? (
       <div className={styles.loading}>Loading models...</div>
@@ -78,6 +107,7 @@ const ModelList = ({ isLoading, groupedModels, selectedModel, onSelectModel, sea
             <span className={styles.providerName}>{group.provider}</span>
             <span className={styles.providerTypeSeparator}>→</span>
             <span className={styles.typeLabel}>{group.type}</span>
+            <span className={styles.modelCount}>({group.models.length})</span>
           </div>
           
           {/* Models in this group */}
@@ -110,7 +140,7 @@ const ModelList = ({ isLoading, groupedModels, selectedModel, onSelectModel, sea
       )
     )}
   </div>
-);
+));
 
 /**
  * Fast string search function that uses direct character comparison
@@ -148,22 +178,9 @@ function fastSearch(haystack, needle) {
 }
 
 /**
- * Helper function to determine if a model matches the search term by type
- */
-function isTypeMatch(model, searchLower) {
-  if (!searchLower || !model) return false;
-  
-  // Check if search term directly matches any type information
-  if (model.typeGroupName && model.typeGroupName.toLowerCase().includes(searchLower)) return true;
-  if (model.type && model.type.toLowerCase().includes(searchLower)) return true;
-  
-  return false;
-}
-
-/**
  * SearchContainer component for model searching
  */
-const SearchContainer = ({ searchTerm, onSearchChange, totalCount }) => (
+const SearchContainer = React.memo(({ searchTerm, onSearchChange, totalCount }) => (
   <div className={styles.searchContainer}>
     <ModelSearch 
       searchTerm={searchTerm}
@@ -171,7 +188,7 @@ const SearchContainer = ({ searchTerm, onSearchChange, totalCount }) => (
       resultCount={totalCount} 
     />
   </div>
-);
+));
 
 /**
  * ModelSelectionPanel component for selecting models from a filterable list
@@ -218,11 +235,43 @@ const ModelSelectionPanel = React.forwardRef(({
   </div>
 ));
 
+// Helper function to format provider name
+const formatProviderName = (provider) => {
+  if (!provider) return '';
+  // Simple title case, handle AI
+  return provider
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
+    .replace(/ai/gi, 'AI');
+};
+
+// Helper function to check if model should be included
+const shouldIncludeModel = (model, showExperimental, searchTerm, provider, formattedProvider, typeGroup) => {
+  if (!model) return false;
+  if (model.is_experimental && !showExperimental) {
+    return false;
+  }
+  if (searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
+    const nameMatch = model.name?.toLowerCase().includes(searchLower) || model.displayName?.toLowerCase().includes(searchLower);
+    const providerMatch = provider?.toLowerCase().includes(searchLower) || formattedProvider?.toLowerCase().includes(searchLower);
+    const typeMatch = typeGroup?.toLowerCase().includes(searchLower);
+    const tagMatch = model.tags && model.tags.some(tag => tag?.toLowerCase().includes(searchLower));
+
+    if (!(nameMatch || providerMatch || typeMatch || tagMatch)) {
+      return false;
+    }
+  }
+  return true;
+};
+
 /**
  * Main ModelSelection component that orchestrates all model selection UI
  * @returns {JSX.Element} - Rendered component
  */
 const ModelSelection = () => {
+  // Split context usage between model data and filter functionality
   const { 
     processedModels, 
     selectedModel, 
@@ -230,9 +279,14 @@ const ModelSelection = () => {
     isExperimentalModelsEnabled,
     toggleExperimentalModels,
     showExperimental,
-    updateSearchFilter,
     isLoading
   } = useModel();
+  
+  // Use the filter context for search-related functionality
+  const {
+    modelFilter,
+    updateSearchFilter
+  } = useModelFilter();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCapability, setActiveCapability] = useState('Chat');
@@ -257,6 +311,11 @@ const ModelSelection = () => {
     updateSearchFilter('');
   }, [updateSearchFilter]);
   
+  // Get current search term from context or local state
+  const currentSearchTerm = useMemo(() => {
+    return modelFilter?.search || searchTerm;
+  }, [modelFilter, searchTerm]);
+  
   // Filter and categorize models based on search term and active capability
   const { groupedModels, totalCount } = useMemo(() => {
     if (!processedModels || isLoading || !processedModels[activeCapability]) {
@@ -268,32 +327,17 @@ const ModelSelection = () => {
     const groups = [];
 
     Object.entries(categoryModels).forEach(([provider, typeGroups]) => {
+      // Format the provider name once per provider group
+      const formattedProvider = formatProviderName(provider);
+      
       Object.entries(typeGroups).forEach(([typeGroup, models]) => {
-        const filteredModels = models.filter(model => {
-          // Skip experimental models if not showing them
-          if (model.is_experimental && !showExperimental) {
-            return false;
-          }
-          
-          // Filter by search term (case-insensitive)
-          if (searchTerm) {
-            const searchLower = searchTerm.toLowerCase();
-            const nameMatch = (model.name && model.name.toLowerCase().includes(searchLower)) ||
-                             (model.displayName && model.displayName.toLowerCase().includes(searchLower));
-            const providerMatch = provider.toLowerCase().includes(searchLower);
-            const typeMatch = typeGroup.toLowerCase().includes(searchLower);
-            const tagMatch = model.tags && model.tags.some(tag => tag.toLowerCase().includes(searchLower));
-            
-            if (!(nameMatch || providerMatch || typeMatch || tagMatch)) {
-              return false; // Exclude if no field matches the search term
-            }
-          }
-          return true; // Include if no search term or if it matches
-        });
+        const filteredModels = models.filter(model => 
+          shouldIncludeModel(model, showExperimental, currentSearchTerm, provider, formattedProvider, typeGroup)
+        );
 
         if (filteredModels.length > 0) {
           groups.push({
-            provider: provider,
+            provider: formattedProvider, // Use the formatted provider name
             type: typeGroup,
             models: filteredModels
           });
@@ -304,7 +348,7 @@ const ModelSelection = () => {
 
     return { groupedModels: groups, totalCount: count };
 
-  }, [processedModels, isLoading, activeCapability, showExperimental, searchTerm]);
+  }, [processedModels, isLoading, activeCapability, showExperimental, currentSearchTerm]);
   
   // Prepare capabilities for tabs, including counts
   const capabilitiesWithCounts = useMemo(() => {
@@ -313,18 +357,32 @@ const ModelSelection = () => {
       Object.keys(processedModels).forEach(cap => {
         let modelCount = 0;
         if(processedModels[cap]) {
-          Object.values(processedModels[cap]).forEach(provider => {
-            Object.values(provider).forEach(typeGroup => {
-              modelCount += typeGroup.filter(model => !(model.is_experimental && !showExperimental)).length;
+          Object.entries(processedModels[cap]).forEach(([provider, typeGroups]) => {
+            // Format provider name consistently here too
+            const formattedProvider = formatProviderName(provider);
+            
+            Object.entries(typeGroups).forEach(([typeGroup, models]) => {
+              // Apply the same filtering as in the groupedModels calculation using the shared function
+              const filteredCount = models.filter(model => 
+                shouldIncludeModel(model, showExperimental, currentSearchTerm, provider, formattedProvider, typeGroup)
+              ).length;
+              
+              modelCount += filteredCount;
             });
           });
         }
-        caps[cap] = modelCount > 0 ? [{length: modelCount}] : []; // Store count info simply
+        caps[cap] = modelCount;
       });
     }
     return caps;
-  }, [processedModels, showExperimental]);
+  }, [processedModels, showExperimental, currentSearchTerm]);
 
+  // Sync local search term with context when modelFilter changes
+  useEffect(() => {
+    if (modelFilter?.search !== searchTerm) {
+      setSearchTerm(modelFilter?.search || '');
+    }
+  }, [modelFilter, searchTerm]);
 
   return (
     <div className={styles.modelSelectionContainer}>

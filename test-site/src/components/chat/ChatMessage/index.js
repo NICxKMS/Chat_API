@@ -1,137 +1,156 @@
-import React, { memo, useMemo } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import React, { memo, useMemo, lazy, Suspense } from 'react';
+import PropTypes from 'prop-types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { formatMessageContent } from '../../../utils/formatters';
 import styles from './ChatMessage.module.css';
+import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CopyIcon } from '@primer/octicons-react';
+
+// Lazy load SyntaxHighlighter and styles
+const LazySyntaxHighlighter = lazy(() => 
+  import('react-syntax-highlighter').then(module => ({ default: module.Prism }))
+);
+const lazyLoadStyle = (isDark) => 
+  lazy(() => 
+    isDark 
+      ? import('react-syntax-highlighter/dist/esm/styles/prism/atom-dark') 
+      : import('react-syntax-highlighter/dist/esm/styles/prism/prism')
+  );
 
 /**
- * Individual chat message component
- * @param {Object} props - Component props
- * @param {string} props.role - Message role (user, assistant, system, error)
- * @param {string} props.content - Message content
- * @param {boolean} [props.isStreaming=false] - Whether the message is currently streaming
- * @returns {JSX.Element} - Rendered component
+ * Component to render code blocks with syntax highlighting and copy button
  */
-const ChatMessage = memo(({ role, content, isStreaming = false }) => {
+const CodeBlock = memo(({ node, inline, className, children, ...props }) => {
   const { isDark } = useTheme();
-  
-  // Determine CSS classes based on role
+  const match = /language-(\w+)/.exec(className || '');
+  const language = match?.[1] || 'plaintext';
+  const codeString = String(children).replace(/\n$/, ''); // Remove trailing newline
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(codeString).then(() => {
+      console.log('Code copied!');
+    }).catch(err => {
+      console.error('Failed to copy code:', err);
+    });
+  };
+
+  const StyleComponent = useMemo(() => lazyLoadStyle(isDark), [isDark]);
+
+  return !inline ? (
+    <div className={styles.codeBlockContainer}> 
+      <div className={styles.codeHeader}>
+        <span className={styles.language}>{language}</span>
+        <button className={styles.copyButton} onClick={handleCopy} aria-label="Copy code">
+          <CopyIcon size={14} className={styles.copyIcon} /> Copy
+        </button>
+      </div>
+      <Suspense fallback={<pre className={styles.pre}><code>Loading style...</code></pre>}>
+        <StyleComponent>
+          {(style) => (
+            <Suspense fallback={<pre className={styles.pre}><code>Loading highlighter...</code></pre>}>
+              <LazySyntaxHighlighter
+                style={style}
+                language={language}
+                PreTag="pre"
+                className={styles.pre}
+                wrapLines={true}
+                {...props}
+              >
+                {codeString}
+              </LazySyntaxHighlighter>
+            </Suspense>
+          )}
+        </StyleComponent>
+      </Suspense>
+    </div>
+  ) : (
+    <code className={`${styles.inlineCode} ${className}`} {...props}>
+      {children}
+    </code>
+  );
+});
+CodeBlock.displayName = 'CodeBlock';
+CodeBlock.propTypes = { /* Add PropTypes if needed */ };
+
+/**
+ * Individual chat message component (Refactored for ReactMarkdown & Streaming)
+ */
+const ChatMessage = memo(({ role, content, isStreaming = false, streamContent = '', metrics }) => {
   const messageClass = useMemo(() => {
     const baseClass = styles.message;
+    // Apply streaming class to the main message div if assistant is streaming
+    const streamingClass = (isStreaming && role === 'assistant') ? styles.streaming : ''; 
     
+    let roleClass = '';
     switch (role) {
-      case 'user':
-        return `${baseClass} ${styles.userMessage}`;
-      case 'assistant':
-        return `${baseClass} ${styles.assistantMessage}`;
-      case 'system':
-        return `${baseClass} ${styles.systemMessage}`;
-      case 'error':
-        return `${baseClass} ${styles.errorMessage}`;
-      default:
-        return baseClass;
+      case 'user': roleClass = styles.userMessage; break;
+      case 'assistant': roleClass = styles.assistantMessage; break;
+      case 'system': roleClass = styles.systemMessage; break;
+      case 'error': roleClass = styles.errorMessage; break;
+      default: break;
     }
-  }, [role]);
+    return `${baseClass} ${roleClass} ${streamingClass}`.trim();
+  }, [role, isStreaming]);
   
-  // Process code blocks in the content
-  const formattedContent = useMemo(() => {
-    return processMessageContent(content, isDark);
-  }, [content, isDark]);
+  // Components map for react-markdown
+  const markdownComponents = useMemo(() => ({ 
+    code: CodeBlock, // Use our custom CodeBlock component
+    // Customize other elements like p, a, etc. if needed
+    // p: ({node, ...props}) => <p className={styles.paragraph} {...props} />,
+    // a: ({node, ...props}) => <a className={styles.link} target="_blank" rel="noopener noreferrer" {...props} />,
+  }), []);
   
+  // Combine base content with streaming content for assistant messages
+  const renderContent = (role === 'assistant' && isStreaming)
+    ? (content || '') + streamContent // Append stream to existing or empty content
+    : content; // Render final content otherwise
+
   return (
     <div 
-      className={`${messageClass} ${isStreaming ? styles.streaming : ''}`}
+      className={messageClass} // Apply combined classes here
       data-role={role}
     >
       <div className={styles.avatar}>
         {getAvatarIcon(role)}
       </div>
       
-      <div 
-        className={styles.messageContent}
-        dangerouslySetInnerHTML={{ __html: formattedContent }}
-      />
+      <div className={styles.messageContentWrapper}>
+        <div className={styles.messageContent}>
+          <ReactMarkdown
+            children={renderContent || ''} // Render combined or final content
+            remarkPlugins={[remarkGfm]} // Enable GitHub Flavored Markdown
+            components={markdownComponents}
+            // Disallow dangerous HTML - rely on markdown components
+            disallowedElements={['script', 'style']}
+            unwrapDisallowed={true}
+          />
+          {/* Streaming cursor is now handled by CSS pseudo-element on .streaming */}
+        </div>
+        
+        {/* Per-Response Metrics - only show if assistant, NOT streaming, and metrics exist */}
+        {role === 'assistant' && !isStreaming && metrics && (
+          <div className={styles.metricsContainer}>
+             <span>⏱️ {metrics.time?.toFixed(2)}s</span> |
+             <span>#️⃣ {metrics.tokens}</span> |
+             <span>⚡ {metrics.tps?.toFixed(1)} TPS</span>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 });
-
-/**
- * Process message content with code highlighting
- * @param {string} content - Raw message content
- * @param {boolean} isDark - Whether dark theme is active
- * @returns {string} - HTML formatted content
- */
-const processMessageContent = (content, isDark) => {
-  if (!content) return '';
-  
-  // First, process all code blocks
-  const codeBlockRegex = /```(\w*)([\s\S]*?)```/g;
-  let result = content;
-  let match;
-  let lastIndex = 0;
-  let processedContent = '';
-  
-  while ((match = codeBlockRegex.exec(content)) !== null) {
-    // Add text before this code block
-    if (match.index > lastIndex) {
-      const textBefore = content.substring(lastIndex, match.index);
-      processedContent += formatMessageContent(textBefore);
-    }
-    
-    // Get language and code
-    const language = match[1].trim() || 'plaintext';
-    const code = match[2].trim();
-    
-    // Create highlighted code
-    const highlightedCode = highlightCode(code, language, isDark);
-    processedContent += highlightedCode;
-    
-    lastIndex = match.index + match[0].length;
-  }
-  
-  // Add any remaining text
-  if (lastIndex < content.length) {
-    const textAfter = content.substring(lastIndex);
-    processedContent += formatMessageContent(textAfter);
-  }
-  
-  return result.includes('```') ? processedContent : formatMessageContent(content);
-};
-
-/**
- * Highlight code using SyntaxHighlighter
- * @param {string} code - Code to highlight
- * @param {string} language - Programming language
- * @param {boolean} isDark - Whether dark theme is active
- * @returns {string} - HTML with highlighted code
- */
-const highlightCode = (code, language, isDark) => {
-  // Use appropriate theme based on current app theme
-  const style = isDark ? atomDark : prism;
-  
-  try {
-    // Use SyntaxHighlighter to highlight the code
-    const highlighted = SyntaxHighlighter.highlight(code, language, style);
-    
-    // Wrap in code block elements
-    return `<div class="${styles.codeBlock}">
-      <div class="${styles.codeHeader}">
-        <span class="${styles.language}">${language}</span>
-        <button class="${styles.copyButton}" onclick="navigator.clipboard.writeText(\`${code.replace(/`/g, '\\`')}\`)">
-          Copy
-        </button>
-      </div>
-      <pre class="${styles.pre}"><code class="${styles.code} language-${language}">${highlighted}</code></pre>
-    </div>`;
-  } catch (error) {
-    console.error('Error highlighting code:', error);
-    
-    // Fallback to simple code block
-    return `<div class="${styles.codeBlock}">
-      <pre class="${styles.pre}"><code class="${styles.code}">${code}</code></pre>
-    </div>`;
-  }
+ChatMessage.displayName = 'ChatMessage';
+ChatMessage.propTypes = {
+  role: PropTypes.oneOf(['user', 'assistant', 'system', 'error']).isRequired,
+  content: PropTypes.string, // Allow null/undefined initially if streaming
+  isStreaming: PropTypes.bool,
+  streamContent: PropTypes.string, // Added prop type
+  metrics: PropTypes.shape({ 
+    time: PropTypes.number,
+    tokens: PropTypes.number,
+    tps: PropTypes.number,
+  }),
 };
 
 /**
@@ -140,81 +159,14 @@ const highlightCode = (code, language, isDark) => {
  * @returns {JSX.Element} - Avatar SVG icon
  */
 const getAvatarIcon = (role) => {
+  const iconProps = { size: 20, className: styles.avatarIcon };
   switch (role) {
-    case 'user':
-      return (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      );
-    case 'assistant':
-      return (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <circle cx="12" cy="10" r="3" />
-          <path d="M7 16.3c0-3 2.5-5.5 5.5-5.5h1c3 0 5.5 2.5 5.5 5.5" />
-          <path d="M12 13 L12 16" />
-        </svg>
-      );
-    case 'system':
-      return (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <rect x="2" y="4" width="20" height="16" rx="2" />
-          <path d="M8 10h8" />
-          <path d="M8 14h4" />
-        </svg>
-      );
-    case 'error':
-      return (
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-      );
-    default:
-      return null;
+    case 'user': return <PersonIcon {...iconProps} />;
+    case 'assistant': return <CopilotIcon {...iconProps} />;
+    case 'system': return <GearIcon {...iconProps} />;
+    case 'error': return <AlertIcon {...iconProps} />;
+    default: return null;
   }
 };
-
-// Display name for debugging
-ChatMessage.displayName = 'ChatMessage';
 
 export default ChatMessage; 

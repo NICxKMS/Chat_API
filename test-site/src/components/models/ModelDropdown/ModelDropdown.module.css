@@ -98,10 +98,29 @@
   background: var(--card-bg);
   border-bottom: 1px solid rgba(var(--primary-rgb), 0.15);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin; /* For Firefox */
+  -ms-overflow-style: none; /* For IE and Edge */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.capabilityTabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.capabilityTabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.capabilityTabs::-webkit-scrollbar-thumb {
+  background: rgba(var(--primary-rgb), 0.2);
+  border-radius: 4px;
 }
 
 .capabilityTab {
-  flex: 1;
+  flex: 0 0 auto;
+  min-width: 80px;
   padding: 0.85rem 0.75rem;
   text-align: center;
   cursor: pointer;
@@ -178,6 +197,16 @@
 
 .typeLabel {
   margin-right: 0.35rem;
+}
+
+.modelCount {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--secondary-text);
+  background-color: rgba(var(--primary-rgb), 0.1);
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+  font-weight: 500;
 }
 
 .providerTypeSeparator {

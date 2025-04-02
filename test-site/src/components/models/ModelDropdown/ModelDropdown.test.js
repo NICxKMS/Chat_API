@@ -47,7 +47,20 @@ let mockState = {
 
 // Mock the context provider
 jest.mock('../../../contexts/ModelContext', () => ({
-  useModel: () => mockState,
+  useModel: () => ({
+    processedModels: mockState.processedModels,
+    selectedModel: mockState.selectedModel,
+    selectModel: mockState.selectModel,
+    isExperimentalModelsEnabled: mockState.isExperimentalModelsEnabled,
+    toggleExperimentalModels: mockState.toggleExperimentalModels,
+    showExperimental: mockState.showExperimental,
+    isLoading: mockState.isLoading,
+  }),
+  useModelFilter: () => ({
+    modelFilter: { search: mockState.searchTerm || '' },
+    updateCategoryFilter: mockState.updateCategoryFilter || jest.fn(),
+    updateSearchFilter: mockState.updateSearchFilter,
+  }),
 }));
 // --- END MOCK SETUP ---
 

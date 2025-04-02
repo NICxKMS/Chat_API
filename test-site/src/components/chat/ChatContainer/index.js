@@ -1,122 +1,133 @@
-import React, { useState, useRef, useCallback, memo, lazy, Suspense } from 'react';
-import { useChat } from '../../../contexts/ChatContext';
-import { useModel } from '../../../contexts/ModelContext';
-import { useSettings } from '../../../contexts/SettingsContext';
+import React, { memo, lazy, Suspense, useRef } from 'react';
+import { useChatLogic } from '../../../hooks/useChatLogic';
 import styles from './ChatContainer.module.css';
+import Spinner from '../../common/Spinner';
 
-// Lazy-loaded components for better performance
+// Lazy-loaded components
 const MessageList = lazy(() => import('../MessageList'));
 const ChatInput = lazy(() => import('../ChatInput'));
 const ChatControls = lazy(() => import('../ChatControls'));
-const PerformanceMetrics = lazy(() => import('../PerformanceMetrics'));
+const GlobalMetricsBar = lazy(() => import('../GlobalMetricsBar'));
+const SecondaryActions = lazy(() => import('../SecondaryActions'));
 
 /**
- * Main chat container component that holds the chat interface
- * @param {Object} props - Component props
- * @param {Function} props.toggleSettings - Function to toggle settings panel
- * @returns {JSX.Element} - Rendered component
+ * Main chat container component
  */
-const ChatContainer = memo(({ toggleSettings }) => {
-  const { 
-    chatHistory, 
-    isWaitingForResponse, 
+const ChatContainer = memo(() => {
+  const {
+    chatHistory,
+    isWaitingForResponse,
     error,
-    metrics,
-    sendMessage, 
-    sendMessageStreaming,
-    stopStreaming,
+    metrics, 
+    selectedModel,
+    settings,
+    streamContent,
+    handleSendMessage,
+    handleStopGeneration,
     resetChat, 
-    downloadChatHistory 
-  } = useChat();
-  
-  const { selectedModel } = useModel();
-  const { settings } = useSettings();
-  
-  // Reference to message list for scrolling
+    downloadChatHistory, 
+  } = useChatLogic();
+
   const messageListRef = useRef(null);
-  
-  // Local state for streaming content updates
-  const [streamContent, setStreamContent] = useState('');
-  
-  // State for tracking the currently processed message
-  const [currentMessage, setCurrentMessage] = useState('');
-  
-  // Function to handle sending messages
-  const handleSendMessage = useCallback(async (message) => {
-    if (!message.trim() || !selectedModel) return;
-    
-    setCurrentMessage(message);
-    
-    // Reset stream content
-    setStreamContent('');
-    
-    if (settings.stream) {
-      // Use streaming API
-      await sendMessageStreaming(message, (content) => {
-        setStreamContent(content);
-      });
-    } else {
-      // Use non-streaming API
-      await sendMessage(message);
-    }
-    
-    // Clear current message
-    setCurrentMessage('');
-  }, [selectedModel, settings.stream, sendMessage, sendMessageStreaming]);
-  
-  // Handle stopping generation
-  const handleStopGeneration = useCallback(() => {
-    stopStreaming();
-    setStreamContent('');
-  }, [stopStreaming]);
-  
+  const isActiveChat = chatHistory.length > 0;
+
+  // Classes for the main container
+  const chatContainerClasses = `${styles.chatContainer} ${isActiveChat ? styles.activeChat : styles.emptyChat}`;
+  // Input area class determination moved inside conditional rendering
+
+  // Helper function to render the input area contents
+  const renderInputAreaContents = (isFixedLayout) => {
+    const isStaticLayout = !isFixedLayout; // Flag for empty state layout
+    return (
+      <>
+        {/* Global Metrics: Only show when fixed */} 
+        {isFixedLayout && (
+          <Suspense fallback={<div className={styles.globalMetricsPlaceholder} />}>
+            <GlobalMetricsBar 
+              metrics={metrics?.session}
+              modelName={selectedModel?.name} 
+            />
+          </Suspense>
+        )}
+
+        <div className={styles.inputControlsWrapper}> 
+          {isWaitingForResponse && !settings?.stream && (
+            <div className={styles.inputSpinnerContainer}>
+              <Spinner size="small" />
+            </div>
+          )}
+          <Suspense fallback={<div className={styles.inputPlaceholder} />}>
+            <ChatInput
+              onSendMessage={handleSendMessage}
+              disabled={isWaitingForResponse && !settings?.stream} 
+              selectedModel={selectedModel} 
+            />
+          </Suspense>
+          <Suspense fallback={<div className={styles.controlsPlaceholder} />}>
+            <ChatControls
+              onReset={resetChat} 
+              onDownload={downloadChatHistory} 
+              onStopGeneration={handleStopGeneration}
+              isGenerating={isWaitingForResponse}
+              hasMessages={isActiveChat}
+              isStaticLayout={isStaticLayout}
+            />
+          </Suspense>
+        </div>
+
+        {/* Secondary Actions: Only show when fixed */} 
+        {isFixedLayout && (
+          <Suspense fallback={<div className={styles.secondaryActionsPlaceholder} />}>
+            <SecondaryActions 
+              onNewChat={resetChat}
+              onDownloadChat={downloadChatHistory}
+              canDownload={isActiveChat}
+            />
+          </Suspense>
+        )}
+      </>
+    );
+  };
+
   return (
-    <div className={styles.chatContainer}>
+    <div className={chatContainerClasses}>
       <div className={styles.chatArea}>
-        {/* Message list */}
-        <Suspense fallback={<div className={styles.messagePlaceholder} />}>
-          <MessageList 
-            ref={messageListRef}
-            messages={chatHistory}
-            streamContent={streamContent}
-            isStreaming={isWaitingForResponse && settings.stream}
-            error={error}
-          />
-        </Suspense>
-        
-        {/* Performance metrics */}
-        <Suspense fallback={<div className={styles.metricsPlaceholder} />}>
-          <PerformanceMetrics metrics={metrics} />
-        </Suspense>
+        {isActiveChat ? (
+          // Active Chat: Render MessageList
+          <Suspense fallback={<div className={styles.messagePlaceholder} />}>
+            <MessageList
+              ref={messageListRef}
+              messages={chatHistory}
+              streamContent={streamContent}
+              isStreaming={isWaitingForResponse && settings?.stream}
+              error={error}
+            />
+          </Suspense>
+        ) : (
+          // Empty Chat: Render Greeting and Input Area (Static Layout)
+          <div className={styles.emptyChatContent}>
+            <div className={styles.greetingMessage}>
+              <h2>Welcome to AI Chat!</h2>
+              <p>Select a model above and start your conversation.</p>
+            </div>
+            {/* Render input area directly below greeting */}
+            <div className={`${styles.inputArea} ${styles.staticInputArea}`}> 
+              {renderInputAreaContents(false)} 
+            </div>
+          </div>
+        )}
       </div>
-      
-      <div className={styles.inputArea}>
-        {/* Chat input */}
-        <Suspense fallback={<div className={styles.inputPlaceholder} />}>
-          <ChatInput
-            onSendMessage={handleSendMessage}
-            disabled={isWaitingForResponse && !settings.stream}
-            selectedModel={selectedModel}
-          />
-        </Suspense>
-        
-        {/* Chat controls */}
-        <Suspense fallback={<div className={styles.controlsPlaceholder} />}>
-          <ChatControls
-            onReset={resetChat}
-            onDownload={downloadChatHistory}
-            onSettings={toggleSettings}
-            onStopGeneration={handleStopGeneration}
-            isGenerating={isWaitingForResponse}
-            hasMessages={chatHistory.length > 0}
-          />
-        </Suspense>
-      </div>
+
+      {/* Fixed Input Area Wrapper (Only rendered when chat is active) */}
+      {isActiveChat && (
+        <div className={`${styles.inputArea} ${styles.fixedInputArea}`}> 
+          {renderInputAreaContents(true)} 
+        </div>
+      )}
     </div>
   );
 });
 
-// Display name for debugging
 ChatContainer.displayName = 'ChatContainer';
 
 export default ChatContainer; 

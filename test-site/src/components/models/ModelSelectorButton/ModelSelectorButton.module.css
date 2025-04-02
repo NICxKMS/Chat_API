@@ -1,0 +1,43 @@
+.modelSelectorButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.2rem;
+  border-radius: 20px; /* Pill shape */
+  background-color: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg); /* Elevated shadow */
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap; /* Prevent wrapping */
+  position: relative; /* Needed for absolute positioning if triggering dropdown directly */
+}
+
+.modelSelectorButton:hover:not(:disabled) {
+  background-color: var(--button-primary-hover-bg);
+  box-shadow: var(--shadow-xl); /* Slightly larger shadow on hover */
+  transform: translateY(-1px); /* Subtle lift */
+}
+
+.modelSelectorButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-lg);
+}
+
+.modelSelectorButton:disabled {
+  background-color: var(--button-disabled-bg);
+  color: var(--button-disabled-text);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.buttonText {
+  margin-right: 0.5rem;
+}
+
+.buttonIcon {
+  opacity: 0.8;
+} 

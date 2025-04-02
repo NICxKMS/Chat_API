@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 // Create theme context
 const ThemeContext = createContext();
@@ -21,13 +21,13 @@ export const ThemeProvider = ({ children }) => {
   });
 
   // Toggle between light and dark themes
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setTheme(prevTheme => {
       const newTheme = prevTheme === 'dark' ? 'light' : 'dark';
       localStorage.setItem('theme', newTheme);
       return newTheme;
     });
-  };
+  }, []);
 
   // Apply theme class to body element
   useEffect(() => {
@@ -35,12 +35,12 @@ export const ThemeProvider = ({ children }) => {
     document.body.classList.add(`${theme}-mode`);
   }, [theme]);
 
-  // Context value
-  const value = {
+  // Context value - memoized to prevent unnecessary re-renders
+  const value = useMemo(() => ({
     theme,
     toggleTheme,
     isDark: theme === 'dark'
-  };
+  }), [theme, toggleTheme]);
 
   return (
     <ThemeContext.Provider value={value}>

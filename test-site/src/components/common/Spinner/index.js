@@ -25,4 +25,5 @@ const Spinner = ({ size = 'medium', color }) => {
   );
 };
 
-export default Spinner; 
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(Spinner); 

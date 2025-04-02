@@ -5,14 +5,24 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 // Cache expiry time in milliseconds (5 minutes)
 const CACHE_EXPIRY_TIME = 5 * 60 * 1000;
 
-// Create model context
+// Create separate contexts for models and filtering
 const ModelContext = createContext();
+const ModelFilterContext = createContext();
 
 // Custom hook for using model context
 export const useModel = () => {
   const context = useContext(ModelContext);
   if (context === undefined) {
     throw new Error('useModel must be used within a ModelProvider');
+  }
+  return context;
+};
+
+// Custom hook for using model filter context
+export const useModelFilter = () => {
+  const context = useContext(ModelFilterContext);
+  if (context === undefined) {
+    throw new Error('useModelFilter must be used within a ModelProvider');
   }
   return context;
 };
@@ -29,7 +39,7 @@ export const ModelProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Filter state
+  // Filter state - moved to separate context
   const [showExperimental, setShowExperimental] = useLocalStorage('showExperimental', false);
   const [modelFilter, setModelFilter] = useState({
     search: '',
@@ -223,8 +233,11 @@ export const ModelProvider = ({ children }) => {
   
   // Select a model
   const selectModel = useCallback((model) => {
-    setSelectedModel(model);
-  }, []);
+    // Check if the model is actually different to prevent unnecessary updates
+    if (selectedModel?.id !== model?.id) { 
+      setSelectedModel(model);
+    }
+  }, [selectedModel]);
   
   // Fetch models from API
   const fetchModels = useCallback(async () => {
@@ -280,7 +293,7 @@ export const ModelProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [apiStatus.online, apiUrl, cacheModels, getCachedModels, processModels, selectedModel]);
+  }, [apiStatus.online, apiUrl, cacheModels, getCachedModels, processModels]);
   
   // Fetch models when API comes online
   useEffect(() => {
@@ -289,8 +302,13 @@ export const ModelProvider = ({ children }) => {
     }
   }, [apiStatus.online, fetchModels]);
   
-  // Context value
-  const value = {
+  // Create toggleExperimentalModels callback at the top level
+  const toggleExperimentalModels = useCallback(() => {
+    setShowExperimental(prev => !prev);
+  }, [setShowExperimental]);
+  
+  // Main model context value - no filter state
+  const modelValue = useMemo(() => ({
     allModels,
     processedModels,
     experimentalModels,
@@ -298,19 +316,41 @@ export const ModelProvider = ({ children }) => {
     isLoading,
     error,
     showExperimental,
-    modelFilter,
     isExperimentalModelsEnabled: showExperimental,
-    toggleExperimentalModels: () => setShowExperimental(prev => !prev),
+    toggleExperimentalModels,
     setShowExperimental,
-    updateCategoryFilter,
-    updateSearchFilter,
     selectModel,
     refreshModels: fetchModels
-  };
+  }), [
+    allModels,
+    processedModels,
+    experimentalModels,
+    selectedModel,
+    isLoading,
+    error,
+    showExperimental,
+    toggleExperimentalModels,
+    setShowExperimental,
+    selectModel,
+    fetchModels
+  ]);
+  
+  // Filter context value - only filter-related state
+  const filterValue = useMemo(() => ({
+    modelFilter,
+    updateCategoryFilter,
+    updateSearchFilter
+  }), [
+    modelFilter,
+    updateCategoryFilter,
+    updateSearchFilter
+  ]);
   
   return (
-    <ModelContext.Provider value={value}>
-      {children}
+    <ModelContext.Provider value={modelValue}>
+      <ModelFilterContext.Provider value={filterValue}>
+        {children}
+      </ModelFilterContext.Provider>
     </ModelContext.Provider>
   );
 }; 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 // Default settings values
 const DEFAULT_SETTINGS = {
@@ -46,14 +46,14 @@ export const SettingsProvider = ({ children }) => {
   const shouldRestrictTemperature = useCallback((model) => {
     if (!model) return false;
     
-    const modelId = model.id?.toLowerCase() || '';
-    const modelName = model.name?.toLowerCase() || '';
-    const modelSeries = model.series?.toLowerCase() || '';
-    
-    // Check if model name or series starts with 'o'
-    return modelId.startsWith('o') || 
-           modelName.startsWith('o') || 
-           modelSeries.startsWith('o');
+    // More explicit flag checking for temperature restriction
+    // Check for specific model properties that indicate temperature restriction
+    return (
+      model.requiresFixedTemperature === true || 
+      (model.properties && model.properties.includes('fixed_temperature')) ||
+      (model.id && model.id.toLowerCase().startsWith('o')) ||
+      (model.series && model.series.toLowerCase() === 'o-series')
+    );
   }, []);
   
   // Get current settings with potential model-specific overrides
@@ -67,14 +67,20 @@ export const SettingsProvider = ({ children }) => {
     return settings;
   }, [settings, shouldRestrictTemperature]);
   
-  // Context value
-  const value = {
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({
     settings,
     updateSetting,
     resetSettings,
     shouldRestrictTemperature,
     getModelAdjustedSettings
-  };
+  }), [
+    settings,
+    updateSetting, 
+    resetSettings, 
+    shouldRestrictTemperature, 
+    getModelAdjustedSettings
+  ]);
   
   return (
     <SettingsContext.Provider value={value}>

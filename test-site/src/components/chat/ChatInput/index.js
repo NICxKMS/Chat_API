@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
+import { PaperAirplaneIcon } from '@primer/octicons-react';
 import styles from './ChatInput.module.css';
 
 /**
@@ -91,29 +92,11 @@ const ChatInput = memo(({ onSendMessage, disabled = false, selectedModel }) => {
         disabled={!message.trim() || disabled || !selectedModel}
         aria-label="Send message"
       >
-        <SendIcon className={styles.sendIcon} />
+        <PaperAirplaneIcon size={18} className={styles.sendIcon} />
       </button>
     </div>
   );
 });
-
-// SVG Send icon as a component
-const SendIcon = ({ className }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-    aria-hidden="true"
-  >
-    <path d="M22 2L11 13" />
-    <path d="M22 2L15 22L11 13L2 9L22 2Z" />
-  </svg>
-);
 
 // Display name for debugging
 ChatInput.displayName = 'ChatInput';

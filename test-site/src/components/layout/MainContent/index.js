@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useCallback } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import styles from './MainContent.module.css';
 
@@ -9,58 +9,44 @@ const SidebarToggle = lazy(() => import('../SidebarToggle'));
 
 /**
  * Main content area component containing chat interface and settings
+ * @param {Object} props - Component props
+ * @param {boolean} props.isSidebarOpen - Whether the sidebar is open (mobile)
+ * @param {Function} props.toggleSidebar - Function to toggle the sidebar (mobile)
+ * @param {boolean} props.isSettingsOpen - Whether the settings panel is open
+ * @param {Function} props.toggleSettings - Function to toggle the settings panel
  * @returns {JSX.Element} - Rendered component
  */
-const MainContent = () => {
-  const isDesktop = useIsDesktop();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  // Toggle settings panel
-  const toggleSettings = useCallback(() => {
-    setIsSettingsOpen(prev => !prev);
-  }, []);
-  
-  // Toggle sidebar on mobile
-  const toggleSidebar = useCallback(() => {
-    setIsSidebarOpen(prev => !prev);
-  }, []);
+const MainContent = ({ 
+  isSidebarOpen, 
+  toggleSidebar, 
+  isSettingsOpen, // Receive from Layout 
+  toggleSettings // Receive from Layout
+}) => {
+  // isDesktop hook is no longer needed here for conditional rendering
+  // const isDesktop = useIsDesktop();
   
   return (
     <main className={styles.mainContent}>
-      {/* Sidebar toggle button (mobile only) */}
-      {!isDesktop && (
-        <Suspense fallback={<div className={styles.togglePlaceholder} />}>
-          <SidebarToggle
-            isOpen={isSidebarOpen}
-            onToggle={toggleSidebar}
-          />
-        </Suspense>
-      )}
+      {/* Always render SidebarToggle - visibility can be handled by CSS if needed */}
+      <Suspense fallback={<div className={styles.togglePlaceholder} />}>
+        <SidebarToggle
+          isOpen={isSidebarOpen}
+          onToggle={toggleSidebar}
+        />
+      </Suspense>
       
       {/* Chat area */}
       <Suspense fallback={<div className={styles.chatPlaceholder} />}>
-        <ChatContainer 
-          toggleSettings={toggleSettings}
-        />
+        <ChatContainer />
       </Suspense>
       
-      {/* Settings panel (slide in from right) */}
+      {/* Settings panel (slide in from right) - Pass state and close handler */}
       <Suspense fallback={null}>
         <SettingsPanel 
           isOpen={isSettingsOpen}
-          onClose={toggleSettings}
+          onClose={toggleSettings} // Use toggleSettings from Layout as onClose
         />
       </Suspense>
-      
-      {/* Sidebar overlay for mobile */}
-      {!isDesktop && isSidebarOpen && (
-        <div 
-          className={styles.sidebarOverlay}
-          onClick={toggleSidebar}
-          aria-hidden="true"
-        />
-      )}
     </main>
   );
 };

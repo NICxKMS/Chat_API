@@ -18,13 +18,91 @@
   position: relative;
   scrollbar-width: thin;
   scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+  transition: padding-bottom 0.3s ease-in-out;
 }
 
+/* Styles for active chat (with messages) */
+.activeChat .chatArea {
+  padding-bottom: 120px;
+}
+
+/* Styles for empty chat */
+.emptyChat .chatArea {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.emptyChatContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.greetingMessage {
+  color: var(--secondary-text);
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.greetingMessage h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.greetingMessage p {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Base Input Area styles (Common to static and fixed) */
 .inputArea {
-  padding: 0;
+  padding: 0.75rem 1rem;
   background-color: var(--chat-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
+  width: 100%;
+}
+
+/* Styles for the static input area in empty chat */
+.staticInputArea {
   position: relative;
+  margin-top: 1rem;
+  max-width: 800px;
+}
+
+/* Styles for the fixed input area in active chat */
+.fixedInputArea {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 4rem);
+  max-width: 800px;
+  box-shadow: var(--shadow-lg);
   z-index: 10;
+}
+
+/* Wrapper for Input and Controls */
+.inputControlsWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Container for the spinner next to input */
+.inputSpinnerContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 0.5rem;
 }
 
 /* Placeholder styles with shimmer animation */
@@ -107,5 +185,20 @@
   
   .controlsPlaceholder {
     margin: 0 0.75rem 0.75rem;
+  }
+
+  .staticInputArea {
+    max-width: calc(100% - 2rem);
+  }
+
+  .fixedInputArea {
+    width: calc(100% - 2rem);
+    bottom: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+  }
+  
+  .activeChat .chatArea {
+    padding-bottom: 90px;
   }
 } 

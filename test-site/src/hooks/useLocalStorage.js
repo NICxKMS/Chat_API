@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * Custom hook for using localStorage with React state
@@ -7,22 +7,25 @@ import { useState, useEffect } from 'react';
  * @returns {[any, Function]} - State value and setter function
  */
 export const useLocalStorage = (key, initialValue) => {
+  // Use a ref to hold the initial value to avoid unnecessary state updates
+  const initialValueRef = useRef(initialValue);
+  
   // Initialize state from localStorage or use initialValue
   const [storedValue, setStoredValue] = useState(() => {
     try {
       // Get from localStorage by key
       const item = window.localStorage.getItem(key);
       // Parse stored json or return initialValue
-      return item ? JSON.parse(item) : initialValue;
+      return item ? JSON.parse(item) : initialValueRef.current;
     } catch (error) {
       console.error(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
+      return initialValueRef.current;
     }
   });
 
   // Return a wrapped version of useState's setter function that
   // persists the new value to localStorage
-  const setValue = (value) => {
+  const setValue = useCallback((value) => {
     try {
       // Allow value to be a function so we have same API as useState
       const valueToStore =
@@ -36,18 +39,18 @@ export const useLocalStorage = (key, initialValue) => {
     } catch (error) {
       console.error(`Error setting localStorage key "${key}":`, error);
     }
-  };
+  }, [key, storedValue]);
 
   // Update stored value if key changes
   useEffect(() => {
     try {
       const item = window.localStorage.getItem(key);
-      setStoredValue(item ? JSON.parse(item) : initialValue);
+      setStoredValue(item ? JSON.parse(item) : initialValueRef.current);
     } catch (error) {
       console.error(`Error updating from localStorage key "${key}":`, error);
-      setStoredValue(initialValue);
+      setStoredValue(initialValueRef.current);
     }
-  }, [key, initialValue]);
+  }, [key]); // Remove initialValue from dependencies
 
   return [storedValue, setValue];
 };

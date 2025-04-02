@@ -14,11 +14,11 @@
 }
 
 .header {
-  padding: 1.2rem 1.5rem;
+  padding: 1rem;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--sidebar-bg) 97%, var(--accent));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -28,10 +28,10 @@
 }
 
 .title {
-  font-size: 1.5rem;
+  margin: 0;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--text);
-  margin: 0;
   background: linear-gradient(to right, var(--text), color-mix(in srgb, var(--text) 80%, var(--accent)));
   -webkit-background-clip: text;
   background-clip: text;
@@ -40,47 +40,13 @@
 }
 
 .apiInfo {
-  padding: 0.9rem 1.5rem;
-  background: color-mix(in srgb, var(--sidebar-bg) 98%, black);
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.2s ease;
-}
-
-.apiInfo:hover {
-  background: color-mix(in srgb, var(--sidebar-bg) 96%, var(--accent) 10%);
-}
-
-.apiLabel {
-  font-weight: 600;
-  color: var(--secondary-text);
-  display: flex;
-  align-items: center;
-}
-
-.apiUrl {
-  color: var(--text);
-  opacity: 0.85;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.8rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 200px;
-  transition: opacity 0.2s ease;
-}
-
-.apiUrl:hover {
-  opacity: 1;
+  display: none;
 }
 
 .modelContainer {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 0.5rem 0;
+  padding: 1rem;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) transparent;
 }
@@ -99,13 +65,15 @@
 }
 
 .footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-color);
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   background: color-mix(in srgb, var(--sidebar-bg) 97%, var(--accent));
   position: sticky;
   bottom: 0;
+  margin-top: auto;
 }
 
 /* Placeholder styles for Suspense fallbacks */
@@ -115,6 +83,8 @@
   background: linear-gradient(90deg, var(--hover), color-mix(in srgb, var(--hover) 85%, var(--accent)));
   border-radius: 12px;
   animation: pulse 1.5s infinite alternate ease-in-out;
+  min-height: 24px;
+  min-width: 24px;
 }
 
 .modelPlaceholder {
@@ -124,6 +94,8 @@
   border-radius: 8px;
   animation: pulse 1.5s infinite alternate ease-in-out;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  min-height: 24px;
+  min-width: 24px;
 }
 
 .themePlaceholder {
@@ -132,6 +104,8 @@
   background: linear-gradient(135deg, var(--hover), color-mix(in srgb, var(--hover) 85%, var(--accent)));
   border-radius: 20px;
   animation: pulse 1.5s infinite alternate ease-in-out;
+  min-height: 24px;
+  min-width: 24px;
 }
 
 @keyframes pulse {
@@ -141,6 +115,17 @@
   to {
     opacity: 1;
   }
+}
+
+/* Compact state for desktop - changed to hide completely */
+.compactSidebar {
+  transform: translateX(-100%);
+  /* Remove fixed width */
+  /* width: 80px; */
+  
+  /* Ensure it doesn't affect layout when transformed */
+  margin-left: -300px; /* Adjust if sidebar base width changes */
+  /* We might need pointer-events: none; if interactable elements remain accessible */
 }
 
 /* Mobile styles */
@@ -160,4 +145,134 @@
   .sidebar.active {
     transform: translateX(0);
   }
-} 
+}
+
+/* Styles for icon buttons */
+.iconButton {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.iconButton:hover {
+  background-color: var(--hover);
+  color: var(--text);
+}
+
+/* Specific styles for New Chat Button */
+.newChatButton {
+  border: 1px solid var(--border-color);
+}
+
+.newChatButton span {
+  /* Hide text on smaller sidebar widths if needed */
+}
+
+.compactSidebar .newChatButton span {
+  display: none;
+}
+
+/* Placeholder for chat list container */
+.chatListContainer {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+
+.sessionList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sessionItem {
+  padding: 0 0.5rem;
+}
+
+.sessionButton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--secondary-text);
+  cursor: pointer;
+  text-align: left;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sessionButton:hover {
+  background-color: var(--hover);
+  color: var(--text);
+}
+
+.sessionTitle {
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+  margin-right: 0.5rem;
+}
+
+.sessionTimestamp {
+  font-size: 0.75rem;
+  color: var(--secondary-text);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/* Compact Session List Styles */
+.compactSessionList {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0;
+  gap: 0.5rem;
+}
+
+.compactSessionButton {
+  padding: 0.6rem;
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.compactSessionButton span {
+  font-weight: bold;
+}
+
+/* Adjust sidebar padding/width for compact state */
+.sidebar.compact {
+  width: var(--sidebar-width-compact);
+}
+
+.sidebar.compact .header {
+  padding: 1rem 0.5rem;
+  justify-content: center;
+}
+
+.sidebar.compact .footer {
+  padding: 0.75rem 0.5rem;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Remove old compact styles */
+/* .compactSidebar { ... } */
+/* .compactSidebar .newChatButton span { ... } */
+
+/* The duplicate block starting from "Chat Session List Styles" should be removed from here down */ 

@@ -1,0 +1,59 @@
+.actionsContainer {
+  display: flex;
+  justify-content: space-between; /* Push items to ends */
+  align-items: center;
+  padding: 0.6rem 1rem; /* Adjust padding as needed */
+  border-top: 1px solid var(--border); /* Separator */
+  background-color: var(--card-bg); /* Match metrics bar maybe? */
+  border-radius: 0 0 8px 8px; /* Round bottom corners */
+  margin-top: -1px; /* Overlap border with input area bottom */
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: 5px;
+  border: 1px solid transparent; /* Start with transparent border */
+  background-color: transparent;
+  color: var(--secondary-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover:not(:disabled) {
+  background-color: var(--hover);
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+
+.actionButton:active:not(:disabled) {
+  background-color: var(--border); /* Slightly darker feedback */
+}
+
+.actionButton:disabled {
+  color: var(--disabled-text);
+  cursor: not-allowed;
+}
+
+/* Specific button adjustments if needed */
+.newChatButton {
+  /* No specific styles needed currently */
+}
+
+.downloadButton {
+  /* No specific styles needed currently */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .actionsContainer {
+    padding: 0.5rem 0.75rem;
+  }
+  .actionButton {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+  }
+} 

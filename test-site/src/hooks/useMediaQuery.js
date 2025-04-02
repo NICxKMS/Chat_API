@@ -1,4 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+
+// Define breakpoint constants in a single source of truth
+export const BREAKPOINTS = {
+  mobile: '640px',
+  tablet: '1023px',
+  desktop: '1024px'
+};
+
+// Cached media query listeners
+const mediaQueryListeners = new Map();
 
 /**
  * Custom hook that returns true if the current viewport matches the provided media query
@@ -21,8 +31,20 @@ export const useMediaQuery = (query) => {
       return undefined;
     }
 
-    // Create media query list
-    const mediaQueryList = window.matchMedia(query);
+    // Check if we already have a listener for this query
+    if (!mediaQueryListeners.has(query)) {
+      // Create media query list
+      const mediaQueryList = window.matchMedia(query);
+      
+      // Create listener registry for this query
+      mediaQueryListeners.set(query, {
+        mediaQueryList,
+        listeners: new Set()
+      });
+    }
+    
+    const queryData = mediaQueryListeners.get(query);
+    const { mediaQueryList, listeners } = queryData;
 
     // Initial check
     setMatches(mediaQueryList.matches);
@@ -31,12 +53,21 @@ export const useMediaQuery = (query) => {
     const listener = (event) => {
       setMatches(event.matches);
     };
+    
+    // Add listener to registry
+    listeners.add(listener);
 
     // Modern browsers
     if (mediaQueryList.addEventListener) {
       mediaQueryList.addEventListener('change', listener);
       return () => {
         mediaQueryList.removeEventListener('change', listener);
+        listeners.delete(listener);
+        
+        // Clean up registry if no more listeners
+        if (listeners.size === 0) {
+          mediaQueryListeners.delete(query);
+        }
       };
     } 
     // Legacy support for older browsers (e.g., IE, older Safari)
@@ -44,6 +75,12 @@ export const useMediaQuery = (query) => {
       mediaQueryList.addListener(listener);
       return () => {
         mediaQueryList.removeListener(listener);
+        listeners.delete(listener);
+        
+        // Clean up registry if no more listeners
+        if (listeners.size === 0) {
+          mediaQueryListeners.delete(query);
+        }
       };
     }
 
@@ -57,15 +94,19 @@ export const useMediaQuery = (query) => {
  * Pre-configured hooks for common breakpoints
  */
 export const useIsMobile = () => {
-  return useMediaQuery('(max-width: 640px)');
+  const query = useMemo(() => `(max-width: ${BREAKPOINTS.mobile})`, []);
+  return useMediaQuery(query);
 };
 
 export const useIsTablet = () => {
-  return useMediaQuery('(min-width: 641px) and (max-width: 1023px)');
+  const query = useMemo(() => 
+    `(min-width: calc(${BREAKPOINTS.mobile} + 1px)) and (max-width: ${BREAKPOINTS.tablet})`, []);
+  return useMediaQuery(query);
 };
 
 export const useIsDesktop = () => {
-  return useMediaQuery('(min-width: 1024px)');
+  const query = useMemo(() => `(min-width: ${BREAKPOINTS.desktop})`, []);
+  return useMediaQuery(query);
 };
 
 /**
@@ -73,9 +114,5 @@ export const useIsDesktop = () => {
  * @returns {{mobile: string, tablet: string, desktop: string}}
  */
 export const useBreakpoints = () => {
-  return {
-    mobile: '640px',
-    tablet: '1023px',
-    desktop: '1024px'
-  };
+  return BREAKPOINTS;
 }; 
