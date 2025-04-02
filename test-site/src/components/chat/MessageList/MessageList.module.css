@@ -2,9 +2,11 @@
   position: relative;
   height: 100%;
   width: 100%;
-  overflow: hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+  padding-bottom: 110px;
+  padding-top: 90px;
+  margin-top: auto;
 }
 
 .messageListContainer::before {
@@ -20,7 +22,9 @@
 }
 
 .messageRow {
+  display: flex;
   padding: 0.75rem 1.25rem;
+  padding-bottom: 12px;
   box-sizing: border-box;
   transition: background-color 0.2s ease;
 }
@@ -140,6 +144,7 @@ body.dark-mode .messageRow:hover {
 @media (max-width: 768px) {
   .messageRow {
     padding: 0.75rem 1rem;
+    padding-bottom: 10px;
   }
   
   .scrollToBottomButton {

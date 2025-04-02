@@ -235,7 +235,7 @@ export const ModelProvider = ({ children }) => {
   const selectModel = useCallback((model) => {
     // Check if the model is actually different to prevent unnecessary updates
     if (selectedModel?.id !== model?.id) { 
-      setSelectedModel(model);
+    setSelectedModel(model);
     }
   }, [selectedModel]);
   

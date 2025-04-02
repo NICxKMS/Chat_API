@@ -6,17 +6,18 @@
 }
 
 .controlButton {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  background-color: var(--hover);
-  border: 1px solid var(--border);
-  color: var(--text);
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: none;
+  background-color: transparent;
+  color: var(--secondary-text);
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: all 0.2s ease;
+  min-width: 36px;
+  min-height: 36px;
 }
 
 .controlButton:hover:not(:disabled) {
@@ -34,9 +35,9 @@
 }
 
 .controlIcon {
-  width: 16px;
-  height: 16px;
-  margin-right: 0.25rem;
+  width: 18px;
+  height: 18px;
+  margin-bottom: 8px;
 }
 
 /* Specific button styles */

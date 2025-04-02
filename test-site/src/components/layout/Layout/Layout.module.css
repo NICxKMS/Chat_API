@@ -43,7 +43,7 @@
 
 .contentPlaceholder {
   /* Take full space of container */
-  flex-grow: 1; 
+  flex-grow: 1;
   width: 100%;
   background-color: var(--bg);
   /* Keep other styles */
@@ -62,7 +62,7 @@
 @media (max-width: 1023px) {
   .sidebarContainer {
     position: absolute; /* Take out of flow */
-    height: 100%;
+  height: 100%;
     transform: translateX(-100%); /* Hidden by default */
     width: var(--sidebar-width-full); /* Always full width when shown */
     border-right: 1px solid var(--border); /* Keep border */
@@ -132,7 +132,7 @@
   max-width: 90vw;
   max-height: 80vh;
   overflow-y: auto;
-  position: relative;
+    position: relative;
   transform: scale(0.95);
   animation: scaleIn 0.2s ease forwards;
 }

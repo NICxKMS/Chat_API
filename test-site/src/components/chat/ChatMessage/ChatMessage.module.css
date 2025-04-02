@@ -5,14 +5,7 @@
   animation: fadeIn 0.3s ease-in-out;
   border-radius: 12px;
   transition: all 0.3s ease;
-  margin-bottom: 12px;
-  max-width: 92%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   align-items: flex-start;
-}
-
-.message:last-child {
-  margin-bottom: 0;
 }
 
 /* Message variants based on role */
@@ -29,7 +22,6 @@
   align-self: flex-start;
   margin-right: auto;
   border-bottom-left-radius: 4px;
-  border: 1px solid var(--border);
   flex-direction: row;
 }
 
@@ -331,7 +323,7 @@
   .message {
     gap: 0.75rem;
     padding: 0.75rem;
-    max-width: 95%;
+    max-width: 98%;
   }
   
   .avatar {

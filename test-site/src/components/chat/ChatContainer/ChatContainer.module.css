@@ -4,7 +4,6 @@
   height: 100%;
   width: 100%;
   background-color: var(--chat-bg);
-  overflow: hidden;
   position: relative;
   border-radius: 8px;
   box-shadow: var(--shadow);
@@ -12,18 +11,20 @@
 
 .chatArea {
   flex-grow: 1;
-  overflow: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   position: relative;
   scrollbar-width: thin;
   scrollbar-color: var(--scroll-thumb) var(--scroll-track);
-  transition: padding-bottom 0.3s ease-in-out;
+  padding: 0 40px;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 /* Styles for active chat (with messages) */
 .activeChat .chatArea {
-  padding-bottom: 120px;
 }
 
 /* Styles for empty chat */
@@ -80,14 +81,15 @@
 
 /* Styles for the fixed input area in active chat */
 .fixedInputArea {
-  position: fixed;
+  position: absolute;
   bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 4rem);
-  max-width: 800px;
+  max-width: 760px;
+  width: calc(100% - 80px);
   box-shadow: var(--shadow-lg);
   z-index: 10;
+  margin: 0 auto;
+  left: 40px;
+  right: 40px;
 }
 
 /* Wrapper for Input and Controls */
@@ -193,12 +195,14 @@
 
   .fixedInputArea {
     width: calc(100% - 2rem);
+    max-width: none;
     bottom: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
+    left: 1rem;
+    right: 1rem;
   }
   
   .activeChat .chatArea {
-    padding-bottom: 90px;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 } 

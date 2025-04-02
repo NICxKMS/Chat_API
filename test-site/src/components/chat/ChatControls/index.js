@@ -35,7 +35,6 @@ const ChatControls = memo(({
           title="Clear chat history"
         >
           <TrashIcon size={16} className={styles.controlIcon} />
-          <span className={styles.controlText}>Clear</span>
         </button>
       )}
       
@@ -49,7 +48,6 @@ const ChatControls = memo(({
           title="Download chat history"
         >
           <DownloadIcon size={16} className={styles.controlIcon} />
-          <span className={styles.controlText}>Download</span>
         </button>
       )}
       
@@ -62,7 +60,6 @@ const ChatControls = memo(({
           title="Stop generation"
         >
           <StopIcon size={16} className={styles.controlIcon} />
-          <span className={styles.controlText}>Stop</span>
         </button>
       )}
     </div>

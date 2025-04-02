@@ -1,16 +1,19 @@
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
-import { PaperAirplaneIcon } from '@primer/octicons-react';
+import PropTypes from 'prop-types';
+import { PaperAirplaneIcon, PlusIcon } from '@primer/octicons-react';
 import styles from './ChatInput.module.css';
 
 /**
  * Auto-resizing chat input component
  * @param {Object} props - Component props
  * @param {Function} props.onSendMessage - Function to handle message sending
+ * @param {Function} props.onNewChat - Function to trigger a new chat
  * @param {boolean} [props.disabled=false] - Whether the input is disabled
  * @param {Object} [props.selectedModel] - Currently selected model
+ * @param {boolean} [props.isStaticLayout=false] - Flag indicating if the layout is static (empty chat)
  * @returns {JSX.Element} - Rendered component
  */
-const ChatInput = memo(({ onSendMessage, disabled = false, selectedModel }) => {
+const ChatInput = memo(({ onSendMessage, onNewChat, disabled = false, selectedModel, isStaticLayout = false }) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef(null);
   
@@ -74,6 +77,19 @@ const ChatInput = memo(({ onSendMessage, disabled = false, selectedModel }) => {
   
   return (
     <div className={styles.inputContainer}>
+      {/* Conditionally render New Chat button only if not static layout */}
+      {!isStaticLayout && (
+        <button 
+          className={`${styles.actionButton} ${styles.newChatButton}`}
+          onClick={onNewChat}
+          aria-label="Start new chat"
+          title="Start new chat"
+          type="button"
+        >
+          <PlusIcon size={18} />
+        </button>
+      )}
+      
       <textarea
         ref={textareaRef}
         className={styles.chatInput}
@@ -91,6 +107,7 @@ const ChatInput = memo(({ onSendMessage, disabled = false, selectedModel }) => {
         onClick={handleSend}
         disabled={!message.trim() || disabled || !selectedModel}
         aria-label="Send message"
+        type="button"
       >
         <PaperAirplaneIcon size={18} className={styles.sendIcon} />
       </button>
@@ -98,7 +115,14 @@ const ChatInput = memo(({ onSendMessage, disabled = false, selectedModel }) => {
   );
 });
 
-// Display name for debugging
+ChatInput.propTypes = {
+  onSendMessage: PropTypes.func.isRequired,
+  onNewChat: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  selectedModel: PropTypes.object,
+  isStaticLayout: PropTypes.bool,
+};
+
 ChatInput.displayName = 'ChatInput';
 
 export default ChatInput; 

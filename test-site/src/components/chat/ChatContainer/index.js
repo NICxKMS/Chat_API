@@ -8,7 +8,6 @@ const MessageList = lazy(() => import('../MessageList'));
 const ChatInput = lazy(() => import('../ChatInput'));
 const ChatControls = lazy(() => import('../ChatControls'));
 const GlobalMetricsBar = lazy(() => import('../GlobalMetricsBar'));
-const SecondaryActions = lazy(() => import('../SecondaryActions'));
 
 /**
  * Main chat container component
@@ -61,6 +60,8 @@ const ChatContainer = memo(() => {
               onSendMessage={handleSendMessage}
               disabled={isWaitingForResponse && !settings?.stream} 
               selectedModel={selectedModel} 
+              onNewChat={resetChat}
+              isStaticLayout={isStaticLayout}
             />
           </Suspense>
           <Suspense fallback={<div className={styles.controlsPlaceholder} />}>
@@ -74,17 +75,6 @@ const ChatContainer = memo(() => {
             />
           </Suspense>
         </div>
-
-        {/* Secondary Actions: Only show when fixed */} 
-        {isFixedLayout && (
-          <Suspense fallback={<div className={styles.secondaryActionsPlaceholder} />}>
-            <SecondaryActions 
-              onNewChat={resetChat}
-              onDownloadChat={downloadChatHistory}
-              canDownload={isActiveChat}
-            />
-          </Suspense>
-        )}
       </>
     );
   };

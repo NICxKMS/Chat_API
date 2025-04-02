@@ -78,28 +78,28 @@ const Layout = () => {
 
       {/* Sidebar container */}
       <div className={styles.sidebarContainer}>
-        <Suspense fallback={<div className={styles.sidebarPlaceholder} />}>
-          <Sidebar 
+      <Suspense fallback={<div className={styles.sidebarPlaceholder} />}>
+        <Sidebar 
             // Pass isCompact prop if Sidebar needs to adjust its content
             isCompact={isDesktop && !isSidebarOpen} 
-            onNewChat={handleNewChat} // Pass new chat handler
-            onToggleSettings={toggleSettings} // Pass settings toggle handler
-          /> 
-        </Suspense>
+          onNewChat={handleNewChat} // Pass new chat handler
+          onToggleSettings={toggleSettings} // Pass settings toggle handler
+        /> 
+      </Suspense>
       </div>
       
       {/* Main content container */}
       <div className={styles.mainContentContainer}>
-        <Suspense fallback={<div className={styles.contentPlaceholder} />}>
-          <MainContent 
+      <Suspense fallback={<div className={styles.contentPlaceholder} />}>
+        <MainContent 
             // Pass toggleSidebar for mobile button
-            isSidebarOpen={isSidebarOpen} 
-            toggleSidebar={toggleSidebar} 
-            // Pass settings state and toggle function to MainContent
-            isSettingsOpen={isSettingsOpen} 
-            toggleSettings={toggleSettings}
-          />
-        </Suspense>
+          isSidebarOpen={isSidebarOpen} 
+          toggleSidebar={toggleSidebar} 
+          // Pass settings state and toggle function to MainContent
+          isSettingsOpen={isSettingsOpen} 
+          toggleSettings={toggleSettings}
+        />
+      </Suspense>
       </div>
 
       {/* Mobile overlay */}
