@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react';
 import { useApi } from './ApiContext';
 import { useModel } from './ModelContext';
 import { useSettings } from './SettingsContext';
 import { useAuth } from './AuthContext';
 
 // Create chat context
-const ChatContext = createContext();
+export const ChatContext = createContext();
 
 // Custom hook for using chat context
 export const useChat = () => {
@@ -38,9 +38,11 @@ export const ChatProvider = ({ children }) => {
     isComplete: false
   });
   
-  // Create refs at component level
-  const lastUpdateTimeRef = React.useRef(0);
-  const contentBufferRef = React.useRef('');
+  // Reference for streaming text content - used for direct DOM updates
+  const streamingTextRef = useRef('');
+  const streamBufferRef = useRef('');
+  const updateTimeoutRef = useRef(null);
+  const isStreamingRef = useRef(false);
   
   // Format model identifier for API
   const formatModelIdentifier = useCallback((model) => {
@@ -112,8 +114,36 @@ export const ChatProvider = ({ children }) => {
     return { role, content };
   }, []);
   
-  // Process streaming message using EventSource instead of fetch
-  const streamMessage = useCallback(async (message) => {
+  // Helper function to update chat history with new content
+  // Using an optimized approach to minimize re-renders
+  const updateChatWithContent = useCallback((content) => {
+    // Store the latest content in the ref for direct DOM access
+    streamingTextRef.current = content;
+    
+    // Use React's functional update to ensure we're working with the latest state
+    setChatHistory(prev => {
+      const updated = [...prev];
+      const assistantIndex = updated.length - 1;
+      
+      // Only update if we have a valid assistant message to update
+      if (assistantIndex >= 0 && updated[assistantIndex].role === 'assistant') {
+        // Only update if content has changed to avoid unnecessary re-renders
+        if (updated[assistantIndex].content !== content) {
+          updated[assistantIndex] = { 
+            role: 'assistant', 
+            content: content 
+          };
+          return updated;
+        }
+      }
+      
+      // Return the same reference if no change is needed
+      return prev;
+    });
+  }, []);
+  
+  // Process streaming message using Fetch API with ReadableStream for optimal performance
+  const streamMessageWithFetch = useCallback(async (message) => {
     if (!message || !selectedModel) {
       setError('Please enter a message and select a model');
       return null;
@@ -125,7 +155,7 @@ export const ChatProvider = ({ children }) => {
       return null;
     }
     
-    // Add user message to history (for UI only)
+    // Add user message to history
     const userMessage = addMessageToHistory('user', message);
     
     // Reset metrics and start timer
@@ -136,20 +166,18 @@ export const ChatProvider = ({ children }) => {
     setIsWaitingForResponse(true);
     setError(null);
     
-    // Add assistant response with empty content initially (for UI only)
-    // This will appear immediately in the UI but won't be sent to the API
+    // Add assistant response with empty content initially
     addMessageToHistory('assistant', '');
     
     let accumulatedContent = '';
     let tokenCount = 0;
-    let eventSource = null;
-
+    let abortController = new AbortController();
+    let lastRenderTime = 0;
+    
     // Set up timeout
     let timeoutId = setTimeout(() => {
       console.log('Streaming request timed out after 60 seconds');
-      if (eventSource) {
-        eventSource.close();
-      }
+      abortController.abort();
       setError('Request timed out. Please try again.');
       setIsWaitingForResponse(false);
     }, 60000); // 60 second timeout
@@ -158,18 +186,16 @@ export const ChatProvider = ({ children }) => {
       // Get adjusted settings based on model
       const adjustedSettings = getModelAdjustedSettings(selectedModel);
       
-      // Prepare request payload - Filter out empty assistant messages to avoid validation error
+      // Prepare request payload - Filter out empty assistant messages
       const validMessages = [...chatHistory].filter(msg => {
-        // Keep all user messages
         if (msg.role === 'user') return true;
-        // For assistant messages, only keep ones with content
         return (msg.role === 'assistant' && msg.content && msg.content.trim() !== '');
       });
       
-      // Add only the user message (not the empty assistant message)
+      // Add only the user message
       validMessages.push(userMessage);
       
-      // Create the final payload with valid messages only
+      // Create the final payload
       const payload = {
         model: modelId,
         messages: validMessages,
@@ -180,151 +206,175 @@ export const ChatProvider = ({ children }) => {
         presence_penalty: adjustedSettings.presence_penalty
       };
       
-      // Using POST with EventSource requires a different approach
-      // We'll use URLSearchParams to send the request in the URL
-      const params = new URLSearchParams();
-      params.append('data', JSON.stringify(payload));
+      // Prepare optimized headers for streaming
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'X-Requested-With': 'XMLHttpRequest'
+      };
       
-      // Construct URL for EventSource (POST simulation via query param)
-      const streamUrl = new URL(`/api/chat/stream-sse?${params.toString()}`, apiUrl).toString();
+      if (isAuthenticated && idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+      }
       
-      console.log(`Starting EventSource streaming request to ${streamUrl}`);
+      // Construct URL for fetch API
+      const streamUrl = new URL('/api/chat/stream', apiUrl).toString();
       
-      // Create a promise that will be resolved when the streaming is complete
-      return new Promise((resolve, reject) => {
-        // Create EventSource
-        eventSource = new EventSource(streamUrl);
+      console.log(`Starting optimized fetch streaming request to ${streamUrl}`);
+      
+      // Make the fetch request with appropriate settings for streaming
+      const response = await fetch(streamUrl, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(payload),
+        signal: abortController.signal,
+        cache: 'no-store',
+        credentials: 'same-origin'
+      });
+      
+      if (!response.ok) {
+        let errorMessage = `API error: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // Use default error message if parsing fails
+        }
+        throw new Error(errorMessage);
+      }
+      
+      // Get the response body as a stream with optimized settings
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      
+      // Variables for optimized chunk processing
+      let buffer = '';
+      let processingChunk = false;
+      
+      // Begin reading the stream
+      while (true) {
+        const { done, value } = await reader.read();
         
-        // Use component-level refs for tracking updates
-        // Reset them for a new streaming session
-        lastUpdateTimeRef.current = 0;
-        contentBufferRef.current = '';
+        // Reset timeout on each chunk
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          console.log('No data received for 60 seconds, timing out');
+          abortController.abort();
+          setError('Connection timed out');
+          setIsWaitingForResponse(false);
+        }, 60000);
         
-        eventSource.onopen = (event) => {
-          console.log('EventSource connection opened');
-          // Reset timeout each time connection opens
-          clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => {
-            console.log('Streaming request timed out after 60 seconds');
-            eventSource.close();
-            setError('Request timed out. Please try again.');
-            setIsWaitingForResponse(false);
-            reject(new Error('Request timed out'));
-          }, 60000);
-        };
+        if (done) {
+          // Stream is complete
+          console.log('Stream complete');
+          break;
+        }
         
-        eventSource.onmessage = (event) => {
-          try {
-            // Clear existing timeout and set a new one
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-              console.log('No messages received for 60 seconds, timing out');
-              eventSource.close();
-              setError('Connection timed out');
-              setIsWaitingForResponse(false);
-              reject(new Error('Connection timed out'));
-            }, 60000);
+        // Decode the chunk
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+        
+        // Process all complete SSE messages in the buffer
+        // Don't process overlapping calls
+        if (!processingChunk) {
+          processingChunk = true;
+          
+          // Split by double newlines to find complete SSE messages
+          const messages = buffer.split('\n\n');
+          
+          // Keep the last potentially incomplete message in the buffer
+          buffer = messages.pop() || '';
+          
+          // Process each complete message
+          for (const message of messages) {
+            if (!message.trim()) continue;
             
-            // Check for [DONE] message
-            if (event.data === '[DONE]') {
-              console.log('Received [DONE] message from stream');
-              
-              // Ensure any buffered content is flushed
-              if (contentBufferRef.current) {
-                accumulatedContent += contentBufferRef.current;
-                updateChatWithContent(accumulatedContent);
-                contentBufferRef.current = '';
-              }
-              
-              eventSource.close();
-              updatePerformanceMetrics(tokenCount, true);
-              setIsWaitingForResponse(false);
-              resolve(accumulatedContent);
-              return;
+            // Check for heartbeat
+            if (message.startsWith(':heartbeat')) {
+              console.log('Received heartbeat');
+              continue;
             }
             
-            try {
-              const parsedData = JSON.parse(event.data);
-              const content = parsedData.content || '';
+            // Process data message
+            if (message.startsWith('data:')) {
+              const data = message.slice(5).trim();
               
-              if (content) {
-                // Add to buffer
-                contentBufferRef.current += content;
+              // Check for [DONE] message
+              if (data === '[DONE]') {
+                console.log('Received [DONE] message from stream');
+                updatePerformanceMetrics(tokenCount, true);
+                continue;
+              }
+              
+              // Parse the JSON data
+              try {
+                const parsedData = JSON.parse(data);
+                const content = parsedData.content || '';
                 
-                // Track if we need to update now based on time since last update
-                const now = Date.now();
-                const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-                
-                // Update every 33ms (approximately 30fps) for smoother visual updates
-                // This helps prevent React's batching from making updates appear jerky
-                if (timeSinceLastUpdate >= 33 || contentBufferRef.current.length > 10) {
-                  // Update accumulated content
-                  accumulatedContent += contentBufferRef.current;
+                if (content) {
+                  // Add to accumulated content immediately
+                  accumulatedContent += content;
                   
-                  // Update the UI with the latest content
-                  updateChatWithContent(accumulatedContent);
-                  
-                  // Reset buffer and update timestamp
-                  contentBufferRef.current = '';
-                  lastUpdateTimeRef.current = now;
+                  // Update the streaming text ref for direct DOM updates
+                  streamingTextRef.current = accumulatedContent;
                   
                   // Update token count estimate
                   tokenCount += content.split(/\s+/).length || 0;
-                  updatePerformanceMetrics(tokenCount, false);
+                  
+                  // Optimize UI updates to avoid React re-render thrashing
+                  // Use requestAnimationFrame for smoother visual experience
+                  const now = performance.now();
+                  if (now - lastRenderTime > 16) { // ~60fps update rate
+                    const currentContent = accumulatedContent;
+                    const currentTokenCount = tokenCount;
+                    window.requestAnimationFrame(() => {
+                      updateChatWithContent(currentContent);
+                      updatePerformanceMetrics(currentTokenCount, false);
+                    });
+                    lastRenderTime = now;
+                  }
                 }
+              } catch (parseError) {
+                console.warn('Error parsing message data:', parseError, data);
               }
-            } catch (parseError) {
-              console.warn('Error parsing message data:', parseError, event.data);
             }
-          } catch (e) {
-            console.error('Error in message handler:', e);
           }
-        };
-        
-        eventSource.onerror = (error) => {
-          console.error('EventSource error:', error);
-          // Don't close connection on the first error - let it try to reconnect
-          // But if we get repeated errors, close it
-          if (eventSource.readyState === 2) { // CLOSED
-            clearTimeout(timeoutId);
-            setError('Connection to server lost');
-            setIsWaitingForResponse(false);
-            reject(new Error('Connection to server lost'));
-          }
-        };
-        
-        // Set up cleanup method that will be called if the component unmounts
-        return () => {
-          if (eventSource) {
-            console.log('Closing EventSource connection');
-            eventSource.close();
-            clearTimeout(timeoutId);
-          }
-        };
+          
+          processingChunk = false;
+        }
+      }
+      
+      // Final update to ensure all content is displayed
+      window.requestAnimationFrame(() => {
+        updateChatWithContent(accumulatedContent);
+        updatePerformanceMetrics(tokenCount, true);
       });
       
+      // Stream is complete
+      setIsWaitingForResponse(false);
+      return accumulatedContent;
+      
     } catch (error) {
-      console.error('Error in streaming message:', error);
+      console.error('Error in fetch streaming:', error);
       setError(error.message || 'An error occurred during streaming');
       setIsWaitingForResponse(false);
-      if (eventSource) {
-        eventSource.close();
-      }
-      clearTimeout(timeoutId);
       return null;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }, [
-    apiUrl, selectedModel, chatHistory, getModelAdjustedSettings, 
-    addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics, 
-    startPerformanceTimer, updatePerformanceMetrics, 
-    isAuthenticated, idToken, setError, setIsWaitingForResponse
+    apiUrl, selectedModel, chatHistory, getModelAdjustedSettings,
+    addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics,
+    startPerformanceTimer, updatePerformanceMetrics,
+    isAuthenticated, idToken, setError, setIsWaitingForResponse, updateChatWithContent
   ]);
   
   // Send message to API - decide between streaming and non-streaming
   const sendMessage = useCallback(async (message) => {
     // Use streaming if enabled in settings
     if (settings.streaming) {
-      return streamMessage(message);
+      return streamMessageWithFetch(message);
     }
     
     if (!message || !selectedModel) {
@@ -415,7 +465,7 @@ export const ChatProvider = ({ children }) => {
     apiUrl, selectedModel, chatHistory, settings, getModelAdjustedSettings, 
     addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics, 
     startPerformanceTimer, updatePerformanceMetrics, extractTokenCount, 
-    isAuthenticated, idToken, setError, setIsWaitingForResponse, streamMessage
+    isAuthenticated, idToken, setError, setIsWaitingForResponse, streamMessageWithFetch
   ]);
   
   // Reset chat history
@@ -463,27 +513,35 @@ export const ChatProvider = ({ children }) => {
     }
   }, [chatHistory]);
   
-  // Helper function to update chat history with new content
-  // Using a separate function to ensure consistent updates
-  const updateChatWithContent = (content) => {
-    // Use unstable_batchedUpdates to ensure the update isn't batched with others
-    // This helps create smoother visual updates
-    queueMicrotask(() => {
-      setChatHistory(prev => {
-        const updated = [...prev];
-        const assistantIndex = updated.length - 1;
-        
-        if (assistantIndex >= 0 && updated[assistantIndex].role === 'assistant') {
-          updated[assistantIndex] = { 
-            role: 'assistant', 
-            content: content 
-          };
-        }
-        
-        return updated;
-      });
-    });
-  };
+  // Optimized streaming update function with buffering
+  const updateStreamingText = useCallback((newChunk) => {
+    if (!isStreamingRef.current) {
+      isStreamingRef.current = true;
+    }
+    
+    // Add to buffer
+    streamBufferRef.current += newChunk;
+    
+    // Update the streaming text ref directly
+    // The StreamingMessage component will handle the word-by-word display
+    streamingTextRef.current = streamBufferRef.current;
+    
+    // No need for excessive throttling since StreamingMessage handles the typing effect
+    // Just ensure the reference is updated immediately for the typing component to access
+  }, []);
+  
+  const finishStreaming = useCallback(() => {
+    // Final update to ensure buffer is fully flushed
+    streamingTextRef.current = streamBufferRef.current;
+    
+    // Clear any pending updates
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+      updateTimeoutRef.current = null;
+    }
+    
+    isStreamingRef.current = false;
+  }, []);
   
   // Memoize the context value
   const contextValue = useMemo(() => ({
@@ -493,7 +551,12 @@ export const ChatProvider = ({ children }) => {
     metrics,
     submitMessage: sendMessage,
     resetChat,
-    downloadChatHistory
+    downloadChatHistory,
+    updateChatWithContent,
+    streamingTextRef,
+    updateStreamingText,
+    finishStreaming,
+    isStreaming: isStreamingRef.current
   }), [
     chatHistory,
     isWaitingForResponse,
@@ -501,7 +564,10 @@ export const ChatProvider = ({ children }) => {
     metrics,
     sendMessage,
     resetChat,
-    downloadChatHistory
+    downloadChatHistory,
+    updateChatWithContent,
+    updateStreamingText,
+    finishStreaming
   ]);
   
   return (

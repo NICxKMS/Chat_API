@@ -13,7 +13,6 @@ class ChatController {
     // Bind methods (consider if still necessary with Fastify style)
     this.chatCompletion = this.chatCompletion.bind(this);
     this.chatCompletionStream = this.chatCompletionStream.bind(this);
-    this.chatCompletionEventStream = this.chatCompletionEventStream.bind(this);
     this.getChatCapabilities = this.getChatCapabilities.bind(this);
     logger.info("ChatController initialized");
   }
@@ -169,24 +168,26 @@ class ChatController {
     let lastActivityTime = Date.now();
     let heartbeatInterval = null;
     let timeoutCheckInterval = null;
-    let abortController = new AbortController(); // Add abort controller for stream cancellation
+    let abortController = new AbortController();
     const HEARTBEAT_INTERVAL_MS = 20000;
     const TIMEOUT_DURATION_MS = 60000;
     let streamStartTime = null;
     let ttfbRecorded = false;
-    let chunkCounter = 0; // Track number of chunks for debugging and metrics
+    let chunkCounter = 0;
 
-    // Use reply.raw for direct access to the underlying Node response object
-    const response = reply.raw;
+    // Create a PassThrough stream with a low highWaterMark for immediate flushing
+    const { PassThrough } = await import('node:stream');
+    const stream = new PassThrough({ 
+      highWaterMark: 1,  // Use smallest highWaterMark to ensure immediate chunk delivery
+      autoDestroy: true  // Automatically destroy when finished
+    });
 
-    /**
-     * Safely ends the response stream, cleans up intervals, and records metrics.
-     * Uses the Node.js response object (response = reply.raw).
-     */
-    const safelyEndResponse = (message, errorType = null) => {
+    // Set up stream ending utility function
+    const safelyEndStream = (message, errorType = null) => {
       if (!streamClosed) {
-        logger.info(`${message} (sent ${chunkCounter} chunks)`); // Add chunk count to log
+        logger.info(`${message} (sent ${chunkCounter} chunks)`);
         streamClosed = true;
+        
         if (heartbeatInterval) { clearInterval(heartbeatInterval); }
         if (timeoutCheckInterval) { clearInterval(timeoutCheckInterval); }
         
@@ -194,22 +195,23 @@ class ChatController {
           const durationSeconds = (Date.now() - streamStartTime) / 1000;
           metrics.recordStreamDuration(providerName, modelName, durationSeconds);
         }
+        
         if (errorType && providerName && modelName) {
           metrics.incrementStreamErrorCount(providerName, modelName, errorType);
         }
 
         // Send final [DONE] event to explicitly signal completion to clients
         try {
-          if (!response.writableEnded && response.writable) {
-            response.write("data: [DONE]\n\n");
-          }
+          stream.write("data: [DONE]\n\n");
+          // Explicitly flush any remaining buffered data
+          stream.uncork();
         } catch (e) {
           logger.warn(`Error sending final [DONE] event: ${e.message}`);
         }
 
-        // Check Node.js response object directly
-        if (!response.writableEnded) {
-          response.end();
+        // End the stream properly
+        if (!stream.writableEnded) {
+          stream.end();
         }
       }
     };
@@ -221,254 +223,9 @@ class ChatController {
       const { model, messages, temperature = 0.7, max_tokens = 1000 } = request.body;
       
       if (!model) {
-        // Use reply to send error before headers are set
         return reply.status(400).send({ error: "Missing required parameter: model" });
       }
-      if (!Array.isArray(messages) || messages.length === 0) {
-        return reply.status(400).send({ error: "Missing or invalid messages array" });
-      }
-
-      // Extract provider/model name (logic unchanged)
-      if (model.includes("/")) {
-        [providerName, modelName] = model.split("/", 2);
-      } else {
-        const defaultProvider = providerFactory.getProvider();
-        providerName = defaultProvider.name;
-        modelName = model;
-      }
-
-      const provider = providerFactory.getProvider(providerName);
-      if (!provider) {
-        return reply.status(404).send({ error: `Provider '${providerName}' not found or not configured` });
-      }
-
-      logger.info(`Processing STREAMING chat request for ${providerName}/${modelName}`);
-      streamStartTime = Date.now();
       
-      // --- Streaming Specific Logic --- 
-
-      // Set and flush headers with performance optimizations
-      // Content-Encoding compression is explicitly avoided to prevent buffering
-      response.setHeader("Content-Type", "text/event-stream");
-      response.setHeader("Cache-Control", "no-cache, no-transform");
-      response.setHeader("Connection", "keep-alive");
-      response.setHeader("Transfer-Encoding", "chunked"); 
-      response.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering if present
-      
-      // Manually add CORS headers because reply.raw might bypass the plugin
-      response.setHeader("Access-Control-Allow-Origin", "*"); // Match global diagnostic setting
-      response.setHeader("Access-Control-Allow-Credentials", "true");
-
-      // Force flush headers with uncork to ensure immediate delivery
-      if (typeof response.socket?.uncork === 'function') {
-        response.socket.uncork();
-      }
-      response.flushHeaders();
-      lastActivityTime = Date.now();
-
-      // Setup Heartbeat using reply.raw
-      heartbeatInterval = setInterval(() => {
-        if (!streamClosed && response.writable) { 
-          try {
-            response.write(":heartbeat\n\n"); 
-          } catch (err) {
-            safelyEndResponse(`Error sending heartbeat: ${err.message}`);
-          }
-        }
-      }, HEARTBEAT_INTERVAL_MS);
-
-      // Setup Inactivity Timeout Check (logic unchanged)
-      timeoutCheckInterval = setInterval(() => {
-        if (Date.now() - lastActivityTime > TIMEOUT_DURATION_MS) {
-          safelyEndResponse(`Stream timed out due to inactivity for ${providerName}/${modelName}`, "timeout");
-          abortController.abort(); // Signal abort to ongoing fetch operations
-        }
-      }, TIMEOUT_DURATION_MS / 2);
-
-      // Handle client disconnect using Node.js request object (request.raw)
-      request.raw.on("close", () => {
-        safelyEndResponse(`Client disconnected stream for ${providerName}/${modelName}`, "client_disconnect");
-        abortController.abort(); // Signal abort to ongoing fetch operations
-      });
-
-      // Prepare options (unchanged)
-      const options = {
-        model: modelName,
-        messages,
-        temperature: parseFloat(temperature?.toString() || "0.7"),
-        max_tokens: parseInt(max_tokens?.toString() || "1000", 10),
-        abortSignal: abortController.signal, // Pass abort signal to provider if it supports it
-      };
-
-      // Call provider stream (unchanged)
-      const stream = provider.chatCompletionStream(options);
-      
-      // Iterate through stream
-      for await (const chunk of stream) {
-        if (streamClosed) { break; }
-        lastActivityTime = Date.now(); 
-        chunkCounter++; // Track chunks for metrics
-        
-        if (!ttfbRecorded) {
-          const ttfbSeconds = (Date.now() - streamStartTime) / 1000;
-          metrics.recordStreamTtfb(providerName, modelName, ttfbSeconds);
-          ttfbRecorded = true;
-        }
-        metrics.incrementStreamChunkCount(providerName, modelName);
-
-        const sseFormattedChunk = `data: ${JSON.stringify(chunk)}\n\n`;
-        
-        // Write chunk safely using reply.raw
-        if (!streamClosed && response.writable) {
-          try {
-            response.write(sseFormattedChunk);
-            
-            // Force immediate delivery for very small chunks
-            if (sseFormattedChunk.length < 50 && typeof response.socket?.uncork === 'function') {
-              response.socket.uncork();
-            }
-          } catch (writeError) {
-            logger.error(`Error writing chunk to response: ${writeError.message}`);
-            safelyEndResponse(`Error writing chunk to response: ${writeError.message}`, "write_error");
-            break;
-          }
-        }
-      }
-      
-      // If loop completes normally, end the stream
-      safelyEndResponse(`Stream finished normally for ${providerName}/${modelName}`);
-      
-    } catch (error) {
-      // Handle errors. Note: Headers might have already been sent.
-      logger.error(`Stream error: ${error.message}`, { provider: providerName, model: modelName, stack: error.stack });
-      const errorType = "provider_error";
-      
-      // Check if headers have been sent using reply.sent (Fastify property)
-      if (!reply.sent && !streamClosed) {
-        // Headers not sent, we can use reply to send a JSON error
-        streamClosed = true; 
-        if (heartbeatInterval) { clearInterval(heartbeatInterval); }
-        if (timeoutCheckInterval) { clearInterval(timeoutCheckInterval); }
-        try {
-          // Determine appropriate status code from error if possible
-          const statusCode = error.status || 500;
-          reply.status(statusCode).send({ 
-            error: "Stream processing error", 
-            message: error.message 
-          });
-        } catch (err) {
-          logger.error("Failed to send JSON error response:", err);
-        }
-        // Record error metric
-        if (providerName && modelName) {
-          metrics.incrementStreamErrorCount(providerName, modelName, errorType);
-        }
-      } else if (!streamClosed && response.writable) {
-        // Headers ARE sent, try to send a structured error event over the stream using reply.raw
-        const errorPayload = {
-          code: error.code || error.name || "ProviderStreamError",
-          message: error.message || "An error occurred during streaming.",
-          status: error.status || 500,
-          provider: providerName,
-          model: modelName
-        };
-        try {
-          const sseErrorEvent = `event: error\ndata: ${JSON.stringify(errorPayload)}\n\n`;
-          response.write(sseErrorEvent);
-          logger.info(`Sent SSE error event for ${providerName}/${modelName}`);
-        } catch (writeError) {
-          logger.error("Failed to write SSE error event to stream:", writeError);
-        }
-        // End the stream after attempting to send the error event
-        safelyEndResponse(`Stream ended due to error: ${error.message}`, errorType);
-      } else {
-        // Stream already closed or not writable
-        logger.warn("Stream already closed or not writable when error occurred.");
-        if (providerName && modelName) {
-          metrics.incrementStreamErrorCount(providerName, modelName, errorType);
-        }
-        if (heartbeatInterval) { clearInterval(heartbeatInterval); }
-        if (timeoutCheckInterval) { clearInterval(timeoutCheckInterval); }
-      }
-    }
-  }
-
-  /**
-   * Handles streaming chat completion requests using EventSource-compatible SSE.
-   * This endpoint is specifically designed to work with browser's native EventSource.
-   * Uses GET with query parameters instead of POST body for better compatibility.
-   * @param {FastifyRequest} request - Fastify request object.
-   * @param {FastifyReply} reply - Fastify reply object.
-   */
-  async chatCompletionEventStream(request, reply) {
-    let providerName, modelName;
-    let streamClosed = false; 
-    let lastActivityTime = Date.now();
-    let heartbeatInterval = null;
-    let timeoutCheckInterval = null;
-    let abortController = new AbortController(); // Add abort controller for stream cancellation
-    const HEARTBEAT_INTERVAL_MS = 10000; // Send heartbeats more frequently (10s)
-    const TIMEOUT_DURATION_MS = 60000;
-    let streamStartTime = null;
-    let ttfbRecorded = false;
-    let chunkCounter = 0; // Track number of chunks for debugging and metrics
-
-    // Use reply.raw for direct access to the underlying Node response object
-    const response = reply.raw;
-
-    /**
-     * Safely ends the response stream, cleans up intervals, and records metrics.
-     * Uses the Node.js response object (response = reply.raw).
-     */
-    const safelyEndResponse = (message, errorType = null) => {
-      if (!streamClosed) {
-        logger.info(`${message} (sent ${chunkCounter} chunks)`);
-        streamClosed = true;
-        if (heartbeatInterval) { clearInterval(heartbeatInterval); }
-        if (timeoutCheckInterval) { clearInterval(timeoutCheckInterval); }
-        
-        if (streamStartTime && providerName && modelName) {
-          const durationSeconds = (Date.now() - streamStartTime) / 1000;
-          metrics.recordStreamDuration(providerName, modelName, durationSeconds);
-        }
-        if (errorType && providerName && modelName) {
-          metrics.incrementStreamErrorCount(providerName, modelName, errorType);
-        }
-
-        // Send final [DONE] event to explicitly signal completion to clients
-        try {
-          if (!response.writableEnded && response.writable) {
-            response.write("data: [DONE]\n\n");
-          }
-        } catch (e) {
-          logger.warn(`Error sending final [DONE] event: ${e.message}`);
-        }
-
-        // Check Node.js response object directly
-        if (!response.writableEnded) {
-          response.end();
-        }
-      }
-    };
-
-    try {
-      metrics.incrementRequestCount();
-      
-      // Get data from query parameter
-      let dataParam;
-      try {
-        dataParam = decodeURIComponent(request.query.data || '{}');
-        dataParam = JSON.parse(dataParam);
-      } catch (e) {
-        return reply.status(400).send({ error: "Invalid data parameter" });
-      }
-      
-      const { model, messages, temperature = 0.7, max_tokens = 1000 } = dataParam;
-      
-      if (!model) {
-        // Use reply to send error before headers are set
-        return reply.status(400).send({ error: "Missing required parameter: model" });
-      }
       if (!Array.isArray(messages) || messages.length === 0) {
         return reply.status(400).send({ error: "Missing or invalid messages array" });
       }
@@ -487,54 +244,43 @@ class ChatController {
         return reply.status(404).send({ error: `Provider '${providerName}' not found or not configured` });
       }
 
-      logger.info(`Processing EVENT-STREAM chat request for ${providerName}/${modelName}`);
+      logger.info(`Processing STREAMING chat request for ${providerName}/${modelName}`);
       streamStartTime = Date.now();
       
-      // --- Streaming Specific Logic --- 
-
-      // Set and flush headers with performance optimizations
-      // Content-Encoding compression is explicitly avoided to prevent buffering
-      response.setHeader("Content-Type", "text/event-stream");
-      response.setHeader("Cache-Control", "no-cache, no-transform");
-      response.setHeader("Connection", "keep-alive");
-      response.setHeader("Transfer-Encoding", "chunked"); 
-      response.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering if present
+      // Set headers optimized for streaming
+      reply.header('Content-Type', 'text/event-stream');
+      reply.header('Cache-Control', 'no-cache, no-transform');
+      reply.header('Connection', 'keep-alive');
+      reply.header('X-Accel-Buffering', 'no'); // Prevent nginx buffering
+      reply.header('Transfer-Encoding', 'chunked'); // Enable chunked encoding
       
-      // Manually add CORS headers because reply.raw might bypass the plugin
-      response.setHeader("Access-Control-Allow-Origin", "*"); // Match global diagnostic setting
-      response.setHeader("Access-Control-Allow-Credentials", "true");
-
-      // Force flush headers with uncork to ensure immediate delivery
-      if (typeof response.socket?.uncork === 'function') {
-        response.socket.uncork();
-      }
-      response.flushHeaders();
+      // Send the stream to the client
+      reply.send(stream);
       lastActivityTime = Date.now();
 
-      // Setup Heartbeat - more frequent for EventSource
+      // Set up heartbeat interval
       heartbeatInterval = setInterval(() => {
-        if (!streamClosed && response.writable) { 
+        if (!streamClosed && !stream.writableEnded) { 
           try {
-            response.write(":heartbeat\n\n"); 
-            logger.debug(`Sent heartbeat for ${providerName}/${modelName}`);
+            stream.write(":heartbeat\n\n");
           } catch (err) {
-            safelyEndResponse(`Error sending heartbeat: ${err.message}`);
+            safelyEndStream(`Error sending heartbeat: ${err.message}`);
           }
         }
       }, HEARTBEAT_INTERVAL_MS);
 
-      // Setup Inactivity Timeout Check
+      // Setup inactivity timeout check
       timeoutCheckInterval = setInterval(() => {
         if (Date.now() - lastActivityTime > TIMEOUT_DURATION_MS) {
-          safelyEndResponse(`Stream timed out due to inactivity for ${providerName}/${modelName}`, "timeout");
-          abortController.abort(); // Signal abort to ongoing fetch operations
+          safelyEndStream(`Stream timed out due to inactivity for ${providerName}/${modelName}`, "timeout");
+          abortController.abort();
         }
       }, TIMEOUT_DURATION_MS / 2);
 
-      // Handle client disconnect using Node.js request object (request.raw)
+      // Handle client disconnect
       request.raw.on("close", () => {
-        safelyEndResponse(`Client disconnected stream for ${providerName}/${modelName}`, "client_disconnect");
-        abortController.abort(); // Signal abort to ongoing fetch operations
+        safelyEndStream(`Client disconnected stream for ${providerName}/${modelName}`, "client_disconnect");
+        abortController.abort();
       });
 
       // Prepare options
@@ -546,14 +292,14 @@ class ChatController {
         abortSignal: abortController.signal,
       };
 
-      // Call provider stream
-      const stream = provider.chatCompletionStream(options);
+      // Get provider stream
+      const providerStream = provider.chatCompletionStream(options);
       
-      // Iterate through stream
-      for await (const chunk of stream) {
+      // Optimized stream processing with immediate chunk writing
+      for await (const chunk of providerStream) {
         if (streamClosed) { break; }
         lastActivityTime = Date.now(); 
-        chunkCounter++; // Track chunks for metrics
+        chunkCounter++;
         
         if (!ttfbRecorded) {
           const ttfbSeconds = (Date.now() - streamStartTime) / 1000;
@@ -564,53 +310,51 @@ class ChatController {
 
         const sseFormattedChunk = `data: ${JSON.stringify(chunk)}\n\n`;
         
-        // Write chunk safely using reply.raw
-        if (!streamClosed && response.writable) {
+        if (!streamClosed && !stream.writableEnded) {
           try {
-            response.write(sseFormattedChunk);
+            // Write each chunk immediately without buffering
+            stream.write(sseFormattedChunk);
             
-            // Force immediate delivery for very small chunks
-            if (sseFormattedChunk.length < 50 && typeof response.socket?.uncork === 'function') {
-              response.socket.uncork();
+            // Force immediate flush after each chunk for optimal responsiveness
+            if (typeof stream.uncork === 'function') {
+              stream.uncork();
             }
           } catch (writeError) {
-            logger.error(`Error writing chunk to response: ${writeError.message}`);
-            safelyEndResponse(`Error writing chunk to response: ${writeError.message}`, "write_error");
+            logger.error(`Error writing chunk to stream: ${writeError.message}`);
+            safelyEndStream(`Error writing chunk to stream: ${writeError.message}`, "write_error");
             break;
           }
         }
       }
       
       // If loop completes normally, end the stream
-      safelyEndResponse(`Stream finished normally for ${providerName}/${modelName}`);
+      safelyEndStream(`Stream finished normally for ${providerName}/${modelName}`);
       
     } catch (error) {
-      // Handle errors. Note: Headers might have already been sent.
+      // Handle errors
       logger.error(`Stream error: ${error.message}`, { provider: providerName, model: modelName, stack: error.stack });
       const errorType = "provider_error";
       
-      // Check if headers have been sent using reply.sent (Fastify property)
+      // Check if headers have been sent
       if (!reply.sent && !streamClosed) {
         // Headers not sent, we can use reply to send a JSON error
         streamClosed = true; 
         if (heartbeatInterval) { clearInterval(heartbeatInterval); }
         if (timeoutCheckInterval) { clearInterval(timeoutCheckInterval); }
-        try {
-          // Determine appropriate status code from error if possible
-          const statusCode = error.status || 500;
-          reply.status(statusCode).send({ 
-            error: "Stream processing error", 
-            message: error.message 
-          });
-        } catch (err) {
-          logger.error("Failed to send JSON error response:", err);
-        }
+        
+        // Determine appropriate status code from error if possible
+        const statusCode = error.status || 500;
+        reply.status(statusCode).send({ 
+          error: "Stream processing error", 
+          message: error.message 
+        });
+        
         // Record error metric
         if (providerName && modelName) {
           metrics.incrementStreamErrorCount(providerName, modelName, errorType);
         }
-      } else if (!streamClosed && response.writable) {
-        // Headers ARE sent, try to send a structured error event over the stream using reply.raw
+      } else if (!streamClosed && !stream.writableEnded) {
+        // Headers ARE sent, try to send a structured error event over the stream
         const errorPayload = {
           code: error.code || error.name || "ProviderStreamError",
           message: error.message || "An error occurred during streaming.",
@@ -618,15 +362,17 @@ class ChatController {
           provider: providerName,
           model: modelName
         };
+        
         try {
           const sseErrorEvent = `event: error\ndata: ${JSON.stringify(errorPayload)}\n\n`;
-          response.write(sseErrorEvent);
+          stream.write(sseErrorEvent);
           logger.info(`Sent SSE error event for ${providerName}/${modelName}`);
         } catch (writeError) {
           logger.error("Failed to write SSE error event to stream:", writeError);
         }
+        
         // End the stream after attempting to send the error event
-        safelyEndResponse(`Stream ended due to error: ${error.message}`, errorType);
+        safelyEndStream(`Stream ended due to error: ${error.message}`, errorType);
       } else {
         // Stream already closed or not writable
         logger.warn("Stream already closed or not writable when error occurred.");

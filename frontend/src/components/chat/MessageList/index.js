@@ -4,10 +4,11 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import ChatMessage from '../ChatMessage';
 import styles from './MessageList.module.css';
 import { ArrowDownIcon } from '@primer/octicons-react';
+import { useChat } from '../../../contexts/ChatContext';
 
 // Helper component to render and measure each row
 const Row = memo(({ data, index, style }) => {
-  const { finalMessages, setSize, width } = data;
+  const { finalMessages, setSize, width, isWaitingForResponse } = data;
   const rowRef = useRef(null);
 
   useEffect(() => {
@@ -27,10 +28,25 @@ const Row = memo(({ data, index, style }) => {
 
     return () => observer.disconnect();
     // Adding width to dependencies ensures observer restarts if width changes,
-    // which might affect height due to text wrapping.
+    // which might affect text wrapping.
   }, [index, setSize, width]);
 
   const message = finalMessages[index];
+  
+  // Safety check to prevent errors with undefined messages
+  if (!message) {
+    console.warn(`Message at index ${index} is undefined`);
+    return null;
+  }
+  
+  // Determine if this message is currently streaming based on:
+  // 1. Is it an assistant message
+  // 2. Is it the last message
+  // 3. Is the app currently waiting for response
+  const isLastMessage = index === finalMessages.length - 1;
+  const isStreaming = message.role === 'assistant' && 
+                      isLastMessage && 
+                      isWaitingForResponse;
 
   // Separate height from other styles provided by react-window
   const { height, ...restStyle } = style;
@@ -39,8 +55,8 @@ const Row = memo(({ data, index, style }) => {
     // Apply position/width styles, but NOT the height from react-window
     <div style={restStyle} className={styles.messageRow} ref={rowRef}>
       <ChatMessage
-        role={message.role}
-        content={message.content}
+        message={message}
+        isStreaming={isStreaming}
       />
     </div>
   );
@@ -55,6 +71,7 @@ Row.displayName = 'MessageListRow';
  * @returns {JSX.Element} - Rendered component
  */
 const MessageList = forwardRef(({ messages, error }, ref) => {
+  const { isWaitingForResponse } = useChat();
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const listRef = useRef(null);
   const outerListRef = useRef(null);
@@ -127,8 +144,9 @@ const MessageList = forwardRef(({ messages, error }, ref) => {
   const itemData = useMemo(() => ({
     finalMessages,
     setSize,
-    width: listWidth // Pass width to Row
-  }), [finalMessages, setSize, listWidth]);
+    width: listWidth, // Pass width to Row
+    isWaitingForResponse // Pass waiting state for streaming detection
+  }), [finalMessages, setSize, listWidth, isWaitingForResponse]);
 
   return (
     <div 
