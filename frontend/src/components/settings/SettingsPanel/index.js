@@ -98,15 +98,6 @@ const SettingsPanel = memo(({ isOpen, onClose }) => {
             onChange={value => updateSetting('presence_penalty', value)}
             tooltip="Penalize tokens that already appeared: Higher values encourage more diverse topics"
           />
-          
-          {/* Stream toggle */}
-          <SettingsToggle 
-            id="stream"
-            label="Stream Response"
-            isChecked={settings.stream}
-            onChange={value => updateSetting('stream', value)}
-            tooltip="Stream responses as they're generated vs. waiting for the complete response"
-          />
         </Suspense>
       </div>
     </div>

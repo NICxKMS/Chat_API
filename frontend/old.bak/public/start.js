@@ -24,7 +24,7 @@ let retryTimeout = null;
 console.log(`Starting test site with API connection to: ${API_URL}`);
 console.log('Checking API connection...');
 
-function checkApiConnection() {
+// function checkApiConnection() {
   // Skip if server already started
   if (serverStarted) return;
   
@@ -88,9 +88,9 @@ function checkApiConnection() {
   });
 
   currentRequest.end();
-}
+// }
 
-function handleRetry() {
+// function handleRetry() {
   // Skip if server already started
   if (serverStarted) return;
   
@@ -113,7 +113,7 @@ function handleRetry() {
 `);
     checkPortAvailability(DEFAULT_PORT);
   }
-}
+// }
 
 function cleanupPendingRequests() {
   // Clean up any pending HTTP requests
@@ -223,4 +223,4 @@ function startServer(port) {
 }
 
 // Start by checking API connection
-checkApiConnection(); 
+// checkApiConnection(); 

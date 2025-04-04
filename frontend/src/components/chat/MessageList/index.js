@@ -2,7 +2,6 @@ import React, { forwardRef, useEffect, useState, useRef, useMemo, useCallback, m
 import { VariableSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import ChatMessage from '../ChatMessage';
-import TypingIndicator from '../../common/TypingIndicator';
 import styles from './MessageList.module.css';
 import { ArrowDownIcon } from '@primer/octicons-react';
 
@@ -42,7 +41,6 @@ const Row = memo(({ data, index, style }) => {
       <ChatMessage
         role={message.role}
         content={message.content}
-        isStreaming={message.isStreaming}
       />
     </div>
   );
@@ -53,30 +51,19 @@ Row.displayName = 'MessageListRow';
  * Virtualized list of chat messages with optimized rendering
  * @param {Object} props - Component props
  * @param {Array} props.messages - Array of message objects
- * @param {string} props.streamContent - Current content being streamed
- * @param {boolean} props.isStreaming - Whether streaming is in progress
  * @param {string} props.error - Error message to display
  * @returns {JSX.Element} - Rendered component
  */
-const MessageList = forwardRef(({ messages, streamContent, isStreaming, error }, ref) => {
+const MessageList = forwardRef(({ messages, error }, ref) => {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const listRef = useRef(null);
   const outerListRef = useRef(null);
   const sizeMap = useRef({}); // To store measured heights
   const [listWidth, setListWidth] = useState(0); // Track width for observer re-run
 
-  // Combine regular messages with streaming content (if any)
+  // Combine regular messages with error content (if any)
   const finalMessages = useMemo(() => {
     const result = [...messages];
-    
-    // If we have streaming content, add it as a temporary AI message
-    if (isStreaming && streamContent) {
-      result.push({
-        role: 'assistant',
-        content: streamContent,
-        isStreaming: true
-      });
-    }
     
     // Add error message if any
     if (error) {
@@ -88,7 +75,7 @@ const MessageList = forwardRef(({ messages, streamContent, isStreaming, error },
     }
     
     return result;
-  }, [messages, streamContent, isStreaming, error]);
+  }, [messages, error]);
   
   // Function for Row component to report its size
   const setSize = useCallback((index, height) => {
@@ -125,7 +112,7 @@ const MessageList = forwardRef(({ messages, streamContent, isStreaming, error },
       const { scrollHeight, clientHeight } = outerListRef.current;
       outerListRef.current.scrollTop = scrollHeight - clientHeight;
     }
-  }, [finalMessages, shouldAutoScroll, streamContent]);
+  }, [finalMessages, shouldAutoScroll]);
   
   // Handle scroll events to determine if we should auto-scroll
   const handleScroll = ({ scrollOffset, scrollUpdateWasRequested }) => {
@@ -174,17 +161,6 @@ const MessageList = forwardRef(({ messages, streamContent, isStreaming, error },
           );
         }}
       </AutoSizer>
-      
-      {/* Typing indicator shown during streaming */}
-      {isStreaming && !streamContent && (
-        <div 
-          className={styles.typingIndicatorContainer} 
-          role="status"
-          aria-live="polite"
-        >
-          <TypingIndicator />
-        </div>
-      )}
       
       {/* Scroll to bottom button */}
       {!shouldAutoScroll && (

@@ -7,6 +7,7 @@ import axios from "axios";
 import BaseProvider from "./BaseProvider.js";
 import { createBreaker } from "../utils/circuitBreaker.js";
 import * as metrics from "../utils/metrics.js";
+import logger from "../utils/logger.js";
 
 class OpenRouterProvider extends BaseProvider {
   constructor(config) {
@@ -108,13 +109,13 @@ class OpenRouterProvider extends BaseProvider {
             }
           }
         } catch (error) {
-          console.warn(`Failed to dynamically load OpenRouter models: ${error.message}`);
+          logger.warn(`Failed to dynamically load OpenRouter models: ${error.message}`);
         }
       }
       
       return models;
     } catch (error) {
-      console.error(`OpenRouter getModels error: ${error.message}`);
+      logger.error(`OpenRouter getModels error: ${error.message}`);
       return [];
     }
   }
@@ -131,19 +132,19 @@ class OpenRouterProvider extends BaseProvider {
       
       // Check for authentication errors
       if (status === 401 || status === 403) {
-        console.error(`OpenRouter authentication error (${status}): ${statusText}`);
-        console.error("Please verify your API key is valid and properly formatted");
+        logger.error(`OpenRouter authentication error (${status}): ${statusText}`);
+        logger.error("Please verify your API key is valid and properly formatted");
         // Log any clerk auth messages if present
         if (error.response?.headers?.["x-clerk-auth-message"]) {
-          console.error(`Auth details: ${error.response.headers["x-clerk-auth-message"]}`);
+          logger.error(`Auth details: ${error.response.headers["x-clerk-auth-message"]}`);
         }
       } else if (status === 400) {
-        console.error(`OpenRouter bad request (400): ${JSON.stringify(data)}`);
+        logger.error(`OpenRouter bad request (400): ${JSON.stringify(data)}`);
       } else {
-        console.error(`${context}: ${error.message}`);
+        logger.error(`${context}: ${error.message}`);
       }
     } else {
-      console.error(`${context}: ${error.message}`);
+      logger.error(`${context}: ${error.message}`);
     }
   }
 
@@ -307,55 +308,123 @@ class OpenRouterProvider extends BaseProvider {
       if (standardOptions.presence_penalty !== undefined) {requestBody.presence_penalty = standardOptions.presence_penalty;}
       if (standardOptions.stop) {requestBody.stop = standardOptions.stop;}
 
-      // Use axios with responseType: 'stream' to handle the SSE stream
-      const response = await this.client.post("/chat/completions", requestBody, {
+      // Create request configuration
+      const requestConfig = {
         responseType: "stream"
-      });
+      };
+
+      // Add abort signal if provided
+      if (standardOptions.abortSignal instanceof AbortSignal) {
+        requestConfig.signal = standardOptions.abortSignal;
+      }
+
+      // Use axios with responseType: 'stream' to handle the SSE stream
+      const response = await this.client.post("/chat/completions", requestBody, requestConfig);
 
       stream = response.data; // Get the stream from the response data
       
       let buffer = "";
-      for await (const chunk of stream) {
-        buffer += chunk.toString(); // Append chunk to buffer
+      let ended = false;
+      
+      // Clean up function to ensure stream is properly destroyed
+      const cleanupStream = () => {
+        ended = true;
+        if (stream && !stream.destroyed && typeof stream.destroy === 'function') {
+          try {
+            stream.destroy();
+          } catch (e) {
+            logger.error("Error destroying stream:", e);
+          }
+        }
+      };
 
-        // Use a simple buffer and split approach to parse SSE messages
-        let boundary = buffer.indexOf("\n\n");
-        while (boundary !== -1) {
-          const message = buffer.substring(0, boundary);
-          buffer = buffer.substring(boundary + 2);
+      // Handle abort signal if provided
+      if (standardOptions.abortSignal instanceof AbortSignal) {
+        standardOptions.abortSignal.addEventListener('abort', cleanupStream, { once: true });
+      }
+
+      try {
+        for await (const chunk of stream) {
+          if (ended) break; // Check if stream was aborted
+          buffer += chunk.toString(); // Append chunk to buffer
+
+          // Process complete messages in the buffer
+          let processedMessages = 0;
+          let boundary = buffer.indexOf("\n\n");
           
-          if (message.startsWith("data: ")) {
-            const dataStr = message.substring(6);
-            if (dataStr.trim() === "[DONE]") {
-              break; // Stream finished
-            }
+          while (boundary !== -1) {
+            processedMessages++;
+            const message = buffer.substring(0, boundary);
+            buffer = buffer.substring(boundary + 2);
             
-            try {
-              const data = JSON.parse(dataStr);
-              
-              if (firstChunk) {
-                const duration = process.hrtime(startTime);
-                accumulatedLatency = (duration[0] * 1000) + (duration[1] / 1000000);
-                metrics.recordStreamTtfb(this.name, modelName, accumulatedLatency / 1000);
-                firstChunk = false;
+            if (message.startsWith("data: ")) {
+              const dataStr = message.substring(6);
+              if (dataStr.trim() === "[DONE]") {
+                ended = true;
+                break; // Stream finished with DONE marker
               }
               
-              const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency);
-              yield normalizedChunk;
+              try {
+                const data = JSON.parse(dataStr);
+                
+                if (firstChunk) {
+                  const duration = process.hrtime(startTime);
+                  accumulatedLatency = (duration[0] * 1000) + (duration[1] / 1000000);
+                  metrics.recordStreamTtfb(this.name, modelName, accumulatedLatency / 1000);
+                  firstChunk = false;
+                }
+                
+                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency);
+                yield normalizedChunk;
 
-            } catch (jsonError) {
-              console.error(`Error parsing JSON from OpenRouter stream: ${jsonError.message}`, dataStr);
-              // Decide how to handle JSON parse errors, e.g., skip or throw
+              } catch (jsonError) {
+                logger.error(`Error parsing JSON from OpenRouter stream: ${jsonError.message}`, dataStr);
+                // Log error but continue processing other messages
+              }
+            }
+            boundary = buffer.indexOf("\n\n");
+          }
+          
+          // If multiple messages were processed, log it
+          if (processedMessages > 1) {
+            logger.debug(`Processed ${processedMessages} messages from buffer in one chunk`);
+          }
+          
+          // Check for [DONE] outside of complete messages to handle edge cases
+          if (buffer.includes("[DONE]")) {
+            ended = true;
+            break;
+          }
+        }
+        
+        // Process any remaining data in the buffer after the stream ends
+        if (buffer.length > 0 && !ended) {
+          if (buffer.startsWith("data: ")) {
+            const dataStr = buffer.substring(6).trim();
+            if (dataStr && dataStr !== "[DONE]") {
+              try {
+                const data = JSON.parse(dataStr);
+                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency);
+                yield normalizedChunk;
+              } catch (jsonError) {
+                logger.error(`Error parsing final JSON from buffer: ${jsonError.message}`, buffer);
+              }
             }
           }
-          boundary = buffer.indexOf("\n\n");
         }
-        // If the special [DONE] message was processed, exit the loop
-        if (buffer.includes("[DONE]")) {break;}
+        
+        // Record successful stream completion
+        metrics.incrementProviderRequestCount(this.name, modelName, "success");
+
+      } finally {
+        // Clean up the abort signal listener if it was added
+        if (standardOptions.abortSignal instanceof AbortSignal) {
+          standardOptions.abortSignal.removeEventListener('abort', cleanupStream);
+        }
+        
+        // Always ensure the stream is properly destroyed
+        cleanupStream();
       }
-      
-      // Record successful stream completion
-      metrics.incrementProviderRequestCount(this.name, modelName, "success");
 
     } catch (error) {
       this._handleApiError(error, `OpenRouter stream with ${modelName || "unknown model"}`);
@@ -363,16 +432,8 @@ class OpenRouterProvider extends BaseProvider {
         metrics.incrementProviderRequestCount(this.name, modelName, "error");
         metrics.incrementProviderErrorCount(this.name, modelName, error.response?.status || "network");
       }
-      // Ensure the stream is destroyed on error if it exists
-      if (stream && typeof stream.destroy === "function") {
-        stream.destroy(error);
-      } 
+      // Throw specific error message for upstream handling
       throw new Error(`OpenRouter stream error: ${error.message}`);
-    } finally {
-      // Optional: Explicitly destroy the stream if it wasn't fully consumed or errored
-      if (stream && !stream.destroyed && typeof stream.destroy === "function") {
-        stream.destroy();
-      }
     }
   }
 

@@ -9,6 +9,7 @@ import { createBreaker } from "../utils/circuitBreaker.js";
 import * as metrics from "../utils/metrics.js";
 // Import the specific histogram instance
 import { responseTimeHistogram } from "../utils/metrics.js";
+import logger from "../utils/logger.js";
 
 class GeminiProvider extends BaseProvider {
   /**
@@ -25,7 +26,7 @@ class GeminiProvider extends BaseProvider {
     
     // Validate API key
     if (!config.apiKey) {
-      console.warn("Gemini API key is missing or set to dummy-key. Using fallback mode with limited functionality.");
+      logger.warn("Gemini API key is missing or set to dummy-key. Using fallback mode with limited functionality.");
       this.hasValidApiKey = false;
     } else {
       this.hasValidApiKey = true;
@@ -33,7 +34,7 @@ class GeminiProvider extends BaseProvider {
     
     // Store API version from config or environment
     this.apiVersion = config.apiVersion || process.env.GEMINI_API_VERSION || "v1beta";
-    console.log(`Using Gemini API version: ${this.apiVersion}`);
+    logger.info(`Using Gemini API version: ${this.apiVersion}`);
     
     // Initialize Google Generative AI SDK
     this.genAI = new GoogleGenerativeAI(config.apiKey);
@@ -104,7 +105,7 @@ class GeminiProvider extends BaseProvider {
             });
           }
         } catch (error) {
-          console.warn(`Failed to dynamically load Gemini models: ${error.message}`);
+          logger.warn(`Failed to dynamically load Gemini models: ${error.message}`);
         }
       }
       
@@ -118,7 +119,7 @@ class GeminiProvider extends BaseProvider {
       }));
       
     } catch (error) {
-      console.error(`Gemini getModels error: ${error.message}`);
+      logger.error(`Gemini getModels error: ${error.message}`);
       return [];
     }
   }
@@ -197,7 +198,7 @@ class GeminiProvider extends BaseProvider {
         apiVersion: this.apiVersionInfo.version
       };
     } catch (error) {
-      console.error(`Error in getProvidersInfo: ${error.message}`);
+      logger.error(`Error in getProvidersInfo: ${error.message}`);
       
       // Return at least some default information
       return {
@@ -243,7 +244,7 @@ class GeminiProvider extends BaseProvider {
 
       return this.availableModels;
     } catch (error) {
-      console.error(`Error fetching Gemini models: ${error.message}`);
+      logger.error(`Error fetching Gemini models: ${error.message}`);
       return this.availableModels; // Return cached models on error
     }
   }
@@ -302,13 +303,13 @@ class GeminiProvider extends BaseProvider {
       return response;
     } catch (error) {
       // Handle errors with fallback mechanism
-      console.error(`Gemini chat completion error: ${error.message}`);
+      logger.error(`Gemini chat completion error: ${error.message}`);
       metrics.incrementProviderErrorCount(this.name, options.model || this.config.defaultModel, error.status || 500);
       
       try {
         return await this._completionFallback(options, error);
       } catch (fallbackError) {
-        console.error(`Fallback also failed: ${fallbackError.message}`);
+        logger.error(`Fallback also failed: ${fallbackError.message}`);
         return {
           id: `error-${Date.now()}`,
           model: options.model || this.config.defaultModel || "gemini-1.5-pro",
@@ -347,7 +348,7 @@ class GeminiProvider extends BaseProvider {
 
       // Validate formattedContents before use
       if (!Array.isArray(formattedContents)) {
-        console.error("GeminiProvider._rawChatCompletion: _processMessages did not return a valid formattedContents array.");
+        logger.error("GeminiProvider._rawChatCompletion: _processMessages did not return a valid formattedContents array.");
         throw new Error("Internal error processing messages for Gemini.");
       }
       
@@ -363,7 +364,7 @@ class GeminiProvider extends BaseProvider {
               history = formattedContents; // Remaining messages are history
           } else {
               // If the last message isn't 'user', something is wrong or it's a model-only start (unlikely for chat)
-              console.warn("GeminiProvider._rawChatCompletion: Last message role is not 'user'. Treating all formatted content as history and sending an empty prompt. This might lead to unexpected behavior.");
+              logger.warn("GeminiProvider._rawChatCompletion: Last message role is not 'user'. Treating all formatted content as history and sending an empty prompt. This might lead to unexpected behavior.");
               history = formattedContents;
               // Sending an empty prompt might not be ideal, consider throwing an error or adjusting based on expected use cases.
           }
@@ -412,7 +413,7 @@ class GeminiProvider extends BaseProvider {
 
         // Ensure we don't send an empty prompt unless intended
         if (!promptForGeneration && !systemPromptText) {
-             console.warn("GeminiProvider._rawChatCompletion: Attempting to generate content with empty prompt and no system instruction.");
+             logger.warn("GeminiProvider._rawChatCompletion: Attempting to generate content with empty prompt and no system instruction.");
              // Decide how to handle: throw error, return empty response, etc.
              // For now, proceed, but the API might reject it.
         }
@@ -461,7 +462,7 @@ class GeminiProvider extends BaseProvider {
       
       return response;
     } catch (error) {
-      console.error(`Error in _rawChatCompletion: ${error.message}`);
+      logger.error(`Error in _rawChatCompletion: ${error.message}`);
       throw error;
     }
   }
@@ -477,7 +478,7 @@ class GeminiProvider extends BaseProvider {
 
     // 1. Input validation: Ensure messages is an array
     if (!Array.isArray(messages)) {
-      console.error("GeminiProvider._processMessages: Input 'messages' is not an array.", messages);
+      logger.error("GeminiProvider._processMessages: Input 'messages' is not an array.", messages);
       // Return defaults to prevent downstream errors
       return { formattedContents: [], systemPromptText: "" };
     }
@@ -486,7 +487,7 @@ class GeminiProvider extends BaseProvider {
     for (const message of messages) {
       // Basic validation for message structure
       if (!message || typeof message.content !== 'string' || typeof message.role !== 'string') {
-        console.warn("GeminiProvider._processMessages: Skipping message with invalid format:", message);
+        logger.warn("GeminiProvider._processMessages: Skipping message with invalid format:", message);
         continue; // Skip malformed messages
       }
 
@@ -503,7 +504,7 @@ class GeminiProvider extends BaseProvider {
       } else if (currentRole === "assistant" || currentRole === "model") {
         roleForSdk = "model"; // Google uses 'model' for assistant role
       } else {
-        console.warn(`GeminiProvider._processMessages: Ignoring message with unknown role: ${message.role}`);
+        logger.warn(`GeminiProvider._processMessages: Ignoring message with unknown role: ${message.role}`);
         continue; // Skip unknown roles
       }
 
@@ -511,7 +512,7 @@ class GeminiProvider extends BaseProvider {
       if (roleForSdk === lastRole) {
           // Handle consecutive messages: Option 1: Merge with the previous one
           if (formattedContents.length > 0) {
-              console.warn(`GeminiProvider._processMessages: Merging consecutive message content for role '${roleForSdk}'.`);
+              logger.warn(`GeminiProvider._processMessages: Merging consecutive message content for role '${roleForSdk}'.`);
               const lastMessage = formattedContents[formattedContents.length - 1];
               if (lastMessage.parts && Array.isArray(lastMessage.parts) && lastMessage.parts[0]?.text !== undefined) {
                   lastMessage.parts[0].text += "\\n" + message.content; // Append content
@@ -521,10 +522,10 @@ class GeminiProvider extends BaseProvider {
               }
           } else {
                // If the *first* message somehow violates alternation (shouldn't happen with valid input)
-               console.warn(`GeminiProvider._processMessages: Skipping consecutive message at the beginning for role '${roleForSdk}'.`);
+               logger.warn(`GeminiProvider._processMessages: Skipping consecutive message at the beginning for role '${roleForSdk}'.`);
           }
           // Option 2: Skip/prune the message (alternative to merging)
-          // console.warn(`GeminiProvider._processMessages: Pruning consecutive message with role '${roleForSdk}' to enforce alternating history.`);
+          // logger.warn(`GeminiProvider._processMessages: Pruning consecutive message with role '${roleForSdk}' to enforce alternating history.`);
           // continue;
       } else {
           // Add the message with the correct role
@@ -540,7 +541,7 @@ class GeminiProvider extends BaseProvider {
     // (This is often implied, but good to check if strict alternation didn't enforce it)
     // Note: The SDK might handle this, but explicit check can prevent errors.
     if (formattedContents.length > 0 && formattedContents[0].role !== 'user') {
-        console.warn("GeminiProvider._processMessages: History does not start with 'user'. Prepending an empty user message or adjusting might be needed depending on SDK requirements.");
+        logger.warn("GeminiProvider._processMessages: History does not start with 'user'. Prepending an empty user message or adjusting might be needed depending on SDK requirements.");
         // Depending on strictness, might need to prepend an empty user message or drop the first model message.
         // For now, log a warning. Let's assume the SDK is flexible or the input guarantees user start.
     }
@@ -553,7 +554,7 @@ class GeminiProvider extends BaseProvider {
    * Completion fallback mechanism
    */
   async _completionFallback(options, error) {
-    console.log(`Using fallback for error: ${error.message}`);
+    logger.info(`Using fallback for error: ${error.message}`);
     
     // Create a fallback response
     return {
@@ -615,21 +616,20 @@ class GeminiProvider extends BaseProvider {
       const generativeModel = this.genAI.getGenerativeModel({ model: modelName });
 
       // Prepare messages and system prompt using the corrected method
-      // Destructure the CORRECT return value from the refactored _processMessages
       const { formattedContents, systemPromptText } = this._processMessages(standardOptions.messages);
 
       // Validate that formattedContents is an array before proceeding
       if (!Array.isArray(formattedContents)) {
-          throw new Error("_processMessages did not return a valid formattedContents array.");
+        throw new Error("_processMessages did not return a valid formattedContents array.");
       }
 
       // Prepare request body (messages, generationConfig)
       const request = {
-        contents: formattedContents, // Use the correctly formatted array from _processMessages
+        contents: formattedContents,
         generationConfig: {
           temperature: standardOptions.temperature,
           maxOutputTokens: standardOptions.max_tokens,
-          stopSequences: standardOptions.stop // Ensure stop sequences are passed
+          stopSequences: standardOptions.stop
         },
         safetySettings: standardOptions.safety_settings || []
       };
@@ -637,24 +637,21 @@ class GeminiProvider extends BaseProvider {
       // Add system instruction if a system prompt exists
       if (systemPromptText) {
         request.systemInstruction = {
-          role: "system", // Although Gemini uses a separate field, adding role for clarity if structure changes
           parts: [{ text: systemPromptText }]
         };
       }
 
-      // Use the stream method from the Google AI SDK
-      // This should now receive a valid 'contents' array
-      const result = await generativeModel.generateContentStream(request);
+      // Generate content stream using the Google AI SDK
+      const streamResult = await generativeModel.generateContentStream(request);
 
       let firstChunk = true;
       let accumulatedLatency = 0;
 
-      // Iterate through the stream response
-      for await (const chunk of result.stream) {
+      // Iterate through the stream response chunks
+      for await (const chunk of streamResult.stream) {
         if (firstChunk) {
           const duration = process.hrtime(startTime);
           accumulatedLatency = (duration[0] * 1000) + (duration[1] / 1000000);
-          // Corrected metrics call for stream TTFB
           metrics.recordStreamTtfb(this.name, modelName, accumulatedLatency / 1000);
           firstChunk = false;
         }
@@ -672,11 +669,10 @@ class GeminiProvider extends BaseProvider {
       );
 
     } catch (error) {
-      console.error(`Gemini stream error: ${error.message}`, error); // Log full error
+      logger.error(`Gemini stream error: ${error.message}`, error);
       if (modelName) {
         metrics.incrementProviderErrorCount(this.name, modelName, error.status || 500);
       }
-      // Rethrow or yield an error chunk
       throw new Error(`Gemini stream error: ${error.message}`);
     }
   }
@@ -696,29 +692,30 @@ class GeminiProvider extends BaseProvider {
     let totalTokens = 0;
 
     try {
-      // Extract text content
-      if (chunk.candidates && chunk.candidates[0].content && chunk.candidates[0].content.parts) {
-        content = chunk.candidates[0].content.parts.map(part => part.text || "").join("");
+      // Extract text content from the candidates
+      if (chunk.candidates && chunk.candidates[0]?.content?.parts) {
+        content = chunk.candidates[0].content.parts
+          .filter(part => part.text)
+          .map(part => part.text)
+          .join("");
       }
       
-      // Extract finish reason
-      finishReason = chunk.candidates && chunk.candidates[0].finishReason 
-        ? chunk.candidates[0].finishReason : null;
+      // Extract finish reason if available
+      finishReason = chunk.candidates?.[0]?.finishReason || null;
 
-      // Extract token counts (if available)
+      // Extract token counts if available
       const usageMetadata = chunk.usageMetadata;
       if (usageMetadata) {
         promptTokens = usageMetadata.promptTokenCount || 0;
         completionTokens = usageMetadata.candidatesTokenCount || 0;
         totalTokens = usageMetadata.totalTokenCount || 0;
       }
-
     } catch (e) {
-      console.error("Error parsing Gemini stream chunk:", e, chunk);
+      logger.error("Error parsing Gemini stream chunk:", e, chunk);
     }
     
     return {
-      id: `chunk-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`, // Generate a unique ID
+      id: `chunk-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
       model: model,
       provider: this.name,
       createdAt: new Date().toISOString(),
@@ -729,8 +726,8 @@ class GeminiProvider extends BaseProvider {
         completionTokens: completionTokens,
         totalTokens: totalTokens
       },
-      latency: latency || 0, // Latency to first chunk
-      raw: chunk // Include the raw chunk
+      latency: latency || 0,
+      raw: chunk
     };
   }
 }

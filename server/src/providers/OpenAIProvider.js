@@ -348,6 +348,8 @@ class OpenAIProvider extends BaseProvider {
   async *chatCompletionStream(options) {
     const startTime = process.hrtime();
     let modelName;
+    let streamCancelled = false;
+    
     try {
       // Standardize and validate options
       const standardOptions = this.standardizeOptions(options);
@@ -365,6 +367,22 @@ class OpenAIProvider extends BaseProvider {
         stream: true, // Enable streaming
       };
       
+      // Add abort signal if provided
+      if (standardOptions.abortSignal instanceof AbortSignal) {
+        apiOptions.signal = standardOptions.abortSignal;
+        
+        // Set up cancellation handler
+        if (!standardOptions.abortSignal.aborted) {
+          standardOptions.abortSignal.addEventListener('abort', () => {
+            streamCancelled = true;
+            logger.info(`[${this.name}] Stream aborted by client for ${modelName}`);
+          }, { once: true });
+        } else {
+          // Signal already aborted, throw immediately
+          throw new Error("Stream aborted before request was made");
+        }
+      }
+      
       logger.info(`[${this.name}] Calling OpenAI client.chat.completions.create with stream: true`); // Log before call
 
       // Use circuit breaker for API calls
@@ -378,38 +396,60 @@ class OpenAIProvider extends BaseProvider {
       let accumulatedLatency = 0;
       let chunkCounter = 0; // Add chunk counter
 
-      for await (const chunk of stream) {
-        chunkCounter++; // Increment counter
-        logger.info(`[${this.name}] Received chunk ${chunkCounter} from stream.`); // Log on chunk receive
+      try {
+        for await (const chunk of stream) {
+          // Check for cancellation after each chunk
+          if (streamCancelled) {
+            logger.info(`[${this.name}] Stream processing stopped due to cancellation`);
+            break;
+          }
+          
+          chunkCounter++; // Increment counter
+          logger.info(`[${this.name}] Received chunk ${chunkCounter} from stream.`); // Log on chunk receive
 
-        if (firstChunk) {
-          const duration = process.hrtime(startTime);
-          accumulatedLatency = (duration[0] * 1000) + (duration[1] / 1000000);
-          metrics.recordStreamTtfb(this.name, modelName, accumulatedLatency / 1000);
-          firstChunk = false;
+          if (firstChunk) {
+            const duration = process.hrtime(startTime);
+            accumulatedLatency = (duration[0] * 1000) + (duration[1] / 1000000);
+            metrics.recordStreamTtfb(this.name, modelName, accumulatedLatency / 1000);
+            firstChunk = false;
+          }
+          
+          // Normalize chunk format (example, adapt as needed)
+          const normalizedChunk = this._normalizeStreamChunk(chunk, modelName, accumulatedLatency);
+          yield normalizedChunk;
         }
         
-        // Normalize chunk format (example, adapt as needed)
-        const normalizedChunk = this._normalizeStreamChunk(chunk, modelName, accumulatedLatency);
-        yield normalizedChunk;
-      }
-      
-      logger.info(`[${this.name}] Stream iteration finished after ${chunkCounter} chunks.`); // Log after loop
+        logger.info(`[${this.name}] Stream iteration finished after ${chunkCounter} chunks.`); // Log after loop
 
-      // Record successful stream completion
-      metrics.incrementProviderRequestCount(
-        this.name,
-        modelName,
-        "200"
-      );
+        // Only record successful completion if not cancelled
+        if (!streamCancelled) {
+          metrics.incrementProviderRequestCount(
+            this.name,
+            modelName,
+            "200"
+          );
+        }
+      } finally {
+        // Remove abort listener if it was added
+        if (standardOptions.abortSignal instanceof AbortSignal) {
+          standardOptions.abortSignal.removeEventListener('abort', () => {
+            streamCancelled = true;
+          });
+        }
+      }
 
     } catch (error) {
-      // Make catch logging very prominent
-      logger.error(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
-      logger.error(`[${this.name}] CRITICAL STREAM ERROR in provider catch block: ${error.message}`);
-      logger.error(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`, { model: modelName, stack: error.stack });
-      if (modelName) {
-        metrics.incrementProviderErrorCount(this.name, modelName);
+      // Don't log as critical if stream was intentionally cancelled
+      if (streamCancelled) {
+        logger.info(`[${this.name}] Stream error after cancellation: ${error.message}`);
+      } else {
+        // Make catch logging very prominent for unexpected errors
+        logger.error(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
+        logger.error(`[${this.name}] CRITICAL STREAM ERROR in provider catch block: ${error.message}`);
+        logger.error(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`, { model: modelName, stack: error.stack });
+        if (modelName) {
+          metrics.incrementProviderErrorCount(this.name, modelName);
+        }
       }
       // Re-throw specific error for upstream handling
       // Consider yielding an error object instead if the stream already started

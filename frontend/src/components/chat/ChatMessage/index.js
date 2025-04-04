@@ -73,13 +73,11 @@ CodeBlock.displayName = 'CodeBlock';
 CodeBlock.propTypes = { /* Add PropTypes if needed */ };
 
 /**
- * Individual chat message component (Refactored for ReactMarkdown & Streaming)
+ * Individual chat message component
  */
-const ChatMessage = memo(({ role, content, isStreaming = false, streamContent = '', metrics }) => {
+const ChatMessage = memo(({ role, content, metrics }) => {
   const messageClass = useMemo(() => {
     const baseClass = styles.message;
-    // Apply streaming class to the main message div if assistant is streaming
-    const streamingClass = (isStreaming && role === 'assistant') ? styles.streaming : ''; 
     
     let roleClass = '';
     switch (role) {
@@ -89,8 +87,8 @@ const ChatMessage = memo(({ role, content, isStreaming = false, streamContent = 
       case 'error': roleClass = styles.errorMessage; break;
       default: break;
     }
-    return `${baseClass} ${roleClass} ${streamingClass}`.trim();
-  }, [role, isStreaming]);
+    return `${baseClass} ${roleClass}`.trim();
+  }, [role]);
   
   // Components map for react-markdown
   const markdownComponents = useMemo(() => ({ 
@@ -99,11 +97,6 @@ const ChatMessage = memo(({ role, content, isStreaming = false, streamContent = 
     // p: ({node, ...props}) => <p className={styles.paragraph} {...props} />,
     // a: ({node, ...props}) => <a className={styles.link} target="_blank" rel="noopener noreferrer" {...props} />,
   }), []);
-  
-  // Combine base content with streaming content for assistant messages
-  const renderContent = (role === 'assistant' && isStreaming)
-    ? (content || '') + streamContent // Append stream to existing or empty content
-    : content; // Render final content otherwise
 
   return (
     <div 
@@ -117,18 +110,17 @@ const ChatMessage = memo(({ role, content, isStreaming = false, streamContent = 
       <div className={styles.messageContentWrapper}>
         <div className={styles.messageContent}>
           <ReactMarkdown
-            children={renderContent || ''} // Render combined or final content
+            children={content || ''} 
             remarkPlugins={[remarkGfm]} // Enable GitHub Flavored Markdown
             components={markdownComponents}
             // Disallow dangerous HTML - rely on markdown components
             disallowedElements={['script', 'style']}
             unwrapDisallowed={true}
           />
-          {/* Streaming cursor is now handled by CSS pseudo-element on .streaming */}
         </div>
         
-        {/* Per-Response Metrics - only show if assistant, NOT streaming, and metrics exist */}
-        {role === 'assistant' && !isStreaming && metrics && (
+        {/* Per-Response Metrics - only show if assistant and metrics exist */}
+        {role === 'assistant' && metrics && (
           <div className={styles.metricsContainer}>
              <span>⏱️ {metrics.time?.toFixed(2)}s</span> |
              <span>#️⃣ {metrics.tokens}</span> |
@@ -143,9 +135,7 @@ const ChatMessage = memo(({ role, content, isStreaming = false, streamContent = 
 ChatMessage.displayName = 'ChatMessage';
 ChatMessage.propTypes = {
   role: PropTypes.oneOf(['user', 'assistant', 'system', 'error']).isRequired,
-  content: PropTypes.string, // Allow null/undefined initially if streaming
-  isStreaming: PropTypes.bool,
-  streamContent: PropTypes.string, // Added prop type
+  content: PropTypes.string,
   metrics: PropTypes.shape({ 
     time: PropTypes.number,
     tokens: PropTypes.number,

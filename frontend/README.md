@@ -4,7 +4,7 @@ A modern React-based chat interface for interacting with various AI models.
 
 ## Features
 
-- Real-time chat interface with streaming responses
+- Modern React-based chat interface for AI interactions
 - Model selection from various providers
 - Customizable settings for response generation
 - Code block syntax highlighting

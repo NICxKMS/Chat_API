@@ -24,6 +24,13 @@ async function chatRoutes (fastify, options) {
   fastify.post("/stream", chatController.chatCompletionStream);
 
   /**
+   * GET /stream-sse (within plugin prefix)
+   * Endpoint for EventSource-compatible streaming using GET with query params.
+   * This is more compatible with browsers' EventSource implementation.
+   */
+  fastify.get("/stream-sse", chatController.chatCompletionEventStream);
+
+  /**
    * GET /capabilities (within plugin prefix)
    * Get chat capabilities and system status
    */

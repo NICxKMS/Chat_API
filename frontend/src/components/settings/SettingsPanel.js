@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
 import styles from './SettingsPanel.module.css';
 import { IoMdClose } from 'react-icons/io';
+import SettingsSwitch from './SettingsSwitch';
 
 const SettingsPanel = ({ isOpen, onClose }) => {
   const { settings, updateSetting, resetSettings } = useSettings();
@@ -44,8 +45,23 @@ const SettingsPanel = ({ isOpen, onClose }) => {
             Adjust global model parameters for chat responses.
           </p>
 
+          {/* Streaming Toggle */}
+          <div className={styles.settingItem}>
+            <SettingsSwitch
+              id="streaming"
+              label="Enable Streaming"
+              isChecked={settings.streaming}
+              onChange={(value) => updateSetting('streaming', value)}
+              tooltip="Enable streaming responses as they are generated"
+            />
+            <p className={styles.descriptionText}>Receive chat responses in real-time as they are generated.</p>
+          </div>
+
           {/* Map over settings object to create controls */}
           {Object.entries(settings).map(([key, value]) => {
+            // Skip streaming setting as it's handled above
+            if (key === 'streaming') return null;
+            
             // Define input properties based on the setting key
             let inputProps = {
               type: 'number', // Default to number

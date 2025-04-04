@@ -153,28 +153,6 @@
   order: 1;
 }
 
-/* Updated Streaming effect - Use pseudo-element on .streaming class */
-.message.streaming .messageContent::after {
-  content: '';
-  display: inline-block;
-  width: 8px;
-  height: 1.1em; /* Match line height */
-  background: var(--primary); /* Use primary color */
-  margin-left: 4px; /* Space from last character */
-  vertical-align: text-bottom;
-  animation: blink 1s infinite;
-  border-radius: 1px;
-}
-
-/* Remove old explicit cursor style if it exists */
-.streamingCursor {
-  display: none;
-}
-
-.streaming::after { /* Remove old message-level cursor */
-  display: none;
-}
-
 /* Updated Code block styles */
 .codeBlockContainer { /* Renamed from .codeBlock */
   margin: 1rem 0;
@@ -312,15 +290,6 @@
   }
 }
 
-@keyframes blink {
-  0%, 100% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .message {
@@ -364,11 +333,6 @@
   margin-right: auto;
   flex-direction: row;
 }
-
-/* Remove transition:all from .messageItem */
-/* .messageItem { transition: all 0.3s ease; } */
-/* Remove transition:all from .messageInner */
-/* .messageInner { transition: all 0.3s ease; } */
 
 /* Use theme variables */
 .codeBlockHeader {

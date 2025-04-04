@@ -7,7 +7,7 @@ const DEFAULT_SETTINGS = {
   max_tokens: 2000,
   frequency_penalty: 0,
   presence_penalty: 0,
-  // Removed stream from default settings, as it's usually request-specific
+  streaming: false
 };
 
 // Create settings context

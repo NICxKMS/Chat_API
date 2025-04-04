@@ -14,8 +14,7 @@ jest.mock('../../../contexts/SettingsContext', () => ({
       top_p: 0.9,
       max_tokens: 1500,
       frequency_penalty: 0.5,
-      presence_penalty: 0.2,
-      stream: true,
+      presence_penalty: 0.2
     },
     updateSetting: mockUpdateSetting,
     shouldRestrictTemperature: mockShouldRestrictTemperature,
@@ -121,7 +120,6 @@ describe('SettingsPanel', () => {
     expect(await screen.findByLabelText('Max Tokens')).toHaveValue('1500');
     expect(await screen.findByLabelText('Frequency Penalty')).toHaveValue('0.5');
     expect(await screen.findByLabelText('Presence Penalty')).toHaveValue('0.2');
-    expect(await screen.findByLabelText('Stream Response')).toBeChecked();
   });
 
   test('calls updateSetting with correct args when Temperature slider changes', async () => {
@@ -157,14 +155,6 @@ describe('SettingsPanel', () => {
     const slider = await screen.findByLabelText('Presence Penalty');
     fireEvent.change(slider, { target: { value: '0.8' } });
     expect(mockUpdateSetting).toHaveBeenCalledWith('presence_penalty', 0.8);
-  });
-
-  test('calls updateSetting with correct args when Stream Response toggle changes', async () => {
-    renderPanel({ isOpen: true });
-    const toggle = await screen.findByLabelText('Stream Response');
-    // Initial state is true (checked), click to change to false
-    fireEvent.click(toggle); 
-    expect(mockUpdateSetting).toHaveBeenCalledWith('stream', false);
   });
 
   test('disables Temperature slider and shows tooltip when restricted', async () => {

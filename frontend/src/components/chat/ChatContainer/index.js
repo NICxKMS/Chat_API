@@ -27,9 +27,7 @@ const ChatContainer = memo(({
     metrics, 
     selectedModel: modelFromLogic,
     settings,
-    streamContent,
     handleSendMessage,
-    handleStopGeneration,
     resetChat, 
     downloadChatHistory, 
   } = useChatLogic();
@@ -60,7 +58,7 @@ const ChatContainer = memo(({
         )}
 
         <div className={styles.inputControlsWrapper}> 
-          {isWaitingForResponse && !settings?.stream && (
+          {isWaitingForResponse && (
             <div className={styles.inputSpinnerContainer}>
               <Spinner size="small" />
             </div>
@@ -68,7 +66,7 @@ const ChatContainer = memo(({
           <Suspense fallback={<div className={styles.inputPlaceholder} />}>
             <ChatInput
               onSendMessage={handleSendMessage}
-              disabled={isWaitingForResponse && !settings?.stream} 
+              disabled={isWaitingForResponse} 
               selectedModel={modelFromLogic} 
               onNewChat={onNewChat}
               isStaticLayout={isStaticLayout}
@@ -78,7 +76,6 @@ const ChatContainer = memo(({
             <ChatControls
               onReset={resetChat} 
               onDownload={downloadChatHistory} 
-              onStopGeneration={handleStopGeneration}
               isGenerating={isWaitingForResponse}
               hasMessages={isActiveChat}
               isStaticLayout={isStaticLayout}
@@ -111,8 +108,6 @@ const ChatContainer = memo(({
             <MessageList
               ref={messageListRef}
               messages={chatHistory}
-              streamContent={streamContent}
-              isStreaming={isWaitingForResponse && settings?.stream}
               error={error}
             />
           </Suspense>

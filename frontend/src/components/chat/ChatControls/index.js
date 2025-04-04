@@ -2,16 +2,15 @@ import React, { memo, useState, useEffect, useRef, Suspense, lazy } from 'react'
 import PropTypes from 'prop-types';
 import styles from './ChatControls.module.css';
 // Restore necessary icons
-import { TrashIcon, DownloadIcon, StopIcon, ChevronUpIcon, GearIcon, PlusIcon } from '@primer/octicons-react';
+import { TrashIcon, DownloadIcon, ChevronUpIcon, GearIcon, PlusIcon } from '@primer/octicons-react';
+import { useSettings } from '../../../contexts/SettingsContext';
 
 // Restore lazy loads
 const ThemeToggle = lazy(() => import('../../common/ThemeToggle'));
 
 /**
- * Chat control buttons - Stop button always visible when generating,
- * other actions are in a pop-up menu triggered by ChevronUpIcon on mobile.
+ * Chat control buttons - Actions are in a pop-up menu triggered by ChevronUpIcon on mobile.
  * @param {Object} props - Component props
- * @param {Function} props.onStopGeneration - Stop generation function
  * @param {boolean} props.isGenerating - Whether AI is generating a response
  * @param {Function} props.onReset - Clear chat function
  * @param {Function} props.onDownload - Download chat function
@@ -21,7 +20,6 @@ const ThemeToggle = lazy(() => import('../../common/ThemeToggle'));
  * @returns {JSX.Element} - Rendered component
  */
 const ChatControls = memo(({ 
-  onStopGeneration, 
   isGenerating, 
   // Restore props
   onReset, 
@@ -30,6 +28,9 @@ const ChatControls = memo(({
   onNewChat, 
   onToggleSettings
 }) => {
+  // Get settings to check if streaming is enabled
+  const { settings } = useSettings();
+  
   // Restore state and refs
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -59,18 +60,14 @@ const ChatControls = memo(({
 
   return (
     <div className={styles.controls}>
-      {/* Stop generation button - Renders if isGenerating */}
-      {isGenerating && (
-        <button
-          className={`${styles.controlButton} ${styles.stopButton}`}
-          onClick={onStopGeneration}
-          aria-label="Stop generation"
-          title="Stop generation"
-        >
-          <StopIcon size={16} className={styles.controlIcon} />
-        </button>
+      {/* Streaming Indicator */}
+      {settings.streaming && (
+        <div className={styles.streamingIndicator} title="Streaming mode enabled">
+          <span className={styles.streamingDot}></span>
+          <span className={styles.streamingText}>Streaming</span>
+        </div>
       )}
-
+      
       {/* "More Actions" Button + Menu (Button hidden on Desktop via CSS) */}
       <div className={styles.moreActionsContainer}> 
         <button
@@ -143,7 +140,6 @@ const ChatControls = memo(({
 });
 
 ChatControls.propTypes = {
-  onStopGeneration: PropTypes.func.isRequired,
   isGenerating: PropTypes.bool,
   // Restore prop types
   onReset: PropTypes.func.isRequired,

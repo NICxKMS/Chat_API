@@ -89,10 +89,20 @@ const start = async () => {
     // Register essential plugins
     await fastify.register(fastifyCors, {
       // origin: 'http://localhost:3001', // Temporarily commented out
-      origin: '*', // Use wildcard for diagnostics
+      origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3001', 'http://localhost:3000'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true // Note: Credentials might behave differently with origin: '*'
+      allowedHeaders: [
+        'Content-Type', 
+        'Authorization',
+        'Accept',
+        'Cache-Control',
+        'Connection',
+        'X-Requested-With',
+        'Range'
+      ],
+      exposedHeaders: ['Content-Length', 'Content-Range', 'Content-Encoding'],
+      credentials: true,
+      maxAge: 86400 // 24 hours
     });
     await fastify.register(fastifyHelmet, {
         // TODO: Review Helmet options for production.
