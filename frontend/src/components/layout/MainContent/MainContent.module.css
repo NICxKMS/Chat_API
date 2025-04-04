@@ -60,3 +60,15 @@
     transform: translate(-50%, -50%) rotate(360deg);
   }
 } 
+
+/* Remove Wrapper style for the model selector button */
+/*
+.modelButtonWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  padding-top: 1.5rem;
+  z-index: 30;
+}
+*/ 

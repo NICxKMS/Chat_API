@@ -2,37 +2,36 @@
  * Model Classification Service
  * Handles sending model data to the classification server using Protocol Buffers
  */
-import * as grpc from '@grpc/grpc-js';
-import providerFactory from '../providers/ProviderFactory.js';
-import protoUtils from '../utils/protoUtils.js';
+import * as grpc from "@grpc/grpc-js";
+import providerFactory from "../providers/ProviderFactory.js";
+import protoUtils from "../utils/protoUtils.js";
+import chalk from "chalk";
 
 export class ModelClassificationService {
   /**
    * Create a new ModelClassificationService
    * @param {string} serverAddress - The address of the classification server
    */
-  constructor(serverAddress = 'localhost:8080') {
+  constructor(serverAddress = "localhost:8080") {
     this.serverAddress = serverAddress;
     this.client = protoUtils.createModelClassificationClient(serverAddress);
   }
 
   /**
-   * Get all models from all providers
-   * @returns {Promise<object>} - A list of all models
+   * Convert provider info into the protobuf ModelList format.
+   * @param {object} providersInfo - Data fetched from providerFactory.getProvidersInfo()
+   * @returns {object} - A protobuf-compatible LoadedModelList object
    */
-  async getAllModelsForProto() {
+  createProtoModelList(providersInfo) {
     try {
-      // Get all provider models
-      const providersInfo = await providerFactory.getProvidersInfo();
-      
       // Convert to proto format
       const modelList = [];
       
       for (const [provider, info] of Object.entries(providersInfo)) {
-        if (info && typeof info === 'object' && 'models' in info && Array.isArray(info.models)) {
+        if (info && typeof info === "object" && "models" in info && Array.isArray(info.models)) {
           for (const model of info.models) {
             // Convert string model IDs to objects, or use existing object
-            const modelObj = typeof model === 'string' 
+            const modelObj = typeof model === "string" 
               ? { id: model, name: model, provider } 
               : { ...model, provider, name: model.name || model.id };
             
@@ -42,7 +41,7 @@ export class ModelClassificationService {
               continue;
             }
             
-            // Enhance with classification properties if available
+            // Enhance with classification properties if available (if needed later)
             // this.enhanceModelWithClassificationProperties(modelObj);
             
             // Convert to proto format
@@ -58,13 +57,13 @@ export class ModelClassificationService {
       }
       
       // Get default provider safely
-      let defaultProviderName = 'none';
-      let defaultModelName = '';
+      let defaultProviderName = "none";
+      let defaultModelName = "";
       
       try {
-        const defaultProvider = providerFactory.getProvider();
-        defaultProviderName = defaultProvider?.name || 'none';
-        defaultModelName = defaultProvider?.config?.defaultModel || '';
+        const defaultProvider = providerFactory.getProvider(); // Still need this for defaults
+        defaultProviderName = defaultProvider?.name || "none";
+        defaultModelName = defaultProvider?.config?.defaultModel || "";
       } catch (error) {
         console.warn(`Error getting default provider: ${error.message}`);
       }
@@ -76,12 +75,12 @@ export class ModelClassificationService {
         default_model: defaultModelName
       };
     } catch (error) {
-      console.error(`Error in getAllModelsForProto: ${error.message}`);
+      console.error(`Error in createProtoModelList: ${error.message}`);
       // Return empty model list on error
       return {
         models: [],
-        default_provider: 'none',
-        default_model: ''
+        default_provider: "none",
+        default_model: ""
       };
     }
   }
@@ -89,18 +88,19 @@ export class ModelClassificationService {
   
   /**
    * Send models to the classification server and return classified models
+   * @param {object} providersInfo - Pre-fetched provider information.
    * @returns {Promise<object>} - Classified models
    */
-  async getClassifiedModels() {
+  async getClassifiedModels(providersInfo) { // Accept providersInfo as argument
     try {
       // Check if client is properly initialized
       if (!this.client) {
-        console.error('Classification client not initialized');
-        throw new Error('Classification service client not initialized');
+        console.error("Classification client not initialized");
+        throw new Error("Classification service client not initialized");
       }
 
-      // Get all models
-      const modelList = await this.getAllModelsForProto();
+      // Convert pre-fetched models to proto format
+      const modelList = this.createProtoModelList(providersInfo);
       
       // Log the server address we're connecting to
       console.log(`Connecting to classification server at ${this.serverAddress}`);
@@ -111,7 +111,7 @@ export class ModelClassificationService {
       return new Promise((resolve, reject) => {
         // Set a timeout for the gRPC call
         const timeout = setTimeout(() => {
-          reject(new Error(`Classification request timed out after 15 seconds`));
+          reject(new Error("Classification request timed out after 15 seconds"));
         }, 15000);
         
         // Log the number of models being sent for debugging
@@ -119,48 +119,42 @@ export class ModelClassificationService {
         
         // Call the gRPC service with retry logic
         const attemptClassify = (retryCount = 0, maxRetries = 3) => {
-          // Call the classify method in the protoUtils
+          console.log(chalk.blue('[gRPC Client] Making classifyModels call...'));
           this.client.classifyModels(modelList, (error, response) => {
+            clearTimeout(timeout); // Clear timeout once callback is received
+            
             if (error) {
               // Handle gRPC errors
-              console.error(`Classification error (attempt ${retryCount + 1}/${maxRetries + 1}): ${error.message}`);
+              console.error(chalk.red(`[gRPC Client] classifyModels Error (Attempt ${retryCount + 1}/${maxRetries + 1}): ${error.code} - ${error.details || error.message}`));
               
-              // Clear the timeout if set
-              clearTimeout(timeout);
+              // Check if the error is retryable (e.g., UNAVAILABLE, DEADLINE_EXCEEDED)
+              const isRetryable = error.code === grpc.status.UNAVAILABLE || 
+                                  error.code === grpc.status.DEADLINE_EXCEEDED;
               
-              // If we have retries left, try again
-              if (retryCount < maxRetries) {
-                console.log(`Retrying classification (attempt ${retryCount + 2}/${maxRetries + 1})...`);
+              // Retry only for specific retryable errors
+              if (isRetryable && retryCount < maxRetries) {
+                console.log(`Retrying gRPC classifyModels (Attempt ${retryCount + 2}/${maxRetries + 1})...`);
                 
                 // Exponential backoff delay with jitter: 2^n * 500ms + random(0-200ms)
                 const backoff = Math.min((Math.pow(2, retryCount) * 500) + Math.random() * 200, 5000);
                 setTimeout(() => attemptClassify(retryCount + 1, maxRetries), backoff);
               } else {
-                // No more retries, reject the promise
-                reject(new Error(`Classification failed after ${maxRetries + 1} attempts: ${error.message}`));
+                // No more retries or non-retryable error, reject the promise
+                console.log(chalk.red('[gRPC Client] classifyModels failed, rejecting.'));
+                reject(new Error(`gRPC classifyModels failed after ${retryCount + 1} attempts: ${error.details || error.message}`));
               }
             } else {
-              // Clear the timeout if set
-              clearTimeout(timeout);
+              console.log(chalk.green('[gRPC Client] classifyModels call successful.'));
               
               // Check if response is valid
               if (!response) {
-                reject(new Error('Received empty response from classification server'));
+                console.log(chalk.red('[gRPC Client] classifyModels received empty response, rejecting.'));
+                reject(new Error("Received empty response from classification server"));
                 return;
               }
 
-              // // Log the raw response object for inspection
-              // try {
-              //   console.log("--- RAW gRPC Response ---:", JSON.stringify(response, null, 2));
-              // } catch (stringifyError) {
-              //   console.log("--- RAW gRPC Response (Stringify Failed) ---", response);
-              // }
-              
-              // Log the number of HIERARCHICAL groups received
               console.log(`Successfully classified models, received ${response.hierarchical_groups?.length || 0} hierarchical groups`);
-              
-              // Resolve the promise with the response
-              resolve(response);
+              resolve(response); // Resolve the promise with the response, not return it from callback
             }
           });
         };
@@ -175,16 +169,16 @@ export class ModelClassificationService {
   }
 
   /**
-   * Get models that match specific criteria
-   * @param {object} criteria - Criteria for filtering models
-   * @returns {Promise<object>} - Models matching criteria
+   * Get models that match specific criteria from the classification service.
+   * @param {object} criteria - Criteria for filtering models (will be converted to proto).
+   * @returns {Promise<object>} - Models matching criteria (raw proto response).
    */
   async getModelsByCriteria(criteria) {
     try {
       // Check if client is properly initialized
       if (!this.client) {
-        console.error('Classification client not initialized');
-        throw new Error('Classification service client not initialized');
+        console.error("Classification client not initialized");
+        throw new Error("Classification service client not initialized");
       }
       
       // Log the server address we're connecting to
@@ -198,36 +192,41 @@ export class ModelClassificationService {
       return new Promise((resolve, reject) => {
         // Set a timeout for the gRPC call
         const timeout = setTimeout(() => {
-          reject(new Error(`Classification criteria request timed out after 10 seconds`));
+          reject(new Error("Classification criteria request timed out after 10 seconds"));
         }, 10000);
         
         // Call the gRPC service with retry logic
         const attemptGetModelsByCriteria = (retryCount = 0, maxRetries = 2) => {
+          console.log(chalk.blue('[gRPC Client] Making getModelsByCriteria call...'));
           this.client.getModelsByCriteria(protoCriteria, (error, response) => {
+            clearTimeout(timeout); // Clear timeout once callback is received
+            
             if (error) {
               // Handle gRPC errors
-              console.error(`Get models by criteria error (attempt ${retryCount + 1}/${maxRetries + 1}): ${error.message}`);
+              console.error(chalk.red(`[gRPC Client] getModelsByCriteria Error (Attempt ${retryCount + 1}/${maxRetries + 1}): ${error.code} - ${error.details || error.message}`));
               
-              // Clear the timeout if set
-              clearTimeout(timeout);
+              // Check if the error is retryable
+              const isRetryable = error.code === grpc.status.UNAVAILABLE || 
+                                  error.code === grpc.status.DEADLINE_EXCEEDED;
               
-              // If we have retries left, try again
-              if (retryCount < maxRetries) {
-                console.log(`Retrying get models by criteria (attempt ${retryCount + 2}/${maxRetries + 1})...`);
+              // Retry only for specific retryable errors
+              if (isRetryable && retryCount < maxRetries) {
+                console.log(`Retrying gRPC getModelsByCriteria (Attempt ${retryCount + 2}/${maxRetries + 1})...`);
                 
                 // Simple backoff delay: 1s, 2s, ...
                 setTimeout(() => attemptGetModelsByCriteria(retryCount + 1, maxRetries), (retryCount + 1) * 1000);
               } else {
-                // No more retries, reject the promise
-                reject(new Error(`Get models by criteria failed after ${maxRetries + 1} attempts: ${error.message}`));
+                // No more retries or non-retryable error, reject the promise
+                console.log(chalk.red('[gRPC Client] getModelsByCriteria failed, rejecting.'));
+                reject(new Error(`gRPC getModelsByCriteria failed after ${retryCount + 1} attempts: ${error.details || error.message}`));
               }
             } else {
-              // Clear the timeout if set
-              clearTimeout(timeout);
+              console.log(chalk.green('[gRPC Client] getModelsByCriteria call successful.'));
               
               // Check if response is valid
               if (!response) {
-                reject(new Error('Received empty response from classification server'));
+                console.log(chalk.red('[gRPC Client] getModelsByCriteria received empty response, rejecting.'));
+                reject(new Error("Received empty response from classification server"));
                 return;
               }
               

@@ -10,8 +10,11 @@
   background-color: var(--hover);
   border-radius: 9999px;
   padding: 0.35rem 0.85rem;
-  border: 1px solid var(--border);
-  transition: all 0.2s ease;
+  border: 1px solid var(--border-pronounced);
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing), 
+              border-color var(--theme-transition-duration) var(--theme-transition-timing), 
+              box-shadow 0.2s ease, 
+              transform 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -132,4 +135,75 @@
     transform: scale(2);
     opacity: 0;
   }
+}
+
+.statusIndicator {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              box-shadow var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.tooltip {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              box-shadow var(--theme-transition-duration) var(--theme-transition-timing),
+              border-color var(--theme-transition-duration) var(--theme-transition-timing),
+              opacity 0.2s ease,
+              transform 0.2s ease;
+  border: 1px solid var(--border-pronounced);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  transition: transform 0.3s ease,
+              background-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.online .statusDot {
+  background-color: var(--status-online);
+}
+
+.offline .statusDot {
+  background-color: var(--status-offline);
+}
+
+.unknown .statusDot {
+  background-color: var(--status-unknown, gray);
+}
+
+.inMenu {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.inMenu .statusDot {
+  width: 12px;
+  height: 12px;
+  margin: 0;
+}
+
+.inMenu:hover {
+  transform: none;
+  box-shadow: none !important;
+}
+
+.floating {
+  /* Add styles for floating class */
+}
+
+.loading {
+  /* Add styles for loading class */
+}
+
+.unknown {
+  /* Add styles for unknown class */
 } 

@@ -1,41 +1,65 @@
-import React, { memo } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { useApi } from '../../../contexts/ApiContext';
 import styles from './ApiStatus.module.css';
+import { SyncIcon } from '@primer/octicons-react'; 
 
 /**
  * Component to display API connection status
  * @returns {JSX.Element} - Rendered component
  */
-const ApiStatus = memo(() => {
-  const { apiStatus, checkApiStatus } = useApi();
-  const { online, checking } = apiStatus;
-  
-  // Status CSS class based on connection state
-  const statusClass = online ? styles.online : styles.offline;
-  
-  // Status text to display
-  const statusText = online ? 'Online' : 'Offline';
-  
-  // Handle refresh click
-  const handleRefresh = () => {
+const ApiStatus = memo(({ isFloating = false, isMenu = false }) => {
+  const { apiUrl, checkApiStatus, apiStatus, lastChecked, isLoading } = useApi();
+
+  // Attach refresh to main click handler
+  const handleClick = useCallback((e) => {
+    if (e) e.stopPropagation(); 
     checkApiStatus();
+  }, [checkApiStatus]);
+
+  const getStatusText = () => {
+    if (isLoading) return 'Checking...';
+    if (apiStatus === 'online') return 'API Online';
+    if (apiStatus === 'offline') return 'API Offline';
+    return 'API Status Unknown';
   };
-  
+
+  const statusText = getStatusText();
+  const titleText = lastChecked
+    ? `${statusText} (Last checked: ${new Date(lastChecked).toLocaleTimeString()})`
+    : statusText;
+
+  // Combine classes based on props
+  const statusClasses = [
+    styles.status,
+    styles[apiStatus] || styles.unknown,
+    isLoading ? styles.loading : '',
+    isFloating ? styles.floating : '',
+    isMenu ? styles.inMenu : '' // Add class for menu context
+  ].filter(Boolean).join(' ');
+
+  // Dynamic title for hover effect
+  const hoverTitle = isMenu 
+    ? `API Status: ${statusText}. Click to refresh.` 
+    : titleText; // Use detailed text for non-menu title
+
   return (
-    <div className={styles.container}>
-      <div className={styles.status}>
-        <div className={`${styles.indicator} ${statusClass} ${checking ? styles.checking : ''}`} />
-        <span className={styles.text}>{statusText}</span>
-      </div>
+    <div 
+      className={statusClasses} 
+      // Use common onClick handler, role/aria depend on context
+      onClick={handleClick} 
+      role={isMenu ? "button" : "status"} 
+      tabIndex={isMenu ? 0 : -1} // Make focusable only if button
+      aria-label={hoverTitle} // Use more descriptive aria-label
+      title={hoverTitle} // Use dynamic title
+    >
+      <span className={styles.statusDot}></span>
+      {/* Remove status text span entirely */}
+      {/* Remove Refresh button entirely */}
       
-      <button 
-        className={styles.refreshButton}
-        onClick={handleRefresh}
-        aria-label="Refresh API connection status"
-        title="Refresh API connection status"
-      >
-        <RefreshIcon className={styles.refreshIcon} />
-      </button>
+      {/* Remove custom tooltip rendering */}
+      {/* {!isMenu && showTooltip && (
+         <Tooltip text={tooltipText} position="top" />
+      )} */}
     </div>
   );
 });

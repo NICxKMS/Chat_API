@@ -2,17 +2,17 @@
  * Protocol Buffer Utilities
  * Handles loading Proto files and creating gRPC clients
  */
-import path from 'path';
-import * as grpc from '@grpc/grpc-js';
-import * as protoLoader from '@grpc/proto-loader';
-import { fileURLToPath } from 'url';
+import path from "path";
+import * as grpc from "@grpc/grpc-js";
+import * as protoLoader from "@grpc/proto-loader";
+import { fileURLToPath } from "url";
 
 // Get current file's directory in ES module context
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Path to proto file
-const PROTO_PATH = path.resolve(__dirname, '../protos/models.proto');
+const PROTO_PATH = path.resolve(__dirname, "../protos/models.proto");
 
 // Proto loader options - enhanced for better compatibility with Go server
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
@@ -21,7 +21,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   enums: String,
   defaults: true,
   oneofs: true,
-  includeDirs: [path.resolve(__dirname, '..')],
+  includeDirs: [path.resolve(__dirname, "..")],
 });
 
 // Load proto file
@@ -35,18 +35,18 @@ const modelService = protoDescriptor.modelservice;
  * @param {string} serverAddress - The address of the classification server
  * @returns {Object} gRPC client for the model classification service
  */
-export function createModelClassificationClient(serverAddress = 'localhost:8080') {
+export function createModelClassificationClient(serverAddress = "localhost:8080") {
   // Enhanced options for better compatibility with Go server
   const options = {
-    'grpc.max_receive_message_length': 1024 * 1024 * 50, // 50MB
-    'grpc.max_send_message_length': 1024 * 1024 * 50, // 50MB
-    'grpc.default_compression_algorithm': 0, // No compression
-    'grpc.default_compression_level': 0, // No compression
-    'grpc.keepalive_time_ms': 30000,
-    'grpc.keepalive_timeout_ms': 10000,
-    'grpc.http2.min_time_between_pings_ms': 30000,
-    'grpc.http2.max_pings_without_data': 0,
-    'grpc.keepalive_permit_without_calls': 1
+    "grpc.max_receive_message_length": 1024 * 1024 * 1, // 1MB
+    "grpc.max_send_message_length": 1024 * 1024 * 1, // 1MB
+    "grpc.default_compression_algorithm": 0, // No compression
+    "grpc.default_compression_level": 0, // No compression
+    "grpc.keepalive_time_ms": 30000,
+    "grpc.keepalive_timeout_ms": 10000,
+    "grpc.http2.min_time_between_pings_ms": 30000,
+    "grpc.http2.max_pings_without_data": 0,
+    "grpc.keepalive_permit_without_calls": 1
   };
 
   return new modelService.ModelClassificationService(
@@ -63,7 +63,7 @@ export function createModelClassificationClient(serverAddress = 'localhost:8080'
  * @param {string} defaultModel - Default model ID
  * @returns {Object} Protocol Buffer LoadedModelList object properly formatted for GRPC
  */
-export function createLoadedModelList(modelList = [], defaultProvider = '', defaultModel = '') {
+export function createLoadedModelList(modelList = [], defaultProvider = "", defaultModel = "") {
   try {
     // Process models to proper format first
     const formattedModels = modelList.map(model => createProtoModel(model));
@@ -90,25 +90,25 @@ export function createProtoModel(model) {
   try {
     // Create a model object that matches the Go proto definition
     return {
-      id: String(model.id || ''),
-      name: String(model.name || ''),
+      id: String(model.id || ""),
+      name: String(model.name || ""),
       context_size: Number(model.contextSize || 0),
       max_tokens: Number(model.maxTokens || 0),
-      provider: String(model.provider || ''),
-      display_name: String(model.displayName || ''),
-      description: String(model.description || ''),
+      provider: String(model.provider || ""),
+      display_name: String(model.displayName || ""),
+      description: String(model.description || ""),
       cost_per_token: Number(model.costPerToken || 0),
       capabilities: Array.isArray(model.capabilities) ? model.capabilities.map(String) : [],
       
       // Classification fields with correct types
-      family: String(model.family || ''),
-      type: String(model.type || ''),
-      series: String(model.series || ''),
-      variant: String(model.variant || ''),
+      family: String(model.family || ""),
+      type: String(model.type || ""),
+      series: String(model.series || ""),
+      variant: String(model.variant || ""),
       is_default: Boolean(model.isDefault || false),
-      is_multimodal: Boolean(model.isMultimodal || model.capabilities?.includes('vision') || false),
+      is_multimodal: Boolean(model.isMultimodal || model.capabilities?.includes("vision") || false),
       is_experimental: Boolean(model.isExperimental || false),
-      version: String(model.version || ''),
+      version: String(model.version || ""),
       
       // Initialize metadata as a map of strings
       metadata: convertMetadataToStringMap(model.metadata || {})
@@ -130,7 +130,7 @@ function convertMetadataToStringMap(metadata) {
   
   Object.entries(metadata).forEach(([key, value]) => {
     if (value !== null && value !== undefined) {
-      stringMap[key] = typeof value === 'object' ? 
+      stringMap[key] = typeof value === "object" ? 
         JSON.stringify(value) : String(value);
     }
   });
@@ -154,35 +154,35 @@ export function convertToProtoModel(model) {
  */
 export function convertFromProtoModel(protoModel) {
   if (!protoModel) {
-    console.warn('Received undefined or null protoModel in convertFromProtoModel');
+    console.warn("Received undefined or null protoModel in convertFromProtoModel");
     return {};
   }
   
   // Extract standard fields with camelCase keys and ensure correct types
   const model = {
-    id: protoModel.id || '',
-    name: protoModel.name || '',
-    contextSize: typeof protoModel.context_size === 'number' ? protoModel.context_size : 0,
-    maxTokens: typeof protoModel.max_tokens === 'number' ? protoModel.max_tokens : 0,
-    provider: protoModel.provider || '',
-    displayName: protoModel.display_name || '',
-    description: protoModel.description || '',
-    costPerToken: typeof protoModel.cost_per_token === 'number' ? protoModel.cost_per_token : 0,
+    id: protoModel.id || "",
+    name: protoModel.name || "",
+    contextSize: typeof protoModel.context_size === "number" ? protoModel.context_size : 0,
+    maxTokens: typeof protoModel.max_tokens === "number" ? protoModel.max_tokens : 0,
+    provider: protoModel.provider || "",
+    displayName: protoModel.display_name || "",
+    description: protoModel.description || "",
+    costPerToken: typeof protoModel.cost_per_token === "number" ? protoModel.cost_per_token : 0,
     capabilities: Array.isArray(protoModel.capabilities) ? protoModel.capabilities : [],
     
     // Classification fields with camelCase keys
-    family: protoModel.family || '',
-    type: protoModel.type || '',
-    series: protoModel.series || '',
-    variant: protoModel.variant || '',
+    family: protoModel.family || "",
+    type: protoModel.type || "",
+    series: protoModel.series || "",
+    variant: protoModel.variant || "",
     isDefault: Boolean(protoModel.is_default),
     isMultimodal: Boolean(protoModel.is_multimodal),
     isExperimental: Boolean(protoModel.is_experimental),
-    version: protoModel.version || ''
+    version: protoModel.version || ""
   };
 
   // Add metadata fields to model if they exist
-  if (protoModel.metadata && typeof protoModel.metadata === 'object') {
+  if (protoModel.metadata && typeof protoModel.metadata === "object") {
     model.metadata = {};
     for (const [key, value] of Object.entries(protoModel.metadata)) {
       if (value !== undefined) {

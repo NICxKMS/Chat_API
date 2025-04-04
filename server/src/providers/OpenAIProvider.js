@@ -2,15 +2,15 @@
  * OpenAI Provider Implementation
  * Efficiently integrates with OpenAI's API using their official SDK
  */
-import { OpenAI } from 'openai';
-import BaseProvider from './BaseProvider.js';
-import { createBreaker } from '../utils/circuitBreaker.js';
-import * as metrics from '../utils/metrics.js';
+import { OpenAI } from "openai";
+import BaseProvider from "./BaseProvider.js";
+import { createBreaker } from "../utils/circuitBreaker.js";
+import * as metrics from "../utils/metrics.js";
 
 class OpenAIProvider extends BaseProvider {
   constructor(config) {
     super(config);
-    this.name = 'openai';
+    this.name = "openai";
     
     // Initialize OpenAI SDK with custom configuration
     this.client = new OpenAI({
@@ -22,7 +22,7 @@ class OpenAIProvider extends BaseProvider {
     
     // Extract API version info
     this.apiVersionInfo = {
-      version: 'v1',
+      version: "v1",
       lastUpdated: new Date().toISOString()
     };
     
@@ -60,16 +60,16 @@ class OpenAIProvider extends BaseProvider {
         return this.cachedModels;
       }
       
-      console.log('Fetching models from OpenAI API...');
+      console.log("Fetching models from OpenAI API...");
       
       // Create fallback models in case API call fails
       const fallbackModels = [
-        'gpt-4',
-        'gpt-4-turbo',
-        'gpt-4o',
-        'gpt-4o-mini',
-        'gpt-3.5-turbo',
-        'gpt-3.5-turbo-16k',
+        "gpt-4",
+        "gpt-4-turbo",
+        "gpt-4o",
+        "gpt-4o-mini",
+        "gpt-3.5-turbo",
+        "gpt-3.5-turbo-16k",
       ];
       
       // Call the OpenAI API to get available models
@@ -78,32 +78,32 @@ class OpenAIProvider extends BaseProvider {
         const response = await this.client.models.list();
         
         if (!response || !response.data || !Array.isArray(response.data)) {
-          console.error('Invalid response format from OpenAI API:', response);
-          throw new Error('Invalid response format from OpenAI models API');
+          console.error("Invalid response format from OpenAI API:", response);
+          throw new Error("Invalid response format from OpenAI models API");
         }
         
         console.log(`Received ${response.data.length} models from OpenAI API`);
         
         let filteredModels = response.data
-        .filter(model => {
-          let id = model.id || ""; // Ensure `id` is a string
-          let firstChar = id[0];   // Get the first character safely
+          .filter(model => {
+            let id = model.id || ""; // Ensure `id` is a string
+            let firstChar = id[0];   // Get the first character safely
       
-          return !(
-            firstChar === "t" || 
+            return !(
+              firstChar === "t" || 
             firstChar === "b" || 
             firstChar === "w" || 
             (id.length > 1 && id.slice(0, 2) === "om") || // Check "om" only if ID has at least 2 chars
             (id.length > 2 && id.slice(0, 3) === "dav")  // Check "dav" only if ID has at least 3 chars
-          );
-        })
-        .map(model => ({
-          id: model.id,
-          name: model.id,
-          provider: this.name,
-          tokenLimit: this._getTokenLimit(model.id),
-          features: this._getModelFeatures(model.id)
-        }));
+            );
+          })
+          .map(model => ({
+            id: model.id,
+            name: model.id,
+            provider: this.name,
+            tokenLimit: this._getTokenLimit(model.id),
+            features: this._getModelFeatures(model.id)
+          }));
       
       
         // Cache all available models from API - no config filtering
@@ -115,7 +115,7 @@ class OpenAIProvider extends BaseProvider {
         
         return filteredModels;
       } catch (error) {
-        console.error('Error fetching OpenAI models from API:', error.message);
+        console.error("Error fetching OpenAI models from API:", error.message);
         
         // If we have previously loaded models from the API, return those
         if (this.modelsLoadedFromAPI && this.cachedModels.length > 0) {
@@ -137,7 +137,7 @@ class OpenAIProvider extends BaseProvider {
         return models;
       }
     } catch (error) {
-      console.error('Error in getModels:', error.message);
+      console.error("Error in getModels:", error.message);
       
       // Return any models we have or use fallback models
       if (this.hasModels && this.cachedModels.length > 0) {
@@ -166,12 +166,12 @@ class OpenAIProvider extends BaseProvider {
    */
   _getTokenLimit(modelId) {
     const tokenLimits = {
-      'gpt-4': 8192,
-      'gpt-4-32k': 32768,
-      'gpt-4-turbo': 128000,
-      'gpt-4o': 128000,
-      'gpt-3.5-turbo': 4096,
-      'gpt-3.5-turbo-16k': 16384
+      "gpt-4": 8192,
+      "gpt-4-32k": 32768,
+      "gpt-4-turbo": 128000,
+      "gpt-4o": 128000,
+      "gpt-3.5-turbo": 4096,
+      "gpt-3.5-turbo-16k": 16384
     };
     
     // Match model to its base version (without date suffix)
@@ -197,18 +197,18 @@ class OpenAIProvider extends BaseProvider {
     };
     
     // GPT-4 Vision models
-    if (modelId.includes('vision') || modelId.includes('gpt-4-turbo') || modelId.includes('gpt-4o')) {
+    if (modelId.includes("vision") || modelId.includes("gpt-4-turbo") || modelId.includes("gpt-4o")) {
       features.vision = true;
     }
     
     // Tool/function calling models
-    if (modelId.includes('gpt-4') || modelId.includes('gpt-3.5-turbo')) {
+    if (modelId.includes("gpt-4") || modelId.includes("gpt-3.5-turbo")) {
       features.functionCalling = true;
       features.tools = true;
     }
     
     // JSON mode support
-    if (modelId.includes('gpt-4') || modelId.includes('gpt-3.5-turbo')) {
+    if (modelId.includes("gpt-4") || modelId.includes("gpt-3.5-turbo")) {
       features.json = true;
     }
     
@@ -225,8 +225,8 @@ class OpenAIProvider extends BaseProvider {
       this.validateOptions(standardOptions);
       
       // Extract model name (without provider prefix)
-      const modelName = standardOptions.model.includes('/') 
-        ? standardOptions.model.split('/')[1] 
+      const modelName = standardOptions.model.includes("/") 
+        ? standardOptions.model.split("/")[1] 
         : standardOptions.model;
       
       // Update options with extracted model name
@@ -242,7 +242,7 @@ class OpenAIProvider extends BaseProvider {
       metrics.incrementProviderRequestCount(
         this.name,
         modelName,
-        '200'
+        "200"
       );
       
       return response;
@@ -252,8 +252,8 @@ class OpenAIProvider extends BaseProvider {
       // Record failed API call
       metrics.incrementProviderRequestCount(
         this.name,
-        options.model?.includes('/') ? options.model.split('/')[1] : options.model,
-        'error'
+        options.model?.includes("/") ? options.model.split("/")[1] : options.model,
+        "error"
       );
       
       throw error;
@@ -315,22 +315,22 @@ class OpenAIProvider extends BaseProvider {
       model: model,
       provider: this.name,
       createdAt: new Date(response.created * 1000).toISOString(),
-      content: '',
+      content: "",
       usage: {
         promptTokens: response.usage?.prompt_tokens || 0,
         completionTokens: response.usage?.completion_tokens || 0,
         totalTokens: response.usage?.total_tokens || 0
       },
       latency: latency,
-      finishReason: '',
+      finishReason: "",
       raw: response
     };
     
     // Extract content from the message
     if (response.choices && response.choices.length > 0) {
       const choice = response.choices[0];
-      result.content = choice.message?.content || '';
-      result.finishReason = choice.finish_reason || 'stop';
+      result.content = choice.message?.content || "";
+      result.finishReason = choice.finish_reason || "stop";
       
       // Handle tool calls if present
       if (choice.message?.tool_calls && choice.message.tool_calls.length > 0) {
@@ -339,6 +339,94 @@ class OpenAIProvider extends BaseProvider {
     }
     
     return result;
+  }
+
+  /**
+   * Send a chat completion request with streaming response
+   */
+  async *chatCompletionStream(options) {
+    const startTime = process.hrtime();
+    let modelName;
+    try {
+      // Standardize and validate options
+      const standardOptions = this.standardizeOptions(options);
+      this.validateOptions(standardOptions);
+      
+      // Extract model name
+      modelName = standardOptions.model.includes("/") 
+        ? standardOptions.model.split("/")[1] 
+        : standardOptions.model;
+
+      // Prepare API options
+      const apiOptions = {
+        ...standardOptions,
+        model: modelName,
+        stream: true, // Enable streaming
+      };
+
+      // Use circuit breaker for API calls
+      // Note: Circuit breaker needs adjustment for streams if using .fire
+      // Direct call for simplicity here, consider stream-compatible breaker
+      const stream = await this.client.chat.completions.create(apiOptions);
+      
+      let firstChunk = true;
+      let accumulatedLatency = 0;
+
+      for await (const chunk of stream) {
+        if (firstChunk) {
+          const duration = process.hrtime(startTime);
+          accumulatedLatency = (duration[0] * 1000) + (duration[1] / 1000000);
+          metrics.recordStreamTtfb(this.name, modelName, accumulatedLatency / 1000);
+          firstChunk = false;
+        }
+        
+        // Normalize chunk format (example, adapt as needed)
+        const normalizedChunk = this._normalizeStreamChunk(chunk, modelName, accumulatedLatency);
+        yield normalizedChunk;
+      }
+      
+      // Record successful stream completion
+      metrics.incrementProviderRequestCount(
+        this.name,
+        modelName,
+        "200"
+      );
+
+    } catch (error) {
+      console.error(`OpenAI stream error: ${error.message}`);
+      if (modelName) {
+        metrics.incrementProviderErrorCount(this.name, modelName);
+      }
+      // Re-throw specific error for upstream handling
+      // Consider yielding an error object instead if the stream already started
+      throw new Error(`OpenAI stream error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Normalize a streaming chunk from OpenAI
+   */
+  _normalizeStreamChunk(chunk, model, latency) {
+    const choice = chunk.choices && chunk.choices[0];
+    const delta = choice?.delta;
+
+    return {
+      id: chunk.id || `chunk-${Date.now()}`,
+      model: chunk.model || model,
+      provider: this.name,
+      createdAt: chunk.created 
+        ? new Date(chunk.created * 1000).toISOString() 
+        : new Date().toISOString(),
+      content: delta?.content || "",
+      finishReason: choice?.finish_reason || null,
+      usage: {
+        promptTokens: chunk.usage?.prompt_tokens || 0, // Often null in stream chunks
+        completionTokens: chunk.usage?.completion_tokens || 0, // Often null in stream chunks
+        totalTokens: chunk.usage?.total_tokens || 0 // Often null in stream chunks
+      },
+      latency: latency || 0, // Latency to first chunk
+      raw: chunk // Include the raw chunk for potential downstream use
+    };
   }
 }
 

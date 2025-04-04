@@ -14,11 +14,15 @@ const ModelSelectorButton = ({ selectedModelName, onClick, disabled }) => {
       disabled={disabled}
       aria-haspopup="true" // Indicate it triggers a popup menu/dialog
       aria-label={`Select Model (Current: ${selectedModelName || 'None'})`}
+      role="button" // Added role for clarity
     >
-      <span className={styles.buttonText}>
-        {selectedModelName ? `Model: ${selectedModelName}` : 'Select a Model'}
+      {/* Inner span for the gradient border effect */}
+      <span className={styles.innerContent}>
+        <span className={styles.buttonText}>
+          {selectedModelName ? `Model: ${selectedModelName}` : 'Select a Model'}
+        </span>
+        <ChevronDownIcon size={16} className={styles.buttonIcon} />
       </span>
-      <ChevronDownIcon size={16} className={styles.buttonIcon} />
     </button>
   );
 };

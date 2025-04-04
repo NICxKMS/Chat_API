@@ -2,12 +2,12 @@
  * Provider Factory
  * Creates and initializes provider instances based on configuration
  */
-import BaseProvider from './BaseProvider.js';
-import OpenAIProvider from './OpenAIProvider.js';
-import { AnthropicProvider } from './AnthropicProvider.js';
-import GeminiProvider from './GeminiProvider.js';
-import OpenRouterProvider from './OpenRouterProvider.js';
-import config from '../config/config.js';
+import BaseProvider from "./BaseProvider.js";
+import OpenAIProvider from "./OpenAIProvider.js";
+import { AnthropicProvider } from "./AnthropicProvider.js";
+import GeminiProvider from "./GeminiProvider.js";
+import OpenRouterProvider from "./OpenRouterProvider.js";
+import config from "../config/config.js";
 
 /**
  * Provider Factory Class
@@ -24,30 +24,30 @@ class ProviderFactory {
       
       // Find a valid default provider
       const availableProviders = Object.keys(this.providers);
-      if (availableProviders.includes('openai')) {
-        this.defaultProvider = 'openai';
-      } else if (availableProviders.includes('anthropic')) {
-        this.defaultProvider = 'anthropic';
-      } else if (availableProviders.includes('gemini')) {
-        this.defaultProvider = 'gemini';
-      } else if (availableProviders.includes('openrouter')) {
-        this.defaultProvider = 'openrouter';
+      if (availableProviders.includes("openai")) {
+        this.defaultProvider = "openai";
+      } else if (availableProviders.includes("anthropic")) {
+        this.defaultProvider = "anthropic";
+      } else if (availableProviders.includes("gemini")) {
+        this.defaultProvider = "gemini";
+      } else if (availableProviders.includes("openrouter")) {
+        this.defaultProvider = "openrouter";
       } else {
-        this.defaultProvider = availableProviders[0] || 'none';
+        this.defaultProvider = availableProviders[0] || "none";
         console.warn(`No primary providers found, using ${this.defaultProvider} as default`);
       }
       
     } catch (error) {
-      console.error('Error initializing provider factory:', error);
+      console.error("Error initializing provider factory:", error);
       // Initialize with empty providers if there's an error
       this.providers = { 
         none: {
-          name: 'none',
+          name: "none",
           getModels: async () => [],
-          config: { defaultModel: 'none' }
+          config: { defaultModel: "none" }
         }
       };
-      this.defaultProvider = 'none';
+      this.defaultProvider = "none";
     }
   }
   
@@ -171,9 +171,9 @@ class ProviderFactory {
       if (anthropicConfig.apiKey) {
         providers.anthropic = new AnthropicProvider({
           apiKey: anthropicConfig.apiKey,
-          baseUrl: anthropicConfig.baseUrl || 'https://api.anthropic.com',
-          defaultModel: anthropicConfig.defaultModel || 'claude-3-opus-20240229',
-          modelFamily: 'claude',
+          baseUrl: anthropicConfig.baseUrl || "https://api.anthropic.com",
+          defaultModel: anthropicConfig.defaultModel || "claude-3-opus-20240229",
+          modelFamily: "claude",
           ...anthropicConfig
         });
       }
@@ -197,17 +197,17 @@ class ProviderFactory {
       }
 
       if (Object.keys(providers).length === 0) {
-        console.warn('No providers were initialized due to missing API keys');
+        console.warn("No providers were initialized due to missing API keys");
         providers.none = {
-          name: 'none',
+          name: "none",
           getModels: async () => [],
-          config: { defaultModel: 'none' }
+          config: { defaultModel: "none" }
         };
       }
 
       return providers;
     } catch (error) {
-      console.error('Error initializing providers:', error);
+      console.error("Error initializing providers:", error);
       throw error;
     }
   }

@@ -8,7 +8,11 @@
   flex-direction: column;
   flex-shrink: 0;
   overflow-y: auto;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s ease, 
+              transform 0.3s ease, 
+              padding 0.3s ease, 
+              border-color var(--theme-transition-duration) var(--theme-transition-timing), 
+              background var(--theme-transition-duration) var(--theme-transition-timing);
   z-index: 10;
   position: relative;
 }
@@ -74,6 +78,14 @@
   position: sticky;
   bottom: 0;
   margin-top: auto;
+  min-height: 40px;
+}
+
+/* Style for the placeholder text span if needed */
+.footerPlaceholderText {
+  font-size: 0.75rem;
+  color: var(--secondary-text);
+  opacity: 0.5;
 }
 
 /* Placeholder styles for Suspense fallbacks */
@@ -209,7 +221,8 @@
   cursor: pointer;
   text-align: left;
   border-radius: 6px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .sessionButton:hover {
@@ -234,7 +247,8 @@
   flex-shrink: 0;
 }
 
-/* Compact Session List Styles */
+/* Remove Compact Session List Styles */
+/*
 .compactSessionList {
   display: flex;
   flex-direction: column;
@@ -248,28 +262,28 @@
   width: 40px;
   height: 40px;
   justify-content: center;
-  border-radius: 8px;
 }
 
 .compactSessionButton span {
-  font-weight: bold;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
+*/
 
-/* Adjust sidebar padding/width for compact state */
+/* Remove .sidebar.compact rules */
+/*
 .sidebar.compact {
-  width: var(--sidebar-width-compact);
+  // Styles removed as sidebar is now hidden via transform
 }
 
 .sidebar.compact .header {
-  padding: 1rem 0.5rem;
-  justify-content: center;
+  // Styles removed
 }
 
 .sidebar.compact .footer {
-  padding: 0.75rem 0.5rem;
-  justify-content: center;
-  gap: 0.5rem;
+  // Styles removed
 }
+*/
 
 /* Remove old compact styles */
 /* .compactSidebar { ... } */

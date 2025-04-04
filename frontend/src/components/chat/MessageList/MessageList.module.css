@@ -172,3 +172,22 @@ body.dark-mode .messageRow:hover {
     font-size: 0.9rem;
   }
 } 
+
+.messageItemWrapper:hover {
+  /* ... other styles ... */
+  /* Use theme variables */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.errorMessage {
+  /* ... other styles ... */
+  /* Use theme variables */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              border-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+/* Remove transition:all from .messageItemInner */
+/* .messageItemInner { 
+  transition: all 0.3s ease;
+} */ 

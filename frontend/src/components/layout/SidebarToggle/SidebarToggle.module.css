@@ -13,7 +13,9 @@
   justify-content: center;
   cursor: pointer;
   z-index: 100;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              transform 0.2s;
 }
 
 .toggleButton:hover {
@@ -51,4 +53,9 @@
 
 .active .bar:nth-child(3) {
   transform: translateY(-7px) rotate(-45deg);
+}
+
+.icon {
+  transition: transform 0.3s, opacity 0.3s,
+              color var(--theme-transition-duration) var(--theme-transition-timing);
 } 

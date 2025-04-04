@@ -2,11 +2,13 @@
  * Gemini Provider Implementation
  * Integrates with Google's Generative AI SDK for Gemini models
  */
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import axios from 'axios';
-import BaseProvider from './BaseProvider.js';
-import { createBreaker } from '../utils/circuitBreaker.js';
-import * as metrics from '../utils/metrics.js';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import axios from "axios";
+import BaseProvider from "./BaseProvider.js";
+import { createBreaker } from "../utils/circuitBreaker.js";
+import * as metrics from "../utils/metrics.js";
+// Import the specific histogram instance
+import { responseTimeHistogram } from "../utils/metrics.js";
 
 class GeminiProvider extends BaseProvider {
   /**
@@ -14,25 +16,23 @@ class GeminiProvider extends BaseProvider {
    */
   constructor(config) {
     super(config);
-    this.name = 'gemini';
+    this.name = "gemini";
     
     // Debug API key loading
     const keyDebug = config.apiKey ? 
       `${config.apiKey.substring(0, 5)}...${config.apiKey.substring(config.apiKey.length - 4)}` : 
-      'missing';
-    // console.log(`Gemini provider initializing with API key: ${keyDebug}`);
-    // console.log(`API key loaded from env GOOGLE_API_KEY: ${process.env.GOOGLE_API_KEY ? 'yes' : 'no'}`);
+      "missing";
     
     // Validate API key
     if (!config.apiKey) {
-      console.warn('Gemini API key is missing or set to dummy-key. Using fallback mode with limited functionality.');
+      console.warn("Gemini API key is missing or set to dummy-key. Using fallback mode with limited functionality.");
       this.hasValidApiKey = false;
     } else {
       this.hasValidApiKey = true;
     }
     
     // Store API version from config or environment
-    this.apiVersion = config.apiVersion || process.env.GEMINI_API_VERSION || 'v1beta';
+    this.apiVersion = config.apiVersion || process.env.GEMINI_API_VERSION || "v1beta";
     console.log(`Using Gemini API version: ${this.apiVersion}`);
     
     // Initialize Google Generative AI SDK
@@ -57,7 +57,6 @@ class GeminiProvider extends BaseProvider {
     this.availableModels = this.config.models || [];
     
     // Log initialization
-    // console.log(`GeminiProvider initialized successfully${!this.hasValidApiKey ? ' (with limited functionality - no API key)' : ''}`);
   }
 
   /**
@@ -67,10 +66,10 @@ class GeminiProvider extends BaseProvider {
     try {
       // Start with hardcoded models for fast initial response
       let modelIds = this.config.models || [
-        'gemini-2.0-flash',
-        'gemini-2.0-pro',
-        'gemini-1.5-pro',
-        'gemini-1.0-pro'
+        "gemini-2.0-flash",
+        "gemini-2.0-pro",
+        "gemini-1.5-pro",
+        "gemini-1.0-pro"
       ];
       
       // Dynamically fetch models if enabled
@@ -83,7 +82,7 @@ class GeminiProvider extends BaseProvider {
           
           const response = await axios.get(`${baseUrl}/models`, {
             headers: {
-              'Content-Type': 'application/json'
+              "Content-Type": "application/json"
             },
             params: {
               key: apiKey
@@ -94,11 +93,9 @@ class GeminiProvider extends BaseProvider {
           if (response.data && response.data.models) {
             const dynamicModels = response.data.models
               .filter(model => {let firstChar = model.name?.[7];
-                return firstChar !== 'e' && firstChar !== 't' && firstChar !== 'c';})
-              .map((model) => model.name.replace('models/', ''));
+                return firstChar !== "e" && firstChar !== "t" && firstChar !== "c";})
+              .map((model) => model.name.replace("models/", ""));
               
-            // console.log(`Found ${dynamicModels.length} Gemini models from API:`, dynamicModels);
-            
             // Add new models to our list
             dynamicModels.forEach((model) => {
               if (!modelIds.includes(model)) {
@@ -131,10 +128,10 @@ class GeminiProvider extends BaseProvider {
    */
   formatModelName(modelId) {
     return modelId
-      .replace('gemini-', 'Gemini ')
-      .split('-')
+      .replace("gemini-", "Gemini ")
+      .split("-")
       .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
+      .join(" ");
   }
   
   /**
@@ -142,9 +139,9 @@ class GeminiProvider extends BaseProvider {
    */
   getTokenLimit(modelId) {
     const limits = {
-      'gemini-1.5-pro': 1000000,  // 1M tokens
-      'gemini-1.5-flash': 1000000, // 1M tokens
-      'gemini-1.0-pro': 32768     // 32K tokens
+      "gemini-1.5-pro": 1000000,  // 1M tokens
+      "gemini-1.5-flash": 1000000, // 1M tokens
+      "gemini-1.0-pro": 32768     // 32K tokens
     };
     
     return limits[modelId] || 32768; // default to 32K
@@ -165,7 +162,7 @@ class GeminiProvider extends BaseProvider {
     };
     
     // Gemini 1.5 specific features
-    if (modelId.includes('gemini-1.5')) {
+    if (modelId.includes("gemini-1.5")) {
       features.tools = true;
       features.functionCalling = true;
       features.json = true;
@@ -186,7 +183,7 @@ class GeminiProvider extends BaseProvider {
       const models = await this.getModels();
       
       // Determine default model
-      const defaultModel = this.config.defaultModel || (models.length > 0 ? models[0].id : 'gemini-1.5-flash');
+      const defaultModel = this.config.defaultModel || (models.length > 0 ? models[0].id : "gemini-1.5-flash");
       
       return {
         name: this.name,
@@ -206,7 +203,7 @@ class GeminiProvider extends BaseProvider {
       return {
         name: this.name,
         models: [],
-        defaultModel: 'gemini-1.5-flash',
+        defaultModel: "gemini-1.5-flash",
         features: {
           streaming: true,
           vision: true,
@@ -236,12 +233,12 @@ class GeminiProvider extends BaseProvider {
         // Filter to just Gemini models
         this.availableModels = response.data.models
           .filter(model => {
-            const modelName = model.name.replace('models/', '');
-            const isGemini = modelName.startsWith('gemini-');
-            const isPublic = !modelName.includes('internal') || includeInternal;
+            const modelName = model.name.replace("models/", "");
+            const isGemini = modelName.startsWith("gemini-");
+            const isPublic = !modelName.includes("internal") || includeInternal;
             return isGemini && isPublic;
           })
-          .map(model => model.name.replace('models/', ''));
+          .map(model => model.name.replace("models/", ""));
       }
 
       return this.availableModels;
@@ -272,7 +269,7 @@ class GeminiProvider extends BaseProvider {
       if (!this.hasValidApiKey) {
         return {
           id: `error-${Date.now()}`,
-          model: options.model || this.config.defaultModel || 'gemini-1.5-pro',
+          model: options.model || this.config.defaultModel || "gemini-1.5-pro",
           provider: this.name,
           createdAt: new Date().toISOString(),
           content: "API key is invalid or missing. Please configure a valid Google API key.",
@@ -290,18 +287,23 @@ class GeminiProvider extends BaseProvider {
 
       // Start timer for latency measurement
       const startTime = Date.now();
-      metrics.incrementCounter(`${this.name}_requests_total`);
 
       // Send request with circuit breaker
       const response = await this.completionBreaker.fire(options);
       const latency = Date.now() - startTime;
-      metrics.observeHistogram(`${this.name}_request_duration_seconds`, latency / 1000);
+      // Corrected call to use the imported histogram instance
+      responseTimeHistogram.observe(latency / 1000);
+      
+      // Assuming successful request before this line
+      metrics.incrementProviderRequestCount(this.name, options.model, 'success');
+      
+      const result = await this.genAI.getGenerativeModel({ model: options.model });
       
       return response;
     } catch (error) {
       // Handle errors with fallback mechanism
       console.error(`Gemini chat completion error: ${error.message}`);
-      metrics.incrementCounter(`${this.name}_errors_total`);
+      metrics.incrementProviderErrorCount(this.name, options.model || this.config.defaultModel, error.status || 500);
       
       try {
         return await this._completionFallback(options, error);
@@ -309,18 +311,22 @@ class GeminiProvider extends BaseProvider {
         console.error(`Fallback also failed: ${fallbackError.message}`);
         return {
           id: `error-${Date.now()}`,
-          model: options.model || this.config.defaultModel || 'gemini-1.5-pro',
+          model: options.model || this.config.defaultModel || "gemini-1.5-pro",
           provider: this.name,
           createdAt: new Date().toISOString(),
           content: "",
-          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          usage: {
+            promptTokens: this._estimateTokens(options.messages.map(m => m.content).join(" ")),
+            completionTokens: 40, // Approximate for the fallback message
+            totalTokens: this._estimateTokens(options.messages.map(m => m.content).join(" ")) + 40
+          },
           latency: 0,
-          finishReason: "error",
+          finishReason: "fallback",
           errorDetails: {
-            message: error.message || "Unknown error",
-            type: "processing_error",
+            message: error.message,
+            type: "provider_error",
             param: null,
-            code: "500"
+            code: "ECONNRESET"
           }
         };
       }
@@ -333,7 +339,7 @@ class GeminiProvider extends BaseProvider {
   async _rawChatCompletion(options) {
     try {
       // Get model instance
-      const modelId = options.model || this.config.defaultModel || 'gemini-1.5-pro';
+      const modelId = options.model || this.config.defaultModel || "gemini-1.5-pro";
       const genModel = this.genAI.getGenerativeModel({ model: modelId });
       
       // Process messages
@@ -386,14 +392,14 @@ class GeminiProvider extends BaseProvider {
         model: modelId,
         provider: this.name,
         createdAt: new Date().toISOString(),
-        content: result.response?.text() || '',
+        content: result.response?.text() || "",
         usage: {
-          promptTokens: this._estimateTokens(prompt + (systemPrompt || '')),
-          completionTokens: this._estimateTokens(result.response?.text() || ''),
+          promptTokens: this._estimateTokens(prompt + (systemPrompt || "")),
+          completionTokens: this._estimateTokens(result.response?.text() || ""),
           totalTokens: 0 // Will be calculated below
         },
         latency,
-        finishReason: result.response?.promptFeedback?.blockReason || 'stop',
+        finishReason: result.response?.promptFeedback?.blockReason || "stop",
         raw: result
       };
       
@@ -411,8 +417,8 @@ class GeminiProvider extends BaseProvider {
    * Process messages into Gemini-compatible format
    */
   _processMessages(messages) {
-    let systemPrompt = '';
-    let prompt = '';
+    let systemPrompt = "";
+    let prompt = "";
     const history = [];
     
     // Process all messages
@@ -420,23 +426,23 @@ class GeminiProvider extends BaseProvider {
       const message = messages[i];
       
       // Handle system message
-      if (message.role === 'system') {
-        systemPrompt += message.content + '\n';
+      if (message.role === "system") {
+        systemPrompt += message.content + "\n";
         continue;
       }
       
       // Convert user/assistant messages to history format
       if (i < messages.length - 1) {
         // Add to history if not the last message
-        if (message.role === 'user' || message.role === 'assistant') {
+        if (message.role === "user" || message.role === "assistant") {
           history.push({
-            role: message.role === 'user' ? 'user' : 'model',
+            role: message.role === "user" ? "user" : "model",
             parts: [{ text: message.content }]
           });
         }
       } else {
         // Last message becomes the prompt
-        if (message.role === 'user') {
+        if (message.role === "user") {
           prompt = message.content;
         }
       }
@@ -454,14 +460,14 @@ class GeminiProvider extends BaseProvider {
     // Create a fallback response
     return {
       id: `fallback-${Date.now()}`,
-      model: options.model || this.config.defaultModel || 'gemini-1.5-pro',
+      model: options.model || this.config.defaultModel || "gemini-1.5-pro",
       provider: this.name,
       createdAt: new Date().toISOString(),
       content: "I apologize, but I'm having trouble processing your request right now. This could be due to high demand or a temporary issue with the service. Please try again in a moment.",
       usage: {
-        promptTokens: this._estimateTokens(options.messages.map(m => m.content).join(' ')),
+        promptTokens: this._estimateTokens(options.messages.map(m => m.content).join(" ")),
         completionTokens: 40, // Approximate for the fallback message
-        totalTokens: this._estimateTokens(options.messages.map(m => m.content).join(' ')) + 40
+        totalTokens: this._estimateTokens(options.messages.map(m => m.content).join(" ")) + 40
       },
       latency: 0,
       finishReason: "fallback",
@@ -478,9 +484,140 @@ class GeminiProvider extends BaseProvider {
    * Estimate token count based on character count
    */
   _estimateTokens(text) {
-    if (!text) return 0;
+    if (!text) {return 0;}
     // Simple estimation: ~4 chars per token for English text
     return Math.ceil(text.length / 4);
+  }
+
+  /**
+   * Send a chat completion request with streaming response using the Google AI SDK.
+   * Implements the `chatCompletionStream` method defined in `BaseProvider`.
+   * @param {object} options - The request options (model, messages, etc.), standardized.
+   * @yields {object} Standardized response chunks compatible with the API format.
+   * @throws {Error} If the API key is missing, the API request fails, or the stream encounters an error.
+   */
+  async *chatCompletionStream(options) {
+    const startTime = process.hrtime();
+    let modelName;
+    try {
+      if (!this.hasValidApiKey) {
+        throw new Error("Gemini provider requires a valid API key for streaming.");
+      }
+
+      // Standardize and validate options
+      const standardOptions = this.standardizeOptions(options);
+      this.validateOptions(standardOptions);
+      
+      // Extract model name (remove provider prefix if present)
+      modelName = standardOptions.model.includes("/") 
+        ? standardOptions.model.split("/")[1] 
+        : standardOptions.model;
+
+      // Select the correct generative model
+      const generativeModel = this.genAI.getGenerativeModel({ model: modelName });
+
+      // Prepare request body (messages, generationConfig)
+      const request = {
+        contents: this._processMessages(standardOptions.messages),
+        generationConfig: {
+          temperature: standardOptions.temperature,
+          maxOutputTokens: standardOptions.max_tokens,
+          // Add other relevant generation parameters from standardOptions if needed
+          stopSequences: standardOptions.stop // Ensure stop sequences are passed
+        },
+        // Safety settings can be added here if needed
+        safetySettings: standardOptions.safety_settings || []
+      };
+
+      // Use the stream method from the Google AI SDK
+      const result = await generativeModel.generateContentStream(request);
+
+      let firstChunk = true;
+      let accumulatedLatency = 0;
+
+      // Iterate through the stream response
+      for await (const chunk of result.stream) {
+        if (firstChunk) {
+          const duration = process.hrtime(startTime);
+          accumulatedLatency = (duration[0] * 1000) + (duration[1] / 1000000);
+          // Corrected metrics call for stream TTFB
+          metrics.recordStreamTtfb(this.name, modelName, accumulatedLatency / 1000);
+          firstChunk = false;
+        }
+
+        // Normalize the Gemini chunk and yield it
+        const normalizedChunk = this._normalizeStreamChunk(chunk, modelName, accumulatedLatency);
+        yield normalizedChunk;
+      }
+
+      // Record successful stream completion
+      metrics.incrementProviderRequestCount(
+        this.name,
+        modelName,
+        'success'
+      );
+
+    } catch (error) {
+      console.error(`Gemini stream error: ${error.message}`, error); // Log full error
+      if (modelName) {
+        metrics.incrementProviderErrorCount(this.name, modelName, error.status || 500);
+      }
+      // Rethrow or yield an error chunk
+      throw new Error(`Gemini stream error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Normalize a streaming chunk received from the Gemini API stream.
+   * @param {object} chunk - The raw chunk object from the `generateContentStream`.
+   * @param {string} model - The model name used for the request.
+   * @param {number} latency - The latency to the first chunk (milliseconds).
+   * @returns {object} A standardized chunk object matching the API schema.
+   */
+  _normalizeStreamChunk(chunk, model, latency) {
+    let content = "";
+    let finishReason = null;
+    let promptTokens = 0;
+    let completionTokens = 0;
+    let totalTokens = 0;
+
+    try {
+      // Extract text content
+      if (chunk.candidates && chunk.candidates[0].content && chunk.candidates[0].content.parts) {
+        content = chunk.candidates[0].content.parts.map(part => part.text || "").join("");
+      }
+      
+      // Extract finish reason
+      finishReason = chunk.candidates && chunk.candidates[0].finishReason 
+        ? chunk.candidates[0].finishReason : null;
+
+      // Extract token counts (if available)
+      const usageMetadata = chunk.usageMetadata;
+      if (usageMetadata) {
+        promptTokens = usageMetadata.promptTokenCount || 0;
+        completionTokens = usageMetadata.candidatesTokenCount || 0;
+        totalTokens = usageMetadata.totalTokenCount || 0;
+      }
+
+    } catch (e) {
+      console.error("Error parsing Gemini stream chunk:", e, chunk);
+    }
+    
+    return {
+      id: `chunk-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`, // Generate a unique ID
+      model: model,
+      provider: this.name,
+      createdAt: new Date().toISOString(),
+      content: content,
+      finishReason: finishReason,
+      usage: {
+        promptTokens: promptTokens,
+        completionTokens: completionTokens,
+        totalTokens: totalTokens
+      },
+      latency: latency || 0, // Latency to first chunk
+      raw: chunk // Include the raw chunk
+    };
   }
 }
 

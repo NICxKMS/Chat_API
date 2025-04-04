@@ -13,7 +13,8 @@
 
 .chatInput {
   flex-grow: 1;
-  border: 1px solid var(--border);
+  /* Use pronounced border */
+  border: 1px solid var(--border-pronounced);
   border-radius: 12px;
   padding: 0.875rem 1rem;
   background-color: var(--input-bg);
@@ -25,14 +26,20 @@
   max-height: 200px;
   overflow-y: auto;
   line-height: 1.5;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  /* Update transition to include border-color */
+  transition: border-color var(--theme-transition-duration) var(--theme-transition-timing),
+              /* Update box-shadow transition */
+              box-shadow var(--theme-transition-duration) var(--theme-transition-timing),
+              background-color var(--theme-transition-duration) var(--theme-transition-timing);
+  /* Update shadow */
+  box-shadow: var(--shadow);
 }
 
 .chatInput:focus {
   outline: none;
   border-color: rgb(var(--primary-rgb));
-  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+  /* Update focus shadow slightly */
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2), var(--shadow);
 }
 
 .chatInput:disabled {
@@ -53,29 +60,43 @@
   align-items: center;
   justify-content: center;
   padding: 0.5rem;
-  border-radius: 5px;
-  border: none;
-  background-color: transparent;
+  /* Match control button style */
+  border-radius: 12px;
+  border: 1px solid var(--border-pronounced);
+  background-color: var(--input-bg);
   color: var(--secondary-text);
+  box-shadow: var(--shadow);
   cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 36px; /* Match control buttons */
-  min-height: 36px; /* Match control buttons */
-  flex-shrink: 0; /* Prevent shrinking */
+  /* Update transition */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              border-color var(--theme-transition-duration) var(--theme-transition-timing),
+              box-shadow var(--theme-transition-duration) var(--theme-transition-timing),
+              transform 0.2s ease;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
 }
 
 .actionButton:hover:not(:disabled) {
-  background-color: var(--button-bg);
-  color: var(--button-text);
+  /* Match control button hover */
+  background-color: color-mix(in srgb, var(--input-bg) 95%, black 5%);
+  color: var(--text);
+  border-color: var(--border-pronounced);
+  box-shadow: var(--shadow);
 }
 
 .actionButton:active:not(:disabled) {
+  /* Match control button active */
   transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
 }
 
 .actionButton:disabled {
+  /* Match control button disabled */
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* New Chat Button Specific (if any needed later) */
@@ -87,64 +108,56 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  border: none;
-  color: var(--button-text);
+  padding: 0.5rem 1rem; /* Adjust padding as needed */
+  /* Match control button style */
+  border-radius: 12px;
+  border: 1px solid var(--border-pronounced);
+  background: var(--button-bg); /* Keep primary color for send? Or use input-bg? Let's try input-bg first */
+  background-color: var(--input-bg);
+  color: var(--secondary-text); /* Match text color */
+  box-shadow: var(--shadow);
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  /* Update transition */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              border-color var(--theme-transition-duration) var(--theme-transition-timing),
+              opacity 0.2s ease,
+              transform 0.3s ease,
+              box-shadow var(--theme-transition-duration) var(--theme-transition-timing);
   flex-shrink: 0;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
 }
 
-.sendButton::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--gradient-accent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
 .sendButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.sendButton:hover:not(:disabled)::before {
-  opacity: 1;
+  /* Match control button hover */
+  background-color: color-mix(in srgb, var(--input-bg) 95%, black 5%);
+  color: var(--text);
+  border-color: var(--border-pronounced);
+  box-shadow: var(--shadow);
+  transform: translateY(0); /* Remove lift maybe? */
 }
 
 .sendButton:active:not(:disabled) {
-  transform: scale(0.92);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* Match control button active */
+  transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
 }
 
 .sendButton:disabled {
-  background: var(--hover);
-  color: var(--secondary-text);
+  /* Match control button disabled */
+  opacity: 0.5;
   cursor: not-allowed;
-  opacity: 0.7;
+  background: var(--input-bg); /* Ensure disabled bg matches */
+  border-color: var(--border-pronounced); /* Keep border */
   box-shadow: none;
 }
 
-.sendIcon {
-  width: 20px;
-  height: 20px;
-  position: relative;
-  z-index: 1;
-  transition: transform 0.3s ease;
-}
-
-.sendButton:hover:not(:disabled) .sendIcon {
-  transform: rotate(15deg);
+/* Styles for icon inside send button */
+.sendButton svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* Responsive adjustments */
@@ -178,4 +191,65 @@
     padding: 0.4rem;
   }
   */
+} 
+
+.inputWrapper {
+  display: flex;
+  align-items: flex-end; /* Align items to bottom for textarea + button */
+  position: relative;
+  border-radius: 10px; /* Match parent .inputArea */
+  background-color: var(--input-bg); /* Use input background */
+  padding: 0.5rem;
+  /* Define base border using standard variable */
+  border: 1px solid var(--border);
+  /* Ensure transition includes border-color */
+  transition: border-color var(--theme-transition-duration) var(--theme-transition-timing),
+              box-shadow 0.2s ease,
+              background-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+/* Style when focused */
+.inputWrapper:focus-within {
+  border-color: rgb(var(--primary-rgb));
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+}
+
+.textarea {
+  /* ... other styles ... */
+  /* Use theme variables */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.sendButton {
+  /* ... other styles ... */
+  /* Combine all with theme color */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              opacity 0.2s ease;
+}
+
+.stopButton {
+  /* ... other styles ... */
+  /* Combine all with theme color */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              opacity 0.3s ease;
+}
+
+.newChatButton {
+  /* ... other styles ... */
+  /* Combine all with theme color */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              border-color var(--theme-transition-duration) var(--theme-transition-timing),
+              opacity 0.3s ease;
+}
+
+.tooltip {
+  /* ... other styles ... */
+  /* Combine all with theme color */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              opacity 0.3s ease;
 } 

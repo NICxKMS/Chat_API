@@ -1,66 +1,110 @@
 // Load environment variables first, before any other imports
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-// Add detailed debug logging for environment variables
-const googleApiKey = process.env.GOOGLE_API_KEY;
-console.log('Environment loaded.');
-console.log('GOOGLE_API_KEY present:', !!googleApiKey);
-if (googleApiKey) {
-  const keyPreview = `${googleApiKey.substring(0, 5)}...${googleApiKey.substring(googleApiKey.length - 4)}`;
-  console.log(`GOOGLE_API_KEY preview: ${keyPreview}`);
+// --- Environment Variable Validation ---
+import { z } from "zod";
+
+// Define the schema for expected environment variables
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  PORT: z.coerce.number().positive().int().optional().default(3000),
+  // Provider API Keys (optional, depends on which providers are enabled/used)
+  OPENAI_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  GOOGLE_API_KEY: z.string().optional(),
+  OPENROUTER_API_KEY: z.string().optional(), // Could also be JWT format
+  // Cache settings
+  CACHE_ENABLED: z.enum(["true", "false"]).optional().default("true"),
+  MAX_REQUEST_SIZE: z.string().optional().default("1mb"), // e.g., '1mb', '500kb'
+  // Classification Service (Optional)
+  USE_CLASSIFICATION_SERVICE: z.enum(["true", "false"]).optional().default("false"),
+  CLASSIFICATION_SERVER_HOST: z.string().optional().default("localhost"),
+  CLASSIFICATION_SERVER_PORT: z.coerce.number().positive().int().optional().default(8080),
+  // Other optional settings
+  ENABLE_HTTP2: z.enum(["true", "false"]).optional().default("false"),
+  LOG_LEVEL: z.enum(["error", "warn", "info", "http", "verbose", "debug", "silly"]).optional().default("info"),
+});
+
+try {
+  // Validate process.env against the schema
+  envSchema.parse(process.env);
+  console.log("Environment variables validated successfully.");
+} catch (error) {
+  console.error("❌ Invalid environment variables:", error.format());
+  process.exit(1); // Exit if validation fails
 }
-console.log('Environment variables:', Object.keys(process.env).filter(key => 
-  key.includes('API_KEY') || 
-  key.includes('GOOGLE') || 
-  key.includes('GEMINI')
-).join(', '));
+// --- End Environment Variable Validation ---
 
 // Now import the rest of the modules
-import express from 'express';
-import cors from 'cors';
-import compression from 'compression';
-import fs from 'fs';
-import path from 'path';
-import spdy from 'spdy'; // HTTP/2 support
+import express from "express";
+import cors from "cors";
+import compression from "compression";
+import fs from "fs";
+import path from "path";
+import spdy from "spdy"; // HTTP/2 support
 
 // Import routes
-import modelRoutes from './routes/modelRoutes';
-import chatRoutes from './routes/chatRoutes';
+import modelRoutes from "./routes/modelRoutes";
+import chatRoutes from "./routes/chatRoutes";
 
 // Import utilities
-import * as metrics from './utils/metrics';
-import * as cache from './utils/cache';
+import * as metrics from "./utils/metrics";
+import * as cache from "./utils/cache";
+// Import the centralized error handler
+import errorHandler from "./middleware/errorHandler.js"; 
 
 // Initialize express app
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Apply middlewares for optimization
-app.use(cors());
-app.use(express.json({ limit: process.env.MAX_REQUEST_SIZE || '1MB' }));
+// --- Core Middlewares ---
 
-// Add compression middleware for faster response delivery
+// Enable CORS for all origins
+app.use(cors());
+
+// Parse JSON request bodies with size limit
+app.use(express.json({ limit: process.env.MAX_REQUEST_SIZE || "1MB" }));
+
+/**
+ * Compression Middleware Configuration.
+ * Enables Gzip compression for responses but explicitly disables it for Server-Sent Events (SSE)
+ * to prevent buffering issues that break streaming.
+ */
 app.use(compression({
   filter: (req, res) => {
-    if (req.headers['x-no-compression']) {
+    // Disable compression for Server-Sent Events (SSE) content type
+    if (res.getHeader("Content-Type") === "text/event-stream") {
+      return false; // Must return false to disable compression
+    }
+    
+    // Allow disabling compression via request header
+    if (req.headers["x-no-compression"]) {
       return false;
     }
+    
+    // Otherwise, use the default filter behavior provided by the compression library
     return compression.filter(req, res);
   },
-  level: 6 // Balanced compression level
+  level: 6 // Balance between compression ratio and CPU usage
 }));
 
-// Create a middleware for metrics collection
+// --- Monitoring & Metrics Middlewares ---
+
+/**
+ * Basic Request Metrics Middleware.
+ * Increments total request count and records response time histogram.
+ * Also tracks request counts per provider/model based on request path/body.
+ */
 app.use((req, res, next) => {
-  // Track request count
+  // Track total request count
   metrics.incrementRequestCount();
   
-  // Track response time
+  // Measure response time
   const startTime = process.hrtime();
   
   // When response finishes
-  res.on('finish', () => {
+  res.on("finish", () => {
     // Calculate response time
     const duration = process.hrtime(startTime);
     const responseTimeMs = (duration[0] * 1000) + (duration[1] / 1000000);
@@ -69,11 +113,11 @@ app.use((req, res, next) => {
     metrics.recordResponseTime(responseTimeMs / 1000); // Convert to seconds for histogram
     
     // Get provider and model from request (if applicable)
-    const provider = (req.body?.provider || req.query?.provider || 'unknown');
-    const model = (req.body?.model || req.query?.model || 'unknown');
+    const provider = (req.body?.provider || req.query?.provider || "unknown");
+    const model = (req.body?.model || req.query?.model || "unknown");
     
     // Record provider request (if applicable)
-    if (req.path.includes('/api/chat') || req.path.includes('/api/models')) {
+    if (req.path.includes("/api/chat") || req.path.includes("/api/models")) {
       metrics.incrementProviderRequestCount(
         provider,
         model,
@@ -85,13 +129,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Memory usage monitoring middleware
+/**
+ * Memory Usage Monitoring Middleware.
+ * Logs a warning and records metrics if heap usage exceeds a threshold.
+ */
 app.use((req, res, next) => {
   const memUsage = process.memoryUsage();
   
-  // Log if memory usage is high
-  if (memUsage.heapUsed > 500 * 1024 * 1024) { // 500MB threshold
-    console.warn('High memory usage detected', {
+  // Log warning if memory usage is high (e.g., > 500MB)
+  if (memUsage.heapUsed > 500 * 1024 * 1024) { 
+    console.warn("High memory usage detected", {
       heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
       heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
       external: `${Math.round(memUsage.external / 1024 / 1024)}MB`,
@@ -100,13 +147,17 @@ app.use((req, res, next) => {
     });
     
     // Record in metrics
-    metrics.memoryGauge.labels('heapUsed').set(memUsage.heapUsed);
+    metrics.memoryGauge.labels("heapUsed").set(memUsage.heapUsed);
   }
   
   next();
 });
 
-// Memory optimization - clean up old cache and run garbage collection periodically
+/**
+ * Periodic Memory Cleanup Middleware.
+ * Logs memory stats and suggests garbage collection if usage is high.
+ * Runs checks periodically (e.g., every 5 minutes).
+ */
 let lastMemoryCleanup = Date.now();
 app.use((req, res, next) => {
   const currentTime = Date.now();
@@ -117,7 +168,7 @@ app.use((req, res, next) => {
     
     // Log current memory usage
     const memUsage = process.memoryUsage();
-    console.log('Memory usage stats:', {
+    console.log("Memory usage stats:", {
       heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
       heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
       external: `${Math.round(memUsage.external / 1024 / 1024)}MB`,
@@ -125,75 +176,25 @@ app.use((req, res, next) => {
     });
     
     // Record in metrics
-    metrics.memoryGauge.labels('heapUsed').set(memUsage.heapUsed);
-    metrics.memoryGauge.labels('heapTotal').set(memUsage.heapTotal);
-    metrics.memoryGauge.labels('rss').set(memUsage.rss);
-    
-    // Perform cleanup if memory is higher than threshold
-    if (memUsage.heapUsed > 400 * 1024 * 1024) { // 400 MB threshold
-      console.log('Memory usage high, performing cleanup...');
-      
-      // Suggest garbage collection (may not actually run depending on V8)
-      if (global.gc) {
-        try {
-          global.gc();
-          console.log('Garbage collection completed');
-        } catch (err) {
-          console.error('Error during garbage collection:', err);
-        }
-      } else {
-        console.warn('Garbage collection not available. Run Node with --expose-gc flag to enable it.');
-      }
-    }
+    metrics.memoryGauge.labels("heapUsed").set(memUsage.heapUsed);
+    metrics.memoryGauge.labels("heapTotal").set(memUsage.heapTotal);
+    metrics.memoryGauge.labels("rss").set(memUsage.rss);
   }
   
   next();
 });
 
-// Routes
-app.use('/api/models', modelRoutes);
-app.use('/api/chat', chatRoutes);
+// --- Routing ---
+app.use("/api/models", modelRoutes);
+app.use("/api/chat", chatRoutes);
 
-// Direct route for categorized models to avoid routing issues
-app.get('/api/models/categories', async (req, res) => {
-  // Create some sample categorized models
-  const categories = [
-    {
-      name: 'Latest & Greatest',
-      providers: [
-        {
-          name: 'openai',
-          models: [
-            { name: 'gpt-4o', isExperimental: false },
-            { name: 'gpt-4-turbo', isExperimental: false },
-            { name: 'gpt-4', isExperimental: false }
-          ]
-        },
-        {
-          name: 'anthropic',
-          models: [
-            { name: 'claude-3-opus', isExperimental: false },
-            { name: 'claude-3-sonnet', isExperimental: false },
-            { name: 'claude-3-haiku', isExperimental: false }
-          ]
-        },
-        {
-          name: 'google',
-          models: [
-            { name: 'gemini-1.5-pro', isExperimental: false },
-            { name: 'gemini-1.5-flash', isExperimental: false },
-            { name: 'gemini-1.0-pro', isExperimental: false }
-          ]
-        }
-      ]
-    }
-  ];
-  
-  res.json(categories);
-});
+// --- Standard Endpoints ---
 
-// Health check endpoint
-app.get('/health', (req, res) => {
+/**
+ * Health Check Endpoint.
+ * Provides basic status, uptime, memory, CPU (if available), and cache stats.
+ */
+app.get("/health", (req, res) => {
   // Get memory usage data
   const memUsage = process.memoryUsage();
   
@@ -205,7 +206,7 @@ app.get('/health', (req, res) => {
   
   // Return health data
   res.json({
-    status: 'ok',
+    status: "ok",
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     memory: {
@@ -215,51 +216,53 @@ app.get('/health', (req, res) => {
     },
     cpu: cpuUsage,
     cache: cacheStats,
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || "development"
   });
 });
 
-// Metrics endpoint for Prometheus scraping
-app.get('/metrics', (req, res) => {
-  res.set('Content-Type', metrics.register.contentType);
+/**
+ * Prometheus Metrics Endpoint.
+ * Exposes metrics collected by the `prom-client` registry.
+ */
+app.get("/metrics", (req, res) => {
+  res.set("Content-Type", metrics.register.contentType);
   metrics.register.metrics().then(data => res.end(data));
 });
 
-// Handle 404 errors
-app.use((req, res) => {
-  res.status(404).json({ 
-    error: 'Not Found',
-    message: `Path ${req.path} does not exist`
-  });
+// --- Error Handling ---
+
+// Catch-all for 404 Not Found errors.
+// Creates an error object and passes it to the next middleware (the errorHandler).
+app.use((req, res, next) => {
+  const err = new Error(`Not Found: The requested path ${req.originalUrl} does not exist.`);
+  err.status = 404;
+  err.name = "NotFoundError"; // Ensure name is set for mapping in errorHandler
+  next(err); // Pass the error to the centralized handler
 });
 
-// Handle errors
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  
-  res.status(err.statusCode || 500).json({ 
-    error: err.name || 'InternalServerError',
-    message: err.message || 'An unexpected error occurred'
-  });
-});
+// Register the centralized error handler middleware.
+// IMPORTANT: This MUST be the last middleware registered with app.use()
+app.use(errorHandler);
 
-// Start the server based on configuration
-if (process.env.ENABLE_HTTP2 === 'true') {
-  // Setup HTTP/2 server with SSL
+// --- Server Start ---
+
+// Start HTTP/2 or HTTP server based on environment configuration
+if (process.env.ENABLE_HTTP2 === "true") {
+  // Setup HTTP/2 server with SSL certificates
   const options = {
-    key: fs.readFileSync(path.join(__dirname, '../certs/server.key')),
-    cert: fs.readFileSync(path.join(__dirname, '../certs/server.crt'))
+    key: fs.readFileSync(path.join(__dirname, "../certs/server.key")),
+    cert: fs.readFileSync(path.join(__dirname, "../certs/server.crt"))
   };
   
   spdy.createServer(options, app).listen(PORT, () => {
     console.log(`HTTP/2 Server running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
   });
 } else {
-  // Start standard HTTP server
+  // Start standard HTTP/1.1 server
   app.listen(PORT, () => {
     console.log(`HTTP Server running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
   });
 }
 

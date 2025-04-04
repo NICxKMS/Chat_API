@@ -128,3 +128,43 @@ The service provides two main RPC methods:
 ## License
 
 MIT 
+
+## Node.js API Server Endpoints
+
+This section details the endpoints provided by the Node.js API server component (located in `src/`).
+
+### Model Endpoints (`/api/models`)
+
+*   **`GET /`**: Get all available models grouped by provider, along with default provider/model.
+*   **`GET /list`**: Alias for `GET /`.
+*   **`GET /categories`**: Get models structured for UI display, potentially using the classification service or a fallback.
+*   **`GET /categorized`**: Alias for `GET /categories`.
+*   **`GET /providers`**: Get a list of configured providers and their capabilities (models, features).
+*   **`GET /capabilities/all`**: Alias for `GET /providers`.
+*   **`GET /classified`**: Get models classified by the external gRPC classification service. Requires the service to be running and enabled via `USE_CLASSIFICATION_SERVICE=true`.
+*   **`GET /classified/criteria?{key}={value}`**: Get models matching specific classification criteria from the gRPC service (e.g., `/classified/criteria?category=code&size=small`).
+*   **`GET /{providerName}`**: Get models available specifically for the named provider (e.g., `/api/models/openai`).
+
+### Chat Endpoints (`/api/chat`)
+
+*   **`POST /completions`**: Send a standard, non-streaming chat completion request. 
+    *   **Body:** `{ "model": "provider/model_name", "messages": [...], "temperature": 0.7, "max_tokens": 1000, ... }`
+    *   **Response:** Standard JSON response with the completion.
+
+*   **`POST /stream`**: Send a streaming chat completion request.
+    *   **Body:** `{ "model": "provider/model_name", "messages": [...], "temperature": 0.7, "max_tokens": 1000, ... }`
+    *   **Response:** `text/event-stream` (Server-Sent Events). Each event is formatted as:
+        ```
+        data: JSON.stringify(chunk)
+        
+        ```
+        Where `chunk` is a JSON object containing the incremental response piece (content delta, usage, finish reason, etc.) in the standardized API format.
+        The stream may also include heartbeat comments (`:heartbeat\n\n`) to keep the connection alive.
+        The stream ends when the connection is closed by the server.
+
+*   **`GET /capabilities`**: Get combined capabilities of chat providers, cache status, circuit breaker states, and basic system status.
+
+### Monitoring Endpoints
+
+*   **`GET /health`**: Basic health check endpoint returning status, uptime, memory usage, etc.
+*   **`GET /metrics`**: Exposes Prometheus metrics for scraping. 

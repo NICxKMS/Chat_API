@@ -1,5 +1,7 @@
 # Node.js dependencies
 /node_modules
+/.clinic
+/benchmark-results
 
 # Environment variables
 .env

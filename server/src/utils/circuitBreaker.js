@@ -2,13 +2,13 @@
  * Circuit Breaker Implementation
  * Protects against cascading failures when external services are unavailable
  */
-import * as metrics from './metrics.js';
+import * as metrics from "./metrics.js";
 
 // Circuit breaker states
 const CircuitState = {
-  CLOSED: 'closed',      // Normal operation
-  OPEN: 'open',          // Circuit is open (failing)
-  HALF_OPEN: 'half-open' // Testing if service recovered
+  CLOSED: "closed",      // Normal operation
+  OPEN: "open",          // Circuit is open (failing)
+  HALF_OPEN: "half-open" // Testing if service recovered
 };
 
 // Store active circuit breakers
@@ -132,7 +132,7 @@ class CircuitBreaker {
   async handleOpen(args) {
     if (this.fallback) {
       this.fallbackCalls++;
-      return this.fallback(args[0], new Error('Circuit is open'));
+      return this.fallback(args[0], new Error("Circuit is open"));
     }
     throw new Error(`Service ${this.name} is unavailable (circuit open)`);
   }
@@ -150,10 +150,10 @@ class CircuitBreaker {
    */
   stateToValue() {
     switch (this.state) {
-      case CircuitState.CLOSED: return 0;
-      case CircuitState.HALF_OPEN: return 1;
-      case CircuitState.OPEN: return 2;
-      default: return -1;
+    case CircuitState.CLOSED: return 0;
+    case CircuitState.HALF_OPEN: return 1;
+    case CircuitState.OPEN: return 2;
+    default: return -1;
     }
   }
 

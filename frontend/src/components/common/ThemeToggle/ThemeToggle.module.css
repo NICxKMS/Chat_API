@@ -53,3 +53,13 @@
 .themeToggle:hover .icon {
   transform: rotate(30deg);
 } 
+
+.themeToggle button {
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing),
+              transform 0.3s ease;
+}
+
+.themeToggle span {
+  transition: opacity 0.3s ease,
+              background-color var(--theme-transition-duration) var(--theme-transition-timing);
+} 

@@ -1,13 +1,13 @@
-import express from 'express';
+import express from "express";
 
 const app = express();
 
 // Simple health check endpoint
-app.get('/api/health', (req, res) => {
+app.get("/api/health", (req, res) => {
   res.status(200).json({
-    status: 'ok',
+    status: "ok",
     timestamp: new Date().toISOString(),
-    service: 'Chat API'
+    service: "Chat API"
   });
 });
 

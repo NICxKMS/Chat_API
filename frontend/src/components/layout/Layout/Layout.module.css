@@ -5,7 +5,8 @@
   overflow: hidden;
   background-color: var(--bg);
   color: var(--text);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
   position: relative;
 }
 
@@ -19,8 +20,13 @@
   flex-shrink: 0;
   position: relative; /* Context for absolute mobile sidebar */
   z-index: 50; /* Above content, below modals */
-  transition: width 0.3s ease; /* Transition width */
+  /* Update transition */
+  transition: width 0.3s ease, transform 0.3s ease, padding 0.3s ease, border 0.3s ease;
   width: var(--sidebar-width-full); /* Default full width */
+  /* Add padding and border inside if needed, or adjust transition */
+  padding: 0; /* Ensure padding doesn't interfere */
+  border-right: 1px solid var(--border); /* Keep border for visible state */
+  overflow: hidden; /* Hide content during transition */
 }
 
 .sidebarPlaceholder {
@@ -53,8 +59,14 @@
 
 /* Sidebar States (Desktop) */
 @media (min-width: 1024px) {
-  .layout.sidebarCompact .sidebarContainer { /* Apply to container */
-    width: var(--sidebar-width-compact);
+  .layout.sidebarCompact .sidebarContainer {
+    width: 0; /* Collapse width */
+    transform: translateX(-100%);
+    pointer-events: none;
+    /* Hide border when collapsed */
+    border-right: none;
+    /* Remove padding when collapsed */
+    padding: 0;
   }
 }
 
@@ -97,7 +109,8 @@
   opacity: 1;
 }
 
-/* Container for the model selector button */
+/* Container for the model selector button - REMOVED */
+/*
 .modelSelectorContainer {
   position: absolute;
   top: 1.5rem;
@@ -105,6 +118,7 @@
   transform: translateX(-50%);
   z-index: 20;
 }
+*/
 
 /* Modal Overlay */
 .modalOverlay {
@@ -132,9 +146,11 @@
   max-width: 90vw;
   max-height: 80vh;
   overflow-y: auto;
-    position: relative;
+  position: relative;
   transform: scale(0.95);
   animation: scaleIn 0.2s ease forwards;
+  /* Add pronounced border */
+  border: 1px solid var(--border-pronounced);
 }
 
 /* Simple fade-in animation */
@@ -145,4 +161,93 @@
 /* Simple scale-in animation */
 @keyframes scaleIn {
   to { transform: scale(1); }
+}
+
+/* Container for floating icons when sidebar is hidden */
+.floatingIconsContainer {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 150; 
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  
+  /* Hidden on mobile by default */
+  display: none; 
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Show floating icons on desktop */
+@media (min-width: 769px) {
+  .floatingIconsContainer {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+
+/* Style for individual floating icon buttons */
+.floatingIconButton {
+  background-color: var(--card-bg);
+  color: var(--text);
+  /* Update border */
+  border: 1px solid var(--border-pronounced);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.floatingIconButton:hover {
+  background-color: var(--hover);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Container for floating API status (Bottom Left) */
+.apiStatusFloatingContainer {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  z-index: 150; /* Same level as other floating icons */
+  
+  /* Always visible now - Removed hiding properties */
+  /* opacity: 0; */
+  /* transform: translateY(20px); */
+  /* pointer-events: none; */
+  /* transition: opacity 0.3s ease, transform 0.3s ease; */
+}
+
+/* Make FLOATING API STATUS visible when sidebar is hidden */
+/* Target the new container */
+/* REMOVED THIS RULE */
+/*
+.sidebarHidden .apiStatusFloatingContainer {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+*/
+
+/* Media Query for smaller screens */
+@media (max-width: 768px) {
+  /* Hide the main floating icons container */
+  .floatingIconsContainer {
+    display: none;
+  }
+
+  /* Hide the floating API Status container */
+  .apiStatusFloatingContainer {
+    display: none;
+  }
 } 

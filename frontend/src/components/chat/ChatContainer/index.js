@@ -8,17 +8,24 @@ const MessageList = lazy(() => import('../MessageList'));
 const ChatInput = lazy(() => import('../ChatInput'));
 const ChatControls = lazy(() => import('../ChatControls'));
 const GlobalMetricsBar = lazy(() => import('../GlobalMetricsBar'));
+const ModelSelectorButton = lazy(() => import('../../models/ModelSelectorButton'));
 
 /**
  * Main chat container component
  */
-const ChatContainer = memo(() => {
+const ChatContainer = memo(({ 
+  selectedModel: passedSelectedModel,
+  isLoadingModels, 
+  toggleModelSelector,
+  onNewChat,
+  onToggleSettings
+}) => {
   const {
     chatHistory,
     isWaitingForResponse,
     error,
     metrics, 
-    selectedModel,
+    selectedModel: modelFromLogic,
     settings,
     streamContent,
     handleSendMessage,
@@ -29,6 +36,9 @@ const ChatContainer = memo(() => {
 
   const messageListRef = useRef(null);
   const isActiveChat = chatHistory.length > 0;
+
+  // Use the selected model passed down for the button, but model from logic elsewhere
+  const displayModelName = passedSelectedModel?.name;
 
   // Classes for the main container
   const chatContainerClasses = `${styles.chatContainer} ${isActiveChat ? styles.activeChat : styles.emptyChat}`;
@@ -44,7 +54,7 @@ const ChatContainer = memo(() => {
           <Suspense fallback={<div className={styles.globalMetricsPlaceholder} />}>
             <GlobalMetricsBar 
               metrics={metrics?.session}
-              modelName={selectedModel?.name} 
+              modelName={modelFromLogic?.name} 
             />
           </Suspense>
         )}
@@ -59,8 +69,8 @@ const ChatContainer = memo(() => {
             <ChatInput
               onSendMessage={handleSendMessage}
               disabled={isWaitingForResponse && !settings?.stream} 
-              selectedModel={selectedModel} 
-              onNewChat={resetChat}
+              selectedModel={modelFromLogic} 
+              onNewChat={onNewChat}
               isStaticLayout={isStaticLayout}
             />
           </Suspense>
@@ -72,6 +82,8 @@ const ChatContainer = memo(() => {
               isGenerating={isWaitingForResponse}
               hasMessages={isActiveChat}
               isStaticLayout={isStaticLayout}
+              onNewChat={onNewChat}
+              onToggleSettings={onToggleSettings}
             />
           </Suspense>
         </div>
@@ -81,6 +93,17 @@ const ChatContainer = memo(() => {
 
   return (
     <div className={chatContainerClasses}>
+      {/* Container for the Model Selector Button */}
+      <div className={styles.modelButtonContainer}>
+        <Suspense fallback={null}> 
+          <ModelSelectorButton 
+            selectedModelName={displayModelName}
+            onClick={toggleModelSelector}
+            disabled={isLoadingModels}
+          />
+        </Suspense>
+      </div>
+
       <div className={styles.chatArea}>
         {isActiveChat ? (
           // Active Chat: Render MessageList

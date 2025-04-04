@@ -83,7 +83,7 @@
 .option {
   padding: 10px 12px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
   font-size: 0.95rem;
 }
 
@@ -141,4 +141,15 @@
 
 .dropdown::-webkit-scrollbar-thumb:hover {
   background-color: var(--text-muted);
+}
+
+.selectElement {
+  transition: border-color var(--theme-transition-duration) var(--theme-transition-timing),
+              box-shadow 0.2s,
+              background-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.selectIcon {
+  transition: transform 0.2s,
+              color var(--theme-transition-duration) var(--theme-transition-timing);
 } 

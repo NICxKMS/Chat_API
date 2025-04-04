@@ -1,80 +1,85 @@
 /* CSS Variables for theming */
 :root {
-  /* Base colors */
-  --primary-rgb: 79, 70, 229;  /* Indigo-600 */
-  --secondary-rgb: 129, 140, 248; /* Indigo-400 */
-  --accent-rgb: 168, 85, 247; /* Purple-500 */
-  --error-rgb: 239, 68, 68; /* Red-500 */
-  --success-rgb: 34, 197, 94; /* Green-500 */
-  --warning-rgb: 245, 158, 11; /* Amber-500 */
-  --info-rgb: 6, 182, 212; /* Cyan-500 */
+  /* Define standard theme transition */
+  --theme-transition-duration: 0.2s; /* Adjust time as desired */
+  --theme-transition-timing: ease; /* Adjust timing function as desired */
+
+  /* Base colors - Updated for Light Theme */
+  --primary-rgb: 86, 18, 244; /* Based on light --clr-primary-a0 */
+  --secondary-rgb: 107, 55, 218; /* Based on light --clr-primary-a20 */
+  --accent-rgb: 98, 40, 231; /* Based on light --clr-primary-a10 */
+  /* Keep functional colors */
+  --error-rgb: 239, 68, 68; 
+  --success-rgb: 34, 197, 94; 
+  --warning-rgb: 245, 158, 11; 
+  --info-rgb: 6, 182, 212; 
   
   /* Font settings */
   --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   --code-font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
   
-  /* Light theme variables */
-  --light-bg: #f9fafb; /* Gray-50 */
-  --light-chat-bg: #ffffff;
-  --light-sidebar-bg: #f3f4f6; /* Gray-100 */
-  --light-text: #111827; /* Gray-900 */
-  --light-secondary-text: #4b5563; /* Gray-600 */
-  --light-border: #e5e7eb; /* Gray-200 */
-  --light-input-bg: #ffffff;
-  --light-button-bg: rgb(var(--primary-rgb));
-  --light-button-hover: rgba(var(--primary-rgb), 0.9);
-  --light-button-text: #ffffff;
-  --light-message-user-bg: rgba(var(--primary-rgb), 0.1);
-  --light-message-assistant-bg: #ffffff;
-  --light-code-bg: #f1f5f9; /* Slate-100 */
-  --light-settings-bg: #f3f4f6; /* Gray-100 */
-  --light-hover: rgba(var(--primary-rgb), 0.05);
-  --light-scroll-track: #f1f5f9; /* Slate-100 */
-  --light-scroll-thumb: #cbd5e1; /* Slate-300 */
-  --light-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --light-toggle-bg: #d1d5db; /* Gray-300 */
-  --light-toggle-button: #ffffff;
-  --light-status-online: #22c55e; /* Green-500 */
-  --light-status-offline: #ef4444; /* Red-500 */
-  --light-card-bg: #ffffff;
+  /* Light theme variables - APPLYING NEW PALETTE */
+  --light-bg: #ffffff; /* --clr-surface-a0 */
+  --light-chat-bg: #ffffff; /* --clr-surface-a0 */
+  --light-sidebar-bg: #f2e8ff; /* --clr-surface-tonal-a0 */
+  --light-text: #000000; /* --clr-dark-a0 */
+  --light-secondary-text: #7c59b4; /* --clr-primary-a50 */
+  --light-border: #e1e1e1; /* --clr-surface-a20 */
+  --border-pronounced-light: #d3d3d3; /* --clr-surface-a30 - New */
+  --light-input-bg: #ffffff; /* --clr-surface-a0 */
+  --light-button-bg: #5612f4; /* --clr-primary-a0 */
+  --light-button-hover: #6228e7; /* --clr-primary-a10 */
+  --light-button-text: #ffffff; /* --clr-light-a0 */
+  --light-message-user-bg: rgba(var(--primary-rgb), 0.08); /* Keep primary alpha blend */
+  --light-message-assistant-bg: #f0f0f0; /* --clr-surface-a10 */
+  --light-code-bg: #e5dcf0; /* --clr-surface-tonal-a10 */
+  --light-settings-bg: #f2e8ff; /* --clr-surface-tonal-a0 */
+  --light-hover: rgba(var(--primary-rgb), 0.05); /* Keep primary alpha blend */
+  --light-scroll-track: #f0f0f0; /* --clr-surface-a10 */
+  --light-scroll-thumb: #d3d3d3; /* --clr-surface-a30 */
+  --light-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04); /* Adjusted alpha */
+  --light-toggle-bg: #d3d3d3; /* --clr-surface-a30 */
+  --light-toggle-button: #ffffff; /* --clr-light-a0 */
+  --light-card-bg: #ffffff; /* --clr-surface-a0 */
   --light-gradient-primary: linear-gradient(135deg, rgb(var(--primary-rgb)), rgb(var(--secondary-rgb)));
   --light-gradient-accent: linear-gradient(135deg, rgb(var(--secondary-rgb)), rgb(var(--accent-rgb)));
   --light-dropdown-bg: linear-gradient(180deg, rgba(var(--primary-rgb), 0.02), rgba(var(--primary-rgb), 0.01));
-  --light-selected-item-bg: rgba(var(--primary-rgb), 0.08);
-  --light-tag-bg: rgba(var(--primary-rgb), 0.05);
-  --light-model-icon-bg: rgba(var(--primary-rgb), 0.9);
+  --light-selected-item-bg: rgba(var(--primary-rgb), 0.08); /* Keep primary alpha blend */
+  --light-tag-bg: rgba(var(--primary-rgb), 0.05); /* Keep primary alpha blend */
+  --light-model-icon-bg: #6228e7; /* --clr-primary-a10 */
   
-  /* Dark theme variables */
-  --dark-bg: #0f172a; /* Slate-900 */
-  --dark-chat-bg: #1e293b; /* Slate-800 */
-  --dark-sidebar-bg: #0f172a; /* Slate-900 */
-  --dark-text: #f1f5f9; /* Slate-100 */
-  --dark-secondary-text: #94a3b8; /* Slate-400 */
-  --dark-border: #334155; /* Slate-700 */
-  --dark-input-bg: #1e293b; /* Slate-800 */
-  --dark-button-bg: rgb(var(--primary-rgb));
-  --dark-button-hover: rgba(var(--primary-rgb), 0.9);
-  --dark-button-text: #ffffff;
-  --dark-message-user-bg: rgba(var(--primary-rgb), 0.15);
-  --dark-message-assistant-bg: #1e293b; /* Slate-800 */
-  --dark-code-bg: #0f172a; /* Slate-900 */
-  --dark-settings-bg: #1e293b; /* Slate-800 */
-  --dark-hover: rgba(var(--secondary-rgb), 0.1);
-  --dark-scroll-track: #1e293b; /* Slate-800 */
-  --dark-scroll-thumb: #475569; /* Slate-600 */
-  --dark-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
-  --dark-toggle-bg: #334155; /* Slate-700 */
-  --dark-toggle-button: #ffffff;
-  --dark-status-online: #22c55e; /* Green-500 */
-  --dark-status-offline: #ef4444; /* Red-500 */
-  --dark-card-bg: #1e293b; /* Slate-800 */
-  --dark-gradient-primary: linear-gradient(135deg, rgb(var(--primary-rgb)), rgb(var(--secondary-rgb)));
-  --dark-gradient-accent: linear-gradient(135deg, rgb(var(--secondary-rgb)), rgb(var(--accent-rgb)));
-  --dark-dropdown-bg: linear-gradient(180deg, rgba(var(--primary-rgb), 0.05), rgba(var(--primary-rgb), 0.01));
-  --dark-selected-item-bg: rgba(var(--primary-rgb), 0.15);
-  --dark-tag-bg: rgba(var(--primary-rgb), 0.1);
-  --dark-model-icon-bg: rgba(var(--primary-rgb), 0.8);
+  /* Dark theme variables - APPLYING NEW PALETTE */
+  --dark-bg: #121212; /* --clr-surface-a0 */
+  --dark-chat-bg: #282828; /* --clr-surface-a10 */
+  --dark-sidebar-bg: #1a1e1e; /* --clr-surface-tonal-a0 */
+  --dark-text: #ffffff; /* --clr-light-a0 */
+  --dark-secondary-text: #8b8b8b; /* --clr-surface-a50 */
+  --dark-border: #3f3f3f; /* --clr-surface-a20 */
+  --border-pronounced-dark: #575757; /* --clr-surface-a30 - New */
+  --dark-input-bg: #282828; /* --clr-surface-a10 */
+  --dark-button-bg: #579d98; /* --clr-primary-a0 */
+  --dark-button-hover: #6ba8a3; /* --clr-primary-a10 */
+  --dark-button-text: #000000; /* --clr-dark-a0 */
+  --dark-message-user-bg: rgba(87, 157, 152, 0.1); /* Use Dark Primary RGB */
+  --dark-message-assistant-bg: #2f3333; /* --clr-surface-tonal-a10 */
+  --dark-code-bg: #121212; /* --clr-surface-a0 */
+  --dark-settings-bg: #282828; /* --clr-surface-a10 */
+  --dark-hover: rgba(87, 157, 152, 0.05); /* Use Dark Primary RGB */
+  --dark-scroll-track: #282828; /* --clr-surface-a10 */
+  --dark-scroll-thumb: #575757; /* --clr-surface-a30 */
+  /* Updated shadow to use darker base */
+  --dark-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --dark-toggle-bg: #3f3f3f; /* --clr-surface-a20 */
+  --dark-toggle-button: #ffffff; /* --clr-light-a0 */
+  --dark-card-bg: #282828; /* --clr-surface-a10 */
+  /* Update gradients to use new primary/secondary/accent */
+  --dark-gradient-primary: linear-gradient(135deg, rgb(87, 157, 152), rgb(126, 178, 174)); /* Use Dark RGBs */
+  --dark-gradient-accent: linear-gradient(135deg, rgb(126, 178, 174), rgb(107, 168, 163)); /* Use Dark RGBs */
+  --dark-dropdown-bg: linear-gradient(180deg, rgba(87, 157, 152, 0.03), rgba(87, 157, 152, 0.01)); /* Use Dark Primary RGB */
+  --dark-selected-item-bg: rgba(87, 157, 152, 0.1); /* Use Dark Primary RGB */
+  --dark-tag-bg: rgba(87, 157, 152, 0.08); /* Use Dark Primary RGB */
+  --dark-model-icon-bg: #6ba8a3; /* --clr-primary-a10 */
 }
 
 /* Apply theme based on body class and system preferences */
@@ -97,6 +102,7 @@ body.light-mode {
   --text: var(--light-text);
   --secondary-text: var(--light-secondary-text);
   --border: var(--light-border);
+  --border-pronounced: var(--border-pronounced-light); /* Add mapping */
   --input-bg: var(--light-input-bg);
   --button-bg: var(--light-button-bg);
   --button-hover: var(--light-button-hover);
@@ -131,6 +137,7 @@ body.dark-mode {
   --text: var(--dark-text);
   --secondary-text: var(--dark-secondary-text);
   --border: var(--dark-border);
+  --border-pronounced: var(--border-pronounced-dark); /* Add mapping */
   --input-bg: var(--dark-input-bg);
   --button-bg: var(--dark-button-bg);
   --button-hover: var(--dark-button-hover);
@@ -177,13 +184,30 @@ body {
 
 body {
   overflow-x: hidden;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  /* Apply standard transition to body colors */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 #root {
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+/* Apply consistent transitions to common elements */
+button, input, textarea, select, header, footer, aside, main, div, span, p, li {
+  /* Apply ONLY to color/background/border unless element needs others */
+  /* Note: This might be overridden by more specific component styles */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              border-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+svg {
+   /* Apply transitions to fill/stroke for icons */
+  transition: fill var(--theme-transition-duration) var(--theme-transition-timing),
+              stroke var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 /* Scrollbars */
@@ -228,12 +252,16 @@ body {
   border-radius: 0.5rem;
   box-shadow: var(--shadow);
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  /* Combine existing transitions with theme transitions */
+  transition: transform 0.2s ease, 
+              box-shadow var(--theme-transition-duration) var(--theme-transition-timing),
+              background-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  /* Update shadow transition to match (optional, could be faster/slower) */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); 
 }
 
 .button-primary {
@@ -244,7 +272,9 @@ body {
   padding: 0.5rem 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  /* Update transition */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .button-primary:hover {
@@ -257,4 +287,6 @@ body {
   background-clip: text;
   color: transparent;
   display: inline-block;
+  /* Add transition for potential color changes if applicable */
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 } 

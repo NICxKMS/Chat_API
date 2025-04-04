@@ -4,7 +4,8 @@
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--border);
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, 
+              background-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .group:hover {
@@ -90,4 +91,19 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.groupHeader {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.resetButton {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              transform 0.2s;
+}
+
+.toggleIcon {
+  transition: transform 0.2s,
+              color var(--theme-transition-duration) var(--theme-transition-timing);
 } 

@@ -7,12 +7,14 @@
   background-color: var(--settings-bg);
   box-shadow: var(--shadow);
   transform: translateX(100%);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              border-color var(--theme-transition-duration) var(--theme-transition-timing);
   z-index: 1000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--border-pronounced);
 }
 
 .open {
@@ -31,7 +33,8 @@
   z-index: 999;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease,
+              background-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .overlay.open {
@@ -75,7 +78,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  transition: all 0.2s ease;
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .closeButton:hover {
