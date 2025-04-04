@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, useMem
 import { useApi } from './ApiContext';
 import { useModel } from './ModelContext';
 import { useSettings } from './SettingsContext';
+import { useAuth } from './AuthContext';
 
 // Create chat context
 const ChatContext = createContext();
@@ -17,9 +18,10 @@ export const useChat = () => {
 
 // Chat provider component
 export const ChatProvider = ({ children }) => {
-  const { apiUrl, apiStatus } = useApi();
+  const { apiUrl } = useApi();
   const { selectedModel } = useModel();
   const { settings, getModelAdjustedSettings } = useSettings();
+  const { idToken, isAuthenticated } = useAuth();
   
   // State for chat - Initialize as empty
   const [chatHistory, setChatHistory] = useState([]); // Reverted to empty array
@@ -117,11 +119,6 @@ export const ChatProvider = ({ children }) => {
       return null;
     }
     
-    if (!apiStatus.online) {
-      setError('API is offline. Please try again later.');
-      return null;
-    }
-    
     const modelId = formatModelIdentifier(selectedModel);
     if (!modelId) {
       setError('Invalid model selection');
@@ -143,6 +140,15 @@ export const ChatProvider = ({ children }) => {
       // Get adjusted settings based on model
       const adjustedSettings = getModelAdjustedSettings(selectedModel);
       
+      // Prepare request headers conditionally
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      if (isAuthenticated && idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+      }
+      
       // Prepare request payload
       const payload = {
         model: modelId,
@@ -155,12 +161,11 @@ export const ChatProvider = ({ children }) => {
         stream: false // Non-streaming mode
       };
       
-      // Send request to API
-      const response = await fetch(`${apiUrl}/chat/completions`, {
+      // Construct URL safely
+      const completionsUrl = new URL('/api/chat/completions', apiUrl).toString();
+      const response = await fetch(completionsUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify(payload)
       });
       
@@ -195,28 +200,16 @@ export const ChatProvider = ({ children }) => {
       setIsWaitingForResponse(false);
     }
   }, [
-    selectedModel, 
-    apiStatus.online, 
-    apiUrl, 
-    chatHistory, 
-    addMessageToHistory, 
-    formatModelIdentifier, 
-    getModelAdjustedSettings, 
-    resetPerformanceMetrics, 
-    startPerformanceTimer,
-    updatePerformanceMetrics,
-    extractTokenCount
+    apiUrl, selectedModel, chatHistory, getModelAdjustedSettings, 
+    addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics, 
+    startPerformanceTimer, updatePerformanceMetrics, extractTokenCount, 
+    isAuthenticated, idToken, setError, setIsWaitingForResponse
   ]);
   
   // Send message with streaming
   const sendMessageStreaming = useCallback(async (message, onUpdate) => {
     if (!message || !selectedModel) {
       setError('Please enter a message and select a model');
-      return null;
-    }
-    
-    if (!apiStatus.online) {
-      setError('API is offline. Please try again later.');
       return null;
     }
     
@@ -235,9 +228,17 @@ export const ChatProvider = ({ children }) => {
     abortControllerRef.current = new AbortController();
     const { signal } = abortControllerRef.current;
     
-    // Add user message to history
-    const userMessage = addMessageToHistory('user', message);
-    
+    // --- Explicit Payload Construction ---
+    // 1. Get the history *before* adding the new user message
+    const historyBeforeUserMessage = chatHistory;
+    // 2. Create the new user message object
+    const newUserMessage = { role: 'user', content: message };
+    // 3. Add the user message to history (queues state update for UI)
+    addMessageToHistory('user', message);
+    // 4. Construct the message list for the API payload explicitly
+    const messagesForPayload = [...historyBeforeUserMessage, newUserMessage];
+    // --- End Explicit Payload Construction ---
+
     // Reset content buffer
     streamingContentRef.current = '';
     
@@ -253,24 +254,32 @@ export const ChatProvider = ({ children }) => {
       // Get adjusted settings based on model
       const adjustedSettings = getModelAdjustedSettings(selectedModel);
       
-      // Prepare request payload
+      // Prepare request headers conditionally
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      if (isAuthenticated && idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+      }
+      
+      // Prepare request payload using the explicitly constructed array
       const payload = {
         model: modelId,
-        messages: [...chatHistory, userMessage],
+        messages: messagesForPayload,
         temperature: adjustedSettings.temperature,
         max_tokens: adjustedSettings.max_tokens,
         top_p: adjustedSettings.top_p,
         frequency_penalty: adjustedSettings.frequency_penalty,
         presence_penalty: adjustedSettings.presence_penalty,
-        stream: true // Enable streaming
+        stream: true // Streaming mode
       };
       
-      // Send streaming request to API
-      const response = await fetch(`${apiUrl}/chat/completions`, {
+      // Construct URL safely
+      const streamUrl = new URL('/api/chat/stream', apiUrl).toString();
+      const response = await fetch(streamUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify(payload),
         signal
       });
@@ -357,17 +366,10 @@ export const ChatProvider = ({ children }) => {
       abortControllerRef.current = null;
     }
   }, [
-    selectedModel,
-    apiStatus.online,
-    apiUrl,
-    chatHistory,
-    addMessageToHistory,
-    formatModelIdentifier,
-    getModelAdjustedSettings,
-    resetPerformanceMetrics,
-    startPerformanceTimer,
-    updatePerformanceMetrics,
-    extractTokenCount
+    apiUrl, selectedModel, chatHistory, getModelAdjustedSettings, 
+    addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics, 
+    startPerformanceTimer, updatePerformanceMetrics, extractTokenCount, 
+    isAuthenticated, idToken, setError, setIsWaitingForResponse
   ]);
   
   // Reset chat history
@@ -421,8 +423,20 @@ export const ChatProvider = ({ children }) => {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
       setIsWaitingForResponse(false);
+      console.log("Streaming request cancelled.");
     }
   }, []);
+  
+  // New function to decide which send method to use
+  const submitMessage = useCallback(async (message, onUpdate = () => {}) => {
+    if (settings.stream) {
+      console.log("[ChatContext] Sending message via streaming endpoint.");
+      return await sendMessageStreaming(message, onUpdate);
+    } else {
+      console.log("[ChatContext] Sending message via completions endpoint.");
+      return await sendMessage(message);
+    }
+  }, [settings.stream, sendMessage, sendMessageStreaming]); // Depend on the setting and the two functions
   
   // Memoize the context value
   const contextValue = useMemo(() => ({
@@ -430,8 +444,7 @@ export const ChatProvider = ({ children }) => {
     isWaitingForResponse,
     error,
     metrics,
-    sendMessage,
-    sendMessageStreaming,
+    submitMessage, // Provide the unified submit function
     stopStreaming,
     resetChat,
     downloadChatHistory
@@ -440,8 +453,7 @@ export const ChatProvider = ({ children }) => {
     isWaitingForResponse,
     error,
     metrics,
-    sendMessage,
-    sendMessageStreaming,
+    submitMessage, // Include the new function
     stopStreaming,
     resetChat,
     downloadChatHistory

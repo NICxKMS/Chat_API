@@ -6,6 +6,7 @@ import { OpenAI } from "openai";
 import BaseProvider from "./BaseProvider.js";
 import { createBreaker } from "../utils/circuitBreaker.js";
 import * as metrics from "../utils/metrics.js";
+import logger from "../utils/logger.js";
 
 class OpenAIProvider extends BaseProvider {
   constructor(config) {
@@ -363,16 +364,24 @@ class OpenAIProvider extends BaseProvider {
         model: modelName,
         stream: true, // Enable streaming
       };
+      
+      logger.info(`[${this.name}] Calling OpenAI client.chat.completions.create with stream: true`); // Log before call
 
       // Use circuit breaker for API calls
       // Note: Circuit breaker needs adjustment for streams if using .fire
       // Direct call for simplicity here, consider stream-compatible breaker
       const stream = await this.client.chat.completions.create(apiOptions);
       
+      logger.info(`[${this.name}] OpenAI client returned stream object. Starting iteration.`); // Log after call
+
       let firstChunk = true;
       let accumulatedLatency = 0;
+      let chunkCounter = 0; // Add chunk counter
 
       for await (const chunk of stream) {
+        chunkCounter++; // Increment counter
+        logger.info(`[${this.name}] Received chunk ${chunkCounter} from stream.`); // Log on chunk receive
+
         if (firstChunk) {
           const duration = process.hrtime(startTime);
           accumulatedLatency = (duration[0] * 1000) + (duration[1] / 1000000);
@@ -385,6 +394,8 @@ class OpenAIProvider extends BaseProvider {
         yield normalizedChunk;
       }
       
+      logger.info(`[${this.name}] Stream iteration finished after ${chunkCounter} chunks.`); // Log after loop
+
       // Record successful stream completion
       metrics.incrementProviderRequestCount(
         this.name,
@@ -393,7 +404,10 @@ class OpenAIProvider extends BaseProvider {
       );
 
     } catch (error) {
-      console.error(`OpenAI stream error: ${error.message}`);
+      // Make catch logging very prominent
+      logger.error(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
+      logger.error(`[${this.name}] CRITICAL STREAM ERROR in provider catch block: ${error.message}`);
+      logger.error(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`, { model: modelName, stack: error.stack });
       if (modelName) {
         metrics.incrementProviderErrorCount(this.name, modelName);
       }

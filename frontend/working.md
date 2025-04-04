@@ -44,7 +44,6 @@ The project consists of two main parts:
         *   Gets references to important DOM elements (chat input, message container, buttons, etc.) using `document.getElementById`.
         *   Sets the displayed API URL text based on the proxy's base URL (`/api`).
         *   Attaches event listeners (`attachEventListeners`) to UI elements (clicks on buttons, keypresses in input, changes in settings, window resize).
-        *   Performs an initial API status check (`checkApiStatus` makes a fetch call to `/api/status` via the proxy) and updates the status indicator text and CSS class ('online'/'offline') in the UI. Sets up an interval (`setInterval`) to re-check the status every 30 seconds.
         *   Initializes the model selection logic (`initializeModelDropdown`).
         *   Adjusts the sidebar visibility based on the initial window size (`checkWindowSizeForSidebar`).
         *   Sets focus to the chat input field (`chatInput.focus()`).

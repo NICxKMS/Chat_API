@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useApi } from './ApiContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useAuth } from './AuthContext';
 
 // Cache expiry time in milliseconds (5 minutes)
 const CACHE_EXPIRY_TIME = 5 * 60 * 1000;
@@ -29,7 +30,8 @@ export const useModelFilter = () => {
 
 // Model provider component
 export const ModelProvider = ({ children }) => {
-  const { apiUrl, apiStatus } = useApi();
+  const { apiUrl } = useApi();
+  const { idToken, isAuthenticated } = useAuth();
   
   // State for model data
   const [allModels, setAllModels] = useState([]);
@@ -57,7 +59,8 @@ export const ModelProvider = ({ children }) => {
       cache.timestamp &&
       Date.now() - cache.timestamp < CACHE_EXPIRY_TIME &&
       cache.allModels &&
-      cache.processedModels
+      cache.processedModels &&
+      cache.experimentalModels
     );
   }, []);
   
@@ -73,7 +76,7 @@ export const ModelProvider = ({ children }) => {
       return {
         allModels: cache.allModels,
         processedModels: cache.processedModels,
-        experimentalModels: cache.experimentalModels || [],
+        experimentalModels: cache.experimentalModels,
         timestamp: cache.timestamp
       };
     } catch (error) {
@@ -104,103 +107,66 @@ export const ModelProvider = ({ children }) => {
     return name.split('/').pop() || name;
   }, []);
   
-  // Process hierarchical model groups
+  // Process hierarchical model groups (Restored)
   const processModels = useCallback((data) => {
     if (!data || !data.hierarchical_groups) {
-      // Keep the existing error check, but maybe log the received data for easier debugging
-      console.error('Invalid model data format received:', data); 
+      console.error('Invalid hierarchical model data format received:', data);
       throw new Error('Invalid model data format');
     }
     
     const allModels = [];
     const experimentalModels = [];
-    const processedModels = {};
+    const processedModels = {}; // Structure: { Category: { Provider: { Type: [Model] } } }
     
-    // Process each top-level group (providers)
     data.hierarchical_groups.forEach(providerGroup => {
-      // Get provider name from group_value
       const provider = providerGroup.group_value;
       
-      // Check if children exist before iterating (safer)
       if (!providerGroup.children || !Array.isArray(providerGroup.children)) return;
 
-      // Iterate through the children of the provider group (these are type groups)
       providerGroup.children.forEach(typeGroup => {
-        // Get type name from group_value
         const type = typeGroup.group_value; 
-        // Use type as the grouping key since ui_name is gone
-        const groupingKey = type; 
 
         if (!typeGroup.children || !Array.isArray(typeGroup.children)) return;
         
-        // Iterate through the children of the type group (these are version groups)
         typeGroup.children.forEach(versionGroup => {
-          // Get version name from group_value
           const version = versionGroup.group_value; 
           
-          // Check if models exist before iterating
           if (!versionGroup.models || !Array.isArray(versionGroup.models)) return;
 
-          // Process each model in the version group
           versionGroup.models.forEach(model => {
-            // Determine category (existing logic seems okay)
+            // Determine category (simplified assumption, adjust if needed)
             let category = 'Chat';
-            // Use model.type directly if available, otherwise check capabilities
-            if (model.type && model.type.toLowerCase() === 'image generation') {
+            if (model.type && model.type.toLowerCase().includes('image')) {
               category = 'Image';
-            } else if (model.type && model.type.toLowerCase() === 'embedding') {
+            } else if (model.type && model.type.toLowerCase().includes('embedding')) {
                category = 'Embedding';
-            } else if (model.capabilities && model.capabilities.includes('embedding')) {
-               category = 'Embedding';
-            } else if (model.capabilities && model.capabilities.includes('Image Generation')) {
-              category = 'Image'; // Handle cases where type might not be set but capability is
             }
             
-            // Create processed model object using direct properties from model where possible
             const processedModel = {
               id: model.id,
-              // Prioritize model.name, fallback to display_name, then normalize id
               name: model.name || model.display_name || normalizeModelName(model), 
-              provider, // Use provider from the outer loop
-              type: model.type || type, // Prefer model.type if present
-              version: model.version || version, // Prefer model.version if present
+              provider,
+              type: model.type || type,
+              version: model.version || version,
               category,
-              groupingKey: model.type || groupingKey, 
               is_experimental: model.is_experimental,
               is_multimodal: model.is_multimodal,
               capabilities: model.capabilities,
-              // Get family and series directly from the model
               family: model.family || type, 
-              series: model.series || version // Fallback to version if series is missing
+              series: model.series || version
             };
             
-            // Add to all models list
             allModels.push(processedModel);
             
-            // Add to experimental models if applicable
             if (model.is_experimental) {
               experimentalModels.push(processedModel);
             }
             
-            // Add to processed models structure (using the determined category)
-            if (!processedModels[category]) {
-              processedModels[category] = {};
-            }
-            
-            if (!processedModels[category][provider]) {
-              processedModels[category][provider] = {};
-            }
-            
-            // Use the determined type (model.type or typeGroup.group_value) as the grouping key
-            const currentTypeKey = processedModel.type; // Use the 'type' field from processedModel
-            if (!processedModels[category][provider][currentTypeKey]) {
-              processedModels[category][provider][currentTypeKey] = [];
-            }
-            
-            processedModels[category][provider][currentTypeKey].push(processedModel);
+            if (!processedModels[category]) processedModels[category] = {};
+            if (!processedModels[category][provider]) processedModels[category][provider] = {};
+            if (!processedModels[category][provider][type]) processedModels[category][provider][type] = [];
+            processedModels[category][provider][type].push(processedModel);
           });
-          
-          // No longer needed - don't sort models, keep them in original order
         });
       });
     });
@@ -241,66 +207,89 @@ export const ModelProvider = ({ children }) => {
   
   // Fetch models from API
   const fetchModels = useCallback(async () => {
-    if (!apiStatus.online) {
-      return;
-    }
-    
     setIsLoading(true);
     setError(null);
     
-    try {
-      // Check cache first
-      const cache = getCachedModels();
-      if (cache) {
-        setAllModels(cache.allModels);
-        setProcessedModels(cache.processedModels);
-        setExperimentalModels(cache.experimentalModels);
-        
-        // Select first model if none selected
-        if (!selectedModel && cache.allModels.length > 0) {
-          setSelectedModel(cache.allModels[0]);
+    // Check cache first
+    const cachedData = getCachedModels();
+    if (cachedData) {
+      console.log("Loading models from valid cache.");
+      setAllModels(cachedData.allModels);
+      setProcessedModels(cachedData.processedModels);
+      setExperimentalModels(cachedData.experimentalModels);
+      // Restore previous logic: select first model if none selected
+      if (!selectedModel && cachedData.allModels.length > 0) {
+        setSelectedModel(cachedData.allModels[0]);
         }
-        
         setIsLoading(false);
-        return;
+      return; // Don't fetch if cache is valid
+    }
+
+    console.log("Fetching models from API...");
+    try {
+      // Prepare request headers conditionally
+      const headers = {
+        'Accept': 'application/json'
+      };
+      if (isAuthenticated && idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
       }
-      
-      // Fetch from API if no valid cache
-      const response = await fetch(`${apiUrl}/models/classified`);
+
+      // Construct URL safely
+      const modelsUrl = new URL('/api/models/classified', apiUrl).toString();
+      const response = await fetch(modelsUrl, { headers });
       
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        let errorMsg = `Error fetching models: ${response.status}`;
+        console.error(errorMsg);
+        throw new Error(errorMsg);
       }
       
       const data = await response.json();
-      console.log('here is the API Response:', data);
-      const processed = processModels(data);
+
+      // Process the fetched data using the new function
+      const { allModels: fetchedAllModels, processedModels: fetchedProcessedModels, experimentalModels: fetchedExperimentalModels } = processModels(data);
       
-      setAllModels(processed.allModels);
-      setProcessedModels(processed.processedModels);
-      setExperimentalModels(processed.experimentalModels);
+      setAllModels(fetchedAllModels);
+      setProcessedModels(fetchedProcessedModels);
+      setExperimentalModels(fetchedExperimentalModels);
+
+      // Cache the newly fetched data
+      cacheModels({
+        allModels: fetchedAllModels,
+        processedModels: fetchedProcessedModels,
+        experimentalModels: fetchedExperimentalModels
+      });
       
-      // Select first model if none selected
-      if (!selectedModel && processed.allModels.length > 0) {
-        setSelectedModel(processed.allModels[0]);
+      // Restore previous logic: Select first model if none selected
+      if (!selectedModel && fetchedAllModels.length > 0) {
+        setSelectedModel(fetchedAllModels[0]);
       }
       
-      // Cache the results
-      cacheModels(processed);
-    } catch (error) {
-      console.error('Error fetching models:', error);
-      setError(error.message);
+    } catch (err) {
+      console.error('Failed to fetch or process models:', err);
+      setError(err.message || 'Failed to load model data');
+      // Attempt to load from potentially expired cache as a last resort?
     } finally {
       setIsLoading(false);
     }
-  }, [apiStatus.online, apiUrl, cacheModels, getCachedModels, processModels]);
+  }, [
+    apiUrl, 
+    getCachedModels, 
+    cacheModels, 
+    processModels, 
+    normalizeModelName,
+    selectedModel,
+    isAuthenticated, 
+    idToken
+  ]);
   
-  // Fetch models when API comes online
+  // Fetch models on initial mount
   useEffect(() => {
-    if (apiStatus.online) {
-      fetchModels();
-    }
-  }, [apiStatus.online, fetchModels]);
+    fetchModels();
+    // Run only once on mount, or when fetchModels function reference changes
+    // (which it shouldn't unless dependencies like apiUrl change)
+  }, [fetchModels]);
   
   // Create toggleExperimentalModels callback at the top level
   const toggleExperimentalModels = useCallback(() => {

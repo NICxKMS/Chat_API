@@ -48,6 +48,8 @@
   --light-selected-item-bg: rgba(var(--primary-rgb), 0.08); /* Keep primary alpha blend */
   --light-tag-bg: rgba(var(--primary-rgb), 0.05); /* Keep primary alpha blend */
   --light-model-icon-bg: #6228e7; /* --clr-primary-a10 */
+  --light-slider-track-bg: #d3d3d3; /* --clr-surface-a30 */
+  --light-slider-thumb-bg: var(--light-button-bg); /* Use button color */
   
   /* Dark theme variables - APPLYING NEW PALETTE */
   --dark-bg: #121212; /* --clr-surface-a0 */
@@ -80,6 +82,8 @@
   --dark-selected-item-bg: rgba(87, 157, 152, 0.1); /* Use Dark Primary RGB */
   --dark-tag-bg: rgba(87, 157, 152, 0.08); /* Use Dark Primary RGB */
   --dark-model-icon-bg: #6ba8a3; /* --clr-primary-a10 */
+  --dark-slider-track-bg: #575757; /* --clr-surface-a30 */
+  --dark-slider-thumb-bg: var(--dark-button-bg); /* Use button color */
 }
 
 /* Apply theme based on body class and system preferences */
@@ -127,6 +131,8 @@ body.light-mode {
   --tag-bg: var(--light-tag-bg);
   --model-icon-bg: var(--light-model-icon-bg);
   --button-bg-rgb: var(--primary-rgb);
+  --slider-track-bg: var(--light-slider-track-bg);
+  --slider-thumb-bg: var(--light-slider-thumb-bg);
   color-scheme: light;
 }
 
@@ -162,6 +168,8 @@ body.dark-mode {
   --tag-bg: var(--dark-tag-bg);
   --model-icon-bg: var(--dark-model-icon-bg);
   --button-bg-rgb: var(--primary-rgb);
+  --slider-track-bg: var(--dark-slider-track-bg);
+  --slider-thumb-bg: var(--dark-slider-thumb-bg);
   color-scheme: dark;
 }
 

@@ -1,8 +1,11 @@
 import React, { lazy, Suspense, useState, useCallback } from 'react';
 import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
+import { useAuth } from '../../../contexts/AuthContext';
+// Import useApi if needed for apiUrl, but not for status
+// import { useApi } from '../../../contexts/ApiContext'; 
 import styles from './Layout.module.css';
-import { PlusIcon, GearIcon, TrashIcon, DownloadIcon } from '@primer/octicons-react';
+import { PlusIcon, GearIcon, TrashIcon, DownloadIcon, SignInIcon, SignOutIcon } from '@primer/octicons-react';
 
 // Lazily loaded components for better initial load performance
 const Sidebar = lazy(() => import('../Sidebar'));
@@ -11,7 +14,10 @@ const MainContent = lazy(() => import('../MainContent'));
 const ModelDropdown = lazy(() => import('../../models/ModelDropdown'));
 const Spinner = lazy(() => import('../../common/Spinner')); // Import Spinner
 const ThemeToggle = lazy(() => import('../../common/ThemeToggle')); // Import for floating icons
-const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Import for floating icons
+// Remove ApiStatus import
+// const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Removed
+const LoginModal = lazy(() => import('../../auth/LoginModal')); // Import LoginModal
+const SettingsPanel = lazy(() => import('../../settings/SettingsPanel')); // Import SettingsPanel
 
 /**
  * Layout component that handles responsive design
@@ -24,6 +30,7 @@ const Layout = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // State for settings panel
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false); // State for model selector visibility
   const { selectedModel, isLoadingModels } = useModel(); // Get model data
+  const { isAuthenticated, currentUser, loading: authLoading, login, logout, isLoggingIn } = useAuth(); // Get auth state and functions
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen(prev => !prev);
@@ -31,7 +38,11 @@ const Layout = () => {
 
   // Toggle settings panel - passed down from MainContent originally, now managed here
   const toggleSettings = useCallback(() => {
-    setIsSettingsOpen(prev => !prev);
+    console.log("Toggling settings panel..."); // Add log
+    setIsSettingsOpen(prev => {
+      console.log("Previous state:", prev, "New state:", !prev); // Log state change
+      return !prev;
+    });
   }, []);
 
   const toggleModelSelector = useCallback(() => {
@@ -121,7 +132,7 @@ const Layout = () => {
           onNewChat={handleNewChat}
           onToggleSettings={toggleSettings}
           // Pass placeholder handlers (for now)
-          onResetChat={handleResetChat} 
+          onResetChat={handleResetChat}
           onDownloadChat={handleDownloadChat}
         />
       </Suspense>
@@ -138,6 +149,31 @@ const Layout = () => {
 
       {/* PERMANENT Floating Icons Container (Bottom Right) */}
       <div className={styles.floatingIconsContainer}> {/* Always rendered now */} 
+        {/* Auth Button (Login/Logout) */}
+        {authLoading ? (
+          <button className={`${styles.floatingIconButton} ${styles.authButton}`} disabled title="Checking Auth...">
+            <Spinner size="small" /> {/* Use a small spinner while loading */}
+          </button>
+        ) : isAuthenticated ? (
+          <button
+            className={`${styles.floatingIconButton} ${styles.authButton}`}
+            onClick={logout}
+            title={`Logged in as ${currentUser?.displayName || currentUser?.email}. Click to logout.`}
+            aria-label="Logout"
+          >
+            <SignOutIcon size={20} />
+            {/* Optional: Add user initial/avatar here */}
+          </button>
+        ) : (
+          <button
+            className={`${styles.floatingIconButton} ${styles.authButton}`}
+            onClick={login}
+            title="Login / Sign Up"
+            aria-label="Login or Sign Up"
+          >
+            <SignInIcon size={20} />
+          </button>
+        )}
         {/* New Chat Button */}
         <button 
           className={styles.floatingIconButton}
@@ -182,19 +218,23 @@ const Layout = () => {
         >
           <GearIcon size={20} />
         </button>
-        {/* API Status Removed from here */}
       </div>
 
-      {/* Floating API Status (Bottom Left - Conditionally Visible) */}
-      <div className={styles.apiStatusFloatingContainer}> {/* Visibility controlled by .sidebarHidden class */} 
-        <Suspense fallback={null}>
-          {/* You might want a different style than floatingIconButton */}
-          {/* For now, wrap in div for positioning */}
-          <div> 
-            <ApiStatus isFloating={true} /> 
-          </div>
+      {/* Conditionally render Settings Panel */} 
+      {/* Always render Settings Panel for CSS transitions, control visibility via props/classes */}
+      <Suspense fallback={null}> {/* No visible fallback needed */}
+        <SettingsPanel 
+          isOpen={isSettingsOpen} 
+          onClose={toggleSettings} 
+        /> 
+      </Suspense>
+
+      {/* Conditionally render Login Modal */} 
+      {isLoggingIn && (
+        <Suspense fallback={<div>Loading Login...</div>}> {/* Basic fallback */} 
+          <LoginModal />
         </Suspense>
-      </div>
+      )}
     </div>
   );
 };

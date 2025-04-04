@@ -35,9 +35,7 @@ This document tracks potential areas for optimization identified during code ana
 
 ### `ApiContext.js`
 
-- [x] **Rendering Efficiency (Context Value):** Memoize the `value` passed to `ApiContext.Provider` using `useMemo` with appropriate dependencies (`apiStatus`, `checkApiStatus`, `apiUrl`) to prevent unnecessary re-renders.
-- [x] **Performance (Polling):** The current polling mechanism (`setInterval`) for status checks might be inefficient. Evaluate if WebSockets, SSE, or on-demand checks are more suitable based on requirements.
-- [x] **Configuration:** The `STATUS_CHECK_INTERVAL` is hardcoded. Consider making this configurable if needed. 
+- [x] **Rendering Efficiency (Context Value):** Memoize the `value` passed to `ApiContext.Provider` using `useMemo` with appropriate dependencies (`apiUrl`) to prevent unnecessary re-renders.
 
 ### `ModelContext.js`
 

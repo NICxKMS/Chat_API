@@ -14,8 +14,7 @@ export const useChatLogic = () => {
     isWaitingForResponse, 
     error,
     metrics,
-    sendMessage, 
-    sendMessageStreaming,
+    submitMessage,
     stopStreaming,
     resetChat, 
     downloadChatHistory 
@@ -33,26 +32,31 @@ export const useChatLogic = () => {
   // State for tracking the currently processed message (might not be needed if Input handles its own state)
   // const [currentMessage, setCurrentMessage] = useState(''); 
 
-  // Function to handle sending messages
+  // Function to handle sending messages using the context's submitMessage
   const handleSendMessage = useCallback(async (message) => {
     if (!message.trim() || !selectedModel) return;
     
     // Reset stream content before sending
     setStreamContent(''); 
     
-    // Decide whether to stream based on settings
-    if (settings.stream) {
-      await sendMessageStreaming(message, (content) => {
-        setStreamContent(content); // Update stream content as it arrives
+    try {
+      // Call the unified submitMessage function from the context
+      // It handles both streaming and non-streaming internally
+      // Pass setStreamContent as the onUpdate callback for streaming
+      await submitMessage(message, (content) => {
+        setStreamContent(content);
       });
-    } else {
-      await sendMessage(message);
+    } catch (err) {
+      // Error handling might already be done in ChatContext, but good to be safe
+      console.error("Error submitting message from useChatLogic:", err);
+      // Optionally set a local error state if needed
     }
     
-    // Clear stream content after message is fully sent (if needed)
-    // setStreamContent(''); // Reset after non-streaming call? Review this logic.
+    // Clear stream content after message is fully sent?
+    // Only needed if submitMessage doesn't handle this implicitly or if you want immediate UI clear
+    // setStreamContent(''); // Review if this is necessary after the context change
 
-  }, [selectedModel, settings.stream, sendMessage, sendMessageStreaming]);
+  }, [selectedModel, submitMessage, setStreamContent]);
   
   // Handle stopping generation
   const handleStopGeneration = useCallback(() => {

@@ -4,6 +4,7 @@ import { ApiProvider } from './contexts/ApiContext';
 import { ModelProvider } from './contexts/ModelContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { ChatProvider } from './contexts/ChatContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Lazy-loaded components
 const Layout = lazy(() => import('./components/layout/Layout'));
@@ -15,6 +16,7 @@ const LoadingSpinner = lazy(() => import('./components/common/Spinner'));
  */
 function App() {
   return (
+    <AuthProvider>
     <ThemeProvider>
       <ApiProvider>
         <ModelProvider>
@@ -28,6 +30,7 @@ function App() {
         </ModelProvider>
       </ApiProvider>
     </ThemeProvider>
+    </AuthProvider>
   );
 }
 

@@ -1,0 +1,115 @@
+import React, { useState, useEffect } from 'react';
+import { useSettings } from '../../contexts/SettingsContext';
+import styles from './SettingsPanel.module.css';
+import { IoMdClose } from 'react-icons/io';
+
+const SettingsPanel = ({ isOpen, onClose }) => {
+  const { settings, updateSetting, resetSettings } = useSettings();
+
+  // Direct handler for input changes
+  const handleChange = (event) => {
+    const { name, value, type } = event.target;
+    // Convert to number for range/number inputs
+    const newValue = type === 'range' || type === 'number' ? Number(value) : value;
+    updateSetting(name, newValue);
+  };
+
+  // Use CSS transitions based on isOpen prop instead of returning null
+  // if (!isOpen) {
+  //   return null; 
+  // }
+
+  return (
+    <div 
+      className={`${styles.panelOverlay} ${isOpen ? styles.panelOverlayOpen : ''}`}
+      onClick={onClose} 
+      aria-hidden={!isOpen}
+    >
+      <div 
+        className={`${styles.panel} ${isOpen ? styles.panelOpen : ''}`}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-title"
+      >
+        <div className={styles.header}>
+          <h2 id="settings-title">Settings</h2>
+          <button onClick={onClose} className={styles.closeButton} aria-label="Close settings">
+            <IoMdClose />
+          </button>
+        </div>
+
+        <div className={styles.content}>
+          <p className={styles.description}>
+            Adjust global model parameters for chat responses.
+          </p>
+
+          {/* Map over settings object to create controls */}
+          {Object.entries(settings).map(([key, value]) => {
+            // Define input properties based on the setting key
+            let inputProps = {
+              type: 'number', // Default to number
+              min: undefined,
+              max: undefined,
+              step: undefined,
+              className: styles.inputNumber,
+            };
+            let label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); // Simple title case
+            let description = '';
+
+            switch (key) {
+              case 'temperature':
+                inputProps = { ...inputProps, type: 'range', min: 0, max: 2, step: 0.01, className: styles.inputRange };
+                description = "Controls randomness (0=deterministic, 2=very random).";
+                break;
+              case 'max_tokens':
+                inputProps = { ...inputProps, min: 1, max: 8192, step: 1 }; // Allow wider range
+                 description = "Max response length.";
+                break;
+              case 'top_p':
+                inputProps = { ...inputProps, type: 'range', min: 0, max: 1, step: 0.01, className: styles.inputRange };
+                 description = "Nucleus sampling threshold.";
+                break;
+              case 'frequency_penalty':
+              case 'presence_penalty':
+                inputProps = { ...inputProps, type: 'range', min: -2, max: 2, step: 0.01, className: styles.inputRange };
+                 description = `Penalty for ${key === 'frequency_penalty' ? 'repeated' : 'present'} tokens.`;
+                break;
+              default:
+                // Skip unknown settings or handle differently
+                return null;
+            }
+
+            return (
+              <div key={key} className={styles.settingItem}>
+                <div className={styles.labelRow}>
+                  <label htmlFor={key} className={styles.label}>{label}</label>
+                  {/* Display value next to label */}
+                  <span className={styles.valueDisplay}>
+                    {typeof value === 'number' ? value.toFixed(inputProps.step < 1 ? 2 : 0) : value}
+                  </span>
+                </div>
+                <input
+                  id={key}
+                  name={key}
+                  value={value}
+                  onChange={handleChange}
+                  {...inputProps} // Spread type, min, max, step, className
+                />
+                {description && <p className={styles.descriptionText}>{description}</p>}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className={styles.footer}>
+          <button onClick={resetSettings} className={styles.resetButton}>
+            Reset Defaults
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsPanel; 

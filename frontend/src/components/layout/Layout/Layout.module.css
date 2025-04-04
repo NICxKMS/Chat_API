@@ -193,28 +193,42 @@
 
 /* Style for individual floating icon buttons */
 .floatingIconButton {
-  background-color: var(--card-bg);
-  color: var(--text);
-  /* Update border */
-  border: 1px solid var(--border-pronounced);
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
+  background-color: var(--button-secondary-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%; /* Make them circular */
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-lg);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .floatingIconButton:hover {
-  background-color: var(--hover);
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: var(--shadow-xl);
+  background-color: var(--button-secondary-hover-bg);
+  color: var(--text-primary);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
-/* Container for floating API status (Bottom Left) */
+.floatingIconButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Specific styling for the Auth button within the floating container */
+.authButton {
+  /* Add any specific styles if needed, e.g., different color */
+  /* Example: Make it stand out slightly */
+  /* border-color: var(--accent-color); */ 
+}
+
+/* Floating API Status (Bottom Left) */
 .apiStatusFloatingContainer {
   position: fixed;
   bottom: 1.5rem;

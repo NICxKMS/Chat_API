@@ -239,11 +239,13 @@ class ChatController {
       response.setHeader("Content-Type", "text/event-stream");
       response.setHeader("Cache-Control", "no-cache");
       response.setHeader("Connection", "keep-alive");
-      // Explicitly set Transfer-Encoding for streaming 
       response.setHeader("Transfer-Encoding", "chunked"); 
-      // Optionally set X-Accel-Buffering for Nginx 
-      // response.setHeader("X-Accel-Buffering", "no");
       
+      // Manually add CORS headers because reply.raw might bypass the plugin
+      response.setHeader("Access-Control-Allow-Origin", "*"); // Match global diagnostic setting
+      response.setHeader("Access-Control-Allow-Credentials", "true");
+      // Note: Consider adding Access-Control-Allow-Methods/Headers if needed, though preflight should handle them.
+
       response.flushHeaders(); // Send headers immediately using Node.js response
       lastActivityTime = Date.now();
 
@@ -388,9 +390,11 @@ class ChatController {
         cacheStats = { enabled: false, error: cacheError.message };
       }
       
-      // Return combined capabilities using reply.send
+      const capabilities = await providerFactory.getAllProviderCapabilities();
+      
+      // Add return here
       return reply.send({
-        providers: providersInfo,
+        capabilities: capabilities,
         defaultProvider: providerFactory.getProvider().name,
         circuitBreakers: circuitBreakerStates,
         cacheStats: cacheStats,

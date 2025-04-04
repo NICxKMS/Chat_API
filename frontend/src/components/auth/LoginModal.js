@@ -1,0 +1,218 @@
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { auth } from '../../firebaseConfig';
+import { 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  EmailAuthProvider, 
+  GithubAuthProvider, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword 
+} from 'firebase/auth';
+import styles from './LoginModal.module.css';
+import Spinner from '../common/Spinner'; // Assuming a Spinner component exists
+
+// Import icons (example using react-icons, install if needed: npm install react-icons)
+import { FcGoogle } from 'react-icons/fc';
+import { FaGithub } from 'react-icons/fa';
+import { IoMdClose } from "react-icons/io";
+import { MdOutlineEmail } from "react-icons/md"; // Icon for email/pass
+
+const LoginModal = () => {
+  const { setIsLoggingIn, error: authContextError } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isEmailPasswordMode, setIsEmailPasswordMode] = useState(true); // Default to Email/Password mode
+
+  // Clear local error when auth context error changes (e.g., token fetch error)
+  useEffect(() => {
+    if (authContextError) {
+      setError(authContextError);
+    }
+  }, [authContextError]);
+
+  const handleSignIn = async (provider) => {
+    if (!auth) {
+      setError("Firebase not initialized. Cannot sign in.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null); // Clear previous errors
+    try {
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged in AuthContext will handle the rest (closing modal, setting user state)
+      console.log("Popup sign-in successful.");
+    } catch (err) {
+      console.error("Popup Sign-in Error:", err);
+      // Customize error messages based on err.code
+      if (err.code === 'auth/popup-closed-by-user') {
+        console.log('Popup sign-in cancelled by user.');
+        // Close the modal as the user cancelled
+        setIsLoggingIn(false);
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        console.log('Popup sign-in cancelled (multiple requests).');
+        // Close the modal
+        setIsLoggingIn(false);
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('Popup blocked by browser. Please allow popups for this site.');
+        // Keep modal open to show the error in this case
+        setIsLoading(false);
+      } else {
+        setError(err.message || 'Failed to sign in. Please try again.');
+        // Keep modal open to show unexpected errors
+        setIsLoading(false);
+      }
+    }
+    // No finally block needed, loading is handled by success/error paths
+  };
+
+  const handleEmailSignIn = async (e) => {
+    e.preventDefault(); // Prevent form submission reload
+    if (!auth) {
+      setError("Firebase not initialized.");
+      return;
+    }
+    if (!email || !password) {
+        setError("Please enter both email and password.");
+        return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged handles the rest
+      console.log("Email/Password sign-in successful.");
+    } catch (err) {
+      console.error("Email Sign-in Error:", err);
+      setError(err.message || 'Failed to sign in with email.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleEmailSignUp = async (e) => {
+    e.preventDefault(); // Prevent form submission reload
+    if (!auth) {
+      setError("Firebase not initialized.");
+      return;
+    }
+    if (!email || !password) {
+        setError("Please enter both email and password.");
+        return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged handles the rest
+      console.log("Email/Password sign-up successful.");
+    } catch (err) {
+      console.error("Email Sign-up Error:", err);
+      setError(err.message || 'Failed to sign up with email.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = () => {
+    const googleProvider = new GoogleAuthProvider();
+    handleSignIn(googleProvider);
+  };
+
+  const handleGithubSignIn = () => {
+    const githubProvider = new GithubAuthProvider();
+    handleSignIn(githubProvider);
+  };
+
+  const closeModal = () => {
+    // Only close if not currently in the middle of a sign-in attempt
+    if (!isLoading) {
+      setIsLoggingIn(false);
+    }
+  };
+
+  return (
+    <div className={styles.overlay} onClick={closeModal}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <button className={styles.closeButton} onClick={closeModal} aria-label="Close login">
+          <IoMdClose />
+        </button>
+        <h2 className={styles.title}>Login / Sign Up</h2>
+        <p className={styles.subtitle}>Choose a provider to continue</p>
+
+        {isLoading && (
+          <div className={`${styles.spinnerContainer} ${styles.fullHeightSpinner}`}> {/* Make spinner take full height when loading */}
+            <Spinner size="large" />
+            <p>Connecting...</p>
+          </div>
+        )}
+
+        {!isLoading && (
+          // Email/Password form is now the default content when not loading
+          <form className={styles.emailForm} onSubmit={handleEmailSignIn}> {/* Added onSubmit */} 
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className={styles.inputField}
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className={styles.inputField}
+            />
+            <div className={styles.emailButtonContainer}>
+              <button type="submit" className={styles.emailButton} disabled={isLoading}>
+                Sign In
+              </button>
+              <button type="button" onClick={handleEmailSignUp} className={`${styles.emailButton} ${styles.signUpButton}`} disabled={isLoading}>
+                Sign Up
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Alternative Sign-in Providers (Icons) - Shown below email form when not loading */}
+        {!isLoading && (
+          <div className={styles.alternativeLoginContainer}>
+            <p className={styles.alternativeLoginText}>Or sign in with</p>
+            <div className={styles.providerIconContainer}>
+              <button
+                className={styles.providerIconButton}
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+                title="Sign in with Google"
+                aria-label="Sign in with Google"
+              >
+                <FcGoogle />
+              </button>
+              <button
+                className={styles.providerIconButton}
+                onClick={handleGithubSignIn}
+                disabled={isLoading}
+                title="Sign in with GitHub"
+                aria-label="Sign in with GitHub"
+              >
+                <FaGithub />
+              </button>
+              {/* Add other provider icons here if needed */}
+            </div>
+          </div>
+        )}
+
+        {error && <p className={styles.error}>{error}</p>}
+
+        <p className={styles.footerText}>
+          By signing in, you agree to our imaginary Terms of Service.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default LoginModal; 

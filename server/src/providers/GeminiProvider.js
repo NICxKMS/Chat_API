@@ -342,8 +342,37 @@ class GeminiProvider extends BaseProvider {
       const modelId = options.model || this.config.defaultModel || "gemini-1.5-pro";
       const genModel = this.genAI.getGenerativeModel({ model: modelId });
       
-      // Process messages
-      const { history, prompt, systemPrompt } = this._processMessages(options.messages);
+      // Process messages using the correct return structure
+      const { formattedContents, systemPromptText } = this._processMessages(options.messages);
+
+      // Validate formattedContents before use
+      if (!Array.isArray(formattedContents)) {
+        console.error("GeminiProvider._rawChatCompletion: _processMessages did not return a valid formattedContents array.");
+        throw new Error("Internal error processing messages for Gemini.");
+      }
+      
+      // Extract history and the final user prompt
+      let history = [];
+      let finalPromptContent = "";
+      if (formattedContents.length > 0) {
+          // Ensure the last message is from the user to be the prompt
+          if (formattedContents[formattedContents.length - 1].role === 'user') {
+              const lastMessage = formattedContents.pop(); // Remove last message to use as prompt
+              // Ensure parts exist and extract text
+              finalPromptContent = lastMessage.parts?.map(p => p.text).join('\n') || "";
+              history = formattedContents; // Remaining messages are history
+          } else {
+              // If the last message isn't 'user', something is wrong or it's a model-only start (unlikely for chat)
+              console.warn("GeminiProvider._rawChatCompletion: Last message role is not 'user'. Treating all formatted content as history and sending an empty prompt. This might lead to unexpected behavior.");
+              history = formattedContents;
+              // Sending an empty prompt might not be ideal, consider throwing an error or adjusting based on expected use cases.
+          }
+      } else {
+          // Handle cases with no messages or only a system prompt (which _processMessages extracts)
+          // If only a system prompt exists, genModel.generateContent will handle it later.
+          // If no messages at all, finalPromptContent remains empty.
+      }
+
 
       // Configure generative options
       const generationConfig = {
@@ -362,45 +391,69 @@ class GeminiProvider extends BaseProvider {
       
       // Create chat session or use directly
       let result;
+      // Use history.length check AFTER history has been properly assigned
       if (history.length > 0) {
         // Using chat history mode
         const chat = genModel.startChat({
           generationConfig,
           safetySettings,
-          history,
-          systemInstruction: systemPrompt || undefined,
+          history, // Use the extracted history
+          systemInstruction: systemPromptText || undefined, // Use the extracted system prompt
         });
         
-        result = await chat.sendMessage(prompt);
+        // Send the final user message content
+        result = await chat.sendMessage(finalPromptContent);
       } else {
-        // Using direct prompt mode
-        const promptWithSystem = systemPrompt ? 
-          `${systemPrompt}\n\n${prompt}` : 
-          prompt;
-          
-        result = await genModel.generateContent(promptWithSystem, {
-          generationConfig,
-          safetySettings
-        });
+        // Using direct prompt mode (no prior history)
+        // Combine system prompt and the single user message if both exist
+        const promptForGeneration = systemPromptText ?
+          `${systemPromptText}\n\n${finalPromptContent}` :
+          finalPromptContent;
+
+        // Ensure we don't send an empty prompt unless intended
+        if (!promptForGeneration && !systemPromptText) {
+             console.warn("GeminiProvider._rawChatCompletion: Attempting to generate content with empty prompt and no system instruction.");
+             // Decide how to handle: throw error, return empty response, etc.
+             // For now, proceed, but the API might reject it.
+        }
+
+        result = await genModel.generateContent(
+           // Pass the combined or single prompt
+           // The SDK might accept structured { role: 'user', parts: [...] } here too,
+           // but simple string is usually sufficient for single-turn.
+           promptForGeneration,
+           { // Pass generationConfig and safetySettings directly
+             generationConfig,
+             safetySettings
+           }
+        );
       }
       
       const latency = Date.now() - startTime;
       
-      // Parse the response
+      // Parse the response (ensure result.response exists)
+      const apiResponse = result?.response; // Safely access response
+
       const response = {
         id: `gemini-${Date.now()}`,
         model: modelId,
         provider: this.name,
         createdAt: new Date().toISOString(),
-        content: result.response?.text() || "",
+        // Safely access text() method
+        content: apiResponse?.text ? apiResponse.text() : "",
         usage: {
-          promptTokens: this._estimateTokens(prompt + (systemPrompt || "")),
-          completionTokens: this._estimateTokens(result.response?.text() || ""),
+           // Use finalPromptContent and systemPromptText for estimation
+          promptTokens: this._estimateTokens(finalPromptContent + (systemPromptText || "")),
+          // Safely estimate completion tokens
+          completionTokens: this._estimateTokens(apiResponse?.text ? apiResponse.text() : ""),
           totalTokens: 0 // Will be calculated below
         },
         latency,
-        finishReason: result.response?.promptFeedback?.blockReason || "stop",
-        raw: result
+         // Safely access promptFeedback and blockReason
+        finishReason: apiResponse?.promptFeedback?.blockReason ||
+                      (apiResponse?.candidates?.[0]?.finishReason) || // Check candidate finish reason too
+                      "stop", // Default to stop if no specific reason found
+        raw: result // Keep the raw result structure
       };
       
       // Calculate total tokens
@@ -414,41 +467,86 @@ class GeminiProvider extends BaseProvider {
   }
 
   /**
-   * Process messages into Gemini-compatible format
+   * Process messages into Gemini-compatible format (history + final prompt)
+   * Handles system prompt aggregation and ensures alternating user/model roles in history.
    */
   _processMessages(messages) {
-    let systemPrompt = "";
-    let prompt = "";
-    const history = [];
-    
-    // Process all messages
-    for (let i = 0; i < messages.length; i++) {
-      const message = messages[i];
-      
-      // Handle system message
-      if (message.role === "system") {
-        systemPrompt += message.content + "\n";
-        continue;
+    let systemPromptText = "";
+    const formattedContents = []; // Holds the final formatted messages for the 'contents' field
+    let lastRole = null; // Track the last role added to formattedContents
+
+    // 1. Input validation: Ensure messages is an array
+    if (!Array.isArray(messages)) {
+      console.error("GeminiProvider._processMessages: Input 'messages' is not an array.", messages);
+      // Return defaults to prevent downstream errors
+      return { formattedContents: [], systemPromptText: "" };
+    }
+
+    // 2. Process messages, format for 'contents', extract system prompt, and ensure alternating roles
+    for (const message of messages) {
+      // Basic validation for message structure
+      if (!message || typeof message.content !== 'string' || typeof message.role !== 'string') {
+        console.warn("GeminiProvider._processMessages: Skipping message with invalid format:", message);
+        continue; // Skip malformed messages
       }
-      
-      // Convert user/assistant messages to history format
-      if (i < messages.length - 1) {
-        // Add to history if not the last message
-        if (message.role === "user" || message.role === "assistant") {
-          history.push({
-            role: message.role === "user" ? "user" : "model",
+
+      const currentRole = message.role.toLowerCase();
+
+      if (currentRole === "system") {
+        systemPromptText += (systemPromptText ? "\\n" : "") + message.content;
+        continue; // System prompts are handled separately, not added to contents
+      }
+
+      let roleForSdk;
+      if (currentRole === "user") {
+        roleForSdk = "user";
+      } else if (currentRole === "assistant" || currentRole === "model") {
+        roleForSdk = "model"; // Google uses 'model' for assistant role
+      } else {
+        console.warn(`GeminiProvider._processMessages: Ignoring message with unknown role: ${message.role}`);
+        continue; // Skip unknown roles
+      }
+
+      // Ensure alternating roles (user -> model -> user -> ...)
+      if (roleForSdk === lastRole) {
+          // Handle consecutive messages: Option 1: Merge with the previous one
+          if (formattedContents.length > 0) {
+              console.warn(`GeminiProvider._processMessages: Merging consecutive message content for role '${roleForSdk}'.`);
+              const lastMessage = formattedContents[formattedContents.length - 1];
+              if (lastMessage.parts && Array.isArray(lastMessage.parts) && lastMessage.parts[0]?.text !== undefined) {
+                  lastMessage.parts[0].text += "\\n" + message.content; // Append content
+              } else {
+                  // If parts structure is unexpected, overwrite (less ideal)
+                   lastMessage.parts = [{ text: message.content }];
+              }
+          } else {
+               // If the *first* message somehow violates alternation (shouldn't happen with valid input)
+               console.warn(`GeminiProvider._processMessages: Skipping consecutive message at the beginning for role '${roleForSdk}'.`);
+          }
+          // Option 2: Skip/prune the message (alternative to merging)
+          // console.warn(`GeminiProvider._processMessages: Pruning consecutive message with role '${roleForSdk}' to enforce alternating history.`);
+          // continue;
+      } else {
+          // Add the message with the correct role
+          formattedContents.push({
+            role: roleForSdk,
             parts: [{ text: message.content }]
           });
-        }
-      } else {
-        // Last message becomes the prompt
-        if (message.role === "user") {
-          prompt = message.content;
-        }
+          lastRole = roleForSdk; // Update the last role added
       }
     }
-    
-    return { history, prompt, systemPrompt };
+
+    // 3. Gemini requires the history to start with a 'user' role if it's not empty.
+    // (This is often implied, but good to check if strict alternation didn't enforce it)
+    // Note: The SDK might handle this, but explicit check can prevent errors.
+    if (formattedContents.length > 0 && formattedContents[0].role !== 'user') {
+        console.warn("GeminiProvider._processMessages: History does not start with 'user'. Prepending an empty user message or adjusting might be needed depending on SDK requirements.");
+        // Depending on strictness, might need to prepend an empty user message or drop the first model message.
+        // For now, log a warning. Let's assume the SDK is flexible or the input guarantees user start.
+    }
+
+    // 4. Return the structured data
+    return { formattedContents: formattedContents, systemPromptText: systemPromptText };
   }
 
   /**
@@ -506,30 +604,46 @@ class GeminiProvider extends BaseProvider {
 
       // Standardize and validate options
       const standardOptions = this.standardizeOptions(options);
-      this.validateOptions(standardOptions);
-      
+      this.validateOptions(standardOptions); // Use BaseProvider validation
+
       // Extract model name (remove provider prefix if present)
-      modelName = standardOptions.model.includes("/") 
-        ? standardOptions.model.split("/")[1] 
+      modelName = standardOptions.model.includes("/")
+        ? standardOptions.model.split("/")[1]
         : standardOptions.model;
 
       // Select the correct generative model
       const generativeModel = this.genAI.getGenerativeModel({ model: modelName });
 
+      // Prepare messages and system prompt using the corrected method
+      // Destructure the CORRECT return value from the refactored _processMessages
+      const { formattedContents, systemPromptText } = this._processMessages(standardOptions.messages);
+
+      // Validate that formattedContents is an array before proceeding
+      if (!Array.isArray(formattedContents)) {
+          throw new Error("_processMessages did not return a valid formattedContents array.");
+      }
+
       // Prepare request body (messages, generationConfig)
       const request = {
-        contents: this._processMessages(standardOptions.messages),
+        contents: formattedContents, // Use the correctly formatted array from _processMessages
         generationConfig: {
           temperature: standardOptions.temperature,
           maxOutputTokens: standardOptions.max_tokens,
-          // Add other relevant generation parameters from standardOptions if needed
           stopSequences: standardOptions.stop // Ensure stop sequences are passed
         },
-        // Safety settings can be added here if needed
         safetySettings: standardOptions.safety_settings || []
       };
 
+      // Add system instruction if a system prompt exists
+      if (systemPromptText) {
+        request.systemInstruction = {
+          role: "system", // Although Gemini uses a separate field, adding role for clarity if structure changes
+          parts: [{ text: systemPromptText }]
+        };
+      }
+
       // Use the stream method from the Google AI SDK
+      // This should now receive a valid 'contents' array
       const result = await generativeModel.generateContentStream(request);
 
       let firstChunk = true;

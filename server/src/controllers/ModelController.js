@@ -68,7 +68,7 @@ class ModelController {
         defaultProvider.config.defaultModel : undefined;
       
       // Return formatted response
-      reply.send({
+      return reply.send({
         models: modelsByProvider,
         providers: Object.keys(providerFactory.getProviders()),
         default: {
@@ -122,7 +122,7 @@ class ModelController {
           provider.config.defaultModel : undefined;
           
         // Return formatted response
-        reply.send({
+        return reply.send({
           provider: providerName,
           models: models,
           defaultModel: defaultModel
@@ -160,7 +160,7 @@ class ModelController {
       // Get all provider info
       const providersInfo = await providerFactory.getProvidersInfo();
       
-      reply.send({
+      return reply.send({
         providers: providersInfo,
         defaultProvider: providerFactory.getProvider().name
       });
@@ -227,7 +227,7 @@ class ModelController {
         }
       ];
       
-      reply.send(categories);
+      return reply.send(categories);
 
     } catch (error) {
       logger.error(`Error getting categorized models: ${error.message}`, { stack: error.stack });
@@ -247,14 +247,12 @@ class ModelController {
   async getProviders(request, reply) {
     try {
       const providers = await providerFactory.getProvidersInfo();
-      reply.send(providers);
+      return reply.send(providers); // Explicitly return reply.send()
     } catch (error) {
       logger.error(`Error getting providers: ${error.message}`, { stack: error.stack });
+      // Let Fastify's error handler handle it
       throw error;
-      // reply.status(500).send({ 
-      //   error: "Failed to get providers", 
-      //   message: error.message 
-      // });
+      // No explicit return needed here as error is thrown
     }
   }
 
@@ -359,7 +357,7 @@ class ModelController {
           const classifiedModels = await this.modelClassificationService.getClassifiedModelsWithCriteria(criteria);
           logger.info("Received response from GetClassifiedModelsWithCriteria gRPC service");
   
-          reply.send(classifiedModels);
+          return reply.send(classifiedModels);
   
       } catch (error) {
           logger.error(`Error getting classified models with criteria from gRPC service: ${error.message}`, { criteria: request.query, stack: error.stack });

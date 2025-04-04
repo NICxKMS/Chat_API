@@ -7,7 +7,7 @@ const DEFAULT_SETTINGS = {
   max_tokens: 2000,
   frequency_penalty: 0,
   presence_penalty: 0,
-  stream: true
+  // Removed stream from default settings, as it's usually request-specific
 };
 
 // Create settings context
@@ -29,7 +29,9 @@ export const SettingsProvider = ({ children }) => {
   
   // Handle individual setting updates
   const updateSetting = useCallback((key, value) => {
+    // Ensure the key is a valid setting we manage
     if (key in DEFAULT_SETTINGS) {
+      console.log(`[SettingsContext] Updating '${key}' from ${settings[key]} to ${value}`);
       setSettings(prev => ({
         ...prev,
         [key]: value
@@ -39,6 +41,7 @@ export const SettingsProvider = ({ children }) => {
   
   // Reset settings to defaults
   const resetSettings = useCallback(() => {
+    console.log("[SettingsContext] Resetting settings to default");
     setSettings(DEFAULT_SETTINGS);
   }, []);
   

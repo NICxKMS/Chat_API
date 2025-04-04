@@ -6,7 +6,6 @@ import { TrashIcon, DownloadIcon, StopIcon, ChevronUpIcon, GearIcon, PlusIcon } 
 
 // Restore lazy loads
 const ThemeToggle = lazy(() => import('../../common/ThemeToggle'));
-const ApiStatus = lazy(() => import('../../common/ApiStatus'));
 
 /**
  * Chat control buttons - Stop button always visible when generating,
@@ -134,7 +133,6 @@ const ChatControls = memo(({
               onClick={() => {/* ApiStatus handles its own click */}}
             >
                <Suspense fallback={null}> 
-                 <ApiStatus isMenu={true} />
                </Suspense>
             </div>
           </div>

@@ -1,0 +1,285 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000; /* Ensure it's above other content */
+  backdrop-filter: blur(4px); /* Optional nice effect */
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal {
+  background-color: var(--card-bg);
+  padding: 30px 40px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-xl);
+  width: 90%;
+  max-width: 450px;
+  position: relative;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  animation: slideIn 0.3s ease-out;
+}
+
+.closeButton {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 5px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.closeButton:hover {
+  color: var(--text-primary);
+}
+
+.title {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin-bottom: 30px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.providerList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.providerButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--button-secondary-bg);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  width: 100%;
+}
+
+.providerButton:hover:not(:disabled) {
+  background-color: var(--button-secondary-hover-bg);
+  border-color: var(--border-hover-color);
+}
+
+.providerButton:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.providerButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.providerIcon {
+  font-size: 1.4rem;
+}
+
+/* Specific provider styles (optional) */
+.google {
+  /* Add specific styles if needed */
+}
+
+.github {
+  /* Add specific styles if needed */
+}
+
+.spinnerContainer {
+  padding: 40px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  color: var(--text-secondary);
+}
+
+.error {
+  color: var(--error-color);
+  background-color: var(--error-bg);
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-top: 20px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.footerText {
+  margin-top: 30px;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.emailToggle {
+  /* Optional: Add specific styles for this button */
+}
+
+.emailForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.inputField {
+  padding: 12px 15px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inputField:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-color-faded);
+}
+
+.emailButtonContainer {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.emailButton {
+  flex-grow: 1; /* Make buttons share space */
+  padding: 12px 15px;
+  border-radius: 6px;
+  border: none;
+  background-color: var(--accent-color);
+  color: var(--accent-text-color);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.emailButton:hover:not(:disabled) {
+  background-color: var(--accent-color-dark);
+}
+
+.emailButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.emailButton:disabled {
+  background-color: var(--accent-color-disabled);
+  cursor: not-allowed;
+}
+
+.signUpButton {
+  background-color: var(--button-secondary-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.signUpButton:hover:not(:disabled) {
+  background-color: var(--button-secondary-hover-bg);
+}
+
+.signUpButton:disabled {
+  background-color: var(--button-secondary-bg);
+  opacity: 0.6;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 15px;
+  text-align: center;
+  width: 100%;
+  padding: 5px;
+  transition: color 0.2s ease;
+}
+
+.backButton:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.fullHeightSpinner {
+  /* Optional: Ensure spinner takes full modal height if needed */
+  /* min-height: 200px; Adjust as needed */
+}
+
+.alternativeLoginContainer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color-subtle);
+  text-align: center;
+}
+
+.alternativeLoginText {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
+}
+
+.providerIconContainer {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+}
+
+.providerIconButton {
+  background: none;
+  border: none;
+  padding: 8px;
+  font-size: 2.2rem; /* Adjust icon size */
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.providerIconButton:hover:not(:disabled) {
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.providerIconButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+} 

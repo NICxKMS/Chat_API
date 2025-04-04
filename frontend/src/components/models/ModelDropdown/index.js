@@ -30,26 +30,6 @@ const SelectedModelDisplay = React.memo(({ selectedModel }) => (
 ));
 
 /**
- * ExperimentalToggle component for showing/hiding experimental models
- */
-const ExperimentalToggle = React.memo(({ isEnabled, onToggle }) => (
-  <div className={styles.experimentalToggle}>
-    <label className={styles.toggleLabel}>
-      <input 
-        type="checkbox" 
-        checked={isEnabled}
-        onChange={onToggle}
-        className={styles.toggleInput}
-      />
-      <span className={styles.toggleTrack}>
-        <span className={styles.toggleThumb} />
-      </span>
-      <span className={styles.toggleText}>Show experimental models</span>
-    </label>
-  </div>
-));
-
-/**
  * CapabilityTabs component for selecting model categories
  */
 const CapabilityTabs = React.memo(({ capabilities, activeCapability, onSelectCapability }) => {
@@ -99,10 +79,9 @@ const ModelList = React.memo(({ isLoading, groupedModels, selectedModel, onSelec
   <div className={styles.modelList} role="listbox">
     {isLoading ? (
       <div className={styles.loading}>Loading models...</div>
-    ) : groupedModels.length > 0 ? (
+    ) : groupedModels && Object.keys(groupedModels).length > 0 ? (
       groupedModels.map((group) => (
         <div key={`${group.provider}-${group.type}`}>
-          {/* Provider/Type header */}
           <div className={styles.providerTypeHeader}>
             <span className={styles.providerName}>{group.provider}</span>
             <span className={styles.providerTypeSeparator}>→</span>
@@ -110,7 +89,6 @@ const ModelList = React.memo(({ isLoading, groupedModels, selectedModel, onSelec
             <span className={styles.modelCount}>({group.models.length})</span>
           </div>
           
-          {/* Models in this group */}
           {group.models.map(model => (
             <ModelItem
               key={model.id}
@@ -209,10 +187,6 @@ const ModelSelectionPanel = React.forwardRef(({
 }, ref) => (
   <div className={styles.modelsContainer} ref={ref}>
     <div className={styles.fixedHeader}>
-      <ExperimentalToggle 
-        isEnabled={isExperimentalModelsEnabled} 
-        onToggle={toggleExperimentalModels} 
-      />
       <CapabilityTabs 
         capabilities={capabilitiesWithCounts} 
         activeCapability={activeCapability} 
@@ -249,9 +223,6 @@ const formatProviderName = (provider) => {
 // Helper function to check if model should be included
 const shouldIncludeModel = (model, showExperimental, searchTerm, provider, formattedProvider, typeGroup) => {
   if (!model) return false;
-  if (model.is_experimental && !showExperimental) {
-    return false;
-  }
   if (searchTerm) {
     const searchLower = searchTerm.toLowerCase();
     const nameMatch = model.name?.toLowerCase().includes(searchLower) || model.displayName?.toLowerCase().includes(searchLower);
@@ -266,140 +237,116 @@ const shouldIncludeModel = (model, showExperimental, searchTerm, provider, forma
   return true;
 };
 
+// Restore ExperimentalToggle component
+const ExperimentalToggle = React.memo(({ isEnabled, onToggle }) => (
+  <div className={styles.experimentalToggle}>
+    <label className={styles.toggleLabel}>
+      <input
+        type="checkbox"
+        checked={isEnabled}
+        onChange={onToggle}
+        className={styles.toggleInput}
+      />
+      <span className={styles.toggleTrack}>
+        <span className={styles.toggleThumb} />
+      </span>
+      <span className={styles.toggleText}>Show experimental models</span>
+    </label>
+  </div>
+));
+
 /**
  * Main ModelSelection component that orchestrates all model selection UI
  * @returns {JSX.Element} - Rendered component
  */
 const ModelSelection = () => {
-  // Split context usage between model data and filter functionality
   const { 
     processedModels, 
     selectedModel, 
+    isLoading, 
+    error, 
     selectModel, 
-    isExperimentalModelsEnabled,
-    toggleExperimentalModels,
     showExperimental,
-    isLoading
+    toggleExperimentalModels
   } = useModel();
   
-  // Use the filter context for search-related functionality
   const {
     modelFilter,
+    updateCategoryFilter, 
     updateSearchFilter
   } = useModelFilter();
   
-  const [searchTerm, setSearchTerm] = useState('');
   const [activeCapability, setActiveCapability] = useState('Chat');
-  const modelSelectorRef = useRef(null);
+  const panelRef = useRef(null);
   
-  // Handle selecting a model
   const handleSelectModel = useCallback((model) => {
     selectModel(model);
-    setSearchTerm('');
-    updateSearchFilter('');
-  }, [selectModel, updateSearchFilter]);
+  }, [selectModel]);
   
-  // Handle search term change
-  const handleSearchChange = useCallback((term) => {
-    setSearchTerm(term);
-    updateSearchFilter(term);
+  const handleSearchChange = useCallback((event) => {
+    updateSearchFilter(event.target.value);
   }, [updateSearchFilter]);
   
-  // Clear search handler
   const handleClearSearch = useCallback(() => {
-    setSearchTerm('');
     updateSearchFilter('');
   }, [updateSearchFilter]);
   
-  // Get current search term from context or local state
-  const currentSearchTerm = useMemo(() => {
-    return modelFilter?.search || searchTerm;
-  }, [modelFilter, searchTerm]);
-  
-  // Filter and categorize models based on search term and active capability
-  const { groupedModels, totalCount } = useMemo(() => {
-    if (!processedModels || isLoading || !processedModels[activeCapability]) {
-      return { groupedModels: [], totalCount: 0 };
+  const capabilitiesWithCounts = useMemo(() => {
+    const counts = {};
+    if (processedModels) {
+      Object.keys(processedModels).forEach(category => {
+        counts[category] = Object.values(processedModels[category])
+          .flatMap(providerGroups => Object.values(providerGroups))
+          .flat()
+          .filter(model => shouldIncludeModel(model, showExperimental, modelFilter.search, model.provider, formatProviderName(model.provider), model.type))
+          .length;
+      });
+    }
+    return counts;
+  }, [processedModels, showExperimental, modelFilter.search]);
+
+  const groupedModels = useMemo(() => {
+    if (!processedModels || !processedModels[activeCapability]) {
+      return [];
     }
     
-    const categoryModels = processedModels[activeCapability];
-    let count = 0;
+    const modelsInCategory = processedModels[activeCapability];
     const groups = [];
 
-    Object.entries(categoryModels).forEach(([provider, typeGroups]) => {
-      // Format the provider name once per provider group
+    Object.entries(modelsInCategory).forEach(([provider, typeGroups]) => {
       const formattedProvider = formatProviderName(provider);
-      
-      Object.entries(typeGroups).forEach(([typeGroup, models]) => {
-        const filteredModels = models.filter(model => 
-          shouldIncludeModel(model, showExperimental, currentSearchTerm, provider, formattedProvider, typeGroup)
+      Object.entries(typeGroups).forEach(([type, models]) => {
+        const filteredGroupModels = models.filter(model =>
+          shouldIncludeModel(model, showExperimental, modelFilter.search, provider, formattedProvider, type)
         );
-
-        if (filteredModels.length > 0) {
+        if (filteredGroupModels.length > 0) {
           groups.push({
-            provider: formattedProvider, // Use the formatted provider name
-            type: typeGroup,
-            models: filteredModels
+            provider: formattedProvider,
+            type: type,
+            models: filteredGroupModels
           });
-          count += filteredModels.length;
         }
       });
     });
 
-    return { groupedModels: groups, totalCount: count };
+    return groups;
+  }, [processedModels, activeCapability, showExperimental, modelFilter.search]);
 
-  }, [processedModels, isLoading, activeCapability, showExperimental, currentSearchTerm]);
-  
-  // Prepare capabilities for tabs, including counts
-  const capabilitiesWithCounts = useMemo(() => {
-    const caps = {};
-    if (processedModels) {
-      Object.keys(processedModels).forEach(cap => {
-        let modelCount = 0;
-        if(processedModels[cap]) {
-          Object.entries(processedModels[cap]).forEach(([provider, typeGroups]) => {
-            // Format provider name consistently here too
-            const formattedProvider = formatProviderName(provider);
-            
-            Object.entries(typeGroups).forEach(([typeGroup, models]) => {
-              // Apply the same filtering as in the groupedModels calculation using the shared function
-              const filteredCount = models.filter(model => 
-                shouldIncludeModel(model, showExperimental, currentSearchTerm, provider, formattedProvider, typeGroup)
-              ).length;
-              
-              modelCount += filteredCount;
-            });
-          });
-        }
-        caps[cap] = modelCount;
-      });
-    }
-    return caps;
-  }, [processedModels, showExperimental, currentSearchTerm]);
-
-  // Sync local search term with context when modelFilter changes
-  useEffect(() => {
-    if (modelFilter?.search !== searchTerm) {
-      setSearchTerm(modelFilter?.search || '');
-    }
-  }, [modelFilter, searchTerm]);
+  const totalModelCount = useMemo(() => {
+    return groupedModels.reduce((count, group) => count + group.models.length, 0);
+  }, [groupedModels]);
 
   return (
     <div className={styles.modelSelectionContainer}>
-      {/* Current model display */}
       <SelectedModelDisplay selectedModel={selectedModel} />
-
-      {/* Search container */}
       <SearchContainer 
-        searchTerm={searchTerm}
+        searchTerm={modelFilter.search}
         onSearchChange={handleSearchChange}
-        totalCount={totalCount}
+        totalCount={totalModelCount} 
       />
-      
-      {/* Model selection list panel */}
       <ModelSelectionPanel
-        ref={modelSelectorRef}
-        isExperimentalModelsEnabled={isExperimentalModelsEnabled}
+        ref={panelRef}
+        isExperimentalModelsEnabled={showExperimental}
         toggleExperimentalModels={toggleExperimentalModels}
         capabilitiesWithCounts={capabilitiesWithCounts}
         activeCapability={activeCapability}
@@ -408,8 +355,8 @@ const ModelSelection = () => {
         groupedModels={groupedModels}
         selectedModel={selectedModel}
         handleSelectModel={handleSelectModel}
-        searchTerm={searchTerm}
-        totalCount={totalCount}
+        searchTerm={modelFilter.search}
+        totalCount={totalModelCount}
         handleClearSearch={handleClearSearch}
       />
     </div>

@@ -169,22 +169,37 @@ This section details the endpoints provided by the Node.js API server component 
 *   **`GET /health`**: Basic health check endpoint returning status, uptime, memory usage, etc.
 *   **`GET /metrics`**: Exposes Prometheus metrics for scraping.
 
-## Authentication
+## Authentication (Firebase)
 
-This API uses JWT (JSON Web Tokens) for authentication.
+This API uses Firebase Authentication. Clients (e.g., frontend applications) should use a Firebase client SDK (Web, iOS, Android) to handle user sign-up, sign-in, and token management.
 
-1.  **Set JWT Secret:** Ensure the `JWT_SECRET` environment variable is set to a strong, secret key in your `.env` file.
-2.  **Login:** Obtain an access token by sending a POST request to `/api/auth/login` with the following JSON body:
-    ```json
-    {
-      "username": "testuser",
-      "password": "password123"
-    }
-    ```
-    *(Note: These are placeholder credentials. Replace with actual user management in a production environment.)*
-3.  **Use Token:** Include the received `access_token` in the `Authorization` header for all subsequent requests to protected API endpoints (e.g., `/api/chat/*`, `/api/models/*`) using the Bearer scheme:
-    ```
-    Authorization: Bearer <your_access_token>
-    ```
+1.  **Firebase Setup:**
+    *   Ensure you have a Firebase project set up.
+    *   Enable Authentication in the Firebase console and configure desired sign-in providers (Email/Password, Google, etc.).
+    *   Generate a Service Account key JSON file from your Firebase project settings (Settings > Service accounts > Generate new private key).
+    *   **Securely** store this key file (e.g., in the project root) and **add it to your `.gitignore`**.
+    *   Set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable in your `.env` file to the path of this key file (e.g., `GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json`).
 
-Requests without a valid token to protected routes will receive a 401 Unauthorized error. 
+2.  **Client-Side:**
+    *   Your frontend application should handle the user login flow using a Firebase client SDK.
+    *   After successful login, the client SDK provides a Firebase ID Token (a JWT).
+
+3.  **API Requests:**
+    *   Include the Firebase ID Token obtained from the client SDK in the `Authorization` header for all requests to protected API endpoints (e.g., `/api/chat/*`, `/api/models/*`) using the Bearer scheme:
+        ```
+        Authorization: Bearer <firebase_id_token>
+        ```
+
+Requests without a valid Firebase ID token to protected routes will receive a 401 Unauthorized error.
+
+## Getting Started
+
+// ... getting started section ...
+
+## Configuration
+
+// ... configuration section ...
+
+## Running the Application
+
+// ... running section ... 
