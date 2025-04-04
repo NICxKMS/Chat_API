@@ -6,117 +6,81 @@ import providerFactory from "../providers/ProviderFactory.js";
 import * as cache from "../utils/cache.js";
 import * as metrics from "../utils/metrics.js";
 import { getCircuitBreakerStates } from "../utils/circuitBreaker.js";
+import logger from "../utils/logger.js";
 
 class ChatController {
   constructor() {
-    console.log("Initializing ChatController...");
-    
-    // Log initialization
-    console.log("ChatController initialized with bound methods");
+    // Bind methods (consider if still necessary with Fastify style)
+    this.chatCompletion = this.chatCompletion.bind(this);
+    this.chatCompletionStream = this.chatCompletionStream.bind(this);
+    this.getChatCapabilities = this.getChatCapabilities.bind(this);
+    console.log("ChatController initialized");
   }
 
   /**
    * Handles standard (non-streaming) chat completion requests.
    * Performs validation, caching, provider selection, and calls the provider's `chatCompletion` method.
-   * @param {express.Request} req - The Express request object.
-   * @param {express.Response} res - The Express response object.
-   * @param {express.NextFunction} next - Express next function.
+   * @param {FastifyRequest} request - Fastify request object.
+   * @param {FastifyReply} reply - Fastify reply object.
    */
-  async chatCompletion(req, res, next) {
+  async chatCompletion(request, reply) {
     const startTime = Date.now();
+    let providerName, modelName; // Declare here for potential use in error logging
     
     try {
-      // Record request in metrics
       metrics.incrementRequestCount();
       
-      const { model, messages, temperature = 0.7, max_tokens = 1000 } = req.body;
+      // Use request.body
+      const { model, messages, temperature = 0.7, max_tokens = 1000, nocache } = request.body;
       
-      // Check for required parameters
       if (!model) {
-        res.status(400).json({ error: "Missing required parameter: model" });
-        return;
+        return reply.status(400).send({ error: "Missing required parameter: model" });
       }
       
       if (!Array.isArray(messages) || messages.length === 0) {
-        res.status(400).json({ error: "Missing or invalid messages array" });
-        return;
+        return reply.status(400).send({ error: "Missing or invalid messages array" });
       }
       
-      // Extract provider name and model name
-      let providerName, modelName;
-      
+      // Extract provider name and model name (logic unchanged)
       if (model.includes("/")) {
         [providerName, modelName] = model.split("/", 2);
       } else {
-        // Use getProvider without arguments to get the default provider
         const defaultProvider = providerFactory.getProvider();
         providerName = defaultProvider.name;
-        if (providerName === "gemini") {
-          modelName = model;
-        } else {
-          modelName = model;
-        }
+        modelName = model;
       }
       
-      // Get the appropriate provider
       const provider = providerFactory.getProvider(providerName);
       
       if (!provider) {
-        res.status(404).json({ 
+        return reply.status(404).send({ 
           error: `Provider '${providerName}' not found or not configured`
         });
-        return;
       }
       
-      console.log(`Processing chat request for ${providerName}/${modelName}`);
+      logger.info(`Processing chat request for ${providerName}/${modelName}`);
       
-      // Check cache if enabled
+      // Cache check logic 
       try {
-        if (typeof cache.isEnabled === "function" && cache.isEnabled() && !req.body.nocache) {
+        if (typeof cache.isEnabled === "function" && cache.isEnabled() && !nocache) {
           try {
-            const cacheKeyData = {
-              provider: providerName,
-              
-              model: modelName,
-              messages: messages,
-              temperature,
-              max_tokens
-            };
-            
+            const cacheKeyData = { provider: providerName, model: modelName, messages, temperature, max_tokens };
             const cacheKey = cache.generateKey(cacheKeyData);
-            
             const cachedResponse = await cache.get(cacheKey);
-            
             if (cachedResponse) {
-              console.log(`Cache hit for ${providerName}/${modelName}`);
-              // Add cache indicator
+              logger.info(`Cache hit for ${providerName}/${modelName}`);
               cachedResponse.cached = true;
-              res.json(cachedResponse);
-              return;
+              return reply.send(cachedResponse); // Use reply.send
             }
           } catch (cacheError) {
-            console.warn(`Cache error: ${cacheError.message}. Continuing without cache.`);
+            logger.warn(`Cache error: ${cacheError.message}. Continuing without cache.`);
           }
         }
       } catch (cacheCheckError) {
-        console.warn(`Failed to check cache status: ${cacheCheckError.message}. Continuing without cache.`);
+        logger.warn(`Failed to check cache status: ${cacheCheckError.message}. Continuing without cache.`);
       }
       
-      // // Set a timeout for the request (REMOVED for P1)
-      // const timeoutDuration = 
-      //   typeof provider.config === 'object' && 
-      //   typeof provider.config.timeout === 'number' ? 
-      //   provider.config.timeout : 30000;
-        
-      // const timeout = setTimeout(() => {
-      //   res.status(504).json({ 
-      //     error: 'Request timeout', 
-      //     message: 'The request took too long to complete'
-      //   });
-      //   // Note: the request will still complete in the background
-      // }, timeoutDuration);
-      
-      // Prepare options for the provider
+      // Prepare options (unchanged, uses parseFloat/parseInt)
       const options = {
         model: modelName,
         messages,
@@ -125,97 +89,68 @@ class ChatController {
       };
       
       try {
-        // Send request to provider
+        // Send request to provider (unchanged)
         const response = await provider.chatCompletion(options);
         
-        // // Clear timeout (REMOVED for P1)
-        // clearTimeout(timeout);
-        
-        // Store response in cache if caching is enabled
+        // Cache set logic 
         try {
-          if (typeof cache.isEnabled === "function" && cache.isEnabled() && !req.body.nocache) {
+          if (typeof cache.isEnabled === "function" && cache.isEnabled() && !nocache) {
             try {
-              const cacheKeyData = {
-                provider: providerName,
-                model: modelName,
-                messages: messages,
-                temperature,
-                max_tokens
-              };
-              
+              const cacheKeyData = { provider: providerName, model: modelName, messages, temperature, max_tokens };
               const cacheKey = cache.generateKey(cacheKeyData);
               await cache.set(cacheKey, response);
-              // console.log(`Cached response for ${providerName}/${modelName}`);
             } catch (cacheError) {
-              console.warn(`Failed to cache response: ${cacheError.message}`);
+              logger.warn(`Failed to cache response: ${cacheError.message}`);
             }
           }
         } catch (cacheCheckError) {
-          console.warn(`Failed to check cache status: ${cacheCheckError.message}`);
+          logger.warn(`Failed to check cache status: ${cacheCheckError.message}`);
         }
         
-        // Return the response
-        res.json(response);
-      } catch (error) {
-        // // Clear timeout (REMOVED for P1)
-        // clearTimeout(timeout);
-        
-        console.error(`Provider error in chatCompletion: ${error.message}`, { provider: providerName, model: modelName });
+        // Return the response using reply.send
+        return reply.send(response); // Explicit return
 
-        // Attempt to create a more specific error based on the provider error
-        let mappedError = error; // Default to original error
-        if (error.message) { // Basic check if error message exists
-          if (/authentication|api key|invalid_request_error.*api_key/i.test(error.message)) {
+      } catch (providerError) {
+        logger.error(`Provider error in chatCompletion: ${providerError.message}`, { provider: providerName, model: modelName, stack: providerError.stack });
+
+        // TODO: Review error handling strategy.
+        // Consider throwing specific custom error types from providers/services
+        // and centralizing status code mapping and response formatting solely
+        // within the fastifyErrorHandler.
+        let mappedError = providerError; 
+        if (providerError.message) { 
+          if (/authentication|api key|invalid_request_error.*api_key/i.test(providerError.message)) {
             mappedError = new Error(`Authentication failed with provider ${providerName}. Check your API key.`);
             mappedError.status = 401;
             mappedError.name = "AuthenticationError";
-          } else if (/rate limit|quota exceeded/i.test(error.message)) {
+          } else if (/rate limit|quota exceeded/i.test(providerError.message)) {
             mappedError = new Error(`Rate limit exceeded for provider ${providerName}.`);
             mappedError.status = 429;
             mappedError.name = "RateLimitError";
-          } else if (/model not found|deployment does not exist/i.test(error.message)) {
+          } else if (/model not found|deployment does not exist/i.test(providerError.message)) {
             mappedError = new Error(`Model '${modelName}' not found or unavailable for provider ${providerName}.`);
             mappedError.status = 404;
             mappedError.name = "NotFoundError";
-          } else if (error.response?.status && error.response.status >= 400 && error.response.status < 500) {
-            // General 4xx from provider (axios error example)
-            mappedError = new Error(`Provider ${providerName} returned client error ${error.response.status}: ${error.message}`);
-            mappedError.status = error.response.status; // Use provider status
-            mappedError.name = "ProviderClientError"; // Custom name
+          } else if (providerError.response?.status && providerError.response.status >= 400 && providerError.response.status < 500) {
+            mappedError = new Error(`Provider ${providerName} returned client error ${providerError.response.status}: ${providerError.message}`);
+            mappedError.status = providerError.response.status;
+            mappedError.name = "ProviderClientError";
           } else {
-            // Default to a generic provider error for other cases
-            mappedError = new Error(`Provider ${providerName} encountered an error: ${error.message}`);
-            mappedError.status = 502; // Bad Gateway is often appropriate
+            mappedError = new Error(`Provider ${providerName} encountered an error: ${providerError.message}`);
+            mappedError.status = 502;
             mappedError.name = "ProviderError";
           }
         }
         
-        // Pass the potentially mapped error to the centralized error handler
-        next(mappedError); // <-- Use next(err) instead of sending response directly
+        // Throw error instead of calling next()
+        throw mappedError; 
 
-        // // Ensure response isn't sent if timeout already fired (or if headers sent) (OLD CODE)
-        // if (!res.headersSent) {
-        //    res.status(500).json({
-        //       error: `Provider error: ${error.message}`,
-        //       provider: providerName,
-        //       model: modelName
-        //    });
-        // }
       }
     } catch (error) {
-      // Catch errors from validation, provider setup, caching etc.
-      console.error(`Server error in chatCompletion: ${error.message}`);
-      // Pass to the centralized error handler
-      next(error); 
-
-      // // OLD CODE
-      // console.error(error.stack);
-      // if (!res.headersSent) {
-      //   res.status(500).json({ 
-      //     error: 'Internal server error', 
-      //     message: error.message 
-      //   });
-      // }
+      // Catch errors from validation, provider setup, caching, or thrown provider errors
+      logger.error(`Server error in chatCompletion handler: ${error.message}`, { provider: providerName, model: modelName, stack: error.stack });
+      // Throw error to be handled by Fastify's central error handler
+      throw error; 
     }
   }
 
@@ -223,65 +158,65 @@ class ChatController {
    * Handles streaming chat completion requests using Server-Sent Events (SSE).
    * Sets up SSE headers, calls the provider's `chatCompletionStream` async generator,
    * pipes the resulting chunks to the client, and handles timeouts/disconnects.
-   * @param {express.Request} req - The Express request object.
-   * @param {express.Response} res - The Express response object.
+   * Uses reply.raw for direct stream manipulation.
+   * @param {FastifyRequest} request - Fastify request object.
+   * @param {FastifyReply} reply - Fastify reply object.
    */
-  async chatCompletionStream(req, res) {
+  async chatCompletionStream(request, reply) {
     let providerName, modelName;
-    let streamClosed = false; // Flag to prevent writing after close/error
+    let streamClosed = false; 
     let lastActivityTime = Date.now();
     let heartbeatInterval = null;
     let timeoutCheckInterval = null;
-    const HEARTBEAT_INTERVAL_MS = 20000; // Send heartbeat comment every 20s
-    const TIMEOUT_DURATION_MS = 60000; // Close connection after 60s of inactivity
-    let streamStartTime = null; // For duration metric
-    let ttfbRecorded = false; // Ensure TTFB is recorded only once
+    const HEARTBEAT_INTERVAL_MS = 20000;
+    const TIMEOUT_DURATION_MS = 60000;
+    let streamStartTime = null;
+    let ttfbRecorded = false;
+
+    // Use reply.raw for direct access to the underlying Node response object
+    const response = reply.raw;
 
     /**
      * Safely ends the response stream, cleans up intervals, and records metrics.
-     * @param {string} message - Log message indicating the reason for ending.
-     * @param {string|null} [errorType=null] - The type of error for metrics (e.g., 'timeout').
+     * Uses the Node.js response object (response = reply.raw).
      */
     const safelyEndResponse = (message, errorType = null) => {
       if (!streamClosed) {
-        console.log(message); // Log the reason for closing
+        logger.info(message); // Use logger
         streamClosed = true;
-        // Clear timers
-        if (heartbeatInterval) {clearInterval(heartbeatInterval);}
-        if (timeoutCheckInterval) {clearInterval(timeoutCheckInterval);}
+        if (heartbeatInterval) { clearInterval(heartbeatInterval); }
+        if (timeoutCheckInterval) { clearInterval(timeoutCheckInterval); }
         
-        // Record total stream duration metric
         if (streamStartTime && providerName && modelName) {
           const durationSeconds = (Date.now() - streamStartTime) / 1000;
           metrics.recordStreamDuration(providerName, modelName, durationSeconds);
         }
-        
-        // Record error if applicable
         if (errorType && providerName && modelName) {
           metrics.incrementStreamErrorCount(providerName, modelName, errorType);
         }
 
-        if (!res.writableEnded) {
-          res.end();
+        // Check Node.js response object directly
+        if (!response.writableEnded) {
+          response.end();
         }
       }
     };
 
     try {
-      // Record request in metrics
       metrics.incrementRequestCount();
       
-      const { model, messages, temperature = 0.7, max_tokens = 1000 } = req.body;
+      // Use request.body
+      const { model, messages, temperature = 0.7, max_tokens = 1000 } = request.body;
       
-      // Basic validation
       if (!model) {
-        return res.status(400).json({ error: "Missing required parameter: model" });
+        // Use reply to send error before headers are set
+        return reply.status(400).send({ error: "Missing required parameter: model" });
       }
       if (!Array.isArray(messages) || messages.length === 0) {
-        return res.status(400).json({ error: "Missing or invalid messages array" });
+        return reply.status(400).send({ error: "Missing or invalid messages array" });
       }
 
-      // Extract provider name and model name (similar to non-streaming)
+      // Extract provider/model name (logic unchanged)
       if (model.includes("/")) {
         [providerName, modelName] = model.split("/", 2);
       } else {
@@ -290,184 +225,171 @@ class ChatController {
         modelName = model;
       }
 
-      // Get the provider
       const provider = providerFactory.getProvider(providerName);
       if (!provider) {
-        return res.status(404).json({ error: `Provider '${providerName}' not found or not configured` });
+        return reply.status(404).send({ error: `Provider '${providerName}' not found or not configured` });
       }
 
-      console.log(`Processing STREAMING chat request for ${providerName}/${modelName}`);
-      streamStartTime = Date.now(); // Start timer *before* flushing headers for accurate TTFB
+      logger.info(`Processing STREAMING chat request for ${providerName}/${modelName}`);
+      streamStartTime = Date.now();
       
       // --- Streaming Specific Logic --- 
 
-      // Set headers for Server-Sent Events (SSE)
-      res.setHeader("Content-Type", "text/event-stream");
-      res.setHeader("Cache-Control", "no-cache");
-      res.setHeader("Connection", "keep-alive");
-      res.flushHeaders(); // Send headers immediately
-      lastActivityTime = Date.now(); // Reset activity time after headers
+      // Set headers using Node.js response object (reply.raw)
+      response.setHeader("Content-Type", "text/event-stream");
+      response.setHeader("Cache-Control", "no-cache");
+      response.setHeader("Connection", "keep-alive");
+      // Explicitly set Transfer-Encoding for streaming 
+      response.setHeader("Transfer-Encoding", "chunked"); 
+      // Optionally set X-Accel-Buffering for Nginx 
+      // response.setHeader("X-Accel-Buffering", "no");
+      
+      response.flushHeaders(); // Send headers immediately using Node.js response
+      lastActivityTime = Date.now();
 
-      // Setup Heartbeat: Send SSE comments periodically to keep the connection alive
+      // Setup Heartbeat using reply.raw
       heartbeatInterval = setInterval(() => {
-        if (!streamClosed && res.writable) { 
+        if (!streamClosed && response.writable) { 
           try {
-            res.write(":heartbeat\n\n"); // SSE comment format
-            // console.log('Sent heartbeat'); 
+            response.write(":heartbeat\n\n"); 
           } catch (err) {
             safelyEndResponse(`Error sending heartbeat: ${err.message}`);
           }
         }
       }, HEARTBEAT_INTERVAL_MS);
 
-      // Setup Inactivity Timeout Check: Monitor time since last chunk/activity
+      // Setup Inactivity Timeout Check (logic unchanged)
       timeoutCheckInterval = setInterval(() => {
         if (Date.now() - lastActivityTime > TIMEOUT_DURATION_MS) {
           safelyEndResponse(`Stream timed out due to inactivity for ${providerName}/${modelName}`, "timeout");
         }
-      }, TIMEOUT_DURATION_MS / 2); // Check more frequently than the timeout itself
+      }, TIMEOUT_DURATION_MS / 2);
 
-      // Handle client disconnect
-      req.on("close", () => {
+      // Handle client disconnect using Node.js request object (request.raw)
+      request.raw.on("close", () => {
         safelyEndResponse(`Client disconnected stream for ${providerName}/${modelName}`, "client_disconnect");
       });
 
-      // Prepare options for the provider stream method
+      // Prepare options (unchanged)
       const options = {
         model: modelName,
         messages,
         temperature: parseFloat(temperature?.toString() || "0.7"),
         max_tokens: parseInt(max_tokens?.toString() || "1000", 10),
-        // Add any other stream-specific options from req.body if needed
       };
 
-      // Call the provider's streaming method
+      // Call provider stream (unchanged)
       const stream = provider.chatCompletionStream(options);
       
-      // Iterate through the provider's async generator stream
+      // Iterate through stream
       for await (const chunk of stream) {
-        if (streamClosed) {break;} // Stop if the stream was closed due to error/timeout/disconnect
-        lastActivityTime = Date.now(); // Reset inactivity timer on receiving data
+        if (streamClosed) { break; }
+        lastActivityTime = Date.now(); 
         
-        // Record Time To First Byte (TTFB) metric on the *first* chunk received
         if (!ttfbRecorded) {
           const ttfbSeconds = (Date.now() - streamStartTime) / 1000;
           metrics.recordStreamTtfb(providerName, modelName, ttfbSeconds);
           ttfbRecorded = true;
         }
-
-        // Increment chunk counter
         metrics.incrementStreamChunkCount(providerName, modelName);
 
-        // Format the chunk as a valid SSE data message
         const sseFormattedChunk = `data: ${JSON.stringify(chunk)}\n\n`;
         
-        // Write chunk safely to the response stream
-        if (!streamClosed && res.writable) {
+        // Write chunk safely using reply.raw
+        if (!streamClosed && response.writable) {
           try {
-            res.write(sseFormattedChunk);
+            response.write(sseFormattedChunk);
           } catch (writeError) {
-            console.error(`Error writing chunk to response: ${writeError.message}`);
+            logger.error(`Error writing chunk to response: ${writeError.message}`);
             safelyEndResponse(`Error writing chunk to response: ${writeError.message}`, "write_error");
-            break; // Stop processing on write error
+            break;
           }
         }
       }
       
-      // If the loop completes without errors, end the stream normally
+      // If loop completes normally, end the stream
       safelyEndResponse(`Stream finished normally for ${providerName}/${modelName}`);
       
     } catch (error) {
-      console.error(`Stream error: ${error.message}`, error.stack);
-      const errorType = "provider_error"; // Default error type
+      // Handle errors. Note: Headers might have already been sent.
+      logger.error(`Stream error: ${error.message}`, { provider: providerName, model: modelName, stack: error.stack });
+      const errorType = "provider_error";
       
-      // Ensure error is sent only if headers haven't been sent
-      if (!res.headersSent && !streamClosed) {
-        streamClosed = true; // Mark as closed
-        if (heartbeatInterval) {clearInterval(heartbeatInterval);}
-        if (timeoutCheckInterval) {clearInterval(timeoutCheckInterval);}
-        try {
-          res.status(500).json({ 
-            error: "Stream processing error", 
-            message: error.message 
-          });
-        } catch (err) {
-          console.error("Failed to send JSON error response:", err);
-        }
-        // Record error metric even if we couldn't send response
-        if (providerName && modelName) {
-          metrics.incrementStreamErrorCount(providerName, modelName, errorType);
-        }
-      } else if (!streamClosed && res.writable) {
-        // If headers ARE sent, try to send a structured error event over the stream
-        // Use a distinct SSE event type for errors
+      // Check if headers have been sent using reply.sent (Fastify property)
+      if (!reply.sent && !streamClosed) {
+          // Headers not sent, we can use reply to send a JSON error
+          streamClosed = true; 
+          if (heartbeatInterval) { clearInterval(heartbeatInterval); }
+          if (timeoutCheckInterval) { clearInterval(timeoutCheckInterval); }
+          try {
+              // Determine appropriate status code from error if possible
+              const statusCode = error.status || 500;
+              reply.status(statusCode).send({ 
+                  error: "Stream processing error", 
+                  message: error.message 
+              });
+          } catch (err) {
+              logger.error("Failed to send JSON error response:", err);
+          }
+          // Record error metric
+          if (providerName && modelName) {
+              metrics.incrementStreamErrorCount(providerName, modelName, errorType);
+          }
+      } else if (!streamClosed && response.writable) {
+        // Headers ARE sent, try to send a structured error event over the stream using reply.raw
         const errorPayload = {
-          // Use properties from the error if available, otherwise provide defaults
           code: error.code || error.name || "ProviderStreamError",
           message: error.message || "An error occurred during streaming.",
-          status: error.status || 500, // Best guess if status not available
+          status: error.status || 500,
           provider: providerName,
           model: modelName
         };
         try {
-          // Format as SSE error event
           const sseErrorEvent = `event: error\ndata: ${JSON.stringify(errorPayload)}\n\n`;
-          res.write(sseErrorEvent);
-          console.log(`Sent SSE error event for ${providerName}/${modelName}`);
+          response.write(sseErrorEvent);
+          logger.info(`Sent SSE error event for ${providerName}/${modelName}`);
         } catch (writeError) {
-          console.error("Failed to write SSE error event to stream:", writeError);
-          // If writing the error fails, we can't do much more
+          logger.error("Failed to write SSE error event to stream:", writeError);
         }
         // End the stream after attempting to send the error event
         safelyEndResponse(`Stream ended due to error: ${error.message}`, errorType);
       } else {
-        // If stream is already closed or not writable, just log and record metric
-        console.log("Stream already closed or not writable when error occurred.");
+        // Stream already closed or not writable
+        logger.warn("Stream already closed or not writable when error occurred.");
         if (providerName && modelName) {
           metrics.incrementStreamErrorCount(providerName, modelName, errorType);
         }
-        if (heartbeatInterval) {clearInterval(heartbeatInterval);}
-        if (timeoutCheckInterval) {clearInterval(timeoutCheckInterval);}
+        if (heartbeatInterval) { clearInterval(heartbeatInterval); }
+        if (timeoutCheckInterval) { clearInterval(timeoutCheckInterval); }
       }
     }
   }
 
   /**
    * Gets combined capabilities information from providers, cache, and system.
-   * @param {express.Request} req - The Express request object.
-   * @param {express.Response} res - The Express response object.
+   * @param {FastifyRequest} request - Fastify request object.
+   * @param {FastifyReply} reply - Fastify reply object.
    */
-  async getChatCapabilities(req, res) {
+  async getChatCapabilities(request, reply) {
     try {
-      // Record request in metrics
       metrics.incrementRequestCount();
       
-      // Get provider information
       const providersInfo = await providerFactory.getProvidersInfo();
-      
-      // Get circuit breaker states
       const circuitBreakerStates = getCircuitBreakerStates();
       
-      // Get cache statistics with safety check
       let cacheStats = { enabled: false };
       try {
         if (typeof cache.getStats === "function") {
           const stats = cache.getStats();
-          cacheStats = { 
-            ...stats,
-            enabled: true
-          };
+          cacheStats = { ...stats, enabled: true };
         }
       } catch (cacheError) {
-        console.warn(`Failed to get cache stats: ${cacheError.message}`);
-        cacheStats = { 
-          enabled: false,
-          error: cacheError.message
-        };
+        logger.warn(`Failed to get cache stats: ${cacheError.message}`);
+        cacheStats = { enabled: false, error: cacheError.message };
       }
       
-      // Return combined capabilities and status
-      res.json({
+      // Return combined capabilities using reply.send
+      return reply.send({
         providers: providersInfo,
         defaultProvider: providerFactory.getProvider().name,
         circuitBreakers: circuitBreakerStates,
@@ -477,13 +399,11 @@ class ChatController {
           memory: process.memoryUsage(),
           timestamp: new Date().toISOString()
         }
-      });
+      }); // Explicit return
     } catch (error) {
-      console.error(`Error getting chat capabilities: ${error.message}`);
-      res.status(500).json({ 
-        error: "Failed to get chat capabilities", 
-        message: error.message 
-      });
+      logger.error(`Error getting chat capabilities: ${error.message}`, { stack: error.stack });
+      // Throw error for Fastify's handler
+      throw error; 
     }
   }
 }

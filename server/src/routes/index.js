@@ -1,32 +1,41 @@
 /**
- * Routes index
- * Combines all API routes into a single router
+ * Main API Routes Plugin
+ * Combines all API routes and registers them under a common prefix.
  */
-import express from "express";
-import modelRoutes from "./modelRoutes.js";
-import chatRoutes from "./chatRoutes.js";
+// import express from "express"; // Removed
+import modelRoutesPlugin from "./modelRoutes.js";
+import chatRoutesPlugin from "./chatRoutes.js";
+// Import config or package.json directly if needed for version
+// import config from "../config/config.js"; 
+// import pkg from '../../package.json' assert { type: 'json' }; // Example for package.json
 
-const router = express.Router();
+// Fastify Plugin function
+async function mainApiRoutes (fastify, options) {
 
-// Status endpoint for API health check
-router.get("/status", (req, res) => {
-  res.json({
-    status: "ok",
-    timestamp: new Date().toISOString()
+  // Status endpoint for API health check
+  fastify.get("/status", (request, reply) => {
+    reply.send({
+      status: "ok",
+      timestamp: new Date().toISOString()
+    });
   });
-});
 
-// Apply API routes
-router.use("/models", modelRoutes);
-router.use("/chat", chatRoutes);
-
-// Version info route
-router.get("/version", (req, res) => {
-  res.json({
-    version: process.env.npm_package_version || "1.0.0",
-    apiVersion: "v1",
-    timestamp: new Date().toISOString()
+  // Version info route
+  fastify.get("/version", (request, reply) => {
+    // Reading package.json version might require different import methods depending on Node version/setup
+    // Using process.env is often simpler if available
+    reply.send({
+      version: process.env.npm_package_version || "1.0.0", 
+      apiVersion: "v1",
+      timestamp: new Date().toISOString()
+    });
   });
-});
 
-export default router;
+  // Register nested route plugins
+  await fastify.register(modelRoutesPlugin, { prefix: "/models" });
+  await fastify.register(chatRoutesPlugin, { prefix: "/chat" });
+
+}
+
+// export default router; // Removed
+export default mainApiRoutes; // Export the plugin function

@@ -167,4 +167,24 @@ This section details the endpoints provided by the Node.js API server component 
 ### Monitoring Endpoints
 
 *   **`GET /health`**: Basic health check endpoint returning status, uptime, memory usage, etc.
-*   **`GET /metrics`**: Exposes Prometheus metrics for scraping. 
+*   **`GET /metrics`**: Exposes Prometheus metrics for scraping.
+
+## Authentication
+
+This API uses JWT (JSON Web Tokens) for authentication.
+
+1.  **Set JWT Secret:** Ensure the `JWT_SECRET` environment variable is set to a strong, secret key in your `.env` file.
+2.  **Login:** Obtain an access token by sending a POST request to `/api/auth/login` with the following JSON body:
+    ```json
+    {
+      "username": "testuser",
+      "password": "password123"
+    }
+    ```
+    *(Note: These are placeholder credentials. Replace with actual user management in a production environment.)*
+3.  **Use Token:** Include the received `access_token` in the `Authorization` header for all subsequent requests to protected API endpoints (e.g., `/api/chat/*`, `/api/models/*`) using the Bearer scheme:
+    ```
+    Authorization: Bearer <your_access_token>
+    ```
+
+Requests without a valid token to protected routes will receive a 401 Unauthorized error. 

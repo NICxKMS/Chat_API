@@ -1,37 +1,43 @@
 /**
- * Model Routes
+ * Model Routes Plugin
  * Defines endpoints for model-related operations
  */
-import express from "express";
+// import express from "express"; // Removed
 import modelController from "../controllers/ModelController.js";
 
-const router = express.Router();
+// Fastify Plugin function
+async function modelRoutes (fastify, options) {
 
-// GET /models - Get all models from all providers
-router.get("/", modelController.getAllModels.bind(modelController));
+  // GET / - Get all models from all providers
+  fastify.get("/", modelController.getAllModels);
 
-// // GET /models/list - REMOVED ALIAS
-// router.get('/list', modelController.getAllModels.bind(modelController));
+  // // GET /models/list - REMOVED ALIAS
+  // router.get('/list', modelController.getAllModels.bind(modelController));
 
-// GET /models/categories - Get models categorized for dropdown UI
-router.get("/categories", modelController.getCategorizedModels.bind(modelController));
+  // GET /categories - Get models categorized for dropdown UI
+  fastify.get("/categories", modelController.getCategorizedModels);
 
-// // GET /models/categorized - REMOVED ALIAS
-// router.get('/categorized', modelController.getCategorizedModels.bind(modelController));
+  // // GET /models/categorized - REMOVED ALIAS
+  // router.get('/categorized', modelController.getCategorizedModels.bind(modelController));
 
-// GET /models/providers - Get all providers and their capabilities
-router.get("/providers", modelController.getProviders.bind(modelController));
+  // GET /providers - Get all providers and their capabilities
+  fastify.get("/providers", modelController.getProviders);
 
-// // GET /models/capabilities/all - REMOVED ALIAS
-// router.get('/capabilities/all', modelController.getProviderCapabilities.bind(modelController));
+  // // GET /models/capabilities/all - REMOVED ALIAS
+  // router.get('/capabilities/all', modelController.getProviderCapabilities.bind(modelController));
 
-// GET /models/classified - Get models classified by external service
-router.get("/classified", modelController.getClassifiedModels.bind(modelController));
+  // GET /classified - Get models classified by external service
+  fastify.get("/classified", modelController.getClassifiedModels);
 
-// GET /models/classified/criteria - Get models classified with specific criteria
-router.get("/classified/criteria", modelController.getClassifiedModelsWithCriteria.bind(modelController));
+  // GET /classified/criteria - Get models classified with specific criteria
+  // Uses request.query internally in the controller
+  fastify.get("/classified/criteria", modelController.getClassifiedModelsWithCriteria);
 
-// GET /models/:providerName - Get models for a specific provider (must be last)
-router.get("/:providerName", modelController.getProviderModels.bind(modelController));
+  // GET /:providerName - Get models for a specific provider (must be last)
+  // Uses request.params.providerName internally in the controller
+  fastify.get("/:providerName", modelController.getProviderModels);
 
-export default router; 
+}
+
+// export default router; // Removed
+export default modelRoutes; // Export the plugin function 

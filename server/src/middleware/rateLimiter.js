@@ -1,70 +1,81 @@
 /**
- * Rate Limiter Middleware
- * Implements rate limiting based on request IP and user ID
+ * Rate Limiter Hook for Fastify
+ * Implements rate limiting based on request IP or user ID using rate-limiter-flexible.
  */
 import { RateLimiterMemory } from "rate-limiter-flexible";
 import logger from "../utils/logger.js";
 import config from "../config/config.js";
 
-// Default rate limit options (if not configured in config)
+// Default rate limit options (adjust defaults as needed)
 const defaultLimiterOptions = {
-  points: 10000000,            // 100 requests
-  duration: 60 ,      // per hour
-  blockDuration: 60 * 15  // Block for 15 minutes
+  points: config.rateLimiting?.options?.points || 100, // Default: 100 points
+  duration: config.rateLimiting?.options?.duration || 60, // Default: per 60 seconds
+  blockDuration: config.rateLimiting?.options?.blockDuration || 60 * 15 // Default: Block for 15 minutes
 };
 
-// Get rate limiter options from config or use defaults
-const limiterOptions = config.rateLimiting?.options || defaultLimiterOptions;
-
 // Create a rate limiter instance
-const rateLimiter = new RateLimiterMemory(limiterOptions);
+const rateLimiter = new RateLimiterMemory(defaultLimiterOptions);
 
 /**
- * Rate limiting middleware
- * Limits requests based on IP address and user ID (if available)
+ * Fastify onRequest Hook for Rate Limiting.
+ * @param {FastifyRequest} request
+ * @param {FastifyReply} reply
  */
-export default function rateLimiterMiddleware(req, res, next) {
+export default async function rateLimiterHook(request, reply) {
   // Skip rate limiting if disabled in config
   if (config.rateLimiting?.enabled === false) {
-    return next();
+    return; // Continue request lifecycle
   }
 
-  // Get client identifier (prefer user ID if authenticated, fallback to IP)
-  const userId = req.user?.id || "";
-  const clientIp = req.ip || req.connection.remoteAddress || "";
+  // Determine client identifier (prefer user ID if available from auth, fallback to IP)
+  // Assumes authentication middleware might decorate 'request.user'
+  const userId = request.user?.id || "";
+  const clientIp = request.ip || ""; // Fastify provides request.ip
   const key = userId || clientIp;
 
-  // Skip if we couldn't determine a key
   if (!key) {
-    logger.warn("Rate limiter: No client identifier found, skipping rate limit check");
-    return next();
+    // Log a warning if no identifier could be found
+    logger.warn("Rate limiter hook: No client identifier found (IP or User), skipping check for request path:", request.raw.url);
+    return; // Continue request lifecycle
   }
 
-  // Consume points
-  rateLimiter.consume(key)
-    .then(rateLimiterRes => {
-      // Set rate limit headers
-      res.setHeader("X-RateLimit-Limit", limiterOptions.points);
-      res.setHeader("X-RateLimit-Remaining", rateLimiterRes.remainingPoints);
-      res.setHeader("X-RateLimit-Reset", new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString());
-      
-      next();
-    })
-    .catch(rateLimiterRes => {
-      // Rate limit exceeded
-      logger.warn(`Rate limit exceeded for ${key}`);
-      
-      // Set rate limit headers
-      res.setHeader("X-RateLimit-Limit", limiterOptions.points);
-      res.setHeader("X-RateLimit-Remaining", 0);
-      res.setHeader("X-RateLimit-Reset", new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString());
-      res.setHeader("Retry-After", Math.ceil(rateLimiterRes.msBeforeNext / 1000));
-      
-      // Send rate limit error
-      res.status(429).json({
-        error: "Too Many Requests",
-        message: "Rate limit exceeded, please try again later",
-        retryAfter: Math.ceil(rateLimiterRes.msBeforeNext / 1000)
-      });
+  try {
+    // Consume points asynchronously
+    const rateLimiterRes = await rateLimiter.consume(key);
+
+    // Set rate limit headers on successful consumption using reply.header
+    reply.header("X-RateLimit-Limit", defaultLimiterOptions.points);
+    reply.header("X-RateLimit-Remaining", rateLimiterRes.remainingPoints);
+    reply.header("X-RateLimit-Reset", new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString());
+
+    // Allow request to continue by returning void/undefined implicitly
+    return;
+
+  } catch (rateLimiterRes) {
+    // Catch the error thrown by rate-limiter-flexible when limit is exceeded
+    if (rateLimiterRes instanceof Error) {
+        // Handle unexpected errors during rate limiting itself
+        logger.error("Unexpected error in rate limiter consumption:", rateLimiterRes);
+        // Decide if you want to let the request proceed or send a generic error
+        // For safety, maybe block the request
+        return reply.status(500).send({ error: "Internal Server Error", message: "Error during rate limit check." });
+    }
+
+    // If it's not an Error, it's the rejection object from rate-limiter-flexible
+    logger.warn(`Rate limit exceeded for key: ${key} on path: ${request.raw.url}`);
+
+    // Set headers for rate limit exceeded response using reply.header
+    reply.header("X-RateLimit-Limit", defaultLimiterOptions.points);
+    reply.header("X-RateLimit-Remaining", 0); // Remaining points are 0 when blocked
+    reply.header("X-RateLimit-Reset", new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString());
+    reply.header("Retry-After", Math.ceil(rateLimiterRes.msBeforeNext / 1000)); // Set Retry-After header
+
+    // Send 429 response using reply.status().send() and stop request lifecycle
+    // Note: We 'return' the reply object to halt further processing in Fastify hooks
+    return reply.status(429).send({
+      error: "Too Many Requests",
+      message: "Rate limit exceeded, please try again later.",
+      retryAfterSeconds: Math.ceil(rateLimiterRes.msBeforeNext / 1000)
     });
-} 
+  }
+}

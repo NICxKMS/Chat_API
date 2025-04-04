@@ -13,6 +13,7 @@ const defaultConfig = {
   environment: process.env.NODE_ENV || "development",
   version: process.env.npm_package_version || "1.0.0",
   logLevel: process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug"),
+  jwtSecret: process.env.JWT_SECRET,
   providers: {
     openai: {
       apiKey: process.env.OPENAI_API_KEY,
@@ -73,5 +74,11 @@ const defaultConfig = {
     headers: ["Content-Type", "Authorization", "X-Requested-With"]
   }
 };
+
+// Add validation for the secret
+if (!defaultConfig.jwtSecret) {
+  console.error("FATAL ERROR: JWT_SECRET environment variable is not set.");
+  process.exit(1);
+}
 
 export default defaultConfig; 

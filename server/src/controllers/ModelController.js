@@ -6,6 +6,7 @@ import providerFactory from "../providers/ProviderFactory.js";
 import * as cache from "../utils/cache.js";
 import * as metrics from "../utils/metrics.js";
 import { ModelClassificationService } from "../services/ModelClassificationService.js";
+import logger from "../utils/logger.js"; // Import logger for explicit logging
 
 class ModelController {
   constructor() {
@@ -26,15 +27,23 @@ class ModelController {
       this.modelClassificationService = null;
     }
     
+    // Bind methods to ensure 'this' context if needed, although might be unnecessary with Fastify
+    this.getAllModels = this.getAllModels.bind(this);
+    this.getProviderModels = this.getProviderModels.bind(this);
+    this.getProviderCapabilities = this.getProviderCapabilities.bind(this);
+    this.getCategorizedModels = this.getCategorizedModels.bind(this);
+    this.getProviders = this.getProviders.bind(this);
+    this.getClassifiedModels = this.getClassifiedModels.bind(this);
+    this.getClassifiedModelsWithCriteria = this.getClassifiedModelsWithCriteria.bind(this);
   }
 
   /**
    * Get all available models grouped by provider, along with default settings.
    * Fetches info from all configured providers.
-   * @param {express.Request} req - Express request object.
-   * @param {express.Response} res - Express response object.
+   * @param {FastifyRequest} request - Fastify request object.
+   * @param {FastifyReply} reply - Fastify reply object.
    */
-  async getAllModels(req, res) {
+  async getAllModels(request, reply) {
     try {
       // Record request in metrics
       metrics.incrementRequestCount();
@@ -59,7 +68,7 @@ class ModelController {
         defaultProvider.config.defaultModel : undefined;
       
       // Return formatted response
-      res.json({
+      reply.send({
         models: modelsByProvider,
         providers: Object.keys(providerFactory.getProviders()),
         default: {
@@ -68,46 +77,38 @@ class ModelController {
         }
       });
     } catch (error) {
-      console.error(`Error getting models: ${error.message}`);
-      res.status(500).json({ 
-        error: "Failed to get models", 
-        message: error.message 
-      });
+      logger.error(`Error getting models: ${error.message}`, { stack: error.stack });
+      // Let Fastify's default error handler (or our custom one later) handle it
+      throw error;
+      // reply.status(500).send({ 
+      //   error: "Failed to get models", 
+      //   message: error.message 
+      // });
     }
   }
 
   /**
-   * Alias for getAllModels - For backward compatibility
-   */
-  async getModels(req, res) {
-    await this.getAllModels(req, res);
-  }
-
-  /**
    * Get models for a specific provider, handling special cases like 'categories'.
-   * @param {express.Request} req - Express request object.
-   * @param {express.Response} res - Express response object.
+   * @param {FastifyRequest} request - Fastify request object.
+   * @param {FastifyReply} reply - Fastify reply object.
    */
-  async getProviderModels(req, res) {
+  async getProviderModels(request, reply) {
     try {
       // Record request in metrics
       metrics.incrementRequestCount();
       
-      const { providerName } = req.params;
+      const { providerName } = request.params; // Use request.params
       
       if (!providerName) {
-        res.status(400).json({ 
+        // Return error response directly
+        return reply.status(400).send({ 
           error: "Provider name is required" 
         });
-        return;
       }
       
-      // Special handling for 'categories' or 'categorized' path parameter
-      if (providerName === "categories" || providerName === "categorized") {
-        // Delegate to the method that handles categorization/classification
-        await this.getCategorizedModels(req, res);
-        return;
-      }
+      // Special handling for paths used by other routes (Fastify handles route precedence)
+      // No need for the explicit check here like in the Express version
+      // if (providerName === "categories" || providerName === "categorized") { ... }
       
       try {
         // Get provider from factory
@@ -121,33 +122,37 @@ class ModelController {
           provider.config.defaultModel : undefined;
           
         // Return formatted response
-        res.json({
+        reply.send({
           provider: providerName,
           models: models,
           defaultModel: defaultModel
         });
       } catch (error) {
-        // Handle provider not found
-        res.status(404).json({ 
+        // Handle provider not found specifically
+        logger.warn(`Provider not found: ${providerName}`, { message: error.message });
+        // Return 404 directly
+        return reply.status(404).send({ 
           error: `Provider '${providerName}' not found or not configured`,
           message: error.message
         });
       }
     } catch (error) {
-      console.error(`Error getting provider models: ${error.message}`);
-      res.status(500).json({ 
-        error: "Failed to get provider models", 
-        message: error.message 
-      });
+      logger.error(`Error getting provider models: ${error.message}`, { providerName: request.params?.providerName, stack: error.stack });
+      // Let Fastify's error handler handle it
+      throw error;
+      // reply.status(500).send({ 
+      //   error: "Failed to get provider models", 
+      //   message: error.message 
+      // });
     }
   }
 
   /**
    * Get detailed capabilities information for all configured providers.
-   * @param {express.Request} req - Express request object.
-   * @param {express.Response} res - Express response object.
+   * @param {FastifyRequest} request - Fastify request object.
+   * @param {FastifyReply} reply - Fastify reply object.
    */
-  async getProviderCapabilities(req, res) {
+  async getProviderCapabilities(request, reply) {
     try {
       // Record request in metrics
       metrics.incrementRequestCount();
@@ -155,26 +160,28 @@ class ModelController {
       // Get all provider info
       const providersInfo = await providerFactory.getProvidersInfo();
       
-      res.json({
+      reply.send({
         providers: providersInfo,
         defaultProvider: providerFactory.getProvider().name
       });
     } catch (error) {
-      console.error(`Error getting provider capabilities: ${error.message}`);
-      res.status(500).json({ 
-        error: "Failed to get provider capabilities", 
-        message: error.message 
-      });
+      logger.error(`Error getting provider capabilities: ${error.message}`, { stack: error.stack });
+      // Let Fastify's error handler handle it
+      throw error;
+      // reply.status(500).send({ 
+      //   error: "Failed to get provider capabilities", 
+      //   message: error.message 
+      // });
     }
   }
 
   /**
    * Get categorized models, either via the classification service or a hardcoded fallback.
    * Used by the `/models/categories` and `/models/categorized` endpoints.
-   * @param {express.Request} req - Express request object.
-   * @param {express.Response} res - Express response object.
+   * @param {FastifyRequest} request - Fastify request object.
+   * @param {FastifyReply} reply - Fastify reply object.
    */
-  async getCategorizedModels(req, res) {
+  async getCategorizedModels(request, reply) {
     try {
       // Record request in metrics
       metrics.incrementRequestCount();
@@ -182,12 +189,12 @@ class ModelController {
       // Check if classification service is enabled and available
       if (this.useClassificationService && this.modelClassificationService) {
         // If enabled, delegate to the classification service method
-        return this.getClassifiedModels(req, res);
+        // Ensure the delegated method also uses (request, reply) and throws errors
+        return await this.getClassifiedModels(request, reply); // Assuming getClassifiedModels is adapted
       }
       
       // Fallback: If classification service is not available, return hardcoded sample data.
-      // This logic was moved from index.js during refactoring (P1.1).
-      console.log("Classification service disabled or unavailable, returning hardcoded sample categories.");
+      logger.warn("Classification service disabled or unavailable, returning hardcoded sample categories.");
       const categories = [
         {
           name: "Latest & Greatest",
@@ -220,237 +227,161 @@ class ModelController {
         }
       ];
       
-      res.json(categories);
+      reply.send(categories);
 
     } catch (error) {
-      console.error(`Error getting categorized models: ${error.message}`);
-      res.status(500).json({ 
-        error: "Failed to get categorized models", 
-        message: error.message 
-      });
+      logger.error(`Error getting categorized models: ${error.message}`, { stack: error.stack });
+      throw error;
+      // reply.status(500).send({ 
+      //   error: "Failed to get categorized models", 
+      //   message: error.message 
+      // });
     }
   }
   
   /**
    * Get available providers and their capabilities
+   * @param {FastifyRequest} request - Fastify request object.
+   * @param {FastifyReply} reply - Fastify reply object.
    */
-  async getProviders(req, res) {
+  async getProviders(request, reply) {
     try {
       const providers = await providerFactory.getProvidersInfo();
-      res.json(providers);
+      reply.send(providers);
     } catch (error) {
-      console.error(`Error getting providers: ${error.message}`);
-      res.status(500).json({ 
-        error: "Failed to get providers", 
-        message: error.message 
-      });
+      logger.error(`Error getting providers: ${error.message}`, { stack: error.stack });
+      throw error;
+      // reply.status(500).send({ 
+      //   error: "Failed to get providers", 
+      //   message: error.message 
+      // });
     }
   }
 
   /**
-   * Get models classified by the external gRPC service.
-   * Handles caching and communication with `ModelClassificationService`.
-   * @param {express.Request} req - Express request object.
-   * @param {express.Response} res - Express response object.
+   * Get classified models from the external gRPC service.
+   * @param {FastifyRequest} request - Fastify request object.
+   * @param {FastifyReply} reply - Fastify reply object.
    */
-  async getClassifiedModels(req, res) {
-    try {
-      // Record request in metrics
-      metrics.incrementRequestCount();
-      
-      // Check if results are in cache
-      const cacheKey = cache.generateKey({ route: "models/classified" });
-      if (cache.isEnabled() && !req.query.nocache) {
-        const cachedResult = await cache.get(cacheKey);
-        if (cachedResult) {
-          res.json(cachedResult);
-          return;
-        }
-      }
-      
-      // If classification service is disabled, return empty result
-      if (!this.useClassificationService || !this.modelClassificationService) {
-        console.log("Classification service is disabled, returning empty result");
-        res.json({
-          hierarchical_groups: [], // Match the expected structure
-          properties: [],
-          timestamp: new Date().toISOString()
-        });
-        return;
-      }
-   
-      try {
-        const serverAddress = this.modelClassificationService["serverAddress"];
-        console.log(`Attempting to connect to classification server at ${serverAddress}`);
-        
-        // Fetch providers info *first* (Refactored in P1.6)
-        const providersInfo = await providerFactory.getProvidersInfo();
-
-        // Get classified models from external service, passing provider info (Refactored in P1.6)
-        console.time("classificationServiceCall"); // Start timer
-        const classifiedModels = await this.modelClassificationService.getClassifiedModels(providersInfo);
-        console.timeEnd("classificationServiceCall"); // End timer and log duration
-        
-        // Check if we have valid hierarchical results
-        if (!classifiedModels || !classifiedModels.hierarchical_groups || classifiedModels.hierarchical_groups.length === 0) {
-          console.warn("Classification service returned empty hierarchical results");
-          res.json({
-            hierarchical_groups: [],
-            properties: classifiedModels?.available_properties || [], // Use available properties if possible
-            timestamp: new Date().toISOString()
-          });
-          return;
-        }
-        
-        // Prepare response (no transformation needed if frontend expects hierarchical)
-        const response = {
-          hierarchical_groups: classifiedModels.hierarchical_groups,
-          properties: classifiedModels.available_properties || [],
-          timestamp: new Date().toISOString()
-        };
-        
-        // Cache the results
-        if (cache.isEnabled() && !req.query.nocache) {
-          await cache.set(cacheKey, response, 300); // Cache for 5 minutes
-        }
-        
-        // Return formatted response
-        res.json(response);
-      } catch (error) {
-        console.error(`Error classifying models: ${error.message}`);
-        console.error(`Stack trace: ${error.stack}`);
-        
-        // Return the error
-        res.status(500).json({ 
-          error: "Classification service error",
-          message: error.message,
-          stack: process.env.NODE_ENV === "development" ? error.stack : undefined
-        });
-      }
-    } catch (error) {
-      console.error(`Error in getClassifiedModels: ${error.message}`);
-      console.error(`Stack trace: ${error.stack}`);
-      res.status(500).json({ 
-        error: "Failed to get classified models", 
-        message: error.message,
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+  async getClassifiedModels(request, reply) {
+    if (!this.useClassificationService || !this.modelClassificationService) {
+      logger.warn("getClassifiedModels called but service disabled/unavailable.");
+      // Service disabled is not necessarily an error, return empty list or fallback?
+      // For now, returning 503 seems consistent with gRPC unavailability
+      return reply.status(503).send({ 
+          error: "Classification service unavailable", 
+          message: "The model classification service is currently disabled or unavailable."
       });
+    }
+
+    try {
+      metrics.incrementRequestCount();
+
+      // --- Start Critical Section --- 
+      let classifiedModels;
+      try {
+          // Fetch provider info first
+          logger.info("Fetching provider info for classification service...");
+          const providersInfo = await providerFactory.getProvidersInfo();
+          logger.info("Provider info fetched.");
+          
+          // Check if providersInfo is valid before proceeding
+          if (!providersInfo || Object.keys(providersInfo).length === 0) {
+            logger.warn("No provider info available to send to classification service.");
+            // Decide what to return: empty result or error?
+            // Returning an empty valid response might be appropriate
+            return reply.send({ hierarchical_groups: [], available_properties: [], timestamp: new Date().toISOString() }); 
+          }
+
+          logger.info("Calling GetClassifiedModels gRPC service with provider info");
+          // Pass providersInfo to the service method
+          classifiedModels = await this.modelClassificationService.getClassifiedModels(providersInfo);
+          logger.info("Received response from GetClassifiedModels gRPC service");
+      } catch (internalError) {
+          // Catch errors specifically from the service call/data prep
+          logger.error(`Internal error during getClassifiedModels service call: ${internalError.message}`, { stack: internalError.stack });
+          // Throw a new error or the original to be caught by the outer handler
+          // Throwing ensures it goes to the centralized Fastify error handler
+          throw new Error(`Internal classification service error: ${internalError.message}`);
+      }
+      // --- End Critical Section --- 
+
+      // Explicitly return the reply object after sending
+      return reply.send(classifiedModels);
+
+    } catch (error) {
+      // This outer catch handles:
+      // 1. Errors thrown from the inner try/catch (e.g., internalError)
+      // 2. Specific gRPC communication errors (like UNAVAILABLE)
+      // 3. Any other unexpected errors in this handler
+      
+      // Log appropriately (already done by the handler)
+      // logger.error(`Error in getClassifiedModels handler: ${error.message}`, { stack: error.stack });
+
+      // Specific handling for gRPC UNAVAILABLE error
+      if (error.code === 14 /* grpc.status.UNAVAILABLE */) {
+          logger.error(`gRPC service unavailable: ${error.message}`, { stack: error.stack });
+          return reply.status(503).send({ 
+              error: "Classification service unavailable",
+              message: `Failed to connect to classification service: ${error.details || error.message}`
+          });
+      }
+      
+      // For any other errors (including the re-thrown internalError), let the centralized handler deal with it.
+      // The centralized handler will log it and return a 500 (or mapped status).
+      throw error; 
     }
   }
-
+  
   /**
-   * Get models matching specific criteria from the classification service.
-   * @param {express.Request} req - Express request object.
-   * @param {express.Response} res - Express response object.
+   * Get classified models from the external gRPC service with criteria.
+   * @param {FastifyRequest} request - Fastify request object.
+   * @param {FastifyReply} reply - Fastify reply object.
    */
-  async getClassifiedModelsWithCriteria(req, res) {
-    try {
-      // Record request in metrics
-      metrics.incrementRequestCount();
-      
-      // Extract criteria from query parameters
-      const criteria = {};
-      
-      // Process all query parameters
-      for (const [key, value] of Object.entries(req.query)) {
-        // Skip certain params that are not criteria
-        if (["nocache", "include_experimental"].includes(key)) {
-          continue;
-        }
-        
-        // Add to criteria
-        criteria[key] = value;
-      }
-      
-      // Check if we have any criteria
-      if (Object.keys(criteria).length === 0) {
-        res.status(400).json({ 
-          error: "No classification criteria provided",
-          message: "Please provide at least one classification criteria"
-        });
-        return;
-      }
-      
-      // Create cache key based on criteria
-      const cacheKey = cache.generateKey({
-        route: "models/classified/criteria",
-        criteria
-      });
-      
-      // Check cache
-      if (cache.isEnabled() && !req.query.nocache) {
-        const cachedResult = await cache.get(cacheKey);
-        if (cachedResult) {
-          res.json(cachedResult);
-          return;
-        }
-      }
-      
-      // If classification service is disabled, return empty result
+  async getClassifiedModelsWithCriteria(request, reply) {
       if (!this.useClassificationService || !this.modelClassificationService) {
-        console.log("Classification service is disabled");
-        res.json({
-          criteria,
-          models: [],
-          count: 0,
-          timestamp: new Date().toISOString()
-        });
-        return;
-      }
-      
-      try {
-        const serverAddress = this.modelClassificationService["serverAddress"];
-        console.log(`Attempting to connect to classification server at ${serverAddress}`);
-        
-        // Get models matching criteria from external service.
-        // No need to pass all models here, just the criteria. (Refactored in P1.6)
-        const matchingModels = await this.modelClassificationService.getModelsByCriteria(criteria);
-        
-        // Check if we have valid results
-        if (!matchingModels || !Array.isArray(matchingModels.models)) {
-          console.warn("Classification service returned invalid results");
-          res.json({
-            criteria,
-            models: [],
-            count: 0,
-            timestamp: new Date().toISOString()
+          logger.warn("getClassifiedModelsWithCriteria called but service disabled/unavailable.");
+          return reply.status(503).send({ 
+              error: "Classification service unavailable", 
+              message: "The model classification service is currently disabled or unavailable."
           });
-          return;
-        }
-        
-        // Transform response
-        const response = {
-          criteria,
-          models: matchingModels.models,
-          count: matchingModels.models.length,
-          timestamp: new Date().toISOString()
-        };
-        
-        // Cache the results
-        if (cache.isEnabled() && !req.query.nocache) {
-          await cache.set(cacheKey, response, 300); // Cache for 5 minutes
-        }
-        
-        // Return formatted response
-        res.json(response);
-      } catch (error) {
-        console.error(`Error getting models by criteria: ${error.message}`);
-        console.error(`Stack trace: ${error.stack}`);
-        
-        // Return the error
-        res.status(500).json({ 
-          error: "Classification service error",
-          message: error.message,
-          stack: process.env.NODE_ENV === "development" ? error.stack : undefined
-        });
       }
-    } catch (error) {
-      console.error(`Error in getClassifiedModelsWithCriteria: ${error.message}`);
-      res.status(500).json({ 
-        error: "Failed to get classified models with criteria", 
-        message: error.message
-      });
-    }
+  
+      try {
+          // Record request in metrics
+          metrics.incrementRequestCount();
+  
+          // Extract criteria from query parameters (Fastify: request.query)
+          const criteria = request.query || {}; 
+          logger.info("Calling GetClassifiedModelsWithCriteria gRPC service with criteria:", criteria);
+  
+          // Call the gRPC service with criteria
+          const classifiedModels = await this.modelClassificationService.getClassifiedModelsWithCriteria(criteria);
+          logger.info("Received response from GetClassifiedModelsWithCriteria gRPC service");
+  
+          reply.send(classifiedModels);
+  
+      } catch (error) {
+          logger.error(`Error getting classified models with criteria from gRPC service: ${error.message}`, { criteria: request.query, stack: error.stack });
+          // Add specific error handling for gRPC errors
+          if (error.code === 14 /* UNAVAILABLE */) {
+              return reply.status(503).send({ 
+                  error: "Classification service unavailable",
+                  message: `Failed to connect to classification service: ${error.details || error.message}`
+              });
+          } else if (error.code === 3 /* INVALID_ARGUMENT */) {
+            return reply.status(400).send({ 
+                error: "Invalid criteria",
+                message: `Invalid criteria provided for classification: ${error.details || error.message}`
+            });
+          }
+          // Otherwise, throw a generic server error
+          throw new Error(`Failed to get classified models with criteria: ${error.message}`);
+          // reply.status(500).send({ 
+          //   error: "Failed to get classified models with criteria", 
+          //   message: error.message 
+          // });
+      }
   }
 }
 
