@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+@theme {
+  /* Light theme variables */
+  --primary-rgb-light: 86, 18, 244; /* #5612f4 */
+  --secondary-rgb-light: 107, 55, 218; /* #6b37da */
+  --accent-rgb-light: 98, 40, 231; /* #6228e7 */
+
+  /* Theme Colors */
+  --color-background: #ffffff;
+  --color-foreground: #000000;
+  --color-foreground-secondary: #7c59b4;
+  --color-border-primary: #e1e1e1;
+  --color-border-secondary: #d3d3d3;
+  --color-input-bg: #ffffff;
+  --color-card-bg: #ffffff;
+  --color-chat-bg: #ffffff;
+  --color-sidebar-bg: #f2e8ff;
+  --color-settings-bg: #f2e8ff;
+  --color-code-bg: #e5dcf0;
+  --color-message-assistant-bg: #f0f0f0;
+
+  /* Primary Action Colors */
+  --color-primary: rgb(var(--primary-rgb-light));
+  --color-primary-hover: rgb(var(--accent-rgb-light)); /* Using accent for hover */
+  --color-primary-text: #ffffff;
+  --color-primary-bgUser: rgba(var(--primary-rgb-light), 0.08);
+  --color-primary-bgTag: rgba(var(--primary-rgb-light), 0.05);
+
+  /* Secondary & Accent */
+  --color-secondary: rgb(var(--secondary-rgb-light));
+  --color-accent: rgb(var(--accent-rgb-light));
+
+  /* Functional Colors (Light) */
+  --color-error: #ef4444; /* Tailwind red-500 */
+  --color-success: #22c55e; /* Tailwind green-500 */
+  --color-warning: #f97316; /* Tailwind orange-500 */
+  --color-info: #06b6d4; /* Tailwind cyan-500 */
+
+  /* Fonts */
+  --font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-family-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+
+  /* Transitions */
+  --transition-duration: 0.2s;
+  --transition-timing: ease;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Apply base styles */
+html {
+  font-family: var(--font-family-sans);
+  color: var(--color-foreground);
+  background-color: var(--color-background);
+  /* Smooth theme transition */
+  transition: color var(--transition-duration) var(--transition-timing),
+              background-color var(--transition-duration) var(--transition-timing);
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Dark theme variables */
+.dark {
+  --primary-rgb-dark: 87, 157, 152; /* #579d98 */
+  --secondary-rgb-dark: 126, 178, 174; /* #7eb2ae */
+  --accent-rgb-dark: 107, 168, 163; /* #6ba8a3 */
+
+  /* Theme Colors */
+  --color-background: #121212;
+  --color-foreground: #ffffff;
+  --color-foreground-secondary: #8b8b8b;
+  --color-border-primary: #3f3f3f;
+  --color-border-secondary: #575757;
+  --color-input-bg: #282828;
+  --color-card-bg: #282828;
+  --color-chat-bg: #282828;
+  --color-sidebar-bg: #1a1e1e;
+  --color-settings-bg: #282828;
+  --color-code-bg: #121212;
+  --color-message-assistant-bg: #2f3333;
+
+  /* Primary Action Colors */
+  --color-primary: rgb(var(--primary-rgb-dark));
+  --color-primary-hover: rgb(var(--accent-rgb-dark)); /* Using accent for hover */
+  --color-primary-text: #000000;
+  --color-primary-bgUser: rgba(var(--primary-rgb-dark), 0.1);
+  --color-primary-bgTag: rgba(var(--primary-rgb-dark), 0.08);
+
+  /* Secondary & Accent */
+  --color-secondary: rgb(var(--secondary-rgb-dark));
+  --color-accent: rgb(var(--accent-rgb-dark));
+
+  /* Functional Colors (Dark - typically same as light, but could be adjusted) */
+  /* Inheriting from :root for now, can override if needed */
+  /* --color-error: ...; */
+}
+
+/* Layout Components */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 280px;
+  background-color: var(--color-sidebar-bg);
+  border-right: 1px solid var(--color-border-primary);
+  transition: transform var(--transition-duration) var(--transition-timing);
+  z-index: 40;
+}
+
+.sidebar-hidden {
+  transform: translateX(-100%);
+}
+
+.main-content {
+  margin-left: 280px;
+  transition: margin-left var(--transition-duration) var(--transition-timing);
+}
+
+.main-content-expanded {
+  margin-left: 0;
+}
+
+/* Chat Components */
+.chat-container {
+  position: relative;
+  height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-chat-bg);
+}
+
+.chat-input-container {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 2rem);
+  max-width: 800px;
+  z-index: 30;
+  background-color: var(--color-input-bg);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-lg);
+  transition: transform var(--transition-duration) var(--transition-timing);
+}
+
+.chat-input-container.hidden {
+  transform: translate(-50%, 100%);
+}
+
+/* Side Buttons */
+.side-buttons {
+  position: fixed;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 30;
+}
+
+.side-button {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-duration) var(--transition-timing);
+  box-shadow: var(--shadow-md);
+}
+
+.side-button:hover {
+  background-color: var(--color-primary-hover);
+  transform: scale(1.1);
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-border-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-foreground-secondary);
+}

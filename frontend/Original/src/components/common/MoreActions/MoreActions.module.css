@@ -1,0 +1,117 @@
+.moreActionsContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.moreButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--chat-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text);
+}
+
+.moreButton:hover {
+  background-color: var(--hover);
+  transform: scale(1.05);
+}
+
+.moreButton:active {
+  transform: scale(0.95);
+}
+
+.moreButton.active {
+  background-color: var(--hover);
+}
+
+.icon {
+  color: var(--text);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.active .icon {
+  transform: rotate(180deg);
+}
+
+.actionsMenu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background-color: var(--chat-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  opacity: 0;
+  visibility: hidden;
+  transform-origin: bottom right;
+  transform: scale(0.95) translateY(10px);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+}
+
+.actionsMenu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1) translateY(0);
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.open .actionButton {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.actionButton:hover {
+  background-color: var(--hover);
+}
+
+.actionButton:active {
+  background-color: var(--active);
+}
+
+.actionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.actionButton:hover .actionIcon {
+  opacity: 1;
+}
+
+.actionLabel {
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+.actionButton:hover .actionLabel {
+  opacity: 1;
+} 
