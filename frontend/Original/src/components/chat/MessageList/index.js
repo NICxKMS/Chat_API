@@ -31,23 +31,32 @@ const MessageList = forwardRef(({ messages, error }, ref) => {
     return result;
   }, [messages, error]);
 
-  // Process message content to extract images and text
+  // Process message content to extract images and text in a single pass
   const processMessageContent = (content) => {
     if (!content) return { images: [], text: content };
-    
-    // Handle array content (for messages with images)
+
     if (Array.isArray(content)) {
-      const images = content
-        .filter(part => part.type === 'image_url')
-        .map(part => part.image_url.url);
-      const text = content
-        .filter(part => part.type === 'text')
-        .map(part => part.text)
-        .join(' ');
-      return { images, text };
+      const images = [];
+      const texts = [];
+
+      content.forEach(part => {
+        if (part.type === 'image_url') {
+          images.push({
+            url: part.image_url.url,
+            alt: part.image_url.alt || part.alt || null // Support both image_url.alt and top-level alt
+          });
+        }
+        if (part.type === 'text') {
+          texts.push(part.text);
+        }
+      });
+
+      return { 
+        images, 
+        text: texts.join(' ') 
+      };
     }
-    
-    // Handle string content (regular text message)
+
     return { images: [], text: content };
   };
 
@@ -75,35 +84,44 @@ const MessageList = forwardRef(({ messages, error }, ref) => {
                               isLastMessage && 
                               isWaitingForResponse;
           
-          // Process message content for images
-          const { images } = processMessageContent(message.content);
+          // Process message content for images and text
+          const { images, text } = processMessageContent(message.content);
+          
+          // Generate a unique key using timestamp if available, fallback to role-index
+          const messageKey = message.timestamp 
+            ? `${message.role}-${message.timestamp}-${index}`
+            : `${message.role}-${index}`;
           
           return (
-            <div key={`${message.role}-${index}`} className={styles.messageRow}>
+            <div key={messageKey} className={styles.messageRow}>
               {/* Render images first if it's a user message with images */}
               {message.role === 'user' && images.length > 0 && (
                 <div className={styles.imageContainer}>
-                  {images.map((imageUrl, imgIndex) => (
+                  {images.map((image, imgIndex) => (
                     <img 
-                      key={imgIndex}
-                      src={imageUrl}
-                      alt={`Uploaded image ${imgIndex + 1}`}
+                      key={`${messageKey}-img-${imgIndex}`}
+                      src={image.url}
+                      alt={image.alt || `Uploaded image ${imgIndex + 1}`}
                       className={styles.messageImage}
-                      onClick={() => handleImageClick(imageUrl)}
+                      onClick={() => handleImageClick(image.url)}
                       style={{ cursor: 'pointer' }}
                     />
                   ))}
                 </div>
               )}
-              <ChatMessage
-                message={message}
-                isStreaming={isStreaming}
-              />
+              {/* Render ChatMessage if there's text content or it's not a user message */}
+              {(text || message.role !== 'user') && (
+                <ChatMessage
+                  message={{ ...message, content: text || message.content }}
+                  isStreaming={isStreaming}
+                />
+              )}
             </div>
           );
         })}
       </div>
       
+      {/* Render the overlay component */}
       <ImageOverlay src={overlayImageSrc} onClose={handleCloseOverlay} />
     </>
   );
