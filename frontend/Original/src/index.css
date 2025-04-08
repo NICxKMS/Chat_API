@@ -22,7 +22,7 @@
   /* Light theme variables - APPLYING NEW PALETTE */
   --light-bg: #ffffff; /* --clr-surface-a0 */
   --light-chat-bg: #ffffff; /* --clr-surface-a0 */
-  --light-sidebar-bg: #f2e8ff; /* --clr-surface-tonal-a0 */
+  --light-sidebar-bg: #ececec; /* --clr-surface-tonal-a0 */
   --light-text: #000000; /* --clr-dark-a0 */
   --light-secondary-text: #7c59b4; /* --clr-primary-a50 */
   --light-border: #e1e1e1; /* --clr-surface-a20 */
@@ -33,8 +33,8 @@
   --light-button-text: #ffffff; /* --clr-light-a0 */
   --light-message-user-bg: rgba(var(--primary-rgb), 0.08); /* Keep primary alpha blend */
   --light-message-assistant-bg: #f0f0f0; /* --clr-surface-a10 */
-  --light-code-bg: #e5dcf0; /* --clr-surface-tonal-a10 */
-  --light-settings-bg: #f2e8ff; /* --clr-surface-tonal-a0 */
+  --light-code-bg: #ececec; /* --clr-surface-tonal-a10 */
+  --light-settings-bg: #ececec; /* --clr-surface-tonal-a0 */
   --light-hover: rgba(var(--primary-rgb), 0.05); /* Keep primary alpha blend */
   --light-scroll-track: #f0f0f0; /* --clr-surface-a10 */
   --light-scroll-thumb: #d3d3d3; /* --clr-surface-a30 */

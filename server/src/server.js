@@ -89,7 +89,7 @@ const start = async () => {
     // Register essential plugins
     await fastify.register(fastifyCors, {
       // origin: 'http://localhost:3001', // Temporarily commented out
-      origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:3002'],
+      origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3001', 'http://localhost:3000','http://192.168.1.100:3001', 'http://localhost:3002','*'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: [
         'Content-Type', 
