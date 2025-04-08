@@ -30,8 +30,8 @@ class ChatController {
     try {
       metrics.incrementRequestCount();
       
-      // Use request.body
-      const { model, messages, temperature = 0.7, max_tokens = 1000, nocache } = request.body;
+      // Use request.body - add extraction of top_p, frequency_penalty, and presence_penalty
+      const { model, messages, temperature = 0.7, max_tokens = 1000, top_p, frequency_penalty, presence_penalty, nocache } = request.body;
       
       if (!model) {
         return reply.status(400).send({ error: "Missing required parameter: model" });
@@ -80,13 +80,18 @@ class ChatController {
         logger.warn(`Failed to check cache status: ${cacheCheckError.message}. Continuing without cache.`);
       }
       
-      // Prepare options (unchanged, uses parseFloat/parseInt)
+      // Prepare options - include optional parameters only if they exist
       const options = {
         model: modelName,
         messages,
         temperature: parseFloat(temperature?.toString() || "0.7"),
         max_tokens: parseInt(max_tokens?.toString() || "1000", 10)
       };
+      
+      // Add optional parameters only if they exist in the request
+      if (top_p !== undefined) options.top_p = parseFloat(top_p);
+      if (frequency_penalty !== undefined) options.frequency_penalty = parseFloat(frequency_penalty);
+      if (presence_penalty !== undefined) options.presence_penalty = parseFloat(presence_penalty);
       
       try {
         // Send request to provider (unchanged)
@@ -219,8 +224,8 @@ class ChatController {
     try {
       metrics.incrementRequestCount();
       
-      // Use request.body
-      const { model, messages, temperature = 0.7, max_tokens = 1000 } = request.body;
+      // Use request.body - add extraction of top_p, frequency_penalty, and presence_penalty
+      const { model, messages, temperature = 0.7, max_tokens = 1000, top_p, frequency_penalty, presence_penalty } = request.body;
       
       if (!model) {
         return reply.status(400).send({ error: "Missing required parameter: model" });
@@ -283,7 +288,7 @@ class ChatController {
         abortController.abort();
       });
 
-      // Prepare options
+      // Prepare options - include additional parameters
       const options = {
         model: modelName,
         messages,
@@ -291,6 +296,11 @@ class ChatController {
         max_tokens: parseInt(max_tokens?.toString() || "1000", 10),
         abortSignal: abortController.signal,
       };
+      
+      // Add optional parameters only if they exist in the request
+      if (top_p !== undefined) options.top_p = parseFloat(top_p);
+      if (frequency_penalty !== undefined) options.frequency_penalty = parseFloat(frequency_penalty);
+      if (presence_penalty !== undefined) options.presence_penalty = parseFloat(presence_penalty);
 
       // Get provider stream
       const providerStream = provider.chatCompletionStream(options);

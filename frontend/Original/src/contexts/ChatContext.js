@@ -55,7 +55,7 @@ export const ChatProvider = ({ children }) => {
   
   // Reset performance metrics
   const resetPerformanceMetrics = useCallback(() => {
-    console.log('Resetting performance metrics');
+    // console.log('Resetting performance metrics');
     setCurrentMessageMetrics({
       startTime: null,
       endTime: null,
@@ -69,7 +69,7 @@ export const ChatProvider = ({ children }) => {
   
   // Start performance timer
   const startPerformanceTimer = useCallback(() => {
-    console.log('Starting performance timer');
+    // console.log('Starting performance timer');
     setCurrentMessageMetrics(prev => ({
       ...prev,
       startTime: Date.now(),
@@ -79,7 +79,7 @@ export const ChatProvider = ({ children }) => {
   
   // Update performance metrics
   const updatePerformanceMetrics = useCallback((tokenCount, isComplete = false) => {
-    console.log('Updating performance metrics:', { tokenCount, isComplete });
+    // console.log('Updating performance metrics:', { tokenCount, isComplete });
     setCurrentMessageMetrics(prev => {
       const endTime = Date.now();
       const elapsedTime = endTime - (prev.startTime || endTime);
@@ -107,7 +107,7 @@ export const ChatProvider = ({ children }) => {
         timeToFirstToken
       };
       
-      console.log('New metrics state:', newMetrics);
+      // console.log('New metrics state:', newMetrics);
       
       // Update the last assistant message's metrics
       setChatHistory(prev => {
@@ -160,7 +160,7 @@ export const ChatProvider = ({ children }) => {
             };
       }
       
-      console.log('Adding message to history:', { role, content, metrics: newMessage.metrics });
+      // console.log('Adding message to history:', { role, content, metrics: newMessage.metrics });
       return [...prev, newMessage];
     });
     return { role, content, metrics };
@@ -246,6 +246,9 @@ export const ChatProvider = ({ children }) => {
         presence_penalty: adjustedSettings.presence_penalty
       };
       
+      // Log payload before streaming request
+      console.log('[DEBUG] Streaming request payload:', payload);
+      
       // Prepare optimized headers for streaming
       const headers = {
         'Content-Type': 'application/json',
@@ -313,7 +316,7 @@ export const ChatProvider = ({ children }) => {
         
         // Decode the chunk
         const chunk = decoder.decode(value, { stream: true });
-        console.log('[DEBUG] Received stream chunk:', chunk);
+        // console.log('[DEBUG] Received stream chunk:', chunk);
         buffer += chunk;
         
         // Process all complete SSE messages in the buffer
@@ -455,6 +458,9 @@ export const ChatProvider = ({ children }) => {
         presence_penalty: adjustedSettings.presence_penalty
       };
       
+      // Log payload before non-streaming request
+      console.log('[DEBUG] Non-streaming request payload:', payload);
+      
       // Construct URL safely
       const completionsUrl = new URL('/api/chat/completions', apiUrl).toString();
       const response = await fetch(completionsUrl, {
@@ -476,7 +482,7 @@ export const ChatProvider = ({ children }) => {
       
       // Parse response
       const data = await response.json();
-      console.log('[DEBUG] Received non-streamed message:', data);
+      // console.log('[DEBUG] Received non-streamed message:', data);
       const content = data.content || '';
       
       // Add AI response to history

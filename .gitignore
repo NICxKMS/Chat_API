@@ -2,7 +2,7 @@
 /node_modules
 /.clinic
 /benchmark-results
-
+req.json
 # Environment variables
 .env
 .env.local

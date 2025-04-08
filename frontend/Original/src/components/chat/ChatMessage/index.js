@@ -83,7 +83,7 @@ const ChatMessage = ({ message, isStreaming }) => {
     return elapsedTime !== null || tokenCount !== null || tokensPerSecond !== null || timeToFirstToken !== null;
   }, [message.role, message.metrics]);
   
-  console.log('Should show metrics:', shouldShowMetrics, { role: message.role, metrics: message.metrics });
+  // console.log('Should show metrics:', shouldShowMetrics, { role: message.role, metrics: message.metrics });
   
   // Determine if this message should use streaming optimization
   const shouldUseStreamingOptimization = isStreaming && message.role === 'assistant';

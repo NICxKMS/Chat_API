@@ -59,9 +59,9 @@ const Layout = () => {
 
   // Toggle settings panel - passed down from MainContent originally, now managed here
   const toggleSettings = useCallback(() => {
-    console.log("Toggling settings panel..."); // Add log
+    // console.log("Toggling settings panel..."); // Add log
     setIsSettingsOpen(prev => {
-      console.log("Previous state:", prev, "New state:", !prev); // Log state change
+      // console.log("Previous state:", prev, "New state:", !prev); // Log state change
       return !prev;
     });
   }, []);

@@ -2,7 +2,7 @@
   position: fixed;
   top: 1rem;
   left: 1rem;
-  z-index: 9999;
+  z-index: 900;
   pointer-events: none;
 }
 

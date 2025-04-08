@@ -290,6 +290,19 @@ class OpenAIProvider extends BaseProvider {
         finalOptions.tool_choice = options.tool_choice;
       }
       
+      // Add top_p, frequency_penalty, and presence_penalty if defined
+      if (options.top_p !== undefined) {
+        finalOptions.top_p = options.top_p;
+      }
+      
+      if (options.frequency_penalty !== undefined) {
+        finalOptions.frequency_penalty = options.frequency_penalty;
+      }
+      
+      if (options.presence_penalty !== undefined) {
+        finalOptions.presence_penalty = options.presence_penalty;
+      }
+      
       // Call the OpenAI API
       const completion = await this.client.chat.completions.create(finalOptions);
       
@@ -367,21 +380,22 @@ class OpenAIProvider extends BaseProvider {
         stream: true, // Enable streaming
       };
       
-      // Add abort signal if provided
-      if (standardOptions.abortSignal instanceof AbortSignal) {
-        apiOptions.signal = standardOptions.abortSignal;
-        
-        // Set up cancellation handler
-        if (!standardOptions.abortSignal.aborted) {
-          standardOptions.abortSignal.addEventListener('abort', () => {
-            streamCancelled = true;
-            logger.info(`[${this.name}] Stream aborted by client for ${modelName}`);
-          }, { once: true });
-        } else {
-          // Signal already aborted, throw immediately
-          throw new Error("Stream aborted before request was made");
-        }
+      // Add top_p, frequency_penalty, and presence_penalty if defined
+      if (standardOptions.top_p !== undefined) {
+        apiOptions.top_p = standardOptions.top_p;
       }
+      
+      if (standardOptions.frequency_penalty !== undefined) {
+        apiOptions.frequency_penalty = standardOptions.frequency_penalty;
+      }
+      
+      if (standardOptions.presence_penalty !== undefined) {
+        apiOptions.presence_penalty = standardOptions.presence_penalty;
+      }
+      
+      // Remove abortSignal and signal from apiOptions
+      delete apiOptions.abortSignal;
+      delete apiOptions.signal;
       
       logger.info(`[${this.name}] Calling OpenAI client.chat.completions.create with stream: true`); // Log before call
 

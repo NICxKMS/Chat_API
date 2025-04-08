@@ -7,7 +7,7 @@ const DEFAULT_SETTINGS = {
   max_tokens: 2000,
   frequency_penalty: 0,
   presence_penalty: 0,
-  streaming: false
+  streaming: true
 };
 
 // Create settings context
@@ -31,7 +31,7 @@ export const SettingsProvider = ({ children }) => {
   const updateSetting = useCallback((key, value) => {
     // Ensure the key is a valid setting we manage
     if (key in DEFAULT_SETTINGS) {
-      console.log(`[SettingsContext] Updating '${key}' from ${settings[key]} to ${value}`);
+      // console.log(`[SettingsContext] Updating '${key}' from ${settings[key]} to ${value}`);
       setSettings(prev => ({
         ...prev,
         [key]: value
@@ -41,7 +41,7 @@ export const SettingsProvider = ({ children }) => {
   
   // Reset settings to defaults
   const resetSettings = useCallback(() => {
-    console.log("[SettingsContext] Resetting settings to default");
+    // console.log("[SettingsContext] Resetting settings to default");
     setSettings(DEFAULT_SETTINGS);
   }, []);
   

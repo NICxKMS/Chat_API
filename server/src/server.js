@@ -4,25 +4,19 @@
  */
 import dotenv from "dotenv";
 import Fastify from "fastify";
-// import cors from "cors"; // Replaced by @fastify/cors
-// import helmet from "helmet"; // Replaced by @fastify/helmet
-// import compression from "compression"; // Replaced by @fastify/compress
+
 import fastifyCors from "@fastify/cors"; // Added
 import fastifyHelmet from "@fastify/helmet"; // Added
 import fastifyCompress from "@fastify/compress"; // Added
 import mainApiRoutes from "./routes/index.js"; // Main plugin
-// import modelRoutesPlugin from "./routes/modelRoutes.js"; // Removed - Registered inside mainApiRoutes
-// import chatRoutesPlugin from "./routes/chatRoutes.js"; // Removed - Registered inside mainApiRoutes
-// import authRoutesPlugin from "./routes/authRoutes.js"; // Removed
+
 import fastifyErrorHandler from "./middleware/errorHandler.js"; // Added error handler import
 import rateLimiterHook from "./middleware/rateLimiter.js"; // Hook import
 import config from "./config/config.js";
 import admin from "firebase-admin"; // Added Firebase Admin
 import logger from "./utils/logger.js"; // Import logger
-// import fastifyJwt from '@fastify/jwt'; // Removed
 
 // Load environment variables from .env file
-// // dotenv.config(); // Temporarily commented out for benchmark testing
 dotenv.config({ override: false }); // Load .env but don't override existing env vars
 
 // Create Fastify application
@@ -113,20 +107,7 @@ const start = async () => {
     });
     await fastify.register(fastifyCompress);
 
-    // --- Register Hooks & Auth ---
-    // Register JWT Plugin // Removed section
-    // await fastify.register(fastifyJwt, {
-    //   secret: config.jwtSecret 
-    // });
 
-    // Decorate request with an authentication handler method // Removed section
-    // fastify.decorate('authenticate', async function(request, reply) {
-    //   try {
-    //     await request.jwtVerify(); 
-    //   } catch (err) {
-    //     reply.status(401).send({ code: 'UNAUTHORIZED', message: 'Missing or invalid authentication token.' });
-    //   }
-    // });
 
     // Add Rate Limiter Hook
     if (config.rateLimiting?.enabled !== false) {
@@ -138,12 +119,7 @@ const start = async () => {
     fastify.get("/health", (request, reply) => {
       reply.status(200).send({ status: "OK", version: config.version });
     });
-    // fastify.get("/api/health", (request, reply) => {
-    //   reply.status(200).send({ status: "ok", timestamp: new Date().toISOString(), service: "Chat API" });
-    // });
 
-    // Register Auth routes (unprotected) // Removed
-    // await fastify.register(authRoutesPlugin, { prefix: "/api/auth" }); // Removed
 
     // Register main API plugin (hook now checks auth, doesn't block)
     await fastify.register(mainApiRoutes, { 
@@ -178,4 +154,3 @@ signals.forEach(signal => {
 
 start();
 
-// export default app; // Removed 
