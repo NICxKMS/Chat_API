@@ -22,12 +22,12 @@ export const ChatProvider = ({ children }) => {
   const { selectedModel } = useModel();
   const { settings, getModelAdjustedSettings } = useSettings();
   const { idToken, isAuthenticated } = useAuth();
-  
+
   // State for chat - Initialize as empty
   const [chatHistory, setChatHistory] = useState([]);
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Performance metrics state - now stored per message
   const [currentMessageMetrics, setCurrentMessageMetrics] = useState({
     startTime: null,
@@ -38,13 +38,13 @@ export const ChatProvider = ({ children }) => {
     isComplete: false,
     timeToFirstToken: null
   });
-  
+
   // Reference for streaming text content - used for direct DOM updates
   const streamingTextRef = useRef('');
   const streamBufferRef = useRef('');
   const updateTimeoutRef = useRef(null);
   const isStreamingRef = useRef(false);
-  
+
   // Format model identifier for API
   const formatModelIdentifier = useCallback((model) => {
     if (!model || !model.provider || !model.id) {
@@ -52,7 +52,7 @@ export const ChatProvider = ({ children }) => {
     }
     return `${model.provider}/${model.id}`;
   }, []);
-  
+
   // Reset performance metrics
   const resetPerformanceMetrics = useCallback(() => {
     // console.log('Resetting performance metrics');
@@ -66,7 +66,7 @@ export const ChatProvider = ({ children }) => {
       timeToFirstToken: null
     });
   }, []);
-  
+
   // Start performance timer
   const startPerformanceTimer = useCallback(() => {
     // console.log('Starting performance timer');
@@ -76,27 +76,27 @@ export const ChatProvider = ({ children }) => {
       isComplete: false
     }));
   }, []);
-  
+
   // Update performance metrics
   const updatePerformanceMetrics = useCallback((tokenCount, isComplete = false) => {
     // console.log('Updating performance metrics:', { tokenCount, isComplete });
     setCurrentMessageMetrics(prev => {
       const endTime = Date.now();
       const elapsedTime = endTime - (prev.startTime || endTime);
-      
+
       // Calculate tokens per second if enough time has elapsed
       let tokensPerSecond = null;
       if (elapsedTime > 500 && tokenCount) {
         tokensPerSecond = Math.round((tokenCount / elapsedTime) * 1000);
       }
-      
+
       // Only update token count if it's higher than the previous count
       const newTokenCount = tokenCount > (prev.tokenCount || 0) ? tokenCount : prev.tokenCount;
-      
+
       // Calculate time to first token if we have tokens but haven't set it yet
-      const timeToFirstToken = prev.timeToFirstToken || 
+      const timeToFirstToken = prev.timeToFirstToken ||
         (newTokenCount > 0 ? elapsedTime : null);
-      
+
       const newMetrics = {
         startTime: prev.startTime,
         endTime,
@@ -106,9 +106,9 @@ export const ChatProvider = ({ children }) => {
         isComplete,
         timeToFirstToken
       };
-      
+
       // console.log('New metrics state:', newMetrics);
-      
+
       // Update the last assistant message's metrics
       setChatHistory(prev => {
         const newHistory = [...prev];
@@ -118,11 +118,11 @@ export const ChatProvider = ({ children }) => {
         }
         return newHistory;
       });
-      
+
       return newMetrics;
     });
   }, []);
-  
+
   // Extract token count from response data
   const extractTokenCount = useCallback((data, content) => {
     // Try to get token count from response data
@@ -130,16 +130,16 @@ export const ChatProvider = ({ children }) => {
     if (data?.tokenUsage?.total) return data.tokenUsage.total;
     if (data?.usage?.completion_tokens) return data.usage.completion_tokens;
     if (data?.usage?.total_tokens) return data.usage.total_tokens;
-    
+
     // Fallback: estimate based on content length
     return Math.ceil((content.split(/\s+/).length) * 1.3);
   }, []);
-  
+
   // Add message to chat history with metrics
   const addMessageToHistory = useCallback((role, content, metrics = null) => {
     setChatHistory(prev => {
       const newMessage = { role, content };
-      
+
       // If metrics are provided, add them to the message
       if (metrics) {
         newMessage.metrics = metrics;
@@ -147,25 +147,25 @@ export const ChatProvider = ({ children }) => {
       // If this is an assistant message, always ensure metrics are attached
       else if (role === 'assistant') {
         // Use current metrics if available, otherwise create a new metrics object
-        newMessage.metrics = currentMessageMetrics.tokenCount !== null 
+        newMessage.metrics = currentMessageMetrics.tokenCount !== null
           ? { ...currentMessageMetrics }
           : {
-              startTime: Date.now(),
-              endTime: null,
-              elapsedTime: null,
-              tokenCount: null,
-              tokensPerSecond: null,
-              isComplete: false,
-              timeToFirstToken: null
-            };
+            startTime: Date.now(),
+            endTime: null,
+            elapsedTime: null,
+            tokenCount: null,
+            tokensPerSecond: null,
+            isComplete: false,
+            timeToFirstToken: null
+          };
       }
-      
+
       // console.log('Adding message to history:', { role, content, metrics: newMessage.metrics });
       return [...prev, newMessage];
     });
     return { role, content, metrics };
   }, [currentMessageMetrics]);
-  
+
   // Update chat history with new content and metrics
   const updateChatWithContent = useCallback((content) => {
     setChatHistory(prev => {
@@ -181,39 +181,39 @@ export const ChatProvider = ({ children }) => {
       return newHistory;
     });
   }, [currentMessageMetrics]);
-  
+
   // Process streaming message using Fetch API with ReadableStream for optimal performance
   const streamMessageWithFetch = useCallback(async (message) => {
     if (!message || !selectedModel) {
       setError('Please enter a message and select a model');
       return null;
     }
-    
+
     const modelId = formatModelIdentifier(selectedModel);
     if (!modelId) {
       setError('Invalid model selection');
       return null;
     }
-    
+
     // Add user message to history
     const userMessage = addMessageToHistory('user', message);
-    
+
     // Reset metrics and start timer
     resetPerformanceMetrics();
     startPerformanceTimer();
-    
+
     // Set loading state
     setIsWaitingForResponse(true);
     setError(null);
-    
+
     // Add assistant response with empty content and initial metrics
     addMessageToHistory('assistant', '', { ...currentMessageMetrics, isComplete: false });
-    
+
     let accumulatedContent = '';
     let accumulatedTokenCount = 0;
     let abortController = new AbortController();
     let lastRenderTime = 0;
-    
+
     // Set up timeout
     let timeoutId = setTimeout(() => {
       console.log('Streaming request timed out after 60 seconds');
@@ -221,20 +221,25 @@ export const ChatProvider = ({ children }) => {
       setError('Request timed out. Please try again.');
       setIsWaitingForResponse(false);
     }, 60000); // 60 second timeout
-    
+
     try {
       // Get adjusted settings based on model
       const adjustedSettings = getModelAdjustedSettings(selectedModel);
-      
-      // Prepare request payload - Filter out empty assistant messages
-      const validMessages = [...chatHistory].filter(msg => {
-        if (msg.role === 'user') return true;
-        return (msg.role === 'assistant' && msg.content && msg.content.trim() !== '');
+
+      // Prepare request payload - Filter out empty assistant messages and remove metrics
+      // strip metrics only
+      const validMessages = chatHistory.map(msg => {
+        const { metrics, ...messageWithoutMetrics } = msg;
+        return messageWithoutMetrics;
       });
-      
-      // Add only the user message
+
+      // then add the new user message (unstripped, if it has no metrics field it’s fine)
       validMessages.push(userMessage);
-      
+
+
+      // Add only the user message
+      // validMessages.push(userMessage);
+
       // Create the final payload
       const payload = {
         model: modelId,
@@ -245,10 +250,10 @@ export const ChatProvider = ({ children }) => {
         frequency_penalty: adjustedSettings.frequency_penalty,
         presence_penalty: adjustedSettings.presence_penalty
       };
-      
+
       // Log payload before streaming request
       console.log('[DEBUG] Streaming request payload:', payload);
-      
+
       // Prepare optimized headers for streaming
       const headers = {
         'Content-Type': 'application/json',
@@ -256,16 +261,16 @@ export const ChatProvider = ({ children }) => {
         'Cache-Control': 'no-cache',
         'X-Requested-With': 'XMLHttpRequest'
       };
-      
+
       if (isAuthenticated && idToken) {
         headers['Authorization'] = `Bearer ${idToken}`;
       }
-      
+
       // Construct URL for fetch API
       const streamUrl = new URL('/api/chat/stream', apiUrl).toString();
-      
+
       console.log(`Starting optimized fetch streaming request to ${streamUrl}`);
-      
+
       // Make the fetch request with appropriate settings for streaming
       const response = await fetch(streamUrl, {
         method: 'POST',
@@ -275,7 +280,7 @@ export const ChatProvider = ({ children }) => {
         cache: 'no-store',
         credentials: 'same-origin'
       });
-      
+
       if (!response.ok) {
         let errorMessage = `API error: ${response.status}`;
         try {
@@ -286,19 +291,19 @@ export const ChatProvider = ({ children }) => {
         }
         throw new Error(errorMessage);
       }
-      
+
       // Get the response body as a stream with optimized settings
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
-      
+
       // Variables for optimized chunk processing
       let buffer = '';
       let processingChunk = false;
-      
+
       // Begin reading the stream
       while (true) {
         const { done, value } = await reader.read();
-        
+
         // Reset timeout on each chunk
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
@@ -307,57 +312,57 @@ export const ChatProvider = ({ children }) => {
           setError('Connection timed out');
           setIsWaitingForResponse(false);
         }, 60000);
-        
+
         if (done) {
           // Stream is complete
           console.log('Stream complete');
           break;
         }
-        
+
         // Decode the chunk
         const chunk = decoder.decode(value, { stream: true });
         // console.log('[DEBUG] Received stream chunk:', chunk);
         buffer += chunk;
-        
+
         // Process all complete SSE messages in the buffer
         if (!processingChunk) {
           processingChunk = true;
-          
+
           const messages = buffer.split('\n\n');
           buffer = messages.pop() || '';
-          
+
           for (const message of messages) {
             if (!message.trim()) continue;
-            
+
             if (message.startsWith(':heartbeat')) {
               console.log('Received heartbeat');
               continue;
             }
-            
+
             if (message.startsWith('data:')) {
               const data = message.slice(5).trim();
-              
+
               if (data === '[DONE]') {
                 console.log('Received [DONE] message from stream');
                 updatePerformanceMetrics(accumulatedTokenCount, true);
                 continue;
               }
-              
+
               try {
                 const parsedData = JSON.parse(data);
                 const content = parsedData.content || '';
-                
+
                 if (content) {
                   // Add to accumulated content
                   accumulatedContent += content;
-                  
+
                   // Update token count for this chunk and accumulate
                   const chunkTokenCount = content.split(/\s+/).length || 0;
                   accumulatedTokenCount += chunkTokenCount;
-                  
+
                   // Update the streaming text ref
                   streamingTextRef.current = accumulatedContent;
-                  
+
                   // Optimize UI updates
                   const now = performance.now();
                   if (now - lastRenderTime > 16) { // ~60fps update rate
@@ -375,21 +380,21 @@ export const ChatProvider = ({ children }) => {
               }
             }
           }
-          
+
           processingChunk = false;
         }
       }
-      
+
       // Final update to ensure all content is displayed
       window.requestAnimationFrame(() => {
         updateChatWithContent(accumulatedContent);
         updatePerformanceMetrics(accumulatedTokenCount, true);
       });
-      
+
       // Stream is complete
       setIsWaitingForResponse(false);
       return accumulatedContent;
-      
+
     } catch (error) {
       console.error('Error in fetch streaming:', error);
       setError(error.message || 'An error occurred during streaming');
@@ -404,40 +409,40 @@ export const ChatProvider = ({ children }) => {
     startPerformanceTimer, updatePerformanceMetrics,
     isAuthenticated, idToken, setError, setIsWaitingForResponse, updateChatWithContent
   ]);
-  
+
   // Send message to API - decide between streaming and non-streaming
   const sendMessage = useCallback(async (message) => {
     // Use streaming if enabled in settings
     if (settings.streaming) {
       return streamMessageWithFetch(message);
     }
-    
+
     if (!message || !selectedModel) {
       setError('Please enter a message and select a model');
       return null;
     }
-    
+
     const modelId = formatModelIdentifier(selectedModel);
     if (!modelId) {
       setError('Invalid model selection');
       return null;
     }
-    
+
     // Add user message to history
     const userMessage = addMessageToHistory('user', message);
-    
+
     // Reset metrics and start timer
     resetPerformanceMetrics();
     startPerformanceTimer();
-    
+
     // Set loading state
     setIsWaitingForResponse(true);
     setError(null);
-    
+
     try {
       // Get adjusted settings based on model
       const adjustedSettings = getModelAdjustedSettings(selectedModel);
-      
+
       // Prepare request headers conditionally
       const headers = {
         'Content-Type': 'application/json',
@@ -446,21 +451,24 @@ export const ChatProvider = ({ children }) => {
       if (isAuthenticated && idToken) {
         headers['Authorization'] = `Bearer ${idToken}`;
       }
-      
+
       // Prepare request payload
       const payload = {
         model: modelId,
-        messages: [...chatHistory, userMessage],
+        messages: [...chatHistory, userMessage].map(msg => {
+          const { metrics, ...messageWithoutMetrics } = msg;
+          return messageWithoutMetrics;
+        }),
         temperature: adjustedSettings.temperature,
         max_tokens: adjustedSettings.max_tokens,
         top_p: adjustedSettings.top_p,
         frequency_penalty: adjustedSettings.frequency_penalty,
         presence_penalty: adjustedSettings.presence_penalty
       };
-      
+
       // Log payload before non-streaming request
       console.log('[DEBUG] Non-streaming request payload:', payload);
-      
+
       // Construct URL safely
       const completionsUrl = new URL('/api/chat/completions', apiUrl).toString();
       const response = await fetch(completionsUrl, {
@@ -468,7 +476,7 @@ export const ChatProvider = ({ children }) => {
         headers: headers,
         body: JSON.stringify(payload)
       });
-      
+
       if (!response.ok) {
         let errorMessage = `API error: ${response.status}`;
         try {
@@ -479,19 +487,19 @@ export const ChatProvider = ({ children }) => {
         }
         throw new Error(errorMessage);
       }
-      
+
       // Parse response
       const data = await response.json();
       // console.log('[DEBUG] Received non-streamed message:', data);
       const content = data.content || '';
-      
+
       // Add AI response to history
       addMessageToHistory('assistant', content);
-      
+
       // Calculate token count and update metrics
       const tokenCount = extractTokenCount(data, content);
       updatePerformanceMetrics(tokenCount, true);
-      
+
       return content;
     } catch (error) {
       console.error('Error sending message:', error);
@@ -501,46 +509,46 @@ export const ChatProvider = ({ children }) => {
       setIsWaitingForResponse(false);
     }
   }, [
-    apiUrl, selectedModel, chatHistory, settings, getModelAdjustedSettings, 
-    addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics, 
-    startPerformanceTimer, updatePerformanceMetrics, extractTokenCount, 
+    apiUrl, selectedModel, chatHistory, settings, getModelAdjustedSettings,
+    addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics,
+    startPerformanceTimer, updatePerformanceMetrics, extractTokenCount,
     isAuthenticated, idToken, setError, setIsWaitingForResponse, streamMessageWithFetch
   ]);
-  
+
   // Reset chat history
   const resetChat = useCallback(() => {
     setChatHistory([]);
     resetPerformanceMetrics();
     setError(null);
   }, [resetPerformanceMetrics]);
-  
+
   // Download chat history as JSON
   const downloadChatHistory = useCallback(() => {
     if (chatHistory.length === 0) {
       setError('No chat history to download');
       return;
     }
-    
+
     try {
       // Create JSON string with pretty formatting
       const historyJson = JSON.stringify(chatHistory, null, 2);
-      
+
       // Create blob
       const blob = new Blob([historyJson], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      
+
       // Create download link
       const a = document.createElement('a');
-      
+
       // Format date for filename
       const date = new Date();
       const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
-      
+
       a.href = url;
       a.download = `chat-history-${dateStr}.json`;
       document.body.appendChild(a);
       a.click();
-      
+
       // Clean up
       setTimeout(() => {
         document.body.removeChild(a);
@@ -551,37 +559,37 @@ export const ChatProvider = ({ children }) => {
       setError('Failed to download chat history');
     }
   }, [chatHistory]);
-  
+
   // Optimized streaming update function with buffering
   const updateStreamingText = useCallback((newChunk) => {
     if (!isStreamingRef.current) {
       isStreamingRef.current = true;
     }
-    
+
     // Add to buffer
     streamBufferRef.current += newChunk;
-    
+
     // Update the streaming text ref directly
     // The StreamingMessage component will handle the word-by-word display
     streamingTextRef.current = streamBufferRef.current;
-    
+
     // No need for excessive throttling since StreamingMessage handles the typing effect
     // Just ensure the reference is updated immediately for the typing component to access
   }, []);
-  
+
   const finishStreaming = useCallback(() => {
     // Final update to ensure buffer is fully flushed
     streamingTextRef.current = streamBufferRef.current;
-    
+
     // Clear any pending updates
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
       updateTimeoutRef.current = null;
     }
-    
+
     isStreamingRef.current = false;
   }, []);
-  
+
   // Memoize the context value
   const contextValue = useMemo(() => ({
     chatHistory,
@@ -608,7 +616,7 @@ export const ChatProvider = ({ children }) => {
     updateStreamingText,
     finishStreaming
   ]);
-  
+
   return (
     <ChatContext.Provider value={contextValue}>
       {children}

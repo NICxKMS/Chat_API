@@ -238,6 +238,7 @@ export const ModelProvider = ({ children }) => {
       // Construct URL safely
       const modelsUrl = new URL('/api/models/classified', apiUrl).toString();
       const response = await fetch(modelsUrl, { headers });
+      console.log('Models response:', response);
       
       if (!response.ok) {
         let errorMsg = `Error fetching models: ${response.status}`;

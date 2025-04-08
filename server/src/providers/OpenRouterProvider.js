@@ -9,6 +9,15 @@ import { createBreaker } from "../utils/circuitBreaker.js";
 import * as metrics from "../utils/metrics.js";
 import logger from "../utils/logger.js";
 
+// Helper to check if a string is a base64 data URL and extract parts
+const parseBase64DataUrl = (str) => {
+  const match = str.match(/^data:(image\/(?:jpeg|png|gif|webp));base64,(.*)$/);
+  if (match) {
+    return { mimeType: match[1], data: match[2] };
+  }
+  return null;
+};
+
 class OpenRouterProvider extends BaseProvider {
   constructor(config) {
     super(config);
@@ -184,13 +193,56 @@ class OpenRouterProvider extends BaseProvider {
   }
 
   /**
+   * Processes messages into the OpenRouter (OpenAI-compatible) format,
+   * handling multimodal content.
+   * @param {Array<object>} messages - Standardized messages array.
+   * @returns {Array<object>} Messages formatted for the OpenRouter API.
+   */
+  _processMessagesForOpenRouter(messages) {
+    return messages.map(message => {
+      // If content is an array (multimodal)
+      if (Array.isArray(message.content)) {
+        const contentParts = message.content.map(item => {
+          if (item.type === 'text') {
+            return { type: 'text', text: item.text };
+          } else if (item.type === 'image_url' && item.image_url?.url) {
+            // OpenRouter accepts image URLs directly (including base64 data URLs)
+            // following the OpenAI format.
+            return { type: 'image_url', image_url: { url: item.image_url.url } };
+          } else {
+            logger.warn(`Unsupported content type in OpenRouter message: ${item.type}`);
+            return null;
+          }
+        }).filter(part => part !== null);
+
+        return {
+          role: message.role,
+          content: contentParts
+        };
+      }
+      // If content is just a string (text only)
+      else if (typeof message.content === 'string') {
+        return {
+          role: message.role,
+          content: message.content
+        };
+      } else {
+         logger.warn(`Message with unexpected content format skipped for OpenRouter:`, message);
+         return null;
+      }
+    }).filter(message => message !== null);
+  }
+
+  /**
    * Raw chat completion method (used by circuit breaker)
    */
   async _rawChatCompletion(options) {
     // Prepare request body for OpenRouter API (OpenAI-compatible)
+    const processedMessages = this._processMessagesForOpenRouter(options.messages);
+
     const requestBody = {
-      model: options.model,
-      messages: options.messages,
+      model: options.model, // Model ID already includes provider prefix for OpenRouter
+      messages: processedMessages,
       temperature: options.temperature,
       max_tokens: options.max_tokens,
       stream: false
@@ -374,7 +426,7 @@ class OpenRouterProvider extends BaseProvider {
                   firstChunk = false;
                 }
                 
-                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency);
+                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency, response.data.choices[0]?.finish_reason, response.data.usage);
                 yield normalizedChunk;
 
               } catch (jsonError) {
@@ -404,7 +456,7 @@ class OpenRouterProvider extends BaseProvider {
             if (dataStr && dataStr !== "[DONE]") {
               try {
                 const data = JSON.parse(dataStr);
-                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency);
+                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency, response.data.choices[0]?.finish_reason, response.data.usage);
                 yield normalizedChunk;
               } catch (jsonError) {
                 logger.error(`Error parsing final JSON from buffer: ${jsonError.message}`, buffer);
@@ -442,29 +494,37 @@ class OpenRouterProvider extends BaseProvider {
    * @param {object} chunk - The raw, parsed JSON object from an SSE data line.
    * @param {string} model - The model name used for the request.
    * @param {number} latency - The latency to the first chunk (milliseconds).
+   * @param {string} finishReason - The finish reason from the API.
+   * @param {object} usage - Current accumulated usage data.
    * @returns {object} A standardized chunk object matching the API schema.
    */
-  _normalizeStreamChunk(chunk, model, latency) {
-    const choice = chunk.choices && chunk.choices[0];
-    const delta = choice?.delta;
+  _normalizeStreamChunk(chunk, model, latency, finishReason, usage) {
+    try {
+      // OpenRouter stream chunks often follow OpenAI's format
+      const choice = chunk.choices?.[0];
+      const delta = choice?.delta;
 
-    return {
-      id: chunk.id || `chunk-${Date.now()}`,
-      model: chunk.model || model,
-      provider: this.name,
-      createdAt: chunk.created 
-        ? new Date(chunk.created * 1000).toISOString() 
-        : new Date().toISOString(),
-      content: delta?.content || "",
-      finishReason: choice?.finish_reason || null,
-      usage: { // Usage data is typically not present in OpenAI stream chunks until the end
-        promptTokens: 0,
-        completionTokens: 0,
-        totalTokens: 0
-      },
-      latency: latency || 0, // Latency to first chunk
-      raw: chunk // Include the raw chunk
-    };
+      return {
+        id: chunk.id,
+        model: chunk.model || model, // Use model from chunk if available
+        provider: this.name,
+        createdAt: chunk.created ? new Date(chunk.created * 1000).toISOString() : new Date().toISOString(),
+        content: delta?.content || null,
+        toolCalls: delta?.tool_calls || null, // Include tool call deltas
+        usage: usage,
+        latency: latency,
+        finishReason: finishReason,
+        raw: chunk
+      };
+    } catch (error) {
+      logger.error(`Error normalizing OpenRouter stream chunk: ${error.message}`, { chunk });
+      // Return a minimal error chunk or rethrow
+      return {
+        id: `error-chunk-${Date.now()}`,
+        error: `Failed to normalize chunk: ${error.message}`,
+        raw: chunk
+      };
+    }
   }
 }
 

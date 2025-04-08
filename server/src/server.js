@@ -15,6 +15,9 @@ import rateLimiterHook from "./middleware/rateLimiter.js"; // Hook import
 import config from "./config/config.js";
 import admin from "firebase-admin"; // Added Firebase Admin
 import logger from "./utils/logger.js"; // Import logger
+import modelRoutes from './routes/modelRoutes.js';
+import { isEnabled as isCacheEnabled } from './utils/cache.js'; // Import specific function
+import { bodyLimit as chatBodyLimit } from './controllers/ChatController.js'; // Import bodyLimit
 
 // Load environment variables from .env file
 dotenv.config({ override: false }); // Load .env but don't override existing env vars
@@ -107,8 +110,6 @@ const start = async () => {
     });
     await fastify.register(fastifyCompress);
 
-
-
     // Add Rate Limiter Hook
     if (config.rateLimiting?.enabled !== false) {
       fastify.addHook('onRequest', rateLimiterHook);
@@ -119,7 +120,6 @@ const start = async () => {
     fastify.get("/health", (request, reply) => {
       reply.status(200).send({ status: "OK", version: config.version });
     });
-
 
     // Register main API plugin (hook now checks auth, doesn't block)
     await fastify.register(mainApiRoutes, { 
@@ -134,6 +134,9 @@ const start = async () => {
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
     // Logger automatically logs listen address
     console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+
+    // Determine Base Path from Environment Variable
+    logger.info(`Cache enabled: ${isCacheEnabled()}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

@@ -32,6 +32,8 @@ const providerRequestCounter = new promClient.Counter({
 const responseTimeHistogram = new promClient.Histogram({
   name: "chat_api_response_time_seconds",
   help: "Response time for non-streaming provider requests in seconds",
+  // WARNING: 'model' label can have high cardinality. Consider sanitization if needed.
+  labelNames: ["provider", "model", "status_code"], // Added labels
   buckets: [0.1, 0.5, 1, 2, 5, 10, 30, 60], // Standard buckets
   registers: [register]
 });

@@ -24,7 +24,13 @@ export const useChatLogic = () => {
   
   // Function to handle sending messages using the context's submitMessage
   const handleSendMessage = useCallback(async (message) => {
-    if (!message.trim() || !selectedModel) return;
+    // Handle both string and array payloads
+    const messageContent = Array.isArray(message) 
+      ? message.map(part => part.type === 'text' ? part.text : '').join(' ').trim()
+      : message;
+
+    if (!messageContent && !Array.isArray(message)) return;
+    if (!selectedModel) return;
     
     try {
       // Call the submitMessage function from the context

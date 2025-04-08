@@ -128,13 +128,19 @@
   flex-direction: column;
   flex-grow: 1;
   min-width: 0;
+  width: 100%;
 }
 
 .userMessage .messageContentWrapper {
   order: 1;
 }
 
+/* Message content */
 .messageContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
   overflow-wrap: break-word;
   word-break: break-word;
   line-height: 1.6;
@@ -146,6 +152,7 @@
   font-family: var(--font-sans);
   line-height: 1.6;
   color: var(--text-primary);
+  width: 100%;
 }
 
 /* Streaming content overall wrapper */
@@ -745,4 +752,11 @@
 .metric {
     padding: 0.2rem 0.4rem;
   }
+}
+
+/* Ensure proper spacing between images and text */
+.messageContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 } 

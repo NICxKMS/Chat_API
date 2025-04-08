@@ -8,6 +8,12 @@ import * as metrics from "../utils/metrics.js";
 import { getCircuitBreakerStates } from "../utils/circuitBreaker.js";
 import logger from "../utils/logger.js";
 
+// Helper function to roughly validate base64 (more robust checks might be needed)
+const isPotentialBase64 = (str) => typeof str === 'string' && /^[A-Za-z0-9+/=]+$/.test(str) && str.length % 4 === 0;
+
+// Increased payload size limit for image data
+export const bodyLimit = 10 * 1024 * 1024; // 10MB
+
 class ChatController {
   constructor() {
     // Bind methods (consider if still necessary with Fastify style)

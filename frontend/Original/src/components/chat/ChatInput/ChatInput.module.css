@@ -1,14 +1,12 @@
 .inputContainer {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
   width: 100%;
+  gap: 8px;
+  padding: 12px;
+  background-color: var(--background-color);
+  border-top: 1px solid var(--border-color);
   position: relative;
-  padding: 1rem;
-  border-top: 1px solid var(--border);
-  background-color: var(--chat-bg);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .chatInput {
@@ -252,4 +250,94 @@
   transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
               color var(--theme-transition-duration) var(--theme-transition-timing),
               opacity 0.3s ease;
+}
+
+/* Image Upload Button */
+.uploadButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--button-background);
+  color: var(--text-color);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.uploadButton:hover {
+  background-color: var(--button-hover-background);
+}
+
+.uploadButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Image Preview Container */
+.imagePreviewContainer {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  background-color: var(--background-color);
+  border-bottom: 1px solid var(--border-color);
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Image Preview Item */
+.imagePreviewItem {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+/* Image Preview Thumbnail */
+.imagePreviewThumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Remove Image Button */
+.removeImageButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.removeImageButton:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Adjust textarea when images are present */
+.imagePreviewContainer + .chatInput {
+  margin-top: 8px;
+}
+
+/* Ensure proper spacing when both new chat and upload buttons are present */
+.newChatButton + .uploadButton {
+  margin-left: 4px;
 } 
