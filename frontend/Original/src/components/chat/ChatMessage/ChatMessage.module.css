@@ -2,7 +2,7 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(5px);
   }
   to {
     opacity: 1;
@@ -26,10 +26,12 @@
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.2s ease-out;
   border-radius: 12px;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease;
   align-items: flex-start;
+  will-change: transform, opacity;
+  contain: content;
 }
 
 /* Message variants based on role */
@@ -39,10 +41,10 @@
   margin-left: auto;
   border-bottom-right-radius: 4px;
   flex-direction: row;
+  max-width: 70%;
 }
 
 .assistantMessage {
-  background-color: var(--message-assistant-bg);
   align-self: flex-start;
   margin-right: auto;
   border-bottom-left-radius: 4px;
@@ -147,7 +149,7 @@
 
 /* Streaming content overall wrapper */
 .streamingContent {
-  white-space: normal; /* Let react-markdown handle wrapping */
+  white-space: normal;
   position: relative;
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -157,10 +159,11 @@
   will-change: contents;
   font-size: 1rem;
   line-height: 1.5;
+  contain: content;
 }
 
-/* Typing cursor */
-.streamingContent::after {
+/* Typing cursor - only show during streaming */
+.streamingContent.streaming::after {
   content: '|';
   display: inline-block;
   vertical-align: middle;
@@ -194,7 +197,6 @@
 .streamingContent table,
 .streamingContent pre,
 .streamingContent code {
-  /* Ensure text color is applied correctly */
   color: var(--text-primary);
 }
 
@@ -278,7 +280,7 @@
   border-radius: 3px;
 }
 
-:global(.dark-theme) .streamingContent blockquote {
+:global(body.dark-mode) .streamingContent blockquote {
   border-left: 4px solid var(--blockquote-border-dark, #343b43);
   background-color: var(--blockquote-bg-dark, #161b22);
   color: var(--text-secondary-dark, #c9d1d9);
@@ -293,7 +295,7 @@
   border-radius: 3px;
 }
 
-:global(.dark-theme) .streamingContent hr {
+:global(body.dark-mode) .streamingContent hr {
   background-color: var(--hr-bg-dark, #343b43);
 }
 
@@ -324,19 +326,21 @@
   margin-right: 0.5rem;
 }
 
+/* === Table Styles (Refactored) === */
 .streamingContent table {
   width: 100%;
-  border-collapse: collapse; /* Use collapse for GitHub style */
+  border-collapse: collapse; 
   font-size: 0.9rem;
-  overflow: hidden; /* Keep for border-radius clipping */
   margin: 1rem 0;
   display: block; /* Needed for overflow */
   overflow-x: auto;
+  border: 1px solid var(--table-border, #dfe2e5); 
+  border-radius: 6px; 
 }
 
 .streamingContent thead {
   background-color: var(--table-header-bg, #f6f8fa);
-  border-bottom: 2px solid var(--table-border, #dfe2e5); /* Header separator */
+  border-bottom: 2px solid var(--table-border, #dfe2e5); 
 }
 
 .streamingContent th {
@@ -344,101 +348,174 @@
   text-align: left;
   font-weight: 600;
   white-space: nowrap;
-  border: 1px solid var(--table-border, #dfe2e5); /* Combined borders */
-  border-top: none;
-  border-left: none;
+  border: 1px solid var(--table-border, #dfe2e5); 
+  border-top: none; 
+  border-left: none; 
+  color: var(--text-primary) !important; /* Force text color */
 }
 
 .streamingContent th:first-child {
-  /* Handled by table border */
+   border-left: none; 
 }
 
 .streamingContent th:last-child {
-  border-right: none;
+  border-right: none; 
 }
 
 .streamingContent tr {
-   border-top: 1px solid var(--table-border, #dfe2e5); /* Horizontal lines */
+   border-top: 1px solid var(--table-border, #dfe2e5); /* Horizontal lines between rows */
 }
 
-.streamingContent tbody tr:nth-child(even) {
-  background-color: var(--table-alt-row, #f6f8fa);
-}
-
-.streamingContent td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  vertical-align: top;
-  border: 1px solid var(--table-border, #dfe2e5); /* Combined borders */
-  border-top: none;
-  border-left: none;
-}
-
-.streamingContent td:last-child {
-  border-right: none;
+.streamingContent tbody tr:first-child {
+  border-top: none; /* Remove border between thead and first row */
 }
 
 .streamingContent tbody {
   background-color: var(--table-body-bg, #ffffff);
 }
 
-/* Dark mode adjustments for react-markdown elements */
-:global(.dark-theme) .streamingContent p,
-:global(.dark-theme) .streamingContent ul,
-:global(.dark-theme) .streamingContent ol,
-:global(.dark-theme) .streamingContent li,
-:global(.dark-theme) .streamingContent blockquote,
-:global(.dark-theme) .streamingContent h1,
-:global(.dark-theme) .streamingContent h2,
-:global(.dark-theme) .streamingContent h3,
-:global(.dark-theme) .streamingContent h4,
-:global(.dark-theme) .streamingContent h5,
-:global(.dark-theme) .streamingContent h6,
-:global(.dark-theme) .streamingContent table,
-:global(.dark-theme) .streamingContent pre,
-:global(.dark-theme) .streamingContent code {
+.streamingContent tbody tr {
+  background-color: var(--table-body-bg, #ffffff); /* Light theme default row */
+}
+
+.streamingContent tbody tr:nth-child(even) {
+  background-color: var(--table-row-alt-bg, #f8f9fa); /* Light theme even row */
+}
+
+.streamingContent td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  border: 1px solid var(--table-border, #dfe2e5);
+  border-top: none; 
+  border-left: none; 
+  color: var(--text-primary) !important; /* Force text color */
+}
+
+.streamingContent td:last-child {
+  border-right: none; 
+}
+
+/* === Dark Mode Styles === */
+:global(body.dark-mode) .streamingContent p,
+:global(body.dark-mode) .streamingContent ul,
+:global(body.dark-mode) .streamingContent ol,
+:global(body.dark-mode) .streamingContent li,
+:global(body.dark-mode) .streamingContent blockquote,
+:global(body.dark-mode) .streamingContent h1,
+:global(body.dark-mode) .streamingContent h2,
+:global(body.dark-mode) .streamingContent h3,
+:global(body.dark-mode) .streamingContent h4,
+:global(body.dark-mode) .streamingContent h5,
+:global(body.dark-mode) .streamingContent h6,
+:global(body.dark-mode) .streamingContent table,
+:global(body.dark-mode) .streamingContent pre,
+:global(body.dark-mode) .streamingContent code {
   color: var(--text-primary-dark);
 }
 
-:global(.dark-theme) .streamingContent a {
+:global(body.dark-mode) .streamingContent a {
   color: var(--link-color-dark);
 }
 
-:global(.dark-theme) .streamingContent a:hover {
+:global(body.dark-mode) .streamingContent a:hover {
   border-bottom-color: var(--link-color-dark);
 }
 
-:global(.dark-theme) .streamingContent del {
+:global(body.dark-mode) .streamingContent del {
   color: var(--text-secondary-dark);
 }
 
-:global(.dark-theme) .streamingContent thead {
-  background-color: var(--table-header-bg-dark, #1c2128);
-  border-bottom: 2px solid var(--table-border-dark, #343b43);
+/* Dark Mode Table Styles */
+:global(body.dark-mode) .streamingContent table {
+  border: 1px solid var(--table-border-dark, #343b43) !important;
+  background-color: var(--table-body-bg) !important;
 }
 
-:global(.dark-theme) .streamingContent th {
-  border: 1px solid var(--table-border-dark, #343b43);
-  border-top: none;
-  border-left: none;
+:global(body.dark-mode) .streamingContent thead {
+  background-color: #161b22 !important;
+  border-bottom: 2px solid var(--table-border-dark, #343b43) !important;
 }
 
-:global(.dark-theme) .streamingContent tr {
-  border-top: 1px solid var(--table-border-dark, #343b43);
+:global(body.dark-mode) .streamingContent tr {
+  border-top: 1px solid var(--table-border-dark, #343b43) !important;
 }
 
-:global(.dark-theme) .streamingContent td {
-  border: 1px solid var(--table-border-dark, #343b43);
-  border-top: none;
-  border-left: none;
+:global(body.dark-mode) .streamingContent tbody {
+  background-color: var(--table-body-bg) !important;
 }
 
-:global(.dark-theme) .streamingContent tbody tr:nth-child(even) {
-  background-color: var(--table-alt-row-dark, #161b22);
+:global(body.dark-mode) .streamingContent tbody tr {
+  background-color: var(--table-body-bg) !important; /* Dark theme default row */
 }
 
-:global(.dark-theme) .streamingContent tbody {
-  background-color: var(--table-body-bg-dark, #0d1117);
+:global(body.dark-mode) .streamingContent tbody tr:nth-child(even) {
+  background-color: var(--table-row-alt-bg) !important; /* Dark theme even row */
+}
+
+:global(body.dark-mode) .streamingContent th,
+:global(body.dark-mode) .streamingContent td {
+  border: 1px solid var(--table-border-dark, #343b43) !important;
+  color: var(--text-primary-dark) !important;
+}
+
+/* Additional rules for nested tables in markdown blocks */
+:global(body.dark-mode) .markdownCodeBlock .streamingContent table {
+  background-color: var(--table-body-bg) !important;
+  border: 1px solid var(--table-border-dark, #343b43) !important;
+}
+
+:global(body.dark-mode) .markdownCodeBlock .streamingContent tbody {
+  background-color: var(--table-body-bg) !important;
+}
+
+:global(body.dark-mode) .markdownCodeBlock .streamingContent tr {
+  background-color: var(--table-body-bg) !important;
+}
+
+:global(body.dark-mode) .markdownCodeBlock .streamingContent tbody tr {
+  background-color: var(--table-body-bg) !important;
+}
+
+:global(body.dark-mode) .markdownCodeBlock .streamingContent tbody tr:nth-child(even) {
+  background-color: var(--table-row-alt-bg) !important;
+}
+
+/* Override inline code style when inside table cells */
+.streamingContent table th code,
+.streamingContent table td code {
+  background-color: transparent !important;
+  color: inherit !important; 
+  padding: 0 !important;
+  font-size: inherit !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+/* Explicit override for DARK MODE code inside table cells */
+:global(body.dark-mode) .streamingContent table th code,
+:global(body.dark-mode) .streamingContent table td code {
+  color: var(--text-primary-dark) !important;
+}
+
+/* Ensure links within tables get correct link color */
+.streamingContent table th a,
+.streamingContent table td a {
+  color: var(--link-color) !important;
+  border-bottom: 1px solid transparent;
+}
+.streamingContent table th a:hover,
+.streamingContent table td a:hover {
+  border-bottom-color: var(--link-color);
+}
+
+:global(body.dark-mode) .streamingContent table th a,
+:global(body.dark-mode) .streamingContent table td a {
+  color: var(--link-color-dark) !important;
+}
+:global(body.dark-mode) .streamingContent table th a:hover,
+:global(body.dark-mode) .streamingContent table td a:hover {
+  border-bottom-color: var(--link-color-dark);
 }
 
 /* Code blocks (Container) */
@@ -522,8 +599,7 @@
 }
 
 /* Adjustments for markdown rendered *inside* .markdownCodeBlock */
-.markdownCodeBlock .streamingContent /* Reset inner streamingContent styles if needed */
-{
+.markdownCodeBlock .streamingContent {
   white-space: normal; 
 }
 
@@ -541,24 +617,23 @@
 .markdownCodeBlock .streamingContent table,
 .markdownCodeBlock .streamingContent pre,
 .markdownCodeBlock .streamingContent code {
-  /* Ensure correct colors inside rendered markdown block */
   color: var(--text-primary);
 }
 
-:global(.dark-theme) .markdownCodeBlock .streamingContent p,
-:global(.dark-theme) .markdownCodeBlock .streamingContent ul,
-:global(.dark-theme) .markdownCodeBlock .streamingContent ol,
-:global(.dark-theme) .markdownCodeBlock .streamingContent li,
-:global(.dark-theme) .markdownCodeBlock .streamingContent blockquote,
-:global(.dark-theme) .markdownCodeBlock .streamingContent h1,
-:global(.dark-theme) .markdownCodeBlock .streamingContent h2,
-:global(.dark-theme) .markdownCodeBlock .streamingContent h3,
-:global(.dark-theme) .markdownCodeBlock .streamingContent h4,
-:global(.dark-theme) .markdownCodeBlock .streamingContent h5,
-:global(.dark-theme) .markdownCodeBlock .streamingContent h6,
-:global(.dark-theme) .markdownCodeBlock .streamingContent table,
-:global(.dark-theme) .markdownCodeBlock .streamingContent pre,
-:global(.dark-theme) .markdownCodeBlock .streamingContent code {
+:global(body.dark-mode) .markdownCodeBlock .streamingContent p,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent ul,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent ol,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent li,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent blockquote,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent h1,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent h2,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent h3,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent h4,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent h5,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent h6,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent table,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent pre,
+:global(body.dark-mode) .markdownCodeBlock .streamingContent code {
   color: var(--text-primary-dark);
 }
 
@@ -664,9 +739,9 @@
   .metricsContainer {
     font-size: 0.7rem;
     gap: 0.5rem;
-  }
-  
-  .metric {
+}
+
+.metric {
     padding: 0.2rem 0.4rem;
   }
 } 

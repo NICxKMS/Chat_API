@@ -1,24 +1,24 @@
 .messageListContainer {
   position: relative;
-  height: 100%;
   width: 100%;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
-  padding-bottom: 110px;
-  padding-top: 90px;
-  margin-top: auto;
+  max-width: 768px;
+  margin: 0 auto;
+  will-change: transform;
+  -webkit-overflow-scrolling: touch;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .messageListContainer::before {
   content: '';
-  position: absolute;
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
   height: 30px;
   background: linear-gradient(to bottom, var(--chat-bg) 0%, transparent 100%);
   z-index: 2;
-  pointer-events: none;
 }
 
 .messageRow {
@@ -27,6 +27,10 @@
   padding-bottom: 12px;
   box-sizing: border-box;
   transition: background-color 0.2s ease;
+  /* Improve performance during scrolling/resizing */
+  will-change: transform;
+  contain: layout; /* Optimize layout containment */
+  width: 100%;
 }
 
 .messageRow:hover {
@@ -43,66 +47,6 @@ body.dark-mode .messageRow:hover {
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
-}
-
-.scrollToBottomButton {
-  position: absolute;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  border: none;
-  color: var(--button-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 3;
-  opacity: 0.9;
-  overflow: hidden;
-}
-
-.scrollToBottomButton::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--gradient-accent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.scrollToBottomButton:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-  opacity: 1;
-}
-
-.scrollToBottomButton:hover::before {
-  opacity: 1;
-}
-
-.scrollToBottomButton:active {
-  transform: scale(0.92);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.scrollIcon {
-  width: 22px;
-  height: 22px;
-  position: relative;
-  z-index: 1;
-  transition: transform 0.3s ease;
-}
-
-.scrollToBottomButton:hover .scrollIcon {
-  transform: translateY(-3px);
 }
 
 /* Empty state styles */
@@ -145,18 +89,6 @@ body.dark-mode .messageRow:hover {
   .messageRow {
     padding: 0.75rem 1rem;
     padding-bottom: 10px;
-  }
-  
-  .scrollToBottomButton {
-    width: 40px;
-    height: 40px;
-    bottom: 1.25rem;
-    right: 1.25rem;
-  }
-  
-  .scrollIcon {
-    width: 18px;
-    height: 18px;
   }
   
   .emptyStateIcon {

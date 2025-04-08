@@ -7,6 +7,7 @@ import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTheme } from '../../../contexts/ThemeContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useChat } from '../../../contexts/ChatContext';
 
 /**
  * StreamingMessage component using react-markdown for rendering
@@ -14,6 +15,7 @@ import remarkGfm from 'remark-gfm';
 const StreamingMessage = ({ content }) => {
   const [parsedSegments, setParsedSegments] = useState([]);
   const { isDark } = useTheme();
+  const { isWaitingForResponse } = useChat();
   
   // Get the appropriate syntax highlighter theme based on dark/light mode
   const syntaxTheme = isDark ? atomDark : prism;
@@ -37,7 +39,7 @@ const StreamingMessage = ({ content }) => {
         }
         
         const language = match[1] || match[3] || '';
-        const codeContent = match[2] || match[4] || ''; // Renamed to avoid confusion
+        const codeContent = match[2] || match[4] || '';
         const isComplete = !!match[2]; 
         
         segments.push({
@@ -64,16 +66,29 @@ const StreamingMessage = ({ content }) => {
     }
   };
   
-  // Update segments whenever content changes
+  // Update segments whenever content changes, with debounce for streaming
   useEffect(() => {
     if (!content) return;
-    try {
-      const segments = processStreamingContent(content);
-      setParsedSegments(segments);
-    } catch (error) {
-      console.error("Error updating segments:", error);
-      setParsedSegments([{ type: 'text', content }]);
-    }
+    
+    // Create a debounced update function to prevent too many re-renders
+    const updateSegmentsWithDebounce = () => {
+      const timeoutId = setTimeout(() => {
+        try {
+          const segments = processStreamingContent(content);
+          setParsedSegments(segments);
+        } catch (error) {
+          console.error("Error updating segments:", error);
+          setParsedSegments([{ type: 'text', content }]);
+        }
+      }, 50); // 50ms debounce
+
+      return timeoutId;
+    };
+
+    const timeoutId = updateSegmentsWithDebounce();
+    
+    // Clean up timeout on content change or unmount
+    return () => clearTimeout(timeoutId);
   }, [content]);
   
   // Render a text segment using ReactMarkdown
@@ -173,9 +188,9 @@ const StreamingMessage = ({ content }) => {
     }
   };
   
-  // Render the component
+  // Render the component with optimization to reduce layout shifts
   return (
-    <div className={`${styles.markdown} ${styles.streamingContent}`}>
+    <div className={`${styles.markdown} ${styles.streamingContent} ${isWaitingForResponse ? styles.streaming : ''}`}>
       {parsedSegments && parsedSegments.map((segment, index) => 
         segment && segment.type === 'text' 
           ? renderTextSegment(segment.content, index)

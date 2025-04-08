@@ -1,4 +1,4 @@
-import React, { memo, lazy, Suspense, useRef } from 'react';
+import React, { memo, lazy, Suspense, useRef, useEffect } from 'react';
 import { useChatLogic } from '../../../hooks/useChatLogic';
 import styles from './ChatContainer.module.css';
 import Spinner from '../../common/Spinner';
@@ -33,7 +33,22 @@ const ChatContainer = memo(({
   } = useChatLogic();
 
   const messageListRef = useRef(null);
+  const chatAreaRef = useRef(null);
+  const scrollContainerRef = useRef(null);
   const isActiveChat = chatHistory.length > 0;
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollContainerRef.current && isActiveChat) {
+      // Use requestAnimationFrame to ensure DOM is fully updated
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          const container = scrollContainerRef.current;
+          container.scrollTop = container.scrollHeight - container.clientHeight;
+        }
+      });
+    }
+  }, [chatHistory, isActiveChat]);
 
   // Use the selected model passed down for the button, but model from logic elsewhere
   const displayModelName = passedSelectedModel?.name;
@@ -102,14 +117,18 @@ const ChatContainer = memo(({
 
       <div className={styles.chatArea}>
         {isActiveChat ? (
-          // Active Chat: Render MessageList
-          <Suspense fallback={<div className={styles.messagePlaceholder} />}>
-            <MessageList
-              ref={messageListRef}
-              messages={chatHistory}
-              error={error}
-            />
-          </Suspense>
+          // Active Chat: Render MessageList inside scroll container
+          <div className={styles.scrollContainer} ref={scrollContainerRef}>
+            <div className={styles.scrollInner}>
+              <Suspense fallback={<div className={styles.messagePlaceholder} />}>
+                <MessageList
+                  ref={messageListRef}
+                  messages={chatHistory}
+                  error={error}
+                />
+              </Suspense>
+            </div>
+          </div>
         ) : (
           // Empty Chat: Render Greeting and Input Area (Static Layout)
           <div className={styles.emptyChatContent}>

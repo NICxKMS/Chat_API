@@ -7,7 +7,7 @@
   position: relative;
   border-radius: 8px;
   box-shadow: var(--shadow);
-  overflow-y: auto;
+  overflow: hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--scroll-thumb) var(--scroll-track);
   transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
@@ -29,13 +29,33 @@
   flex-direction: column;
   position: relative;
   padding: 1rem 0;
-  max-width: 760px;
   width: 100%;
   margin: 0 auto;
+  min-height: 0;
+}
+
+.scrollContainer {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+  position: relative;
+  min-height: 0;
+}
+
+.scrollInner {
+  padding-top: 50px;
+  padding-bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 /* Styles for active chat (with messages) */
 .activeChat .chatArea {
+  padding-bottom: 80px;
 }
 
 /* Styles for empty chat */
@@ -99,7 +119,7 @@
   position: absolute;
   bottom: 1rem;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50.5%);
   width: 100%;
   max-width: 760px;
   box-shadow: var(--shadow-lg);
