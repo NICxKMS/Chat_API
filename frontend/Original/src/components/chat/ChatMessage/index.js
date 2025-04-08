@@ -38,7 +38,7 @@ const formatTime = (ms) => {
  * @returns {JSX.Element} - Rendered component
  */
 const ChatMessage = ({ message, isStreaming }) => {
-  const { isWaitingForResponse, metrics } = useChat();
+  const { isWaitingForResponse } = useChat();
   const { isDark } = useTheme();
   const [copiedCodeIndex, setCopiedCodeIndex] = useState(-1);
   
@@ -75,8 +75,15 @@ const ChatMessage = ({ message, isStreaming }) => {
   }, [message.role]);
   
   // Determine if we should show metrics (only for assistant messages)
-  const shouldShowMetrics = message.role === 'assistant' && 
-                           (isWaitingForResponse || (metrics && metrics.isComplete));
+  const shouldShowMetrics = useMemo(() => {
+    if (message.role !== 'assistant' || !message.metrics) return false;
+    
+    // Check if we have any valid metrics values
+    const { elapsedTime, tokenCount, tokensPerSecond, timeToFirstToken } = message.metrics;
+    return elapsedTime !== null || tokenCount !== null || tokensPerSecond !== null || timeToFirstToken !== null;
+  }, [message.role, message.metrics]);
+  
+  console.log('Should show metrics:', shouldShowMetrics, { role: message.role, metrics: message.metrics });
   
   // Determine if this message should use streaming optimization
   const shouldUseStreamingOptimization = isStreaming && message.role === 'assistant';
@@ -179,17 +186,23 @@ const ChatMessage = ({ message, isStreaming }) => {
   
   // Render performance metrics
   const renderMetrics = () => {
-    if (!shouldShowMetrics || !metrics) return null;
+    if (!shouldShowMetrics || !message.metrics) return null;
     
     const isGenerating = isWaitingForResponse;
-    const { elapsedTime, tokenCount, tokensPerSecond } = metrics;
+    const { elapsedTime, tokenCount, tokensPerSecond, timeToFirstToken } = message.metrics;
     
     return (
       <div className={styles.metricsContainer}>
+        {timeToFirstToken && (
+          <span className={styles.metric}>
+            <ClockIcon size={14} className={styles.metricIcon} />
+            First Token: {formatTime(timeToFirstToken)}
+          </span>
+        )}
         {elapsedTime && (
           <span className={styles.metric}>
             <ClockIcon size={14} className={styles.metricIcon} />
-            Time: {formatTime(elapsedTime)}
+            Total Time: {formatTime(elapsedTime)}
           </span>
         )}
         {tokenCount && (

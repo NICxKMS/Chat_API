@@ -24,18 +24,19 @@ export const ChatProvider = ({ children }) => {
   const { idToken, isAuthenticated } = useAuth();
   
   // State for chat - Initialize as empty
-  const [chatHistory, setChatHistory] = useState([]); // Reverted to empty array
+  const [chatHistory, setChatHistory] = useState([]);
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const [error, setError] = useState(null);
   
-  // Performance metrics state
-  const [metrics, setMetrics] = useState({
+  // Performance metrics state - now stored per message
+  const [currentMessageMetrics, setCurrentMessageMetrics] = useState({
     startTime: null,
     endTime: null,
     elapsedTime: null,
     tokenCount: null,
     tokensPerSecond: null,
-    isComplete: false
+    isComplete: false,
+    timeToFirstToken: null
   });
   
   // Reference for streaming text content - used for direct DOM updates
@@ -54,19 +55,22 @@ export const ChatProvider = ({ children }) => {
   
   // Reset performance metrics
   const resetPerformanceMetrics = useCallback(() => {
-    setMetrics({
+    console.log('Resetting performance metrics');
+    setCurrentMessageMetrics({
       startTime: null,
       endTime: null,
       elapsedTime: null,
       tokenCount: null,
       tokensPerSecond: null,
-      isComplete: false
+      isComplete: false,
+      timeToFirstToken: null
     });
   }, []);
   
   // Start performance timer
   const startPerformanceTimer = useCallback(() => {
-    setMetrics(prev => ({
+    console.log('Starting performance timer');
+    setCurrentMessageMetrics(prev => ({
       ...prev,
       startTime: Date.now(),
       isComplete: false
@@ -75,7 +79,8 @@ export const ChatProvider = ({ children }) => {
   
   // Update performance metrics
   const updatePerformanceMetrics = useCallback((tokenCount, isComplete = false) => {
-    setMetrics(prev => {
+    console.log('Updating performance metrics:', { tokenCount, isComplete });
+    setCurrentMessageMetrics(prev => {
       const endTime = Date.now();
       const elapsedTime = endTime - (prev.startTime || endTime);
       
@@ -85,14 +90,36 @@ export const ChatProvider = ({ children }) => {
         tokensPerSecond = Math.round((tokenCount / elapsedTime) * 1000);
       }
       
-      return {
+      // Only update token count if it's higher than the previous count
+      const newTokenCount = tokenCount > (prev.tokenCount || 0) ? tokenCount : prev.tokenCount;
+      
+      // Calculate time to first token if we have tokens but haven't set it yet
+      const timeToFirstToken = prev.timeToFirstToken || 
+        (newTokenCount > 0 ? elapsedTime : null);
+      
+      const newMetrics = {
         startTime: prev.startTime,
         endTime,
         elapsedTime,
-        tokenCount,
+        tokenCount: newTokenCount,
         tokensPerSecond,
-        isComplete
+        isComplete,
+        timeToFirstToken
       };
+      
+      console.log('New metrics state:', newMetrics);
+      
+      // Update the last assistant message's metrics
+      setChatHistory(prev => {
+        const newHistory = [...prev];
+        const lastMessage = newHistory[newHistory.length - 1];
+        if (lastMessage && lastMessage.role === 'assistant') {
+          lastMessage.metrics = { ...newMetrics };
+        }
+        return newHistory;
+      });
+      
+      return newMetrics;
     });
   }, []);
   
@@ -108,39 +135,52 @@ export const ChatProvider = ({ children }) => {
     return Math.ceil((content.split(/\s+/).length) * 1.3);
   }, []);
   
-  // Add message to chat history
-  const addMessageToHistory = useCallback((role, content) => {
-    setChatHistory(prev => [...prev, { role, content }]);
-    return { role, content };
-  }, []);
-  
-  // Helper function to update chat history with new content
-  // Using an optimized approach to minimize re-renders
-  const updateChatWithContent = useCallback((content) => {
-    // Store the latest content in the ref for direct DOM access
-    streamingTextRef.current = content;
-    
-    // Use React's functional update to ensure we're working with the latest state
+  // Add message to chat history with metrics
+  const addMessageToHistory = useCallback((role, content, metrics = null) => {
     setChatHistory(prev => {
-      const updated = [...prev];
-      const assistantIndex = updated.length - 1;
+      const newMessage = { role, content };
       
-      // Only update if we have a valid assistant message to update
-      if (assistantIndex >= 0 && updated[assistantIndex].role === 'assistant') {
-        // Only update if content has changed to avoid unnecessary re-renders
-        if (updated[assistantIndex].content !== content) {
-          updated[assistantIndex] = { 
-            role: 'assistant', 
-            content: content 
-          };
-          return updated;
-        }
+      // If metrics are provided, add them to the message
+      if (metrics) {
+        newMessage.metrics = metrics;
+      }
+      // If this is an assistant message, always ensure metrics are attached
+      else if (role === 'assistant') {
+        // Use current metrics if available, otherwise create a new metrics object
+        newMessage.metrics = currentMessageMetrics.tokenCount !== null 
+          ? { ...currentMessageMetrics }
+          : {
+              startTime: Date.now(),
+              endTime: null,
+              elapsedTime: null,
+              tokenCount: null,
+              tokensPerSecond: null,
+              isComplete: false,
+              timeToFirstToken: null
+            };
       }
       
-      // Return the same reference if no change is needed
-      return prev;
+      console.log('Adding message to history:', { role, content, metrics: newMessage.metrics });
+      return [...prev, newMessage];
     });
-  }, []);
+    return { role, content, metrics };
+  }, [currentMessageMetrics]);
+  
+  // Update chat history with new content and metrics
+  const updateChatWithContent = useCallback((content) => {
+    setChatHistory(prev => {
+      const newHistory = [...prev];
+      const lastMessage = newHistory[newHistory.length - 1];
+      if (lastMessage && lastMessage.role === 'assistant') {
+        lastMessage.content = content;
+        // Always update metrics for assistant messages
+        if (currentMessageMetrics.tokenCount !== null) {
+          lastMessage.metrics = { ...currentMessageMetrics };
+        }
+      }
+      return newHistory;
+    });
+  }, [currentMessageMetrics]);
   
   // Process streaming message using Fetch API with ReadableStream for optimal performance
   const streamMessageWithFetch = useCallback(async (message) => {
@@ -166,11 +206,11 @@ export const ChatProvider = ({ children }) => {
     setIsWaitingForResponse(true);
     setError(null);
     
-    // Add assistant response with empty content initially
-    addMessageToHistory('assistant', '');
+    // Add assistant response with empty content and initial metrics
+    addMessageToHistory('assistant', '', { ...currentMessageMetrics, isComplete: false });
     
     let accumulatedContent = '';
-    let tokenCount = 0;
+    let accumulatedTokenCount = 0;
     let abortController = new AbortController();
     let lastRenderTime = 0;
     
@@ -277,58 +317,49 @@ export const ChatProvider = ({ children }) => {
         buffer += chunk;
         
         // Process all complete SSE messages in the buffer
-        // Don't process overlapping calls
         if (!processingChunk) {
           processingChunk = true;
           
-          // Split by double newlines to find complete SSE messages
           const messages = buffer.split('\n\n');
-          
-          // Keep the last potentially incomplete message in the buffer
           buffer = messages.pop() || '';
           
-          // Process each complete message
           for (const message of messages) {
             if (!message.trim()) continue;
             
-            // Check for heartbeat
             if (message.startsWith(':heartbeat')) {
               console.log('Received heartbeat');
               continue;
             }
             
-            // Process data message
             if (message.startsWith('data:')) {
               const data = message.slice(5).trim();
               
-              // Check for [DONE] message
               if (data === '[DONE]') {
                 console.log('Received [DONE] message from stream');
-                updatePerformanceMetrics(tokenCount, true);
+                updatePerformanceMetrics(accumulatedTokenCount, true);
                 continue;
               }
               
-              // Parse the JSON data
               try {
                 const parsedData = JSON.parse(data);
                 const content = parsedData.content || '';
                 
                 if (content) {
-                  // Add to accumulated content immediately
+                  // Add to accumulated content
                   accumulatedContent += content;
                   
-                  // Update the streaming text ref for direct DOM updates
+                  // Update token count for this chunk and accumulate
+                  const chunkTokenCount = content.split(/\s+/).length || 0;
+                  accumulatedTokenCount += chunkTokenCount;
+                  
+                  // Update the streaming text ref
                   streamingTextRef.current = accumulatedContent;
                   
-                  // Update token count estimate
-                  tokenCount += content.split(/\s+/).length || 0;
-                  
-                  // Optimize UI updates to avoid React re-render thrashing
-                  // Use requestAnimationFrame for smoother visual experience
+                  // Optimize UI updates
                   const now = performance.now();
                   if (now - lastRenderTime > 16) { // ~60fps update rate
                     const currentContent = accumulatedContent;
-                    const currentTokenCount = tokenCount;
+                    const currentTokenCount = accumulatedTokenCount;
                     window.requestAnimationFrame(() => {
                       updateChatWithContent(currentContent);
                       updatePerformanceMetrics(currentTokenCount, false);
@@ -349,7 +380,7 @@ export const ChatProvider = ({ children }) => {
       // Final update to ensure all content is displayed
       window.requestAnimationFrame(() => {
         updateChatWithContent(accumulatedContent);
-        updatePerformanceMetrics(tokenCount, true);
+        updatePerformanceMetrics(accumulatedTokenCount, true);
       });
       
       // Stream is complete
@@ -472,10 +503,10 @@ export const ChatProvider = ({ children }) => {
   
   // Reset chat history
   const resetChat = useCallback(() => {
-    setChatHistory([]); // Reverted to empty array
+    setChatHistory([]);
     resetPerformanceMetrics();
     setError(null);
-  }, [resetPerformanceMetrics]); // Removed sampleHistory dependency
+  }, [resetPerformanceMetrics]);
   
   // Download chat history as JSON
   const downloadChatHistory = useCallback(() => {
@@ -550,7 +581,7 @@ export const ChatProvider = ({ children }) => {
     chatHistory,
     isWaitingForResponse,
     error,
-    metrics,
+    metrics: currentMessageMetrics,
     submitMessage: sendMessage,
     resetChat,
     downloadChatHistory,
@@ -563,7 +594,7 @@ export const ChatProvider = ({ children }) => {
     chatHistory,
     isWaitingForResponse,
     error,
-    metrics,
+    currentMessageMetrics,
     sendMessage,
     resetChat,
     downloadChatHistory,
