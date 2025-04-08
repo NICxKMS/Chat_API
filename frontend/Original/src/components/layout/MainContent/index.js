@@ -14,6 +14,9 @@ const ChatContainer = lazy(() => import('../../chat/ChatContainer'));
  * @param {boolean} props.isLoadingModels - Whether models are currently loading
  * @param {Function} props.toggleModelSelector - Function to toggle the model dropdown/modal
  * @param {Function} props.onNewChat - Function to handle new chat
+ * @param {Function} props.onResetChat - Function to handle reset chat
+ * @param {Function} props.onDownloadChat - Function to handle download chat
+ * @param {Function} props.onToggleSettings - Function to handle settings toggle
  * @returns {JSX.Element} - Rendered component
  */
 const MainContent = ({ 
@@ -22,19 +25,23 @@ const MainContent = ({
   selectedModel,
   isLoadingModels,
   toggleModelSelector,
-  /* Accept handlers */
-  onNewChat, 
+  onNewChat,
+  onResetChat,
+  onDownloadChat,
+  onToggleSettings
 }) => {
   return (
     <main className={styles.mainContent}>
-      {/* Chat area - Pass model button props down */}
+      {/* Chat area - Pass all action handlers down */}
       <Suspense fallback={<div className={styles.chatPlaceholder} />}>
         <ChatContainer 
           selectedModel={selectedModel}
           isLoadingModels={isLoadingModels}
           toggleModelSelector={toggleModelSelector}
-          /* Pass handlers down */
           onNewChat={onNewChat}
+          onResetChat={onResetChat}
+          onDownloadChat={onDownloadChat}
+          onToggleSettings={onToggleSettings}
         />
       </Suspense>
     </main>

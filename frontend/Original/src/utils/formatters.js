@@ -6,12 +6,13 @@
 export const formatUrls = (text) => {
   if (!text) return '';
   
-  // URL regex pattern
-  const urlPattern = /https?:\/\/[^\s]+/g;
+  // URL regex pattern - improved to handle more URL formats
+  const urlPattern = /(https?:\/\/[^\s'")<>]+)(?=[.,:;!?]*(\s|$|<))/g;
   
   // Replace URLs with anchor tags
   return text.replace(urlPattern, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    const cleanUrl = url.replace(/[.,;:!?]+$/, ''); // Clean trailing punctuation
+    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>`;
   });
 };
 
@@ -36,13 +37,14 @@ export const escapeHtml = (text) => {
 
 /**
  * Processes a string of text to identify and format code blocks
+ * with improved language detection and formatting
  * @param {string} content - Input text which may contain code blocks delimited by ```
  * @returns {string} - Formatted HTML with code blocks properly wrapped
  */
 export const processCodeBlocks = (content) => {
   if (!content) return '';
   
-  const codeBlockRegex = /```(\w*)([\s\S]*?)```/g;
+  const codeBlockRegex = /```([\w-]*)\n?([\s\S]*?)```/g;
   const parts = [];
   let lastIndex = 0;
   let match;
@@ -56,12 +58,15 @@ export const processCodeBlocks = (content) => {
     }
     
     // Get language and code
-    const language = match[1].trim();
+    const language = match[1].trim() || 'plaintext';
     const code = match[2].trim();
+    
+    // Normalize language identifier
+    const normalizedLanguage = normalizeLanguageId(language);
     
     // Add formatted code block
     parts.push(
-      `<pre><code class="language-${language || 'plaintext'}">${code}</code></pre>`
+      `<pre><code class="language-${normalizedLanguage}">${escapeHtml(code)}</code></pre>`
     );
     
     lastIndex = match.index + match[0].length;
@@ -77,7 +82,52 @@ export const processCodeBlocks = (content) => {
 };
 
 /**
+ * Normalizes language identifiers for syntax highlighting
+ * @param {string} lang - Raw language identifier from markdown
+ * @returns {string} - Normalized language identifier
+ */
+export const normalizeLanguageId = (lang) => {
+  // Handle common aliases and normalize language IDs
+  const languageMap = {
+    'js': 'javascript',
+    'ts': 'typescript',
+    'jsx': 'jsx',
+    'tsx': 'tsx',
+    'py': 'python',
+    'rb': 'ruby',
+    'sh': 'bash',
+    'bash': 'bash',
+    'shell': 'bash',
+    'zsh': 'bash',
+    'c': 'c',
+    'cpp': 'cpp',
+    'cs': 'csharp',
+    'java': 'java',
+    'go': 'go',
+    'rust': 'rust',
+    'php': 'php',
+    'html': 'html',
+    'css': 'css',
+    'scss': 'scss',
+    'sql': 'sql',
+    'json': 'json',
+    'yaml': 'yaml',
+    'yml': 'yaml',
+    'md': 'markdown',
+    'tex': 'latex',
+    'kotlin': 'kotlin',
+    'swift': 'swift',
+    'plaintext': 'plaintext',
+    'txt': 'plaintext',
+    '': 'plaintext'
+  };
+  
+  return languageMap[lang.toLowerCase()] || lang.toLowerCase() || 'plaintext';
+};
+
+/**
  * Wraps text in paragraph tags, respecting existing paragraph breaks
+ * with support for markdown formatting
  * @param {string} text - Input text to be wrapped in paragraphs
  * @returns {string} - Text wrapped in paragraph tags
  */
@@ -128,7 +178,62 @@ export const wrapTextInParagraphs = (text) => {
 };
 
 /**
- * Complete message content formatting pipeline
+ * Detects and formats Markdown tables in text
+ * @param {string} text - Text that may contain Markdown tables
+ * @returns {string} - Text with tables converted to HTML
+ */
+export const formatMarkdownTables = (text) => {
+  if (!text) return '';
+  
+  // Regex to match markdown tables
+  const tableRegex = /(\|[^\n]+\|\n)((?:\|[ :]*[-:]+[ :]*)+\|)(\n(?:\|[^\n]+\|\n?)*)/g;
+  
+  return text.replace(tableRegex, (match, headerRow, separatorRow, bodyRows) => {
+    // Process the header row
+    const headers = headerRow.trim().split('|').slice(1, -1).map(cell => cell.trim());
+    
+    // Process the alignment row (determines column alignment)
+    const alignments = separatorRow.trim().split('|').slice(1, -1).map(cell => {
+      const trimmed = cell.trim();
+      if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
+      if (trimmed.endsWith(':')) return 'right';
+      return 'left';
+    });
+    
+    // Process the body rows
+    const rows = bodyRows.trim().split('\n').map(row => 
+      row.trim().split('|').slice(1, -1).map(cell => cell.trim())
+    );
+    
+    // Build the HTML table
+    let tableHtml = '<div class="table-wrapper"><table>';
+    
+    // Add header
+    tableHtml += '<thead><tr>';
+    headers.forEach((header, index) => {
+      const align = alignments[index] || 'left';
+      tableHtml += `<th style="text-align: ${align}">${escapeHtml(header)}</th>`;
+    });
+    tableHtml += '</tr></thead>';
+    
+    // Add body
+    tableHtml += '<tbody>';
+    rows.forEach(row => {
+      tableHtml += '<tr>';
+      row.forEach((cell, index) => {
+        const align = alignments[index] || 'left';
+        tableHtml += `<td style="text-align: ${align}">${escapeHtml(cell)}</td>`;
+      });
+      tableHtml += '</tr>';
+    });
+    tableHtml += '</tbody></table></div>';
+    
+    return tableHtml;
+  });
+};
+
+/**
+ * Complete message content formatting pipeline with enhanced markdown support
  * @param {string} content - Raw message content
  * @returns {string} - Fully formatted HTML
  */
@@ -145,8 +250,8 @@ export const formatMessageContent = (content) => {
   };
   
   // URL regex pattern
-  const urlPattern = /https?:\/\/[^\s]+/g;
-  const codeBlockRegex = /```(\w*)([\s\S]*?)```/g;
+  const urlPattern = /(https?:\/\/[^\s'")<>]+)(?=[.,:;!?]*(\s|$|<))/g;
+  const codeBlockRegex = /```([\w-]*)\n?([\s\S]*?)```/g;
   
   const parts = [];
   let lastIndex = 0;
@@ -159,18 +264,22 @@ export const formatMessageContent = (content) => {
       const textBefore = content.substring(lastIndex, match.index);
       const escapedText = textBefore.replace(/[&<>"']/g, (char) => htmlEntities[char]);
       const formattedText = escapedText.replace(urlPattern, (url) => {
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+        const cleanUrl = url.replace(/[.,;:!?]+$/, ''); // Clean trailing punctuation
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>`;
       });
       parts.push(wrapTextInParagraphs(formattedText));
     }
     
     // Get language and code
-    const language = match[1].trim();
+    const language = match[1].trim() || 'plaintext';
     const code = match[2].trim();
     
-    // Add formatted code block (code content is already inside pre/code tags, no need to escape)
+    // Normalize language identifier
+    const normalizedLanguage = normalizeLanguageId(language);
+    
+    // Add formatted code block with escaped code
     parts.push(
-      `<pre><code class="language-${language || 'plaintext'}">${code}</code></pre>`
+      `<pre><code class="language-${normalizedLanguage}">${escapeHtml(code)}</code></pre>`
     );
     
     lastIndex = match.index + match[0].length;
@@ -181,9 +290,14 @@ export const formatMessageContent = (content) => {
     const textAfter = content.substring(lastIndex);
     const escapedText = textAfter.replace(/[&<>"']/g, (char) => htmlEntities[char]);
     const formattedText = escapedText.replace(urlPattern, (url) => {
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+      const cleanUrl = url.replace(/[.,;:!?]+$/, ''); // Clean trailing punctuation
+      return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>`;
     });
-    parts.push(wrapTextInParagraphs(formattedText));
+    
+    // Format tables in the remaining text
+    const textWithTables = formatMarkdownTables(formattedText);
+    
+    parts.push(wrapTextInParagraphs(textWithTables));
   }
   
   return parts.join('');

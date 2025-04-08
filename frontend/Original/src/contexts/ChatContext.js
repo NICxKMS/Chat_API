@@ -273,6 +273,7 @@ export const ChatProvider = ({ children }) => {
         
         // Decode the chunk
         const chunk = decoder.decode(value, { stream: true });
+        console.log('[DEBUG] Received stream chunk:', chunk);
         buffer += chunk;
         
         // Process all complete SSE messages in the buffer
@@ -444,6 +445,7 @@ export const ChatProvider = ({ children }) => {
       
       // Parse response
       const data = await response.json();
+      console.log('[DEBUG] Received non-streamed message:', data);
       const content = data.content || '';
       
       // Add AI response to history

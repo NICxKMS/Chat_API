@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFirebaseAuth } from '../../firebaseConfig';
+// Import Firebase auth functions using the correct paths
 import { 
   GoogleAuthProvider, 
   signInWithPopup, 
@@ -12,13 +13,13 @@ import {
 import styles from './LoginModal.module.css';
 import Spinner from '../common/Spinner'; // Assuming a Spinner component exists
 
-// Import icons (example using react-icons, install if needed: npm install react-icons)
+// Import icons using the correct paths
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
 import { IoMdClose } from "react-icons/io";
 import { MdOutlineEmail } from "react-icons/md"; // Icon for email/pass
 
-const LoginModal = () => {
+const LoginModal = ({ onClose }) => {
   const { setIsLoggingIn, error: authContextError } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -52,10 +53,12 @@ const LoginModal = () => {
         console.log('Popup sign-in cancelled by user.');
         // Close the modal as the user cancelled
         setIsLoggingIn(false);
+        if (onClose) onClose();
       } else if (err.code === 'auth/cancelled-popup-request') {
         console.log('Popup sign-in cancelled (multiple requests).');
         // Close the modal
         setIsLoggingIn(false);
+        if (onClose) onClose();
       } else if (err.code === 'auth/popup-blocked') {
         setError('Popup blocked by browser. Please allow popups for this site.');
         // Keep modal open to show the error in this case
@@ -131,6 +134,7 @@ const LoginModal = () => {
     // Only close if not currently in the middle of a sign-in attempt
     if (!isLoading) {
       setIsLoggingIn(false);
+      if (onClose) onClose();
     }
   };
 

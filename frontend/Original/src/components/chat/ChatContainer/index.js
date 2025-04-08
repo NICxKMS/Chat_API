@@ -18,6 +18,8 @@ const ChatContainer = memo(({
   isLoadingModels, 
   toggleModelSelector,
   onNewChat,
+  onResetChat,
+  onDownloadChat,
   onToggleSettings
 }) => {
   const {
@@ -28,8 +30,6 @@ const ChatContainer = memo(({
     selectedModel: modelFromLogic,
     settings,
     handleSendMessage,
-    resetChat, 
-    downloadChatHistory, 
   } = useChatLogic();
 
   const messageListRef = useRef(null);
@@ -40,7 +40,6 @@ const ChatContainer = memo(({
 
   // Classes for the main container
   const chatContainerClasses = `${styles.chatContainer} ${isActiveChat ? styles.activeChat : styles.emptyChat}`;
-  // Input area class determination moved inside conditional rendering
 
   // Helper function to render the input area contents
   const renderInputAreaContents = (isFixedLayout) => {
@@ -74,8 +73,8 @@ const ChatContainer = memo(({
           </Suspense>
           <Suspense fallback={<div className={styles.controlsPlaceholder} />}>
             <ChatControls
-              onReset={resetChat} 
-              onDownload={downloadChatHistory} 
+              onReset={onResetChat}
+              onDownload={onDownloadChat}
               isGenerating={isWaitingForResponse}
               hasMessages={isActiveChat}
               isStaticLayout={isStaticLayout}

@@ -1,30 +1,17 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { ContextManager } from './contexts/ContextManager';
 import { performanceMonitor, PERFORMANCE_MARKS, PERFORMANCE_MEASURES } from './utils/performance';
+import { lazyLoad, preloadComponentsIdle } from './utils/lazyLoad';
 
 // Lazy-loaded components with preload hints
-const Layout = lazy(() => import(/* webpackPrefetch: true */ './components/layout/Layout'));
-const LoadingSpinner = lazy(() => import(/* webpackPrefetch: true */ './components/common/Spinner'));
+const Layout = lazy(() => import(/* webpackChunkName: "layout" */ './components/layout/Layout'));
+const LoadingSpinner = lazy(() => import(/* webpackChunkName: "spinner" */ './components/common/Spinner'));
 
-// Preload critical components
-const preloadComponents = () => {
-  const components = [
-    () => import(/* webpackPrefetch: true */ './components/layout/Layout'),
-    () => import(/* webpackPrefetch: true */ './components/common/Spinner')
-  ];
-  
-  // Use requestIdleCallback for non-critical preloading
-  if (window.requestIdleCallback) {
-    window.requestIdleCallback(() => {
-      components.forEach(component => component());
-    });
-  } else {
-    // Fallback for browsers that don't support requestIdleCallback
-    setTimeout(() => {
-      components.forEach(component => component());
-    }, 0);
-  }
-};
+// Define components to preload
+const componentsToPreload = [
+  () => import('./components/layout/Layout'),
+  () => import('./components/common/Spinner')
+];
 
 /**
  * Main App component
@@ -38,7 +25,7 @@ function App() {
     performanceMonitor.mark(PERFORMANCE_MARKS.APP_START);
 
     // Start preloading components after initial render
-    preloadComponents();
+    preloadComponentsIdle(componentsToPreload);
     
     // Use requestAnimationFrame to ensure smooth initialization
     requestAnimationFrame(() => {
@@ -82,11 +69,13 @@ function App() {
  */
 function LoadingScreen() {
   return (
-    <div className="loading-screen">
-      <Suspense fallback={<div>Loading...</div>}>
-        <LoadingSpinner size="large" />
-      </Suspense>
-      <p>Initializing Chat App...</p>
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh' 
+    }}>
+      <LoadingSpinner size="large" />
     </div>
   );
 }

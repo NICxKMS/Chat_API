@@ -1,28 +1,21 @@
-import React, { memo, useMemo, Suspense, lazy, useContext } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useChat } from '../../../contexts/ChatContext';
 import styles from './ChatMessage.module.css';
-import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CopyIcon, ClockIcon, PulseIcon } from '@primer/octicons-react';
+import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CopyIcon, CheckIcon, ClockIcon, PulseIcon } from '@primer/octicons-react';
 import StreamingMessage from './StreamingMessage';
-import { ChatContext } from '../../../contexts/ChatContext';
 
-// Lazy load SyntaxHighlighter and styles
-const SyntaxHighlighter = lazy(() => import('react-syntax-highlighter'));
-const lazyLoadStyle = lazy(() => import('react-syntax-highlighter/dist/esm/styles/prism'));
-
-// Utility to copy text to clipboard
-const copyToClipboard = async (text) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (err) {
-    console.error('Failed to copy text: ', err);
-    return false;
-  }
-};
+// Import prism theme for final rendered content
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import prismDark from 'react-syntax-highlighter/dist/esm/styles/prism/atom-dark';
+import prismLight from 'react-syntax-highlighter/dist/esm/styles/prism/prism';
 
 /**
  * Format time in milliseconds to a human-readable format
@@ -36,61 +29,6 @@ const formatTime = (ms) => {
 };
 
 /**
- * Component to render code blocks with syntax highlighting and copy button
- */
-const CodeBlock = memo(({ node, inline, className, children, ...props }) => {
-  const { isDark } = useTheme();
-  const match = /language-(\w+)/.exec(className || '');
-  const language = match?.[1] || 'plaintext';
-  const codeString = String(children).replace(/\n$/, ''); // Remove trailing newline
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(codeString).then(() => {
-      console.log('Code copied!');
-    }).catch(err => {
-      console.error('Failed to copy code:', err);
-    });
-  };
-
-  const StyleComponent = useMemo(() => lazyLoadStyle(isDark), [isDark]);
-
-  return !inline ? (
-    <div className={styles.codeBlockContainer}> 
-      <div className={styles.codeHeader}>
-        <span className={styles.language}>{language}</span>
-        <button className={styles.copyButton} onClick={handleCopy} aria-label="Copy code">
-          <CopyIcon size={14} className={styles.copyIcon} /> Copy
-        </button>
-      </div>
-      <Suspense fallback={<pre className={styles.pre}><code>Loading style...</code></pre>}>
-        <StyleComponent>
-          {(style) => (
-            <Suspense fallback={<pre className={styles.pre}><code>Loading highlighter...</code></pre>}>
-              <SyntaxHighlighter
-                style={style}
-                language={language}
-                PreTag="pre"
-                className={styles.pre}
-                wrapLines={true}
-                {...props}
-              >
-                {codeString}
-              </SyntaxHighlighter>
-            </Suspense>
-          )}
-        </StyleComponent>
-      </Suspense>
-    </div>
-  ) : (
-    <code className={`${styles.inlineCode} ${className}`} {...props}>
-      {children}
-    </code>
-  );
-});
-CodeBlock.displayName = 'CodeBlock';
-CodeBlock.propTypes = { /* Add PropTypes if needed */ };
-
-/**
  * ChatMessage component with optimized rendering for streaming content
  * @param {Object} props - Component props
  * @param {string} props.role - Message role (user, assistant, system, error)
@@ -100,8 +38,9 @@ CodeBlock.propTypes = { /* Add PropTypes if needed */ };
  * @returns {JSX.Element} - Rendered component
  */
 const ChatMessage = ({ message, isStreaming }) => {
-  const { streamingTextRef } = useContext(ChatContext);
   const { isWaitingForResponse, metrics } = useChat();
+  const { isDark } = useTheme();
+  const [copiedCodeIndex, setCopiedCodeIndex] = useState(-1);
   
   // Choose appropriate icon based on message role
   const icon = useMemo(() => {
@@ -148,58 +87,94 @@ const ChatMessage = ({ message, isStreaming }) => {
                                    isWaitingForResponse && 
                                    isStreaming;
   
-  // Function to render code blocks with syntax highlighting
-  const renderCode = ({ node, inline, className, children, ...props }) => {
-    const match = /language-(\w+)/.exec(className || '');
-    const language = match ? match[1] : '';
+  // Handle copying code to clipboard
+  const handleCopyCode = (code, index) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedCodeIndex(index);
+      setTimeout(() => setCopiedCodeIndex(-1), 2000);
+    });
+  };
+  
+  // Process message content to format code blocks
+  const processContent = (content) => {
+    if (!content) return '';
     
-    // Handle inline code differently
-    if (inline) {
-      return (
-        <code className={styles.inlineCode} {...props}>
-          {children}
-        </code>
-      );
+    const codeBlockRegex = /```([a-zA-Z0-9_-]*)\s*\n?([\s\S]*?)```/g;
+    let match;
+    let lastIndex = 0;
+    let result = '';
+    let codeBlockIndex = 0;
+    
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      // Add text before code block
+      if (match.index > lastIndex) {
+        result += content.substring(lastIndex, match.index);
+      }
+      
+      // Get language and code content
+      const language = match[1] || 'plaintext';
+      const code = match[2] || '';
+      const isCopied = codeBlockIndex === copiedCodeIndex;
+      
+      // Add formatted code block
+      result += `
+        <div class="${styles.codeBlockContainer}">
+          <div class="${styles.codeHeader}">
+            <span class="${styles.language}">${language}</span>
+            <button 
+              class="${styles.copyButton}"
+              onclick="document.dispatchEvent(new CustomEvent('copy-code', {detail: {index: ${codeBlockIndex}, code: \`${escapeForHtml(code)}\`}}))"
+            >
+              ${isCopied ? 
+                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"><path fill-rule="evenodd" d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"></path></svg> Copied!` : 
+                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"><path fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path><path fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path></svg> Copy`
+              }
+            </button>
+          </div>
+          <pre class="${styles.pre}"><code class="language-${language}">${escapeHtml(code)}</code></pre>
+        </div>
+      `;
+      
+      lastIndex = match.index + match[0].length;
+      codeBlockIndex++;
     }
     
-    // Extract code content
-    const codeContent = String(children).replace(/\n$/, '');
+    // Add remaining text
+    if (lastIndex < content.length) {
+      result += content.substring(lastIndex);
+    }
     
-    // Copy code to clipboard handler
-    const handleCopyCode = async () => {
-      try {
-        await navigator.clipboard.writeText(codeContent);
-        console.log('Code copied to clipboard');
-      } catch (err) {
-        console.error('Failed to copy code:', err);
-      }
-    };
+    // Setup copy code event listener
+    if (typeof window !== 'undefined' && codeBlockIndex > 0) {
+      setTimeout(() => {
+        document.addEventListener('copy-code', (e) => {
+          handleCopyCode(e.detail.code, e.detail.index);
+        }, { once: false });
+      }, 0);
+    }
     
-    // Render code block with syntax highlighting
-    return (
-      <div className={styles.codeBlockContainer}>
-        <div className={styles.codeHeader}>
-          <span className={styles.language}>{language || 'code'}</span>
-          <button onClick={handleCopyCode} className={styles.copyButton}>
-            <CopyIcon size={14} className={styles.copyIcon} />
-            Copy
-          </button>
-        </div>
-        <Suspense fallback={<pre>{codeContent}</pre>}>
-          <SyntaxHighlighter
-            language={language}
-            className={styles.pre}
-            useInlineStyles={false}
-            // Use the lazyLoadStyle when it's loaded
-            style={lazyLoadStyle}
-            wrapLongLines={true}
-            showLineNumbers={!inline && language !== 'text'}
-          >
-            {codeContent}
-          </SyntaxHighlighter>
-        </Suspense>
-      </div>
-    );
+    return result;
+  };
+  
+  // Escape HTML for code blocks
+  const escapeHtml = (text) => {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+  
+  // Escape for HTML attributes in JS
+  const escapeForHtml = (text) => {
+    if (!text) return '';
+    return text
+      .replace(/\\/g, '\\\\')
+      .replace(/`/g, '\\`')
+      .replace(/\$/g, '\\$')
+      .replace(/"/g, '\\"');
   };
   
   // Render performance metrics
@@ -239,22 +214,26 @@ const ChatMessage = ({ message, isStreaming }) => {
     );
   };
   
-  // For streaming assistant messages, use the optimized component
-  if (shouldUseStreamingOptimization) {
+  // Process markdown content safely
+  const renderMarkdown = (content) => {
+    // Use custom HTML processing for non-streaming
+    if (message.role === 'assistant') {
+      const processed = processContent(content);
+      return (
+        <div className={styles.markdown} dangerouslySetInnerHTML={{ __html: processed }} />
+      );
+    }
+    
+    // Use simple ReactMarkdown for user messages
     return (
-      <div className={styles.message + ' ' + messageClass}>
-        <div className={styles.avatar}>
-          {icon}
-        </div>
-        <div className={styles.messageContentWrapper}>
-          <div className={styles.messageContent}>
-            <StreamingMessage content={message.content} />
-          </div>
-          {renderMetrics()}
-        </div>
-      </div>
+      <ReactMarkdown
+        className={styles.markdown}
+        remarkPlugins={[remarkGfm]}
+      >
+        {content}
+      </ReactMarkdown>
     );
-  }
+  };
   
   // For non-streaming messages, use the standard ReactMarkdown rendering
   return (
@@ -267,18 +246,12 @@ const ChatMessage = ({ message, isStreaming }) => {
       {/* Message content section */}
       <div className={styles.messageContentWrapper}>
         <div className={styles.messageContent}>
-          {shouldUseDirectTextUpdate ? (
-            // Use StreamingMessage for optimized streaming content rendering
+          {message.role === 'assistant' ? (
+            // Use StreamingMessage for all assistant messages to ensure consistent rendering
             <StreamingMessage content={message.content} />
           ) : (
-            // Use normal ReactMarkdown for non-streaming content
-            <ReactMarkdown
-              className={styles.markdown}
-              remarkPlugins={[remarkGfm]}
-              components={{ code: renderCode }}
-            >
-              {message.content || ''}
-            </ReactMarkdown>
+            // Use our custom rendering for user messages
+            renderMarkdown(message.content || '')
           )}
         </div>
         {renderMetrics()}
@@ -289,12 +262,10 @@ const ChatMessage = ({ message, isStreaming }) => {
 
 ChatMessage.propTypes = {
   message: PropTypes.shape({
-    role: PropTypes.oneOf(['user', 'assistant', 'system', 'error']).isRequired,
-    content: PropTypes.string.isRequired,
+    role: PropTypes.string.isRequired,
+    content: PropTypes.string.isRequired
   }).isRequired,
-  isStreaming: PropTypes.bool.isRequired,
+  isStreaming: PropTypes.bool
 };
-
-ChatMessage.displayName = 'ChatMessage';
 
 export default memo(ChatMessage); 

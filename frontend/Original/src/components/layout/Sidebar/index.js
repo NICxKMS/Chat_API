@@ -25,6 +25,25 @@ const sampleSessions = [
  * @returns {JSX.Element} - Rendered sidebar
  */
 const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
+  // Handle button clicks with fallbacks
+  const handleNewChat = (e) => {
+    e.preventDefault();
+    if (onNewChat) {
+      onNewChat();
+    } else {
+      console.warn('New chat handler not provided');
+    }
+  };
+
+  const handleSettings = (e) => {
+    e.preventDefault();
+    if (onToggleSettings) {
+      onToggleSettings();
+    } else {
+      console.warn('Settings handler not provided');
+    }
+  };
+
   return (
     <div className={`${styles.sidebar} ${className}`}>
       {/* Header with Title and Controls */}
@@ -32,16 +51,18 @@ const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
         <h1 className={styles.title}>AI Chat</h1>
         <div className={styles.headerControls}>
           <button 
-            className={styles.iconButton}
-            onClick={onNewChat}
+            className={`${styles.iconButton} ${styles.newChatButton}`}
+            onClick={handleNewChat}
             aria-label="New chat"
+            title="New chat"
           >
             <PlusIcon size={20} />
           </button>
           <button 
-            className={styles.iconButton}
-            onClick={onToggleSettings}
+            className={`${styles.iconButton} ${styles.settingsButton}`}
+            onClick={handleSettings}
             aria-label="Settings"
+            title="Settings"
           >
             <GearIcon size={20} />
           </button>

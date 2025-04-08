@@ -17,12 +17,12 @@
   background-color: var(--card-bg);
   padding: 30px 40px;
   border-radius: 12px;
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   width: 90%;
   max-width: 450px;
   position: relative;
   text-align: center;
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-pronounced);
   animation: slideIn 0.3s ease-out;
 }
 
@@ -157,19 +157,22 @@
 }
 
 .inputField {
-  padding: 12px 15px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 2px solid var(--border-pronounced);
   background-color: var(--input-bg);
   color: var(--text-primary);
   font-size: 1rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .inputField:focus {
   outline: none;
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px var(--accent-color-faded);
+  box-shadow: 0 0 0 3px var(--accent-color-faded);
 }
 
 .emailButtonContainer {
@@ -179,20 +182,24 @@
 }
 
 .emailButton {
-  flex-grow: 1; /* Make buttons share space */
-  padding: 12px 15px;
-  border-radius: 6px;
-  border: none;
+  flex-grow: 1;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 2px solid var(--border-pronounced);
   background-color: var(--accent-color);
   color: var(--accent-text-color);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .emailButton:hover:not(:disabled) {
   background-color: var(--accent-color-dark);
+  border-color: var(--accent-color-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .emailButton:active:not(:disabled) {
@@ -207,11 +214,15 @@
 .signUpButton {
   background-color: var(--button-secondary-bg);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-pronounced);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .signUpButton:hover:not(:disabled) {
   background-color: var(--button-secondary-hover-bg);
+  border-color: var(--border-hover-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .signUpButton:disabled {
@@ -244,7 +255,7 @@
 .alternativeLoginContainer {
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid var(--border-color-subtle);
+  border-top: 2px solid var(--border-pronounced);
   text-align: center;
 }
 
@@ -261,22 +272,28 @@
 }
 
 .providerIconButton {
-  background: none;
-  border: none;
-  padding: 8px;
-  font-size: 2.2rem; /* Adjust icon size */
+  background: var(--button-secondary-bg);
+  border: 2px solid var(--border-pronounced);
+  padding: 12px;
+  font-size: 1.8rem;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 48px;
+  height: 48px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .providerIconButton:hover:not(:disabled) {
   color: var(--text-primary);
   transform: scale(1.1);
+  border-color: var(--border-hover-color);
+  background-color: var(--button-secondary-hover-bg);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .providerIconButton:disabled {

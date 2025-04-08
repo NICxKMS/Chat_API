@@ -6,7 +6,11 @@ import styles from './ModelSelectorButton.module.css';
 /**
  * Button to trigger the model selection UI (Dropdown/Modal)
  */
-const ModelSelectorButton = ({ selectedModelName, onClick, disabled }) => {
+const ModelSelectorButton = ({ 
+  selectedModelName = null, 
+  onClick, 
+  disabled = false 
+}) => {
   return (
     <button 
       className={styles.modelSelectorButton}
@@ -34,11 +38,6 @@ ModelSelectorButton.propTypes = {
   onClick: PropTypes.func.isRequired,
   /** Whether the button should be disabled */
   disabled: PropTypes.bool,
-};
-
-ModelSelectorButton.defaultProps = {
-  selectedModelName: null,
-  disabled: false,
 };
 
 export default ModelSelectorButton; 

@@ -14,18 +14,26 @@
     "react-syntax-highlighter": "^15.5.0",
     "react-virtualized-auto-sizer": "^1.0.20",
     "react-window": "^1.8.9",
-    "remark-gfm": "^4.0.1",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-emoji": "^5.0.1",
+    "remark-gfm": "^3.0.1",
+    "remark-math": "^6.0.0",
     "web-vitals": "^3.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.24.0",
     "@babel/plugin-syntax-dynamic-import": "^7.8.3",
-    "@babel/preset-env": "^7.26.9",
-    "@babel/preset-react": "^7.26.3",
+    "@babel/preset-env": "^7.24.0",
+    "@babel/preset-react": "^7.23.3",
     "@craco/craco": "^7.1.0",
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",
     "babel-plugin-named-asset-import": "^0.3.8",
+    "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
+    "babel-plugin-transform-remove-console": "^6.9.4",
     "core-js": "^3.41.0",
     "cross-env": "^7.0.3",
     "css-minimizer-webpack-plugin": "^5.0.1",
@@ -36,14 +44,16 @@
     "jest-environment-jsdom": "^29.5.0",
     "rimraf": "^5.0.1",
     "source-map-explorer": "^2.5.3",
-    "terser-webpack-plugin": "^5.3.14"
+    "terser-webpack-plugin": "^5.3.14",
+    "webpack-bundle-analyzer": "^4.10.2"
   },
   "scripts": {
     "start": "cross-env REACT_APP_ENV=development craco start",
     "dev": "cross-env REACT_APP_ENV=development craco start",
     "dev:fast": "cross-env REACT_APP_ENV=development FAST_REFRESH=true craco start --no-lazy",
-    "build": "craco build",
+    "build": "cross-env REACT_APP_ENV=production GENERATE_SOURCEMAP=false craco build",
     "build:prod": "cross-env REACT_APP_ENV=production craco build",
+    "build:analyze": "cross-env REACT_APP_ENV=production ANALYZE=true craco build",
     "test": "craco test",
     "test:coverage": "craco test --coverage --watchAll=false",
     "test:ci": "cross-env CI=true craco test",
@@ -53,7 +63,8 @@
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "eject": "react-scripts eject",
     "clean": "rimraf build node_modules",
-    "reinstall": "npm run clean && npm install"
+    "reinstall": "npm run clean && npm install",
+    "prebuild": "rimraf build"
   },
   "eslintConfig": {
     "extends": [
@@ -88,5 +99,15 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "sideEffects": [
+    "*.css",
+    "*.scss",
+    "*.sass",
+    "*.less",
+    "*.module.css",
+    "*.module.scss",
+    "*.module.sass",
+    "*.module.less"
+  ]
 }

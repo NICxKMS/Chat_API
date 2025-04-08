@@ -1,151 +1,188 @@
-import React, { useEffect, useLayoutEffect, useRef, useContext, useCallback, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { ChatContext, useChat } from '../../../contexts/ChatContext';
 import styles from './ChatMessage.module.css';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useTheme } from '../../../contexts/ThemeContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 /**
- * StreamingMessage component that creates a word-by-word typing effect
- * This approach displays streaming text with a natural typing animation
- *
- * @param {Object} props - Component props
- * @param {string} props.content - The current content from React state 
- * @returns {JSX.Element} - Rendered component
+ * StreamingMessage component using react-markdown for rendering
  */
 const StreamingMessage = ({ content }) => {
-  const { streamingTextRef } = useContext(ChatContext);
-  const containerRef = useRef(null);
-  const textNodeRef = useRef(null);
-  const rafIdRef = useRef(null);
-  const lastDisplayedTextRef = useRef('');
-  const wordsBufferRef = useRef([]);
-  const wordIndexRef = useRef(0);
-  const timerRef = useRef(null);
-  const pauseCounterRef = useRef(0);
+  const [parsedSegments, setParsedSegments] = useState([]);
+  const { isDark } = useTheme();
   
-  // Word speed controls - adjust for desired typing speed
-  const baseWordDelay = 50; // Base delay between words in ms
-  const pauseBetweenSentences = 10; // Additional pause counter for periods
+  // Get the appropriate syntax highlighter theme based on dark/light mode
+  const syntaxTheme = isDark ? atomDark : prism;
   
-  // Set up the text node once
-  useLayoutEffect(() => {
-    if (containerRef.current && !textNodeRef.current) {
-      // Create a text node for efficient updates
-      textNodeRef.current = document.createTextNode('');
-      containerRef.current.appendChild(textNodeRef.current);
-    }
+  // Process the streaming content for display with code block detection
+  const processStreamingContent = (text) => {
+    if (!text) return [];
     
-    return () => {
-      // Clean up timers on unmount
-      if (rafIdRef.current) {
-        cancelAnimationFrame(rafIdRef.current);
-      }
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, []);
-  
-  // Process new streaming content as it arrives
-  useEffect(() => {
-    // Get any new words from the streaming content we haven't processed yet
-    if (streamingTextRef.current !== lastDisplayedTextRef.current) {
-      const allStreamingText = streamingTextRef.current;
-      const newContent = allStreamingText.substring(lastDisplayedTextRef.current.length);
+    try {
+      const segments = [];
+      const codeBlockRegex = /```([\w-]*)\s*\n([\s\S]*?)```|```([\w-]*)\s*([\s\S]*?)$/g;
+      let lastIndex = 0;
+      let match;
       
-      if (newContent) {
-        // Split new content into words (keeping spaces and punctuation)
-        const newWords = newContent.match(/[^\s]+|\s+/g) || [];
-        wordsBufferRef.current = [...wordsBufferRef.current, ...newWords];
-      }
-    }
-    
-    // Start or continue the typing animation if not already running
-    if (wordsBufferRef.current.length > 0 && !timerRef.current) {
-      typeNextWord();
-    }
-    
-    // If content is final (from props), ensure everything is displayed
-    if (content && streamingTextRef.current === content && 
-        lastDisplayedTextRef.current !== content) {
-      // Force display all content
-      lastDisplayedTextRef.current = content;
-      if (textNodeRef.current) {
-        textNodeRef.current.nodeValue = content;
+      while ((match = codeBlockRegex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          segments.push({
+            type: 'text',
+            content: text.substring(lastIndex, match.index)
+          });
+        }
+        
+        const language = match[1] || match[3] || '';
+        const codeContent = match[2] || match[4] || ''; // Renamed to avoid confusion
+        const isComplete = !!match[2]; 
+        
+        segments.push({
+          type: 'code',
+          language: language.trim(),
+          content: codeContent,
+          complete: isComplete
+        });
+        
+        lastIndex = match.index + match[0].length;
       }
       
-      // Clean up any pending animations
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
+      if (lastIndex < text.length) {
+        segments.push({
+          type: 'text',
+          content: text.substring(lastIndex)
+        });
       }
+      
+      return segments;
+    } catch (error) {
+      console.error("Error processing streaming content:", error);
+      return [{ type: 'text', content: text }];
     }
-    
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [content]);
-  
-  // Function to type the next word with natural timing
-  const typeNextWord = useCallback(() => {
-    // If we're pausing, decrement counter and continue
-    if (pauseCounterRef.current > 0) {
-      pauseCounterRef.current--;
-      timerRef.current = setTimeout(typeNextWord, baseWordDelay);
-      return;
-    }
-    
-    // Get next word if available
-    if (wordsBufferRef.current.length > 0) {
-      const nextWord = wordsBufferRef.current.shift();
-      const updatedText = lastDisplayedTextRef.current + nextWord;
-      lastDisplayedTextRef.current = updatedText;
-      
-      // Update DOM directly for performance
-      if (textNodeRef.current) {
-        textNodeRef.current.nodeValue = updatedText;
-      }
-      
-      // Add extra pause after sentences
-      if (nextWord.includes('.') || nextWord.includes('?') || nextWord.includes('!')) {
-        pauseCounterRef.current = pauseBetweenSentences;
-      }
-      
-      // Calculate dynamic timing for next word based on length and content
-      const delay = calculateWordTiming(nextWord);
-      
-      // Schedule next word
-      timerRef.current = setTimeout(typeNextWord, delay);
-    } else {
-      // No more words in buffer
-      timerRef.current = null;
-    }
-  }, []);
-  
-  // Calculate natural-feeling timing between words
-  const calculateWordTiming = (word) => {
-    // Base timing
-    let timing = baseWordDelay;
-    
-    // Adjust for word length (longer words take more time to "type")
-    timing += Math.min(word.length * 5, 30);
-    
-    // Adjust for punctuation (slight pause)
-    if (word.includes(',')) timing += 20;
-    
-    // Random variance for natural feel
-    timing += Math.random() * 20 - 10;
-    
-    return timing;
   };
   
+  // Update segments whenever content changes
+  useEffect(() => {
+    if (!content) return;
+    try {
+      const segments = processStreamingContent(content);
+      setParsedSegments(segments);
+    } catch (error) {
+      console.error("Error updating segments:", error);
+      setParsedSegments([{ type: 'text', content }]);
+    }
+  }, [content]);
+  
+  // Render a text segment using ReactMarkdown
+  const renderTextSegment = (textContent, key) => {
+    if (!textContent) return null;
+    
+    try {
+      // Use react-markdown for rendering text segments
+      // Add components prop for customizations if needed later (e.g., links, images)
+      return (
+        <div 
+          key={key} 
+          className={styles.markdownText} // Main container for markdown text
+        >
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {textContent}
+          </ReactMarkdown>
+        </div>
+      );
+    } catch (error) {
+      console.error("Error rendering text segment with ReactMarkdown:", error);
+      // Fallback to preformatted text
+      return <div key={key} className={styles.markdownText}><pre>{textContent}</pre></div>;
+    }
+  };
+  
+  // Render code block by language type
+  const renderCodeBlock = (segment, index) => {
+    if (!segment) return null;
+    
+    try {
+      const cssClass = !segment.complete ? styles.incompleteCodeBlock : '';
+      
+      // Special handling for "markdown" language blocks - render using ReactMarkdown
+      if (segment.language === 'markdown') {
+        return (
+          <div key={index} className={`${styles.codeBlockContainer} ${cssClass}`}>
+            <div className={styles.codeHeader}>
+              <span className={styles.language}>markdown</span>
+              {/* Add Copy button or other controls here if needed */}
+            </div>
+            {/* Render content as interpreted Markdown using ReactMarkdown */}
+            <div className={styles.markdownCodeBlock}> 
+              {/* This inner div provides padding/background matching code blocks */}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                 {segment.content || ''}
+              </ReactMarkdown>
+            </div>
+          </div>
+        );
+      }
+      
+      // Special handling for "plaintext" language blocks - render raw text
+      if (segment.language === 'plaintext' || segment.language === '') {
+        return (
+          <div key={index} className={`${styles.codeBlockContainer} ${cssClass}`}>
+            <div className={styles.codeHeader}>
+              <span className={styles.language}>{segment.language || 'plaintext'}</span> 
+            </div>
+            {/* Render raw text inside pre/code */}
+            <pre className={styles.pre}>
+              <code>{segment.content || ''}</code>
+            </pre>
+          </div>
+        );
+      }
+      
+      // Regular code blocks with syntax highlighting
+      return (
+        <div key={index} className={`${styles.codeBlockContainer} ${cssClass}`}>
+          <div className={styles.codeHeader}>
+            <span className={styles.language}>{segment.language || 'code'}</span>
+            {/* Add Copy button or other controls here if needed */}
+          </div>
+          <SyntaxHighlighter
+            language={segment.language}
+            style={syntaxTheme}
+            className={styles.pre} // Use className for styling container
+            wrapLines={true}
+            // Remove customStyle if .pre class handles it
+            // customStyle={{ 
+            //   margin: 0, 
+            //   padding: '1rem', 
+            //   background: 'var(--code-bg)',
+            //   borderRadius: '0 0 6px 6px' 
+            // }}
+            PreTag="div" // Use div instead of pre, SyntaxHighlighter wraps in its own pre
+          >
+            {segment.content || ''}
+          </SyntaxHighlighter>
+        </div>
+      );
+    } catch (error) {
+      console.error("Error rendering code block:", error);
+      // Fallback for code block error
+      return <div key={index} className={styles.codeBlockContainer}><pre>{segment.content || ''}</pre></div>;
+    }
+  };
+  
+  // Render the component
   return (
-    <div 
-      ref={containerRef} 
-      className={styles.streamingContent}
-      aria-live="polite"
-    />
+    <div className={`${styles.markdown} ${styles.streamingContent}`}>
+      {parsedSegments && parsedSegments.map((segment, index) => 
+        segment && segment.type === 'text' 
+          ? renderTextSegment(segment.content, index)
+          : renderCodeBlock(segment, index)
+      )}
+      {/* Add loading indicator or cursor if needed */}
+    </div>
   );
 };
 

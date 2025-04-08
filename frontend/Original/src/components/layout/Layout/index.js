@@ -2,25 +2,41 @@ import React, { lazy, Suspense, useState, useCallback } from 'react';
 import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useChat } from '../../../contexts/ChatContext';
 // Import useApi if needed for apiUrl, but not for status
 // import { useApi } from '../../../contexts/ApiContext'; 
 import styles from './Layout.module.css';
+// Import icons using the correct paths
 import { PlusIcon, GearIcon, TrashIcon, DownloadIcon, SignInIcon, SignOutIcon } from '@primer/octicons-react';
+// Import only the specific icons needed
+// const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Removed
+import { useSettings } from '../../../contexts/SettingsContext';
+import { lazyLoad } from '../../../utils/lazyLoad'; // Assuming lazyLoad utility path
 
-// Lazily loaded components for better initial load performance
-const Sidebar = lazy(() => import('../Sidebar'));
-const MainContent = lazy(() => import('../MainContent'));
+// Lazily loaded components with preload hints
+const Sidebar = lazy(() => import(/* webpackPrefetch: true */ '../Sidebar'));
+const MainContent = lazy(() => import(/* webpackPrefetch: true */ '../MainContent'));
 // import ModelSelectorButton from '../../models/ModelSelectorButton'; // Remove this import
-const ModelDropdown = lazy(() => import('../../models/ModelDropdown'));
-const Spinner = lazy(() => import('../../common/Spinner')); // Import Spinner
-const ThemeToggle = lazy(() => import('../../common/ThemeToggle')); // Import for floating icons
+const ModelDropdown = lazy(() => import(/* webpackPrefetch: true */ '../../models/ModelDropdown'));
+const Spinner = lazy(() => import(/* webpackPrefetch: true */ '../../common/Spinner'));
+const ThemeToggle = lazy(() => import(/* webpackPrefetch: true */ '../../common/ThemeToggle'));
 // Remove ApiStatus import
 // const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Removed
-const LoginModal = lazy(() => import('../../auth/LoginModal')); // Import LoginModal
-const SettingsPanel = lazy(() => import('../../settings/SettingsPanel')); // Import SettingsPanel
-const SidebarToggle = lazy(() => import('../SidebarToggle'));
-const MoreActions = lazy(() => import('../../common/MoreActions'));
-const AuthButton = lazy(() => import('../../auth/AuthButton'));
+const LoginModal = lazyLoad(() => import('../../auth/LoginModal'), {
+  prefetch: true, // Or false if you don't want to prefetch
+  webpackChunkName: 'login-modal' // Specific chunk name
+});
+const SettingsPanel = lazy(() => import(/* webpackPrefetch: true */ '../../settings/SettingsPanel'));
+const SidebarToggle = lazy(() => import(/* webpackPrefetch: true */ '../SidebarToggle'));
+const MoreActions = lazy(() => import(/* webpackPrefetch: true */ '../../common/MoreActions'));
+const AuthButton = lazy(() => import(/* webpackPrefetch: true */ '../../auth/AuthButton'));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className={styles.loadingFallback}>
+    <Spinner size="medium" />
+  </div>
+);
 
 /**
  * Layout component that handles responsive design
@@ -35,6 +51,7 @@ const Layout = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { selectedModel, isLoadingModels } = useModel(); // Get model data
   const { isAuthenticated, currentUser, loading: authLoading, login, logout, isLoggingIn } = useAuth(); // Get auth state and functions
+  const { chatHistory, resetChat, downloadChatHistory } = useChat();
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen(prev => !prev);
@@ -53,22 +70,29 @@ const Layout = () => {
     setIsModelSelectorOpen(prev => !prev);
   }, []);
 
-  // Placeholder for new chat functionality
+  // Implement new chat functionality
   const handleNewChat = useCallback(() => {
-    console.log("New Chat clicked!");
-    // TODO: Need actual implementation or state lift
-  }, []);
+    resetChat();
+    // Close sidebar on mobile after starting new chat
+    if (!isDesktop) {
+      setIsSidebarOpen(false);
+    }
+  }, [resetChat, isDesktop]);
 
-  // Placeholder handlers for Reset/Download (NEED ACTUAL IMPLEMENTATION)
+  // Implement reset chat functionality
   const handleResetChat = useCallback(() => {
-    console.warn("Reset Chat clicked - No implementation in Layout!");
-    // TODO: Needs connection to chat logic (e.g., via context or state lift)
-  }, []);
+    if (chatHistory.length === 0) return;
+    
+    if (window.confirm('Are you sure you want to clear the current chat?')) {
+      resetChat();
+    }
+  }, [chatHistory.length, resetChat]);
 
+  // Implement download chat functionality
   const handleDownloadChat = useCallback(() => {
-    console.warn("Download Chat clicked - No implementation in Layout!");
-    // TODO: Needs connection to chat logic (e.g., via context or state lift)
-  }, []);
+    if (chatHistory.length === 0) return;
+    downloadChatHistory();
+  }, [chatHistory.length, downloadChatHistory]);
   
   // Determine layout classes based on state and viewport
   const isSidebarEffectivelyHidden = isDesktop && !isSidebarOpen;
@@ -82,7 +106,7 @@ const Layout = () => {
   return (
     <div className={layoutClasses}>
       {/* Auth Button (Top Right) */}
-      <Suspense fallback={null}>
+      <Suspense fallback={<LoadingFallback />}>
         <AuthButton
           isAuthenticated={isAuthenticated}
           onLogin={() => setIsLoginModalOpen(true)}
@@ -93,7 +117,7 @@ const Layout = () => {
       </Suspense>
 
       {/* Sidebar Toggle */}
-      <Suspense fallback={null}>
+      <Suspense fallback={<LoadingFallback />}>
         <SidebarToggle
           isOpen={isSidebarOpen}
           onToggle={toggleSidebar}
@@ -118,7 +142,10 @@ const Layout = () => {
       {/* Sidebar container */}
       <div className={styles.sidebarContainer}>
         <Suspense fallback={<div className={styles.sidebarPlaceholder} />}>
-          <Sidebar />
+          <Sidebar 
+            onNewChat={handleNewChat}
+            onToggleSettings={toggleSettings}
+          />
         </Suspense>
       </div>
       
