@@ -1,43 +1,56 @@
+/* Import common button styles */
+@import '../../../styles/common/buttons.css';
+
 .moreActionsContainer {
   position: relative;
   display: inline-block;
 }
 
+/* Extend the common button style */
 .moreButton {
-  width: 40px;
-  height: 40px;
+  width: var(--button-size);
+  height: var(--button-size);
   border-radius: 50%;
-  background-color: var(--chat-bg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  background-color: var(--button-bg);
+  border: var(--button-border);
+  box-shadow: var(--button-shadow);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: var(--button-transition);
   color: var(--text);
+  padding: 0;
+  flex-shrink: 0;
 }
 
-.moreButton:hover {
-  background-color: var(--hover);
-  transform: scale(1.05);
+.moreButton:hover:not(:disabled) {
+  background-color: var(--button-hover-bg);
+  transform: scale(var(--button-hover-scale));
 }
 
-.moreButton:active {
-  transform: scale(0.95);
+.moreButton:active:not(:disabled) {
+  transform: scale(var(--button-active-scale));
 }
 
-.moreButton.active {
-  background-color: var(--hover);
+.moreButton:disabled {
+  opacity: var(--button-disabled-opacity);
+  cursor: not-allowed;
+  transform: none;
 }
 
+/* Extend the common icon style */
 .icon {
   color: var(--text);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: var(--button-transition);
+  opacity: var(--button-icon-opacity);
+  width: var(--button-icon-size);
+  height: var(--button-icon-size);
 }
 
 .active .icon {
-  transform: rotate(180deg);
+  transform: scale(1.1);
+  opacity: 1;
 }
 
 .actionsMenu {
@@ -114,4 +127,34 @@
 
 .actionButton:hover .actionLabel {
   opacity: 1;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  .actionsMenu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    bottom: auto;
+    min-width: 200px;
+    background-color: var(--chat-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+  }
+
+  .actionButton {
+    padding: 12px 16px;
+  }
+
+  .actionIcon {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+  }
+
+  .actionLabel {
+    font-size: 14px;
+  }
 } 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronUpIcon } from '@primer/octicons-react';
+import { KebabHorizontalIcon } from '@primer/octicons-react';
 import styles from './MoreActions.module.css';
 
 /**
@@ -38,7 +38,7 @@ const MoreActions = ({ actions = [] }) => {
         aria-label={isOpen ? 'Close actions menu' : 'Open actions menu'}
         aria-expanded={isOpen}
       >
-        <ChevronUpIcon size={20} className={styles.icon} />
+        <KebabHorizontalIcon size={20} className={styles.icon} />
       </button>
       
       <div className={`${styles.actionsMenu} ${isOpen ? styles.open : ''}`}>

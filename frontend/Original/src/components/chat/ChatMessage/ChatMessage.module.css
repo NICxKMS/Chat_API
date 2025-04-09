@@ -129,6 +129,35 @@
   flex-grow: 1;
   min-width: 0;
   width: 100%;
+  position: relative; /* For absolute positioning of copy button */
+}
+
+/* Copy message button */
+.copyMessageButton {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  background-color: var(--hover);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  z-index: 5;
+}
+
+.messageContentWrapper:hover .copyMessageButton {
+  opacity: 1;
+}
+
+.copyMessageButton:hover {
+  background-color: var(--active);
+  color: var(--text-primary);
 }
 
 .userMessage .messageContentWrapper {
@@ -555,6 +584,31 @@
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* Copy button for code blocks */
+.copyButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copyButton:hover {
+  background-color: var(--hover);
+  color: var(--text-primary);
+}
+
+.copyButton svg {
+  flex-shrink: 0;
 }
 
 /* SyntaxHighlighter styles applied to its container */

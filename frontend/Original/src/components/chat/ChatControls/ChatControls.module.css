@@ -1,9 +1,15 @@
+/* Import common button styles */
+@import '../../../styles/common/buttons.css';
+/* Import common animations */
+@import '../../../styles/common/animations.css';
+
 .controls {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
 }
 
+/* Keep controlButton separate since it has a different style than circleActionButton */
 .controlButton {
   display: inline-flex;
   align-items: center;
@@ -15,11 +21,7 @@
   color: var(--secondary-text);
   cursor: pointer;
   box-shadow: var(--shadow);
-  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
-              color var(--theme-transition-duration) var(--theme-transition-timing),
-              border-color var(--theme-transition-duration) var(--theme-transition-timing),
-              box-shadow var(--theme-transition-duration) var(--theme-transition-timing),
-              transform 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 36px;
   min-height: 36px;
   flex-shrink: 0;
@@ -59,20 +61,44 @@
   background-color: #d32f2f; /* Darker red */
 }
 
-/* Remove media query for hiding text */
-/* @media (max-width: 480px) { ... } */
-
-/* Remove all styles for moreActionsContainer, actionsMenu, menuItem, etc. */
-
-/* Restore More Actions styles */
+/* More Actions container */
 .moreActionsContainer {
   position: relative; 
   display: flex; 
   align-items: center;
 }
 
+/* Use common circle button for more actions button */
 .moreActionsButton {
-  /* Always rendered, hidden on desktop */
+  width: var(--button-size);
+  height: var(--button-size);
+  border-radius: 50%;
+  background-color: var(--button-bg);
+  border: var(--button-border);
+  box-shadow: var(--button-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--button-transition);
+  color: var(--text);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.moreActionsButton:hover:not(:disabled) {
+  background-color: var(--button-hover-bg);
+  transform: scale(var(--button-hover-scale));
+}
+
+.moreActionsButton:active:not(:disabled) {
+  transform: scale(var(--button-active-scale));
+}
+
+.moreActionsButton:disabled {
+  opacity: var(--button-disabled-opacity);
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Hide More Actions button on desktop */
@@ -143,12 +169,6 @@
   margin: 0;
 }
 
-/* Remove text reveal styles if they exist */
-/* 
-.menuItemText { ... } 
-.menuItem:hover .menuItemText { ... }
-*/
-
 /* Ensure wrappers fill the small square */
 .menuItem > div { 
   display: flex;
@@ -158,12 +178,7 @@
   height: 100%; 
 }
 
-/* Specific style for API Status menu item */
-.apiStatusMenuItem {
-  /* Base menuItem styles should cover centering/size */
-}
-
-/* Add styles for streaming indicator */
+/* Streaming indicator styles */
 .streamingIndicator {
   display: flex;
   align-items: center;
@@ -198,7 +213,7 @@
   }
   50% {
     opacity: 1;
-    transform: scale(1.2);
+    transform: scale(1);
   }
   100% {
     opacity: 0.3;

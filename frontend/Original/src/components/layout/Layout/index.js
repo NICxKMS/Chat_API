@@ -105,16 +105,57 @@ const Layout = () => {
 
   return (
     <div className={layoutClasses}>
-      {/* Auth Button (Top Right) */}
-      <Suspense fallback={<LoadingFallback />}>
-        <AuthButton
-          isAuthenticated={isAuthenticated}
-          onLogin={() => setIsLoginModalOpen(true)}
-          onLogout={logout}
-          userName={currentUser?.displayName || currentUser?.email}
-          isLoading={authLoading}
-        />
-      </Suspense>
+      {/* Mobile Actions Container (Top Right) */}
+      <div className={styles.mobileActionsContainer}>
+        <div className={styles.mobileActions}>
+          {/* Login Button */}
+          <Suspense fallback={<LoadingFallback />}>
+            <AuthButton
+              isAuthenticated={isAuthenticated}
+              onLogin={() => setIsLoginModalOpen(true)}
+              onLogout={logout}
+              userName={currentUser?.displayName || currentUser?.email}
+              isLoading={authLoading}
+            />
+          </Suspense>
+          
+          {/* Theme Toggle */}
+          <Suspense fallback={null}>
+            <ThemeToggle />
+          </Suspense>
+          
+          {/* Settings Button */}
+          <button 
+            className={styles.mobileActionButton} 
+            onClick={toggleSettings}
+            aria-label="Settings"
+            title="Settings"
+          >
+            <GearIcon size={20} />
+          </button>
+          
+          {/* More Actions Menu */}
+          <MoreActions 
+            actions={[
+              {
+                icon: <PlusIcon size={16} />,
+                label: 'New Chat',
+                onClick: handleNewChat
+              },
+              {
+                icon: <TrashIcon size={16} />,
+                label: 'Reset Chat',
+                onClick: handleResetChat
+              },
+              {
+                icon: <DownloadIcon size={16} />,
+                label: 'Download Chat',
+                onClick: handleDownloadChat
+              }
+            ]}
+          />
+        </div>
+      </div>
 
       {/* Sidebar Toggle */}
       <Suspense fallback={<LoadingFallback />}>

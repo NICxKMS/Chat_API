@@ -119,8 +119,8 @@
   position: absolute;
   bottom: 1rem;
   left: 50%;
-  transform: translateX(-50.5%);
-  width: 100%;
+  transform: translateX(-50%);
+  width: 96%;
   max-width: 760px;
   box-shadow: var(--shadow-lg);
   z-index: 10;

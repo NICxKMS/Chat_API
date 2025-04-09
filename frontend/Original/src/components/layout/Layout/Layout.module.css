@@ -157,40 +157,64 @@
 /* Floating Icons Container */
 .floatingIconsContainer {
   position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  z-index: 100;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 150;
 }
 
 .floatingIcons {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  align-items: center;
 }
 
+/* Import common button styles */
+@import '../../../styles/common/buttons.css';
+
+/* Extend the common button style */
 .floatingIcon {
-  width: 40px;
-  height: 40px;
+  width: var(--button-size);
+  height: var(--button-size);
   border-radius: 50%;
-  background-color: var(--chat-bg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  background-color: var(--button-bg);
+  border: var(--button-border);
+  box-shadow: var(--button-shadow);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--button-transition);
   color: var(--text);
+  padding: 0;
+  flex-shrink: 0;
 }
 
-.floatingIcon:hover {
-  background-color: var(--hover);
-  transform: scale(1.05);
+.floatingIcon:hover:not(:disabled) {
+  background-color: var(--button-hover-bg);
+  transform: scale(var(--button-hover-scale));
 }
 
-.floatingIcon:active {
-  transform: scale(0.95);
+.floatingIcon:active:not(:disabled) {
+  transform: scale(var(--button-active-scale));
+}
+
+.floatingIcon:disabled {
+  opacity: var(--button-disabled-opacity);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Media Query for smaller screens */
+@media (max-width: 768px) {
+  /* Hide the main floating icons container */
+  .floatingIconsContainer {
+    display: none;
+  }
+
+  /* Hide the floating API Status container */
+  .apiStatusFloatingContainer {
+    display: none;
+  }
 }
 
 /* Floating API Status (Bottom Left) */
@@ -218,15 +242,88 @@
 }
 */
 
-/* Media Query for smaller screens */
+/* Mobile Actions Container */
+.mobileActionsContainer {
+  display: none; /* Hidden by default on desktop */
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 900;
+}
+
+.mobileActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--chat-bg);
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+/* Ensure AuthButton fits within the container */
+.mobileActions :global(.authButton) {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  margin: 0;
+}
+
+/* Import common button styles */
+@import '../../../styles/common/buttons.css';
+
+/* Extend the common button style */
+.mobileActionButton {
+  width: var(--button-size);
+  height: var(--button-size);
+  border-radius: 50%;
+  background-color: var(--button-bg);
+  border: var(--button-border);
+  box-shadow: var(--button-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--button-transition);
+  color: var(--text);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.mobileActionButton:hover:not(:disabled) {
+  background-color: var(--button-hover-bg);
+  transform: scale(var(--button-hover-scale));
+}
+
+.mobileActionButton:active:not(:disabled) {
+  transform: scale(var(--button-active-scale));
+}
+
+.mobileActionButton:disabled {
+  opacity: var(--button-disabled-opacity);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Media Query for mobile view */
 @media (max-width: 768px) {
-  /* Hide the main floating icons container */
+  .mobileActionsContainer {
+    display: block;
+  }
+
   .floatingIconsContainer {
     display: none;
   }
+}
 
-  /* Hide the floating API Status container */
-  .apiStatusFloatingContainer {
+/* Media Query for desktop view */
+@media (min-width: 769px) {
+  .mobileActionsContainer {
     display: none;
+  }
+
+  .floatingIconsContainer {
+    display: block;
   }
 } 

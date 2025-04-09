@@ -41,6 +41,7 @@ const ChatMessage = ({ message, isStreaming }) => {
   const { isWaitingForResponse } = useChat();
   const { isDark } = useTheme();
   const [copiedCodeIndex, setCopiedCodeIndex] = useState(-1);
+  const [messageCopied, setMessageCopied] = useState(false);
   
   // Choose appropriate icon based on message role
   const icon = useMemo(() => {
@@ -99,6 +100,24 @@ const ChatMessage = ({ message, isStreaming }) => {
     navigator.clipboard.writeText(code).then(() => {
       setCopiedCodeIndex(index);
       setTimeout(() => setCopiedCodeIndex(-1), 2000);
+    });
+  };
+  
+  // Copy message content to clipboard
+  const handleCopyMessage = () => {
+    // If content is an array (multimodal message), extract just the text
+    const content = typeof message.content === 'string' 
+      ? message.content 
+      : Array.isArray(message.content) 
+        ? message.content
+            .filter(part => part.type === 'text')
+            .map(part => part.text)
+            .join('\n')
+        : '';
+        
+    navigator.clipboard.writeText(content).then(() => {
+      setMessageCopied(true);
+      setTimeout(() => setMessageCopied(false), 2000);
     });
   };
   
@@ -258,6 +277,16 @@ const ChatMessage = ({ message, isStreaming }) => {
       
       {/* Message content section */}
       <div className={styles.messageContentWrapper}>
+        {/* Copy message button */}
+        <button
+          className={styles.copyMessageButton}
+          onClick={handleCopyMessage}
+          aria-label="Copy message"
+          title="Copy message"
+        >
+          {messageCopied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
+        </button>
+        
         <div className={styles.messageContent}>
           {message.role === 'assistant' ? (
             // Use StreamingMessage for all assistant messages to ensure consistent rendering
@@ -276,7 +305,10 @@ const ChatMessage = ({ message, isStreaming }) => {
 ChatMessage.propTypes = {
   message: PropTypes.shape({
     role: PropTypes.string.isRequired,
-    content: PropTypes.string.isRequired
+    content: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.array
+    ]).isRequired
   }).isRequired,
   isStreaming: PropTypes.bool
 };

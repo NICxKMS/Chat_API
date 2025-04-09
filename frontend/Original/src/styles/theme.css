@@ -3,6 +3,19 @@
   --theme-transition-duration: 0.2s;
   --theme-transition-timing: ease-in-out;
   
+  /* Button variables */
+  --button-size: 36px;
+  --button-icon-size: 20px;
+  --button-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --button-shadow: none;
+  --button-border: 1px solid var(--border);
+  --button-bg: transparent;
+  --button-hover-bg: transparent;
+  --button-active-scale: 0.95;
+  --button-hover-scale: 1.05;
+  --button-disabled-opacity: 0.7;
+  --button-icon-opacity: 0.8;
+  
   /* Font families */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
@@ -108,4 +121,67 @@
   --callout-error-border: #f85149;
   --callout-success-bg: #0d211b;
   --callout-success-border: #238645;
+}
+
+/* Button styles */
+.circleActionButton {
+  width: var(--button-size);
+  height: var(--button-size);
+  border-radius: 50%;
+  background-color: transparent;
+  border: var(--button-border);
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--button-transition);
+  color: var(--text);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.circleActionButton:hover:not(:disabled) {
+  background-color: transparent;
+  transform: scale(var(--button-hover-scale));
+  border-color: var(--text);
+}
+
+.circleActionButton:active:not(:disabled) {
+  transform: scale(var(--button-active-scale));
+}
+
+.circleActionButton:disabled {
+  opacity: var(--button-disabled-opacity);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.buttonIcon {
+  color: var(--text);
+  transition: var(--button-transition);
+  opacity: var(--button-icon-opacity);
+  border: 2px solid var(--text);
+  border-radius: 4px;
+  padding: 2px;
+  background: transparent;
+}
+
+.circleActionButton:hover:not(:disabled) .buttonIcon {
+  opacity: 1;
+  border-color: var(--text);
+  transform: scale(1.1);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingIcon {
+  animation: spin 1s linear infinite;
 } 

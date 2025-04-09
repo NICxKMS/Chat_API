@@ -16,6 +16,7 @@ const StreamingMessage = ({ content }) => {
   const [parsedSegments, setParsedSegments] = useState([]);
   const { isDark } = useTheme();
   const { isWaitingForResponse } = useChat();
+  const [copiedCode, setCopiedCode] = useState(null); // Track which code block is copied
   
   // Get the appropriate syntax highlighter theme based on dark/light mode
   const syntaxTheme = isDark ? atomDark : prism;
@@ -64,6 +65,14 @@ const StreamingMessage = ({ content }) => {
       console.error("Error processing streaming content:", error);
       return [{ type: 'text', content: text }];
     }
+  };
+
+  // Handle copy code to clipboard
+  const handleCopyCode = (code, segmentId) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedCode(segmentId);
+      setTimeout(() => setCopiedCode(null), 2000);
+    });
   };
   
   // Update segments whenever content changes, with debounce for streaming
@@ -121,6 +130,8 @@ const StreamingMessage = ({ content }) => {
     
     try {
       const cssClass = !segment.complete ? styles.incompleteCodeBlock : '';
+      const segmentId = `code-${index}`;
+      const isCopied = copiedCode === segmentId;
       
       // Special handling for "markdown" language blocks - render using ReactMarkdown
       if (segment.language === 'markdown') {
@@ -128,7 +139,25 @@ const StreamingMessage = ({ content }) => {
           <div key={index} className={`${styles.codeBlockContainer} ${cssClass}`}>
             <div className={styles.codeHeader}>
               <span className={styles.language}>markdown</span>
-              {/* Add Copy button or other controls here if needed */}
+              <button 
+                className={styles.copyButton}
+                onClick={() => handleCopyCode(segment.content, segmentId)}
+              >
+                {isCopied ? (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14">
+                      <path fillRule="evenodd" d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"></path>
+                    </svg> Copied!
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14">
+                      <path fillRule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                      <path fillRule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg> Copy
+                  </>
+                )}
+              </button>
             </div>
             {/* Render content as interpreted Markdown using ReactMarkdown */}
             <div className={styles.markdownCodeBlock}> 
@@ -146,7 +175,26 @@ const StreamingMessage = ({ content }) => {
         return (
           <div key={index} className={`${styles.codeBlockContainer} ${cssClass}`}>
             <div className={styles.codeHeader}>
-              <span className={styles.language}>{segment.language || 'plaintext'}</span> 
+              <span className={styles.language}>{segment.language || 'plaintext'}</span>
+              <button 
+                className={styles.copyButton}
+                onClick={() => handleCopyCode(segment.content, segmentId)}
+              >
+                {isCopied ? (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14">
+                      <path fillRule="evenodd" d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"></path>
+                    </svg> Copied!
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14">
+                      <path fillRule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                      <path fillRule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                    </svg> Copy
+                  </>
+                )}
+              </button>
             </div>
             {/* Render raw text inside pre/code */}
             <pre className={styles.pre}>
@@ -161,20 +209,31 @@ const StreamingMessage = ({ content }) => {
         <div key={index} className={`${styles.codeBlockContainer} ${cssClass}`}>
           <div className={styles.codeHeader}>
             <span className={styles.language}>{segment.language || 'code'}</span>
-            {/* Add Copy button or other controls here if needed */}
+            <button 
+              className={styles.copyButton}
+              onClick={() => handleCopyCode(segment.content, segmentId)}
+            >
+              {isCopied ? (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14">
+                    <path fillRule="evenodd" d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"></path>
+                  </svg> Copied!
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14">
+                    <path fillRule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                    <path fillRule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                  </svg> Copy
+                </>
+              )}
+            </button>
           </div>
           <SyntaxHighlighter
             language={segment.language}
             style={syntaxTheme}
             className={styles.pre} // Use className for styling container
             wrapLines={true}
-            // Remove customStyle if .pre class handles it
-            // customStyle={{ 
-            //   margin: 0, 
-            //   padding: '1rem', 
-            //   background: 'var(--code-bg)',
-            //   borderRadius: '0 0 6px 6px' 
-            // }}
             PreTag="div" // Use div instead of pre, SyntaxHighlighter wraps in its own pre
           >
             {segment.content || ''}
@@ -196,7 +255,6 @@ const StreamingMessage = ({ content }) => {
           ? renderTextSegment(segment.content, index)
           : renderCodeBlock(segment, index)
       )}
-      {/* Add loading indicator or cursor if needed */}
     </div>
   );
 };
