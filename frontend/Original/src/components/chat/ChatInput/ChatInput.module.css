@@ -4,15 +4,15 @@
   width: 100%;
   gap: 8px;
   padding: 12px;
-  background-color: var(--background-color);
+  background-color: var(--elevated-bg);
   border-top: 1px solid var(--border-color);
   position: relative;
 }
 
 .chatInput {
   flex-grow: 1;
-  /* Use pronounced border */
-  border: 1px solid var(--border-pronounced);
+  /* Remove border */
+  border: none;
   border-radius: 12px;
   padding: 0.875rem 1rem;
   background-color: var(--input-bg);
@@ -35,7 +35,7 @@
 
 .chatInput:focus {
   outline: none;
-  border-color: rgb(var(--primary-rgb));
+  border-color: transparent;
   /* Update focus shadow slightly */
   box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2), var(--shadow);
 }
@@ -61,7 +61,7 @@
   /* Match control button style */
   border-radius: 12px;
   border: 1px solid var(--border-pronounced);
-  background-color: var(--input-bg);
+  background-color: var(--elevated-bg);
   color: var(--secondary-text);
   box-shadow: var(--shadow);
   cursor: pointer;
@@ -78,7 +78,7 @@
 
 .actionButton:hover:not(:disabled) {
   /* Match control button hover */
-  background-color: color-mix(in srgb, var(--input-bg) 95%, black 5%);
+  background-color: color-mix(in srgb, var(--elevated-bg) 95%, black 5%);
   color: var(--text);
   border-color: var(--border-pronounced);
   box-shadow: var(--shadow);
@@ -111,7 +111,7 @@
   border-radius: 12px;
   border: 1px solid var(--border-pronounced);
   background: var(--button-bg); /* Keep primary color for send? Or use input-bg? Let's try input-bg first */
-  background-color: var(--input-bg);
+  background-color: var(--elevated-bg);
   color: var(--secondary-text); /* Match text color */
   box-shadow: var(--shadow);
   font-weight: 500;
@@ -130,7 +130,7 @@
 
 .sendButton:hover:not(:disabled) {
   /* Match control button hover */
-  background-color: color-mix(in srgb, var(--input-bg) 95%, black 5%);
+  background-color: color-mix(in srgb, var(--elevated-bg) 95%, black 5%);
   color: var(--text);
   border-color: var(--border-pronounced);
   box-shadow: var(--shadow);
@@ -147,7 +147,7 @@
   /* Match control button disabled */
   opacity: 0.5;
   cursor: not-allowed;
-  background: var(--input-bg); /* Ensure disabled bg matches */
+  background: var(--elevated-bg); /* Ensure disabled bg matches */
   border-color: var(--border-pronounced); /* Keep border */
   box-shadow: none;
 }
@@ -196,7 +196,7 @@
   align-items: flex-end; /* Align items to bottom for textarea + button */
   position: relative;
   border-radius: 10px; /* Match parent .inputArea */
-  background-color: var(--input-bg); /* Use input background */
+  background-color: var(--elevated-bg); /* Use elevated background */
   padding: 0.5rem;
   /* Define base border using standard variable */
   border: 1px solid var(--border);

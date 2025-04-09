@@ -22,13 +22,14 @@
   /* Light theme variables - APPLYING NEW PALETTE */
   --light-bg: #ffffff; /* --clr-surface-a0 */
   --light-chat-bg: #ffffff; /* --clr-surface-a0 */
+  --light-elevated-bg: #f5f5f5; /* Slightly off-white for elevated components */
   --light-sidebar-bg: #ececec; /* --clr-surface-tonal-a0 */
   --light-text: #000000; /* --clr-dark-a0 */
   --light-secondary-text: #7c59b4; /* --clr-primary-a50 */
   --light-border: #e1e1e1; /* --clr-surface-a20 */
   --border-pronounced-light: #d3d3d3; /* --clr-surface-a30 - New */
   --light-input-bg: #ffffff; /* --clr-surface-a0 */
-  --light-button-bg: #5612f4; /* --clr-primary-a0 */
+  --light-button-bg: transparent; /* --clr-primary-a0 */
   --light-button-hover: #6228e7; /* --clr-primary-a10 */
   --light-button-text: #ffffff; /* --clr-light-a0 */
   --light-message-user-bg: rgba(var(--primary-rgb), 0.08); /* Keep primary alpha blend */
@@ -54,13 +55,14 @@
   /* Dark theme variables - APPLYING NEW PALETTE */
   --dark-bg: #121212; /* --clr-surface-a0 */
   --dark-chat-bg: #282828; /* --clr-surface-a10 */
+  --dark-elevated-bg: #333333; /* Slightly lighter than chat-bg for elevated components */
   --dark-sidebar-bg: #1a1e1e; /* --clr-surface-tonal-a0 */
   --dark-text: #ffffff; /* --clr-light-a0 */
   --dark-secondary-text: #8b8b8b; /* --clr-surface-a50 */
   --dark-border: #3f3f3f; /* --clr-surface-a20 */
   --border-pronounced-dark: #575757; /* --clr-surface-a30 - New */
   --dark-input-bg: #282828; /* --clr-surface-a10 */
-  --dark-button-bg: #579d98; /* --clr-primary-a0 */
+  --dark-button-bg: transparent; /* --clr-primary-a0 */
   --dark-button-hover: #6ba8a3; /* --clr-primary-a10 */
   --dark-button-text: #000000; /* --clr-dark-a0 */
   --dark-message-user-bg: rgba(87, 157, 152, 0.1); /* Use Dark Primary RGB */
@@ -102,6 +104,7 @@
 body.light-mode {
   --bg: var(--light-bg);
   --chat-bg: var(--light-chat-bg);
+  --elevated-bg: var(--light-elevated-bg);
   --sidebar-bg: var(--light-sidebar-bg);
   --text: var(--light-text);
   --secondary-text: var(--light-secondary-text);
@@ -139,6 +142,7 @@ body.light-mode {
 body.dark-mode {
   --bg: var(--dark-bg);
   --chat-bg: var(--dark-chat-bg);
+  --elevated-bg: var(--dark-elevated-bg);
   --sidebar-bg: var(--dark-sidebar-bg);
   --text: var(--dark-text);
   --secondary-text: var(--dark-secondary-text);

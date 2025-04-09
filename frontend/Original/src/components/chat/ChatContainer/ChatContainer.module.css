@@ -96,8 +96,9 @@
 
 /* Base Input Area styles (Common to static and fixed) */
 .inputArea {
+
   padding: 0.75rem 1rem;
-  background-color: var(--chat-bg);
+  background-color: var(--elevated-bg);
   border-radius: 12px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);

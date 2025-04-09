@@ -62,9 +62,8 @@ const ChatControls = memo(({
     <div className={styles.controls}>
       {/* Streaming Indicator */}
       {settings.streaming && (
-        <div className={styles.streamingIndicator} title="Streaming mode enabled">
+        <div className={styles.streamingIndicator} title="Streaming is on">
           <span className={styles.streamingDot}></span>
-          <span className={styles.streamingText}>Streaming</span>
         </div>
       )}
       

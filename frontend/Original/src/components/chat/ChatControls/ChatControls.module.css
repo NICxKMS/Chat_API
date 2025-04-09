@@ -182,15 +182,16 @@
 .streamingIndicator {
   display: flex;
   align-items: center;
-  font-size: 0.8rem;
-  color: #0080ff;
+  justify-content: center;
   margin-right: 12px;
-  padding: 3px 10px;
-  border-radius: 12px;
+  padding: 5px;
+  border-radius: 50%;
   background-color: rgba(0, 128, 255, 0.15);
   cursor: default;
   border: 1px solid rgba(0, 128, 255, 0.3);
   box-shadow: 0 0 4px rgba(0, 128, 255, 0.2);
+  width: 24px;
+  height: 24px;
 }
 
 .streamingDot {
@@ -198,12 +199,7 @@
   width: 8px;
   border-radius: 50%;
   background-color: #0080ff;
-  margin-right: 5px;
   animation: pulse 1.5s infinite;
-}
-
-.streamingText {
-  font-weight: 600;
 }
 
 @keyframes pulse {

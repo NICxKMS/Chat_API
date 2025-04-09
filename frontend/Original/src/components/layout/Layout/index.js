@@ -218,49 +218,6 @@ const Layout = () => {
         />
       )}
 
-      {/* PERMANENT Floating Icons Container (Bottom Right) */}
-      <div className={styles.floatingIconsContainer}>
-        <div className={styles.floatingIcons}>
-          {/* Primary Actions */}
-          <button 
-            className={styles.floatingIcon} 
-            onClick={handleNewChat}
-            aria-label="New Chat"
-            title="New Chat"
-          >
-            <PlusIcon size={20} />
-          </button>
-          
-          <button 
-            className={styles.floatingIcon} 
-            onClick={toggleSettings}
-            aria-label="Settings"
-            title="Settings"
-          >
-            <GearIcon size={20} />
-          </button>
-          
-          {/* More Actions Menu */}
-          <MoreActions 
-            actions={[
-              {
-                icon: <TrashIcon size={16} />,
-                label: 'Reset Chat',
-                onClick: handleResetChat
-              },
-              {
-                icon: <DownloadIcon size={16} />,
-                label: 'Download Chat',
-                onClick: handleDownloadChat
-              }
-            ]}
-          />
-          
-          {/* Theme Toggle */}
-          <ThemeToggle />
-        </div>
-      </div>
-
       {/* Conditionally render Settings Panel */} 
       {/* Always render Settings Panel for CSS transitions, control visibility via props/classes */}
       <Suspense fallback={null}> {/* No visible fallback needed */}
