@@ -8,6 +8,7 @@ import chatRoutesPlugin from "./chatRoutes.js";
 // Import config or package.json directly if needed for version
 // import config from "../config/config.js"; 
 // import pkg from '../../package.json' assert { type: 'json' }; // Example for package.json
+import logger from "../utils/logger.js";
 
 // Fastify Plugin function
 async function mainApiRoutes (fastify, options) {
@@ -29,6 +30,24 @@ async function mainApiRoutes (fastify, options) {
       apiVersion: "v1",
       timestamp: new Date().toISOString()
     });
+  });
+
+  // Add test auth endpoint
+  fastify.get("/test-auth", (request, reply) => {
+    logger.debug("TEST AUTH ENDPOINT CALLED");
+    logger.debug(`User authenticated: ${!!request.user}`);
+    if (request.user) {
+      logger.debug(`User ID: ${request.user.uid}`);
+      return reply.send({
+        authenticated: true,
+        user: request.user
+      });
+    } else {
+      return reply.send({
+        authenticated: false,
+        message: "No user found in request object. Authentication hook may not be running."
+      });
+    }
   });
 
   // Register nested route plugins

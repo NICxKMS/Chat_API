@@ -47,6 +47,7 @@ try {
 
 // --- Firebase Authentication Hook --- 
 async function firebaseAuthHook(request, reply) {
+  logger.debug('=========== FIREBASE AUTH HOOK START ===========');
   // Initialize request.user to null for every request
   request.user = null;
   const authHeader = request.headers.authorization;
@@ -54,6 +55,7 @@ async function firebaseAuthHook(request, reply) {
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const idToken = authHeader.split('Bearer ')[1];
     try {
+      logger.debug('Verifying Firebase token...');
       // Verify the ID token using Firebase Admin SDK
       const decodedToken = await admin.auth().verifyIdToken(idToken);
       // Attach decoded user information if token is valid
@@ -65,16 +67,14 @@ async function firebaseAuthHook(request, reply) {
       logger.debug(`Authenticated user via hook: ${request.user.uid}`);
     } catch (error) {
       // Token provided but invalid/expired. Log warning but allow request to proceed
-      // The route handler can then check request.user to see if auth succeeded
       logger.warn(`Firebase token verification failed (allowing anonymous access): ${error.message}`, { code: error.code });
-      // Optional: Attach error info if needed downstream, but keep user null
-      // request.authError = { code: error.code, message: error.message };
     }
   } else {
     // No token provided, proceed as anonymous
     logger.debug('No auth token provided, proceeding as anonymous.');
   }
 
+  logger.debug('=========== FIREBASE AUTH HOOK END ===========');
   // Always return (allow request to proceed)
   return;
 }
@@ -115,16 +115,25 @@ const start = async () => {
       fastify.addHook('onRequest', rateLimiterHook);
     }
 
+    // Add universal request logging hook to verify execution
+    fastify.addHook('onRequest', async (request, reply) => {
+      logger.debug('=========== UNIVERSAL REQUEST HOOK START ===========');
+      logger.debug(`Request path: ${request.url}`);
+      logger.debug('=========== UNIVERSAL REQUEST HOOK END ===========');
+    });
+
+    // Register Firebase Auth Hook globally
+    fastify.addHook('onRequest', firebaseAuthHook);
+
     // --- Register Route Plugins ---
     // Health check endpoints (can also be moved into a plugin)
     fastify.get("/health", (request, reply) => {
       reply.status(200).send({ status: "OK", version: config.version });
     });
 
-    // Register main API plugin (hook now checks auth, doesn't block)
+    // Register main API plugin
     await fastify.register(mainApiRoutes, { 
-        prefix: "/api",
-        onRequest: [firebaseAuthHook] // Apply hook to check auth status
+        prefix: "/api"
     });
 
     // --- Register Error Handler ---

@@ -4,6 +4,7 @@
  */
 // import express from "express"; // Removed
 import modelController from "../controllers/ModelController.js";
+import logger from "../utils/logger.js";
 
 // Fastify Plugin function
 async function modelRoutes (fastify, options) {
@@ -27,7 +28,14 @@ async function modelRoutes (fastify, options) {
   // router.get('/capabilities/all', modelController.getProviderCapabilities.bind(modelController));
 
   // GET /classified - Get models classified by external service
-  fastify.get("/classified", modelController.getClassifiedModels);
+  fastify.get("/classified", (request, reply, done) => {
+    logger.debug('=========== MODEL CLASSIFIED ROUTE ===========');
+    logger.debug(`Request user: ${JSON.stringify(request.user)}`);
+    logger.debug(`Auth header: ${request.headers.authorization ? 'Present' : 'Not present'}`);
+    
+    // Continue to controller
+    modelController.getClassifiedModels(request, reply);
+  });
 
   // GET /classified/criteria - Get models classified with specific criteria
   // Uses request.query internally in the controller

@@ -12,7 +12,7 @@ const defaultConfig = {
   // port: parseInt(process.env.PORT || "3000", 10),
   environment: process.env.NODE_ENV || "development",
   version: process.env.npm_package_version || "1.0.0",
-  logLevel: process.env.LOG_LEVEL || "info",
+  logLevel: process.env.LOG_LEVEL || "debug",
   providers: {
     openai: {
       apiKey: process.env.OPENAI_API_KEY,
