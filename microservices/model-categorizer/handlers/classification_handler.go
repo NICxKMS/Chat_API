@@ -28,6 +28,22 @@ const (
 // DefaultClassificationProperties returns the default properties for classification
 var DefaultClassificationProperties = []string{PropertyProvider, PropertyFamily, PropertyType, PropertyCapability}
 
+// StandardContextSizes maps model IDs to their standard context sizes
+// Currently only used for Gemini models
+var StandardContextSizes = map[string]int32{
+	// Gemini models
+	"gemini-1.5-pro":                       1000000,
+	"gemini-1.5-pro-latest":                1000000,
+	"gemini-1.5-flash":                     1000000,
+	"gemini-1.5-flash-latest":              1000000,
+	"gemini-1.0-pro":                       32768,
+	"gemini-1.0-pro-vision":                32768,
+	"gemini-1.0-pro-vision-latest":         32768,
+	"gemini-2.0-pro":                       1000000,
+	"gemini-2.0-flash":                     1000000,
+	"gemini-2.5-pro":                       1000000,
+}
+
 // ModelClassificationHandler handles gRPC requests for model classification
 type ModelClassificationHandler struct {
 	proto.UnimplementedModelClassificationServiceServer
@@ -228,8 +244,15 @@ func (h *ModelClassificationHandler) applyModelMetadata(model *models.Model, met
 	model.Type = metadata.Type
 	model.Series = metadata.Series // Assuming Family and Series are the same here based on previous logic
 	model.Variant = metadata.Variant
-	model.ContextSize = int32(metadata.Context)
-	model.Capabilities = metadata.Capabilities
+	
+	// Sort capabilities alphabetically
+	capabilities := metadata.Capabilities
+	if len(capabilities) > 0 {
+		sort.Slice(capabilities, func(i, j int) bool {
+			return strings.ToLower(capabilities[i]) < strings.ToLower(capabilities[j])
+		})
+	}
+	model.Capabilities = capabilities
 
 	// Set version information if it's not already set
 	if model.Version == "" {
@@ -259,6 +282,20 @@ func (h *ModelClassificationHandler) applyModelMetadata(model *models.Model, met
 		model.DisplayName = metadata.DisplayName
 	} else {
 		model.DisplayName = strings.ReplaceAll(model.Name, "-", " ")
+	}
+	
+	// Only set context size for Gemini models
+	if strings.EqualFold(model.Provider, "gemini") || strings.Contains(strings.ToLower(model.Name), "gemini") {
+		if model.ContextSize == 0 && len(model.Name) > 0 {
+			// Check for standard size in map
+			if size, exists := StandardContextSizes[model.ID]; exists {
+				model.ContextSize = size
+			} else if size, exists := StandardContextSizes[model.Name]; exists {
+				model.ContextSize = size
+			} else if metadata.Context > 0 {
+				model.ContextSize = int32(metadata.Context)
+			}
+		}
 	}
 }
 
@@ -311,6 +348,13 @@ func (h *ModelClassificationHandler) classifyModelsByProperty(modelsList []*mode
 			Models:        convertInternalModelsToProto(modelGroup),
 		}
 		groups = append(groups, group)
+	}
+
+	// Sort the groups alphabetically by property value if the property is capability
+	if property == PropertyCapability {
+		sort.Slice(groups, func(i, j int) bool {
+			return strings.ToLower(groups[i].PropertyValue) < strings.ToLower(groups[j].PropertyValue)
+		})
 	}
 
 	return groups

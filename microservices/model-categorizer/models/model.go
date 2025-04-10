@@ -1,5 +1,9 @@
 package models
 
+import (
+	"sort"
+)
+
 // Model represents a single LLM model
 type Model struct {
 	ID             string            `json:"id"`
@@ -62,7 +66,7 @@ type ClassifiedModelResponse struct {
 
 // AvailableClassificationProperties returns the list of available classification properties
 func AvailableClassificationProperties() []*ClassificationProperty {
-	return []*ClassificationProperty{
+	properties := []*ClassificationProperty{
 		{
 			Name:        "provider",
 			DisplayName: "Provider",
@@ -104,6 +108,16 @@ func AvailableClassificationProperties() []*ClassificationProperty {
 			},
 		},
 	}
+	
+	// Sort capability possible values alphabetically
+	for _, prop := range properties {
+		if prop.Name == "capability" {
+			sort.Strings(prop.PossibleValues)
+			break
+		}
+	}
+	
+	return properties
 }
 
 // HierarchicalModelGroup represents a hierarchical grouping of models

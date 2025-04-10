@@ -6,35 +6,33 @@ import providerFactory from "../providers/ProviderFactory.js";
 import * as cache from "../utils/cache.js";
 import * as metrics from "../utils/metrics.js";
 import { ModelClassificationService } from "../services/ModelClassificationService.js";
-import logger from "../utils/logger.js"; // Import logger for explicit logging
+import { getCircuitBreakerStates } from "../utils/circuitBreaker.js";
+import protoUtils from "../utils/protoUtils.js";
+import logger from "../utils/logger.js";
+import { applyCaching } from "./ModelControllerCache.js";
 
 class ModelController {
   constructor() {
-    // Check if classification service is enabled
-    this.useClassificationService = process.env.USE_CLASSIFICATION_SERVICE === "true";
-    
-    // Only initialize if enabled
-    if (this.useClassificationService) {
-      // Initialize with default port 8080 or from environment variable
-      const classificationServerPort = process.env.CLASSIFICATION_SERVER_PORT || "8080";
-      const classificationServerHost = process.env.CLASSIFICATION_SERVER_HOST || "localhost";
-      const serverAddress = `${classificationServerHost}:${classificationServerPort}`;
-      
-      console.log(`Initializing classification service at ${serverAddress}`);
-      this.modelClassificationService = new ModelClassificationService(serverAddress);
-    } else {
-      console.log("Classification service is disabled");
-      this.modelClassificationService = null;
-    }
-    
-    // Bind methods to ensure 'this' context if needed, although might be unnecessary with Fastify
+    // Bind methods (consider if still necessary with Fastify style)
     this.getAllModels = this.getAllModels.bind(this);
     this.getProviderModels = this.getProviderModels.bind(this);
     this.getProviderCapabilities = this.getProviderCapabilities.bind(this);
     this.getCategorizedModels = this.getCategorizedModels.bind(this);
-    this.getProviders = this.getProviders.bind(this);
     this.getClassifiedModels = this.getClassifiedModels.bind(this);
     this.getClassifiedModelsWithCriteria = this.getClassifiedModelsWithCriteria.bind(this);
+    this.getProviders = this.getProviders.bind(this);
+
+    // Initialize classification service if enabled
+    this.useClassificationService = process.env.USE_CLASSIFICATION_SERVICE !== 'false';
+    
+    if (this.useClassificationService) {
+      const serverAddress = `${process.env.CLASSIFICATION_SERVER_HOST || 'localhost'}:${process.env.CLASSIFICATION_SERVER_PORT || '8080'}`;
+      this.modelClassificationService = new ModelClassificationService(serverAddress);
+    } else {
+      this.modelClassificationService = null;
+    }
+    
+    logger.info("ModelController initialized");
   }
 
   /**
@@ -386,5 +384,5 @@ class ModelController {
 // Create singleton instance
 const controller = new ModelController();
 
-// Export instance
-export default controller; 
+// Apply caching if Firestore cache is available
+export default applyCaching(controller); 

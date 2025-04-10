@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
+import { useCacheToggle } from '../../hooks/useCacheToggle';
 import styles from './SettingsPanel.module.css';
 import { IoMdClose } from 'react-icons/io';
 import SettingsSwitch from './SettingsSwitch';
 
 const SettingsPanel = ({ isOpen, onClose }) => {
   const { settings, updateSetting, resetSettings } = useSettings();
+  const { cacheEnabled, toggleCache, refreshModels } = useCacheToggle();
 
   // Direct handler for input changes
   const handleChange = (event) => {
@@ -55,6 +57,26 @@ const SettingsPanel = ({ isOpen, onClose }) => {
               tooltip="Enable streaming responses as they are generated"
             />
             <p className={styles.descriptionText}>Receive chat responses in real-time as they are generated.</p>
+          </div>
+
+          {/* Model Cache Toggle */}
+          <div className={styles.settingItem}>
+            <SettingsSwitch
+              id="modelCache"
+              label="Enable Model Caching"
+              isChecked={cacheEnabled}
+              onChange={toggleCache}
+              tooltip="Cache model data locally to improve loading times"
+            />
+            <p className={styles.descriptionText}>Store model data in your browser to reduce API calls and improve loading times.</p>
+            <button 
+              onClick={refreshModels} 
+              className={`${styles.resetButton} ${styles.refreshButton}`}
+              style={{ marginTop: '8px', padding: '4px 8px' }}
+              disabled={!cacheEnabled}
+            >
+              Refresh Model Data
+            </button>
           </div>
 
           {/* Map over settings object to create controls */}

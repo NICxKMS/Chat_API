@@ -64,6 +64,17 @@ export const ModelProvider = ({ children }) => {
     );
   }, []);
   
+  // Expose isCacheValid function for external access
+  useEffect(() => {
+    // Skip during server-side rendering
+    if (typeof window === 'undefined') return;
+    window.isCacheValid = isCacheValid;
+    
+    return () => {
+      delete window.isCacheValid;
+    };
+  }, [isCacheValid]);
+  
   // Get cached models from localStorage
   const getCachedModels = useCallback(() => {
     try {

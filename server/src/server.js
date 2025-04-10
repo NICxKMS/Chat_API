@@ -12,6 +12,7 @@ import mainApiRoutes from "./routes/index.js"; // Main plugin
 
 import fastifyErrorHandler from "./middleware/errorHandler.js"; // Added error handler import
 import rateLimiterHook from "./middleware/rateLimiter.js"; // Hook import
+import { authenticateUser } from "./middleware/auth/index.js"; // New auth middleware
 import config from "./config/config.js";
 import admin from "firebase-admin"; // Added Firebase Admin
 import logger from "./utils/logger.js"; // Import logger
@@ -45,7 +46,8 @@ try {
 }
 // ------------------------------------
 
-// --- Firebase Authentication Hook --- 
+// --- Legacy Firebase Authentication Hook --- 
+// Keeping this for reference - now replaced with authenticateUser middleware
 async function firebaseAuthHook(request, reply) {
   logger.debug('=========== FIREBASE AUTH HOOK START ===========');
   // Initialize request.user to null for every request
@@ -122,8 +124,8 @@ const start = async () => {
       logger.debug('=========== UNIVERSAL REQUEST HOOK END ===========');
     });
 
-    // Register Firebase Auth Hook globally
-    fastify.addHook('onRequest', firebaseAuthHook);
+    // Register Firebase Auth Hook globally - USE NEW MIDDLEWARE
+    fastify.addHook('onRequest', authenticateUser());
 
     // --- Register Route Plugins ---
     // Health check endpoints (can also be moved into a plugin)
