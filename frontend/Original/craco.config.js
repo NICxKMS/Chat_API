@@ -113,5 +113,11 @@ module.exports = {
       }],
       process.env.REACT_APP_ENV === 'production' && 'babel-plugin-transform-remove-console',
     ].filter(Boolean)
+  },
+  devServer: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp'
+    }
   }
 };

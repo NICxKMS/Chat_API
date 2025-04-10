@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useCallback } from 'react';
+import React, { lazy, Suspense, useState, useCallback, useEffect } from 'react';
 import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -50,8 +50,44 @@ const Layout = () => {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false); // State for model selector visibility
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { selectedModel, isLoadingModels } = useModel(); // Get model data
-  const { isAuthenticated, currentUser, loading: authLoading, login, logout, isLoggingIn } = useAuth(); // Get auth state and functions
+  const { isAuthenticated, currentUser, loading: authLoading, login, logout, isLoggingIn, setIsLoggingIn } = useAuth(); // Get auth state and functions
   const { chatHistory, resetChat, downloadChatHistory } = useChat();
+
+  // Use effect to sync isLoginModalOpen with isLoggingIn from AuthContext
+  useEffect(() => {
+    try {
+      setIsLoginModalOpen(isLoggingIn);
+    } catch (err) {
+      console.error("Error syncing login modal state:", err);
+      // Ensure modal can be closed even if state sync fails
+      setIsLoginModalOpen(false);
+      setIsLoggingIn(false);
+    }
+  }, [isLoggingIn]);
+
+  // Cleanup function to properly handle modal closing
+  const handleCloseLoginModal = useCallback(() => {
+    try {
+      setIsLoginModalOpen(false);
+      setIsLoggingIn(false);
+    } catch (err) {
+      console.error("Error closing login modal:", err);
+      // Force close modal if state update fails
+      setIsLoginModalOpen(false);
+    }
+  }, [setIsLoggingIn]);
+
+  // Update login handler to use AuthContext
+  const handleLogin = useCallback(() => {
+    try {
+      login();
+      setIsLoginModalOpen(true);
+    } catch (err) {
+      console.error("Error initiating login:", err);
+      // Ensure modal can be opened even if login fails
+      setIsLoginModalOpen(true);
+    }
+  }, [login]);
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen(prev => !prev);
@@ -103,6 +139,28 @@ const Layout = () => {
     isSidebarEffectivelyHidden ? styles.sidebarHidden : '' // Controls floating icon visibility
   ].filter(Boolean).join(' ');
 
+  // Add error boundary for the login modal
+  const renderLoginModal = () => {
+    try {
+      return (
+        <Suspense fallback={<div className={styles.modalOverlay}><Spinner size="large" /></div>}>
+          <LoginModal onClose={handleCloseLoginModal} />
+        </Suspense>
+      );
+    } catch (err) {
+      console.error("Error rendering login modal:", err);
+      return (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2>Error</h2>
+            <p>Failed to load login modal. Please try refreshing the page.</p>
+            <button onClick={handleCloseLoginModal}>Close</button>
+          </div>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className={layoutClasses}>
       {/* Mobile Actions Container (Top Right) */}
@@ -112,7 +170,7 @@ const Layout = () => {
           <Suspense fallback={<LoadingFallback />}>
             <AuthButton
               isAuthenticated={isAuthenticated}
-              onLogin={() => setIsLoginModalOpen(true)}
+              onLogin={handleLogin}
               onLogout={logout}
               userName={currentUser?.displayName || currentUser?.email}
               isLoading={authLoading}
@@ -227,14 +285,8 @@ const Layout = () => {
         /> 
       </Suspense>
 
-      {/* Conditionally render Login Modal */} 
-      {isLoginModalOpen && (
-        <Suspense fallback={<div>Loading Login...</div>}> {/* Basic fallback */} 
-          <LoginModal
-            onClose={() => setIsLoginModalOpen(false)}
-          />
-        </Suspense>
-      )}
+      {/* Conditionally render Login Modal */}
+      {(isLoginModalOpen || isLoggingIn) && renderLoginModal()}
     </div>
   );
 };

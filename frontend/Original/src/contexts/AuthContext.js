@@ -8,7 +8,18 @@ const AuthContext = createContext();
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    console.warn('useAuth used outside of AuthProvider - returning default values');
+    return {
+      currentUser: null,
+      idToken: null,
+      loading: false,
+      error: null,
+      login: () => {},
+      logout: () => {},
+      isAuthenticated: false,
+      isLoggingIn: false,
+      setIsLoggingIn: () => {}
+    };
   }
   return context;
 };
@@ -16,81 +27,130 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [idToken, setIdToken] = useState(null);
-  const [loading, setLoading] = useState(true); // Still true initially
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false); // State to trigger login UI
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const login = async () => {
-    // This function now simply signals the intent to log in.
-    // The actual login mechanism (popup, redirect) will be handled
-    // by a dedicated Login component/page triggered by isLoggingIn state.
-    console.log("Login button clicked, setting isLoggingIn to true.");
-    setIsLoggingIn(true);
-  };
+  const login = useCallback(async () => {
+    try {
+      console.log("Login button clicked, setting isLoggingIn to true.");
+      setIsLoggingIn(true);
+      // Add a timeout to handle potential popup issues
+      setTimeout(() => {
+        if (isLoggingIn) {
+          console.warn("Login process taking too long, resetting state");
+          setIsLoggingIn(false);
+        }
+      }, 30000); // 30 second timeout
+    } catch (err) {
+      console.error("Error in login function:", err);
+      setError("Failed to initiate login. Please try again.");
+      setIsLoggingIn(false);
+    }
+  }, [isLoggingIn]);
 
-  const logout = async () => {
-    // Use Firebase signOut
+  const logout = useCallback(async () => {
     const auth = getFirebaseAuth();
     if (!auth) {
-      setError("Firebase not initialized.");
+      console.warn("Firebase not initialized during logout.");
+      setError("Authentication service unavailable.");
       return;
     }
     try {
       await signOut(auth);
-      // onAuthStateChanged will handle setting user/token to null and loading to false
       console.log("Sign out successful.");
     } catch (err) {
       console.error("Logout failed:", err);
       setError(err.message || 'Failed to logout.');
-      // Reset state manually on error?
-      // setCurrentUser(null);
-      // setIdToken(null);
-      // setLoading(false); // Or rely on onAuthStateChanged?
+      // Don't throw error, just log it and continue
     }
-  };
+  }, []);
 
   // Effect to listen for Firebase auth state changes
   useEffect(() => {
-    const auth = getFirebaseAuth();
-    if (!auth) {
-      console.warn("Auth service not available for onAuthStateChanged listener.");
-      setLoading(false); // Stop loading if Firebase isn't initialized
-      return;
-    }
+    let unsubscribe = () => {};
+    let mounted = true;
+    let authStateChangeTimeout;
 
-    console.log("Setting up Firebase onAuthStateChanged listener.");
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user) {
-        try {
-          // Force refresh is false by default, gets cached token if available
-          const token = await user.getIdToken();
-          setIdToken(token);
-          setError(null); // Clear previous errors on successful login
-          setIsLoggingIn(false); // Ensure login UI closes if open
-          console.log("User signed in, token obtained.");
-        } catch (err) {
-          console.error("Failed to get ID token:", err);
-          setError("Failed to get authentication token.");
-          setIdToken(null);
-          // Optionally sign out the user if token fetch fails critically
-          await signOut(auth); 
-        }
-      } else {
-        // User is signed out
-        setIdToken(null);
-        setIsLoggingIn(false); // Ensure login UI closes if open
-        console.log("User signed out.");
+    const setupAuthListener = async () => {
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        console.warn("Auth service not available for onAuthStateChanged listener.");
+        if (mounted) setLoading(false);
+        return;
       }
-      setLoading(false); // Auth state determined
-    });
 
-    // Cleanup listener on component unmount
+      try {
+        console.log("Setting up Firebase onAuthStateChanged listener.");
+        unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (!mounted) return;
+
+          // Clear any existing timeout
+          if (authStateChangeTimeout) {
+            clearTimeout(authStateChangeTimeout);
+          }
+
+          try {
+            setCurrentUser(user);
+            if (user) {
+              try {
+                const token = await user.getIdToken();
+                setIdToken(token);
+                setError(null);
+                setIsLoggingIn(false);
+                console.log("User signed in, token obtained.");
+              } catch (tokenErr) {
+                console.error("Failed to get ID token:", tokenErr);
+                setError("Failed to get authentication token.");
+                setIdToken(null);
+              }
+            } else {
+              setIdToken(null);
+              setIsLoggingIn(false);
+              console.log("User signed out.");
+            }
+          } catch (err) {
+            console.error("Error in auth state change handler:", err);
+            setError("Authentication error occurred.");
+          } finally {
+            if (mounted) setLoading(false);
+          }
+        }, (error) => {
+          console.error("Auth state change error:", error);
+          if (mounted) {
+            setError("Authentication error: " + error.message);
+            setLoading(false);
+          }
+        });
+
+        // Set a timeout to handle potential auth state change issues
+        authStateChangeTimeout = setTimeout(() => {
+          if (mounted && loading) {
+            console.warn("Auth state change taking too long, resetting loading state");
+            setLoading(false);
+          }
+        }, 30000); // 30 second timeout
+
+      } catch (err) {
+        console.error("Error setting up auth listener:", err);
+        if (mounted) {
+          setError("Failed to initialize authentication.");
+          setLoading(false);
+        }
+      }
+    };
+
+    setupAuthListener();
+
     return () => {
+      mounted = false;
+      if (authStateChangeTimeout) {
+        clearTimeout(authStateChangeTimeout);
+      }
       console.log("Cleaning up Firebase onAuthStateChanged listener.");
       unsubscribe();
-    }
-  }, []);
+    };
+  }, [loading]);
 
   const value = {
     currentUser,
@@ -99,9 +159,9 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     logout,
-    isAuthenticated: !!currentUser && !!idToken, // Use state directly
-    isLoggingIn, // Expose state to trigger login UI
-    setIsLoggingIn // Allow login UI to close itself
+    isAuthenticated: !!currentUser && !!idToken,
+    isLoggingIn,
+    setIsLoggingIn
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -38,84 +38,111 @@ const LoginModal = ({ onClose }) => {
     const auth = getFirebaseAuth();
     if (!auth) {
       setError("Firebase not initialized. Cannot sign in.");
+      setIsLoading(false);
       return;
     }
     setIsLoading(true);
-    setError(null); // Clear previous errors
+    setError(null);
     try {
+      // Add a timeout to handle popup blocking
+      const popupTimeout = setTimeout(() => {
+        if (isLoading) {
+          setError('Popup blocked or timed out. Please allow popups for this site.');
+          setIsLoading(false);
+        }
+      }, 10000); // 10 second timeout
+
       await signInWithPopup(auth, provider);
-      // onAuthStateChanged in AuthContext will handle the rest (closing modal, setting user state)
+      clearTimeout(popupTimeout);
       console.log("Popup sign-in successful.");
     } catch (err) {
       console.error("Popup Sign-in Error:", err);
-      // Customize error messages based on err.code
       if (err.code === 'auth/popup-closed-by-user') {
         console.log('Popup sign-in cancelled by user.');
-        // Close the modal as the user cancelled
-        setIsLoggingIn(false);
-        if (onClose) onClose();
+        closeModal();
       } else if (err.code === 'auth/cancelled-popup-request') {
         console.log('Popup sign-in cancelled (multiple requests).');
-        // Close the modal
-        setIsLoggingIn(false);
-        if (onClose) onClose();
+        closeModal();
       } else if (err.code === 'auth/popup-blocked') {
         setError('Popup blocked by browser. Please allow popups for this site.');
-        // Keep modal open to show the error in this case
-        setIsLoading(false);
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Network error. Please check your internet connection.');
       } else {
         setError(err.message || 'Failed to sign in. Please try again.');
-        // Keep modal open to show unexpected errors
-        setIsLoading(false);
       }
+    } finally {
+      setIsLoading(false);
     }
-    // No finally block needed, loading is handled by success/error paths
   };
 
   const handleEmailSignIn = async (e) => {
-    e.preventDefault(); // Prevent form submission reload
+    e.preventDefault();
     const auth = getFirebaseAuth();
     if (!auth) {
       setError("Firebase not initialized.");
+      setIsLoading(false);
       return;
     }
     if (!email || !password) {
-        setError("Please enter both email and password.");
-        return;
+      setError("Please enter both email and password.");
+      setIsLoading(false);
+      return;
     }
     setIsLoading(true);
     setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged handles the rest
       console.log("Email/Password sign-in successful.");
     } catch (err) {
       console.error("Email Sign-in Error:", err);
-      setError(err.message || 'Failed to sign in with email.');
+      let errorMessage = 'Failed to sign in with email.';
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email.';
+      } else if (err.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+      }
+      setError(errorMessage);
+    } finally {
       setIsLoading(false);
     }
   };
 
   const handleEmailSignUp = async (e) => {
-    e.preventDefault(); // Prevent form submission reload
+    e.preventDefault();
     const auth = getFirebaseAuth();
     if (!auth) {
       setError("Firebase not initialized.");
+      setIsLoading(false);
       return;
     }
     if (!email || !password) {
-        setError("Please enter both email and password.");
-        return;
+      setError("Please enter both email and password.");
+      setIsLoading(false);
+      return;
     }
     setIsLoading(true);
     setError(null);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged handles the rest
       console.log("Email/Password sign-up successful.");
     } catch (err) {
       console.error("Email Sign-up Error:", err);
-      setError(err.message || 'Failed to sign up with email.');
+      let errorMessage = 'Failed to sign up with email.';
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = 'Email already in use. Please sign in instead.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      } else if (err.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please use a stronger password.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Email/password accounts are not enabled.';
+      }
+      setError(errorMessage);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -131,15 +158,35 @@ const LoginModal = ({ onClose }) => {
   };
 
   const closeModal = () => {
-    // Only close if not currently in the middle of a sign-in attempt
-    if (!isLoading) {
-      setIsLoggingIn(false);
-      if (onClose) onClose();
+    setIsLoading(false);
+    setIsLoggingIn(false);
+    if (onClose) onClose();
+  };
+
+  // For closing when clicking on the overlay background
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      closeModal();
     }
   };
 
+  // Add error boundary fallback
+  if (error && error.includes('critical')) {
+    return (
+      <div className={styles.overlay} onClick={handleOverlayClick}>
+        <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <h2 className={styles.title}>Error</h2>
+          <p className={styles.error}>{error}</p>
+          <button className={styles.closeButton} onClick={closeModal}>
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.overlay} onClick={closeModal}>
+    <div className={styles.overlay} onClick={handleOverlayClick}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <button className={styles.closeButton} onClick={closeModal} aria-label="Close login">
           <IoMdClose />
@@ -148,15 +195,14 @@ const LoginModal = ({ onClose }) => {
         <p className={styles.subtitle}>Choose a provider to continue</p>
 
         {isLoading && (
-          <div className={`${styles.spinnerContainer} ${styles.fullHeightSpinner}`}> {/* Make spinner take full height when loading */}
+          <div className={`${styles.spinnerContainer} ${styles.fullHeightSpinner}`}>
             <Spinner size="large" />
             <p>Connecting...</p>
           </div>
         )}
 
         {!isLoading && (
-          // Email/Password form is now the default content when not loading
-          <form className={styles.emailForm} onSubmit={handleEmailSignIn}> {/* Added onSubmit */} 
+          <form className={styles.emailForm} onSubmit={handleEmailSignIn}>
             <input
               type="email"
               placeholder="Email Address"
@@ -164,6 +210,7 @@ const LoginModal = ({ onClose }) => {
               onChange={(e) => setEmail(e.target.value)}
               required
               className={styles.inputField}
+              disabled={isLoading}
             />
             <input
               type="password"
@@ -172,6 +219,7 @@ const LoginModal = ({ onClose }) => {
               onChange={(e) => setPassword(e.target.value)}
               required
               className={styles.inputField}
+              disabled={isLoading}
             />
             <div className={styles.emailButtonContainer}>
               <button type="submit" className={styles.emailButton} disabled={isLoading}>
@@ -184,7 +232,6 @@ const LoginModal = ({ onClose }) => {
           </form>
         )}
 
-        {/* Alternative Sign-in Providers (Icons) - Shown below email form when not loading */}
         {!isLoading && (
           <div className={styles.alternativeLoginContainer}>
             <p className={styles.alternativeLoginText}>Or sign in with</p>
@@ -207,7 +254,6 @@ const LoginModal = ({ onClose }) => {
               >
                 <FaGithub />
               </button>
-              {/* Add other provider icons here if needed */}
             </div>
           </div>
         )}
