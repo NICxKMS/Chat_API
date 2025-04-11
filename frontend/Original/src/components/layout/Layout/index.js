@@ -1,13 +1,12 @@
 import React, { lazy, Suspense, useState, useCallback, useEffect } from 'react';
 import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
-import { useAuth } from '../../../contexts/AuthContext';
 import { useChat } from '../../../contexts/ChatContext';
 // Import useApi if needed for apiUrl, but not for status
 // import { useApi } from '../../../contexts/ApiContext'; 
 import styles from './Layout.module.css';
 // Import icons using the correct paths
-import { PlusIcon, GearIcon, TrashIcon, DownloadIcon, SignInIcon, SignOutIcon } from '@primer/octicons-react';
+import { PlusIcon, GearIcon, TrashIcon, DownloadIcon } from '@primer/octicons-react';
 // Import only the specific icons needed
 // const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Removed
 import { useSettings } from '../../../contexts/SettingsContext';
@@ -22,14 +21,9 @@ const Spinner = lazy(() => import(/* webpackPrefetch: true */ '../../common/Spin
 const ThemeToggle = lazy(() => import(/* webpackPrefetch: true */ '../../common/ThemeToggle'));
 // Remove ApiStatus import
 // const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Removed
-const LoginModal = lazyLoad(() => import('../../auth/LoginModal'), {
-  prefetch: true, // Or false if you don't want to prefetch
-  webpackChunkName: 'login-modal' // Specific chunk name
-});
 const SettingsPanel = lazy(() => import(/* webpackPrefetch: true */ '../../settings/SettingsPanel'));
 const SidebarToggle = lazy(() => import(/* webpackPrefetch: true */ '../SidebarToggle'));
 const MoreActions = lazy(() => import(/* webpackPrefetch: true */ '../../common/MoreActions'));
-const AuthButton = lazy(() => import(/* webpackPrefetch: true */ '../../auth/AuthButton'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -48,46 +42,8 @@ const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(isDesktop); 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // State for settings panel
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false); // State for model selector visibility
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { selectedModel, isLoadingModels } = useModel(); // Get model data
-  const { isAuthenticated, currentUser, loading: authLoading, login, logout, isLoggingIn, setIsLoggingIn } = useAuth(); // Get auth state and functions
   const { chatHistory, resetChat, downloadChatHistory } = useChat();
-
-  // Use effect to sync isLoginModalOpen with isLoggingIn from AuthContext
-  useEffect(() => {
-    try {
-      setIsLoginModalOpen(isLoggingIn);
-    } catch (err) {
-      console.error("Error syncing login modal state:", err);
-      // Ensure modal can be closed even if state sync fails
-      setIsLoginModalOpen(false);
-      setIsLoggingIn(false);
-    }
-  }, [isLoggingIn]);
-
-  // Cleanup function to properly handle modal closing
-  const handleCloseLoginModal = useCallback(() => {
-    try {
-      setIsLoginModalOpen(false);
-      setIsLoggingIn(false);
-    } catch (err) {
-      console.error("Error closing login modal:", err);
-      // Force close modal if state update fails
-      setIsLoginModalOpen(false);
-    }
-  }, [setIsLoggingIn]);
-
-  // Update login handler to use AuthContext
-  const handleLogin = useCallback(() => {
-    try {
-      login();
-      setIsLoginModalOpen(true);
-    } catch (err) {
-      console.error("Error initiating login:", err);
-      // Ensure modal can be opened even if login fails
-      setIsLoginModalOpen(true);
-    }
-  }, [login]);
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen(prev => !prev);
@@ -139,44 +95,11 @@ const Layout = () => {
     isSidebarEffectivelyHidden ? styles.sidebarHidden : '' // Controls floating icon visibility
   ].filter(Boolean).join(' ');
 
-  // Add error boundary for the login modal
-  const renderLoginModal = () => {
-    try {
-      return (
-        <Suspense fallback={<div className={styles.modalOverlay}><Spinner size="large" /></div>}>
-          <LoginModal onClose={handleCloseLoginModal} />
-        </Suspense>
-      );
-    } catch (err) {
-      console.error("Error rendering login modal:", err);
-      return (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2>Error</h2>
-            <p>Failed to load login modal. Please try refreshing the page.</p>
-            <button onClick={handleCloseLoginModal}>Close</button>
-          </div>
-        </div>
-      );
-    }
-  };
-
   return (
     <div className={layoutClasses}>
       {/* Mobile Actions Container (Top Right) */}
       <div className={styles.mobileActionsContainer}>
         <div className={styles.mobileActions}>
-          {/* Login Button */}
-          <Suspense fallback={<LoadingFallback />}>
-            <AuthButton
-              isAuthenticated={isAuthenticated}
-              onLogin={handleLogin}
-              onLogout={logout}
-              userName={currentUser?.displayName || currentUser?.email}
-              isLoading={authLoading}
-            />
-          </Suspense>
-          
           {/* Theme Toggle */}
           <Suspense fallback={null}>
             <ThemeToggle />
@@ -284,9 +207,6 @@ const Layout = () => {
           onClose={toggleSettings} 
         /> 
       </Suspense>
-
-      {/* Conditionally render Login Modal */}
-      {(isLoginModalOpen || isLoggingIn) && renderLoginModal()}
     </div>
   );
 };

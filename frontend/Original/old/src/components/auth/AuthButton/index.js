@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { memo } from 'react';
 // Import icons using the correct paths
-import { PersonIcon, SignOutIcon } from '@primer/octicons-react';
+import { SignInIcon, SignOutIcon } from '@primer/octicons-react';
 import styles from './AuthButton.module.css';
 
 /**
@@ -13,38 +13,31 @@ import styles from './AuthButton.module.css';
  * @param {boolean} props.isLoading - Whether authentication is in progress
  * @returns {JSX.Element} - Rendered component
  */
-const AuthButton = ({ 
+const AuthButton = memo(({ 
   isAuthenticated, 
   onLogin, 
   onLogout, 
-  userName, 
+  userName,
   isLoading 
 }) => {
-  const handleClick = () => {
-    if (isLoading) return;
-    if (isAuthenticated) {
-      onLogout();
-    } else {
-      onLogin();
-    }
-  };
-
   return (
-    <button
-      className={`${styles.authButton} ${isLoading ? styles.loading : ''}`}
-      onClick={handleClick}
+    <button 
+      className={styles.authButton}
+      onClick={isAuthenticated ? onLogout : onLogin}
       disabled={isLoading}
-      aria-label={isAuthenticated ? 'Sign out' : 'Sign in'}
-      title={isAuthenticated ? `Sign out (${userName})` : 'Sign in'}
+      title={isLoading ? "Checking authentication..." : isAuthenticated ? `Logged in as ${userName}. Click to logout.` : "Login / Sign Up"}
+      aria-label={isLoading ? "Loading Authentication" : isAuthenticated ? "Logout" : "Login or Sign Up"}
     >
-      {isAuthenticated ? (
+      {isLoading ? (
+        <div className={styles.spinner}></div>
+      ) : isAuthenticated ? (
         <SignOutIcon size={20} className={styles.icon} />
       ) : (
-        <PersonIcon size={20} className={styles.icon} />
+        <SignInIcon size={20} className={styles.icon} />
       )}
     </button>
   );
-};
+});
 
 // Display name for debugging
 AuthButton.displayName = 'AuthButton';

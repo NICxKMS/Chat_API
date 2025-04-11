@@ -1,0 +1,75 @@
+/* Import common button styles */
+@import '../../../styles/common/buttons.css';
+
+/* Extend the common button style with some modifications */
+.themeToggle {
+  width: var(--button-size);
+  height: var(--button-size);
+  border-radius: 50%;
+  background-color: var(--button-bg);
+  border: var(--button-border);
+  box-shadow: var(--button-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--button-transition);
+  color: var(--text);
+  padding: 0;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.themeToggle:hover:not(:disabled) {
+  background-color: var(--button-hover-bg);
+  transform: scale(var(--button-hover-scale));
+}
+
+.themeToggle:active:not(:disabled) {
+  transform: scale(var(--button-active-scale));
+}
+
+.themeToggle:disabled {
+  opacity: var(--button-disabled-opacity);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.themeToggle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-primary);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 50%;
+}
+
+.icon {
+  color: var(--text);
+  transition: var(--button-transition);
+  opacity: var(--button-icon-opacity);
+  width: var(--button-icon-size);
+  height: var(--button-icon-size);
+  position: relative;
+  z-index: 1;
+}
+
+.themeToggle:hover .icon {
+  transform: rotate(30deg);
+  opacity: 1;
+}
+
+.themeToggle button {
+  transition: color var(--theme-transition-duration) var(--theme-transition-timing),
+              transform 0.3s ease;
+}
+
+.themeToggle span {
+  transition: opacity 0.3s ease,
+              background-color var(--theme-transition-duration) var(--theme-transition-timing);
+} 

@@ -1,0 +1,32 @@
+.metricsBar {
+  display: flex;
+  justify-content: center; /* Center items horizontally */
+  align-items: center;
+  gap: 1.5rem; /* Spacing between metrics */
+  padding: 0.5rem 1rem; /* Vertical and horizontal padding */
+  background-color: var(--card-bg); /* Subtle background */
+  border-bottom: 1px solid var(--border); /* Separator line */
+  font-size: 0.8rem;
+  color: var(--secondary-text);
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  transition: opacity 0.3s ease, transform 0.3s ease; /* For potential show/hide */
+  border-radius: 8px 8px 0 0; /* Round top corners if placed directly on input */
+  margin-bottom: -1px; /* Overlap border with input area top border */
+}
+
+.metricItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem; /* Space between icon and text */
+  white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .metricsBar {
+    gap: 1rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+    justify-content: space-around; /* Spread out more on mobile */
+  }
+} 

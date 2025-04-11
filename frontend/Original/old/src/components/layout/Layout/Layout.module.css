@@ -1,0 +1,263 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
+  position: relative;
+}
+
+/* Define sidebar widths */
+:root {
+  --sidebar-width-full: 300px;
+  --sidebar-width-compact: 80px;
+}
+
+.sidebarContainer {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 50;
+  transition: width 0.3s ease, transform 0.3s ease, padding 0.3s ease, border 0.3s ease;
+  width: var(--sidebar-width-full);
+  padding: 0;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.sidebarPlaceholder {
+  width: 100%;
+  height: 100%;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+.mainContentContainer {
+  flex-grow: 1;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.contentPlaceholder {
+  flex-grow: 1;
+  width: 100%;
+  background-color: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar States (Desktop) */
+@media (min-width: 1024px) {
+  .layout.sidebarCompact .sidebarContainer {
+    width: 0;
+    transform: translateX(-100%);
+    pointer-events: none;
+    border-right: none;
+    padding: 0;
+  }
+}
+
+/* Sidebar States (Mobile) */
+@media (max-width: 1023px) {
+  .sidebarContainer {
+    position: fixed;
+    height: 100%;
+    transform: translateX(-100%);
+    width: var(--sidebar-width-full);
+    border-right: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    transition: transform 0.3s ease;
+  }
+
+  .layout.sidebarOpenMobile .sidebarContainer {
+    transform: translateX(0);
+  }
+  
+  .mainContentContainer {
+    width: 100%;
+  }
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.overlayVisible {
+  display: block;
+  opacity: 1;
+}
+
+/* Container for the model selector button - REMOVED */
+/*
+.modelSelectorContainer {
+  position: absolute;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+}
+*/
+
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  opacity: 0;
+  animation: fadeIn 0.2s ease forwards;
+}
+
+/* Modal Content Wrapper */
+.modalContent {
+  background-color: var(--bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative;
+  animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Media Query for smaller screens */
+@media (max-width: 768px) {
+  /* Hide the floating API Status container */
+  .apiStatusFloatingContainer {
+    display: none;
+  }
+}
+
+/* Floating API Status (Bottom Left) */
+.apiStatusFloatingContainer {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  z-index: 150; /* Same level as other floating icons */
+  
+  /* Always visible now - Removed hiding properties */
+  /* opacity: 0; */
+  /* transform: translateY(20px); */
+  /* pointer-events: none; */
+  /* transition: opacity 0.3s ease, transform 0.3s ease; */
+}
+
+/* Make FLOATING API STATUS visible when sidebar is hidden */
+/* Target the new container */
+/* REMOVED THIS RULE */
+/*
+.sidebarHidden .apiStatusFloatingContainer {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+*/
+
+/* Mobile Actions Container */
+.mobileActionsContainer {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.mobileActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--elevated-bg);
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+/* Ensure AuthButton fits within the container */
+.mobileActions :global(.authButton) {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  margin: 0;
+}
+
+/* Import common button styles */
+@import '../../../styles/common/buttons.css';
+
+/* Extend the common button style */
+.mobileActionButton {
+  width: var(--button-size);
+  height: var(--button-size);
+  border-radius: 50%;
+  background-color: transparent !important;
+  border: var(--button-border);
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--button-transition);
+  color: var(--text);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.mobileActionButton:hover:not(:disabled) {
+  background-color: transparent !important;
+  transform: scale(var(--button-hover-scale));
+  border-color: var(--text);
+}
+
+.mobileActionButton:active:not(:disabled) {
+  transform: scale(var(--button-active-scale));
+}
+
+.mobileActionButton:disabled {
+  opacity: var(--button-disabled-opacity);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Media Query for mobile view */
+@media (max-width: 768px) {
+  .mobileActionsContainer {
+    display: block;
+  }
+}
+
+/* Media Query for desktop view */

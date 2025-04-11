@@ -1,5 +1,4 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 
 // Fetch Firebase configuration from environment variables
 const firebaseConfig = {
@@ -13,10 +12,9 @@ const firebaseConfig = {
 };
 
 let app = null;
-let auth = null;
 
 export const initializeFirebase = () => {
-  if (app) return { app, auth };
+  if (app) return { app };
 
   if (
     firebaseConfig.apiKey &&
@@ -26,12 +24,10 @@ export const initializeFirebase = () => {
   ) {
     try {
       app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
       console.log("Firebase initialized successfully.");
     } catch (error) {
       console.error("Firebase initialization failed:", error);
       app = null;
-      auth = null;
     }
   } else {
     console.warn(
@@ -41,15 +37,7 @@ export const initializeFirebase = () => {
     );
   }
   
-  return { app, auth };
-};
-
-export const getFirebaseAuth = () => {
-  if (!auth) {
-    const { auth: newAuth } = initializeFirebase();
-    return newAuth;
-  }
-  return auth;
+  return { app };
 };
 
 export const getFirebaseApp = () => {

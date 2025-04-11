@@ -1,0 +1,126 @@
+/* Define Color Scheme Variables */
+:root {
+  /* Light Theme Defaults */
+  --btn-grad-start: #89CFF0; /* Baby Blue */
+  --btn-grad-mid: #40E0D0;   /* Turquoise */
+  --btn-grad-end: #7FFFD4;   /* Aquamarine */
+  --btn-inner-bg: #f8f9fa;   /* Very Light Grey */
+  --btn-text: #343a40;       /* Dark Grey */
+  --btn-hover-text: #212529; /* Near Black */
+  --btn-glow-color: rgba(64, 224, 208, 0.3); /* Turquoise glow */
+  --btn-focus-ring: rgba(64, 224, 208, 0.6);
+  --btn-disabled-bg: #e9ecef;
+  --btn-disabled-text: #adb5bd;
+  --btn-active-inner-bg: #e9ecef;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Theme Overrides */
+    --btn-grad-start: #5B42F3; /* Purple */
+    --btn-grad-mid: #AF40FF;   /* Violet */
+    --btn-grad-end: #00DDEB;   /* Cyan */
+    --btn-inner-bg: rgb(25, 28, 58); /* Dark Blue/Charcoal */
+    --btn-text: #e9ecef;       /* Light Grey */
+    --btn-hover-text: #ffffff; /* White */
+    --btn-glow-color: rgba(175, 64, 255, 0.3); /* Violet glow */
+    --btn-focus-ring: rgba(175, 64, 255, 0.6);
+    --btn-disabled-bg: #495057;
+    --btn-disabled-text: #6c757d;
+    --btn-active-inner-bg: rgba(25, 28, 58, 0.9);
+  }
+}
+
+.modelSelectorButton {
+  display: inline-flex;
+  align-items: center;
+  background-image: linear-gradient(144deg, 
+    var(--btn-grad-start), 
+    var(--btn-grad-mid) 50%, 
+    var(--btn-grad-end)
+  );
+  border: 0;
+  border-radius: 8px;
+  box-shadow: var(--btn-glow-color) 0 10px 20px -5px;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1em;
+  padding: 3px;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: box-shadow var(--theme-transition-duration) var(--theme-transition-timing),
+              background-image var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.modelSelectorButton:active,
+.modelSelectorButton:hover {
+  outline: 0;
+}
+
+.innerContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--btn-inner-bg);
+  color: var(--btn-text);
+  padding: 0.7rem 1.2rem;
+  border-radius: 6px;
+  width: 100%;
+  height: 100%;
+  transition: background-color 0.3s ease, 
+              color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.modelSelectorButton:hover:not(:disabled) .innerContent {
+  background: none;
+  color: var(--btn-hover-text);
+}
+
+.modelSelectorButton:active:not(:disabled) .innerContent {
+  background-color: var(--btn-active-inner-bg);
+  transition-duration: 50ms;
+}
+
+.modelSelectorButton:disabled {
+  background-image: none;
+  background-color: var(--btn-disabled-bg);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.modelSelectorButton:disabled .innerContent {
+  background-color: transparent;
+  color: var(--btn-disabled-text);
+}
+
+.buttonText {
+  margin-right: 0.6rem;
+}
+
+.buttonIcon {
+  opacity: 0.8;
+  transition: opacity 0.2s ease,
+              color var(--theme-transition-duration) var(--theme-transition-timing);
+  color: currentColor;
+}
+
+.modelSelectorButton:hover:not(:disabled) .buttonIcon {
+  opacity: 1;
+}
+
+.modelSelectorButton:focus-visible {
+  box-shadow: var(--btn-glow-color) 0 10px 20px -5px, 0 0 0 3px var(--btn-focus-ring);
+}
+
+/* Optional: Responsive adjustments */
+/* @media (min-width: 768px) {
+  .modelSelectorButton {
+    font-size: 1rem;
+  }
+} */ 

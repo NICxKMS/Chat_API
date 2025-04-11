@@ -450,7 +450,8 @@ class OpenAIProvider extends BaseProvider {
         accumulatedLatency += chunkLatency;
 
         if (firstChunk) {
-          metrics.recordTimeToFirstChunk(this.name, modelName, chunkLatency);
+          // Convert latency to seconds for the metrics function
+          metrics.recordStreamTtfb(this.name, modelName, chunkLatency / 1000); 
           firstChunk = false;
         }
 

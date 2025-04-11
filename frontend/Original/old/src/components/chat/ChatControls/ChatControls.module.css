@@ -1,0 +1,218 @@
+/* Import common button styles */
+@import '../../../styles/common/buttons.css';
+/* Import common animations */
+@import '../../../styles/common/animations.css';
+
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Keep controlButton separate since it has a different style than circleActionButton */
+.controlButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-pronounced);
+  background-color: var(--input-bg);
+  color: var(--secondary-text);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+.controlButton:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--input-bg) 95%, black 5%);
+  color: var(--text);
+  border-color: var(--border-pronounced);
+  box-shadow: var(--shadow);
+}
+
+.controlButton:active:not(:disabled) {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
+}
+
+.controlButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.controlIcon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Specific button styles */
+.stopButton {
+  background-color: var(--status-offline);
+  color: white;
+  border-color: var(--status-offline);
+}
+
+.stopButton:hover {
+  background-color: #d32f2f; /* Darker red */
+}
+
+/* More Actions container */
+.moreActionsContainer {
+  position: relative; 
+  display: flex; 
+  align-items: center;
+}
+
+/* Use common circle button for more actions button */
+.moreActionsButton {
+  width: var(--button-size);
+  height: var(--button-size);
+  border-radius: 50%;
+  background-color: var(--button-bg);
+  border: var(--button-border);
+  box-shadow: var(--button-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--button-transition);
+  color: var(--text);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.moreActionsButton:hover:not(:disabled) {
+  background-color: var(--button-hover-bg);
+  transform: scale(var(--button-hover-scale));
+}
+
+.moreActionsButton:active:not(:disabled) {
+  transform: scale(var(--button-active-scale));
+}
+
+.moreActionsButton:disabled {
+  opacity: var(--button-disabled-opacity);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Hide More Actions button on desktop */
+@media (min-width: 769px) {
+  .moreActionsContainer {
+    display: none;
+  }
+}
+
+.actionsMenu {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  right: 0;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-pronounced);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  padding: 0.5rem;
+  gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  width: auto;
+  max-width: 200px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: menuFadeIn 0.15s ease forwards;
+}
+
+@keyframes menuFadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Adapt padding on very small screens */
+@media (max-width: 480px) {
+  .actionsMenu {
+    padding: 0.3rem;
+  }
+}
+
+.menuItem {
+  display: inline-flex; 
+  align-items: center;
+  justify-content: center; 
+  padding: 0.6rem;
+  background-color: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  min-width: auto;
+  border-radius: 6px;
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
+  overflow: visible; 
+  position: relative; 
+}
+
+.menuItem:hover {
+  background-color: var(--hover);
+}
+
+.menuItem svg {
+  flex-shrink: 0;
+  opacity: 0.9; 
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+/* Ensure wrappers fill the small square */
+.menuItem > div { 
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  width: 100%; 
+  height: 100%; 
+}
+
+/* Streaming indicator styles */
+.streamingIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  padding: 5px;
+  border-radius: 50%;
+  background-color: rgba(0, 128, 255, 0.15);
+  cursor: default;
+  border: 1px solid rgba(0, 128, 255, 0.3);
+  box-shadow: 0 0 4px rgba(0, 128, 255, 0.2);
+  width: 24px;
+  height: 24px;
+}
+
+.streamingDot {
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  background-color: #0080ff;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+}

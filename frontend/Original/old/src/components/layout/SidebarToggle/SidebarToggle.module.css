@@ -1,0 +1,61 @@
+.toggleContainer {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 900;
+  pointer-events: none;
+}
+
+.toggleButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: var(--chat-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.2s ease;
+}
+
+.toggleButton:hover {
+  background-color: var(--hover);
+  transform: scale(1.05);
+}
+
+.toggleButton:active {
+  transform: scale(0.95);
+}
+
+.hamburger {
+  width: 20px;
+  height: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.bar {
+  height: 2px;
+  width: 100%;
+  background-color: var(--text);
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Animation for the hamburger to X transformation */
+.active .bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.active .bar:nth-child(2) {
+  opacity: 0;
+}
+
+.active .bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}

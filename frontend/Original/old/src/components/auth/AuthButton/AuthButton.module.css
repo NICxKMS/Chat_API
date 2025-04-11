@@ -1,0 +1,77 @@
+/* REMOVED positioning container */
+
+/* Apply common button styles */
+.authButton {
+  /* Copied from common/buttons.css .circleActionButton */
+  width: var(--button-size, 36px);
+  height: var(--button-size, 36px);
+  border-radius: 50%;
+  background-color: transparent !important;
+  border: var(--button-border, 1px solid var(--border));
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--button-transition, all 0.3s cubic-bezier(0.4, 0, 0.2, 1));
+  color: var(--text);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.authButton:hover:not(:disabled) {
+  /* Copied from common/buttons.css */
+  background-color: transparent !important;
+  transform: scale(var(--button-hover-scale, 1.05));
+  border-color: var(--text);
+}
+
+.authButton:active:not(:disabled) {
+  /* Copied from common/buttons.css */
+  transform: scale(var(--button-active-scale, 0.95));
+}
+
+.authButton:disabled {
+  /* Copied from common/buttons.css */
+  opacity: var(--button-disabled-opacity, 0.7);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Apply common icon styles */
+.icon {
+  /* Copied from common/buttons.css .buttonIcon */
+  color: var(--text);
+  transition: var(--button-transition, all 0.3s cubic-bezier(0.4, 0, 0.2, 1));
+  opacity: var(--button-icon-opacity, 0.8);
+  border: 2px solid var(--text);
+  border-radius: 4px;
+  padding: 2px;
+  background: transparent;
+  /* Ensure size matches icon */
+  width: var(--button-icon-size, 20px);
+  height: var(--button-icon-size, 20px);
+}
+
+.authButton:hover:not(:disabled) .icon {
+  /* Copied from common/buttons.css */
+  opacity: 1;
+  border-color: var(--text);
+  transform: scale(1.1);
+}
+
+/* Loading spinner */
+.spinner {
+  width: var(--button-icon-size, 20px); /* Use common variable */
+  height: var(--button-icon-size, 20px); /* Use common variable */
+  border: 2px solid transparent;
+  border-top-color: var(--text);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+} 
