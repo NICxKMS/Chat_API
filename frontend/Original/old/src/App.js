@@ -59,11 +59,11 @@ function App() {
   }
 
   return (
-    <ContextManager>
-      <AuthProvider>
+    <AuthProvider>
+      <ContextManager>
         <AppContent />
-      </AuthProvider>
-    </ContextManager>
+      </ContextManager>
+    </AuthProvider>
   );
 }
 

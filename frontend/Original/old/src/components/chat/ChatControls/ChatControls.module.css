@@ -5,7 +5,8 @@
 
 .controls {
   display: flex;
-  justify-content: flex-end;
+  /* justify-content: center; */
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -58,13 +59,14 @@
 }
 
 .stopButton:hover {
-  background-color: #d32f2f; /* Darker red */
+  background-color: #d32f2f;
+  /* Darker red */
 }
 
 /* More Actions container */
 .moreActionsContainer {
-  position: relative; 
-  display: flex; 
+  position: relative;
+  display: flex;
   align-items: center;
 }
 
@@ -129,7 +131,10 @@
 }
 
 @keyframes menuFadeIn {
-  to { opacity: 1; transform: translateY(0); }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Adapt padding on very small screens */
@@ -140,9 +145,9 @@
 }
 
 .menuItem {
-  display: inline-flex; 
+  display: inline-flex;
   align-items: center;
-  justify-content: center; 
+  justify-content: center;
   padding: 0.6rem;
   background-color: transparent;
   border: none;
@@ -153,8 +158,8 @@
   min-width: auto;
   border-radius: 6px;
   transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
-  overflow: visible; 
-  position: relative; 
+  overflow: visible;
+  position: relative;
 }
 
 .menuItem:hover {
@@ -163,19 +168,19 @@
 
 .menuItem svg {
   flex-shrink: 0;
-  opacity: 0.9; 
+  opacity: 0.9;
   width: 18px;
   height: 18px;
   margin: 0;
 }
 
 /* Ensure wrappers fill the small square */
-.menuItem > div { 
+.menuItem>div {
   display: flex;
   align-items: center;
-  justify-content: center; 
-  width: 100%; 
-  height: 100%; 
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 /* Streaming indicator styles */
@@ -207,10 +212,12 @@
     opacity: 0.3;
     transform: scale(0.8);
   }
+
   50% {
     opacity: 1;
     transform: scale(1);
   }
+
   100% {
     opacity: 0.3;
     transform: scale(0.8);

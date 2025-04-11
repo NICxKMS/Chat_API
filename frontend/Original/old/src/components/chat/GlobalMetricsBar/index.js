@@ -5,7 +5,7 @@ import styles from './GlobalMetricsBar.module.css';
 /**
  * Displays global/session-level metrics above the chat input.
  */
-const GlobalMetricsBar = ({ metrics, modelName }) => {
+const GlobalMetricsBar = ({ metrics = null, modelName = null }) => {
   if (!metrics) {
     return null; // Don't render if no metrics are available
   }
@@ -46,11 +46,6 @@ GlobalMetricsBar.propTypes = {
   }),
   /** Name of the currently selected model */
   modelName: PropTypes.string,
-};
-
-GlobalMetricsBar.defaultProps = {
-  metrics: null,
-  modelName: null,
 };
 
 export default GlobalMetricsBar; 

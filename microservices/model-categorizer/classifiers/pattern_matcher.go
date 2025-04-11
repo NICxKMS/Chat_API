@@ -326,6 +326,7 @@ func (pm *PatternMatcher) addCapabilities(capabilities map[string]bool, modelTyp
 		strings.Contains(modelName, "multimodal") ||
 		modelType == Type4 || modelType == Type45 || modelType == TypeO ||
 		series == SeriesClaude3 ||
+		strings.Contains(modelName, "4o") ||
 		strings.Contains(series, "Gemini") {
 		capabilities[CapVision] = true
 	}

@@ -10,6 +10,11 @@ const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 module.exports = {
+  devServer: {
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'unsafe-none'
+    }
+  },
   webpack: {
     configure: (webpackConfig, { env, paths }) => {
       if (env === 'production') {

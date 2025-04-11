@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useRe
 import { useApi } from './ApiContext';
 import { useModel } from './ModelContext';
 import { useSettings } from './SettingsContext';
+import { useAuth } from './AuthContext';
 
 // Create chat context
 export const ChatContext = createContext();
@@ -20,6 +21,7 @@ export const ChatProvider = ({ children }) => {
   const { apiUrl } = useApi();
   const { selectedModel } = useModel();
   const { settings, getModelAdjustedSettings } = useSettings();
+  const { idToken } = useAuth();
 
   // State for chat - Initialize as empty
   const [chatHistory, setChatHistory] = useState([]);
@@ -260,6 +262,11 @@ export const ChatProvider = ({ children }) => {
         'X-Requested-With': 'XMLHttpRequest'
       };
 
+      // Add authorization header if idToken exists
+      if (idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+      }
+
       // Construct URL for fetch API
       const streamUrl = new URL('/api/chat/stream', apiUrl).toString();
 
@@ -401,7 +408,8 @@ export const ChatProvider = ({ children }) => {
     apiUrl, selectedModel, chatHistory, getModelAdjustedSettings,
     addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics,
     startPerformanceTimer, updatePerformanceMetrics,
-    setError, setIsWaitingForResponse, updateChatWithContent
+    setError, setIsWaitingForResponse, updateChatWithContent,
+    idToken
   ]);
 
   // Send message to API - decide between streaming and non-streaming
@@ -442,6 +450,11 @@ export const ChatProvider = ({ children }) => {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       };
+
+      // Add authorization header if idToken exists
+      if (idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+      }
 
       // Prepare request payload
       const payload = {
@@ -503,7 +516,8 @@ export const ChatProvider = ({ children }) => {
     apiUrl, selectedModel, chatHistory, settings, getModelAdjustedSettings,
     addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics,
     startPerformanceTimer, updatePerformanceMetrics, extractTokenCount,
-    setError, setIsWaitingForResponse, streamMessageWithFetch
+    setError, setIsWaitingForResponse, streamMessageWithFetch,
+    idToken
   ]);
 
   // Reset chat history

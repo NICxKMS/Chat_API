@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useApi } from './ApiContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useAuth } from './AuthContext';
 
 // Cache expiry time in milliseconds (5 minutes)
 const CACHE_EXPIRY_TIME = 5 * 60 * 1000;
@@ -30,6 +31,7 @@ export const useModelFilter = () => {
 // Model provider component
 export const ModelProvider = ({ children }) => {
   const { apiUrl } = useApi();
+  const { idToken } = useAuth();
   
   // State for model data
   const [allModels, setAllModels] = useState([]);
@@ -241,6 +243,11 @@ export const ModelProvider = ({ children }) => {
         'Accept': 'application/json'
       };
 
+      // Add authorization header if idToken exists
+      if (idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+      }
+
       // Construct URL safely
       const modelsUrl = new URL('/api/models/classified', apiUrl).toString();
       const response = await fetch(modelsUrl, { headers });
@@ -286,7 +293,8 @@ export const ModelProvider = ({ children }) => {
     cacheModels, 
     processModels, 
     normalizeModelName,
-    selectedModel
+    selectedModel,
+    idToken
   ]);
   
   // Fetch models on initial mount
