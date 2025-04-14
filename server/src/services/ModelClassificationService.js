@@ -6,6 +6,7 @@ import * as grpc from "@grpc/grpc-js";
 import providerFactory from "../providers/ProviderFactory.js";
 import protoUtils from "../utils/protoUtils.js";
 import chalk from "chalk";
+import * as fs from "fs";
 
 export class ModelClassificationService {
   /**
@@ -69,6 +70,7 @@ export class ModelClassificationService {
       }
       
       // Create LoadedModelList with proper types
+      // console.log(modelList);
       return {
         models: modelList,
         default_provider: defaultProviderName,
@@ -105,7 +107,7 @@ export class ModelClassificationService {
       // Log the server address we're connecting to
       console.log(`Connecting to classification server at ${this.serverAddress}`);
       console.log(`Number of models to classify: ${modelList.models.length}`);
-      
+      // console.log(modelList);
 
       // Return a Promise that will resolve with the classified models
       return new Promise((resolve, reject) => {
@@ -120,6 +122,13 @@ export class ModelClassificationService {
         // Call the gRPC service with retry logic
         const attemptClassify = (retryCount = 0, maxRetries = 3) => {
           console.log(chalk.blue('[gRPC Client] Making classifyModels call...'));
+          // Write request body to file
+          try {
+            fs.writeFileSync('req.json', JSON.stringify(modelList, null, 2));
+            console.log(chalk.magenta('[Debug] Request body written to req.json'));
+          } catch (writeError) {
+            console.error(chalk.red(`[Debug] Error writing request body to req.json: ${writeError.message}`));
+          }
           this.client.classifyModels(modelList, (error, response) => {
             clearTimeout(timeout); // Clear timeout once callback is received
             
@@ -198,6 +207,13 @@ export class ModelClassificationService {
         // Call the gRPC service with retry logic
         const attemptGetModelsByCriteria = (retryCount = 0, maxRetries = 2) => {
           console.log(chalk.blue('[gRPC Client] Making getModelsByCriteria call...'));
+          // Write request body to file
+          try {
+            fs.writeFileSync('req.json', JSON.stringify(protoCriteria, null, 2));
+            console.log(chalk.magenta('[Debug] Criteria request body written to req.json'));
+          } catch (writeError) {
+            console.error(chalk.red(`[Debug] Error writing criteria request body to req.json: ${writeError.message}`));
+          }
           this.client.getModelsByCriteria(protoCriteria, (error, response) => {
             clearTimeout(timeout); // Clear timeout once callback is received
             

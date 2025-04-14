@@ -300,6 +300,7 @@ export const ChatProvider = ({ children }) => {
       // Variables for optimized chunk processing
       let buffer = '';
       let processingChunk = false;
+      let lastRawChunkReceived = null; // Variable to store the last raw chunk
 
       // Begin reading the stream
       while (true) {
@@ -317,12 +318,58 @@ export const ChatProvider = ({ children }) => {
         if (done) {
           // Stream is complete
           console.log('Stream complete');
-          break;
+          if (lastRawChunkReceived) {
+             console.log('[CLIENT LAST RAW CHUNK RECV]', lastRawChunkReceived);
+          }
+          // Process any remaining data in the buffer before breaking
+          if (buffer.trim()) { // Check if buffer has content
+              console.log('[DEBUG] Processing remaining buffer content after stream done:', buffer);
+              console.log(`[FRONTEND RECV RAW - FINAL] Char count: ${buffer.length}`);
+              // Reuse the message processing logic
+              const messages = buffer.split('\n\n');
+              // Don't need to save the last part now, process everything
+              for (const message of messages) {
+                  if (!message.trim()) continue;
+
+                  if (message.startsWith(':heartbeat')) {
+                      // Ignore heartbeats in final processing
+                      continue;
+                  }
+
+                  if (message.startsWith('data:')) {
+                      const data = message.slice(5).trim();
+
+                      if (data === '[DONE]') {
+                          console.log('Received [DONE] message from final buffer processing');
+                          // Ensure metrics are marked as complete if DONE is found here
+                          updatePerformanceMetrics(accumulatedTokenCount, true);
+                          continue; // Skip further processing for [DONE]
+                      }
+
+                      try {
+                          const parsedData = JSON.parse(data);
+                          const content = parsedData.content || '';
+                          if (content) {
+                              accumulatedContent += content;
+                              const chunkTokenCount = content.split(/\s+/).length || 0; // Basic token estimate
+                              accumulatedTokenCount += chunkTokenCount;
+                              streamingTextRef.current = accumulatedContent;
+                              // Update metrics immediately for final content, but don't mark as complete yet
+                              updatePerformanceMetrics(accumulatedTokenCount, false);
+                          }
+                      } catch (parseError) {
+                          console.warn('Error parsing final message data:', parseError, data);
+                      }
+                  }
+              }
+          }
+          break; // Now break the loop
         }
 
         // Decode the chunk
         const chunk = decoder.decode(value, { stream: true });
-        // console.log('[DEBUG] Received stream chunk:', chunk);
+        lastRawChunkReceived = chunk; // Store the latest raw chunk received
+        console.log(`[FRONTEND RECV RAW] Char count: ${chunk.length}`);
         buffer += chunk;
 
         // Process all complete SSE messages in the buffer
@@ -330,7 +377,7 @@ export const ChatProvider = ({ children }) => {
           processingChunk = true;
 
           const messages = buffer.split('\n\n');
-          buffer = messages.pop() || '';
+          buffer = messages.pop() || ''; // Keep incomplete message for next chunk
 
           for (const message of messages) {
             if (!message.trim()) continue;
@@ -345,20 +392,21 @@ export const ChatProvider = ({ children }) => {
 
               if (data === '[DONE]') {
                 console.log('Received [DONE] message from stream');
+                // Mark as complete when DONE is received normally
                 updatePerformanceMetrics(accumulatedTokenCount, true);
-                continue;
+                continue; // Skip further processing for [DONE]
               }
 
               try {
                 const parsedData = JSON.parse(data);
                 const content = parsedData.content || '';
-
+                console.log(`[FRONTEND PROC] Content char count: ${content.length}`);
                 if (content) {
                   // Add to accumulated content
                   accumulatedContent += content;
 
                   // Update token count for this chunk and accumulate
-                  const chunkTokenCount = content.split(/\s+/).length || 0;
+                  const chunkTokenCount = content.split(/\s+/).length || 0; // Basic token estimate
                   accumulatedTokenCount += chunkTokenCount;
 
                   // Update the streaming text ref
@@ -371,6 +419,7 @@ export const ChatProvider = ({ children }) => {
                     const currentTokenCount = accumulatedTokenCount;
                     window.requestAnimationFrame(() => {
                       updateChatWithContent(currentContent);
+                      // Update metrics but don't mark as complete here
                       updatePerformanceMetrics(currentTokenCount, false);
                     });
                     lastRenderTime = now;
@@ -384,11 +433,12 @@ export const ChatProvider = ({ children }) => {
 
           processingChunk = false;
         }
-      }
+      } // End of while loop
 
-      // Final update to ensure all content is displayed
+      // Final update to ensure all content is displayed and metrics marked complete
       window.requestAnimationFrame(() => {
         updateChatWithContent(accumulatedContent);
+        // Ensure performance metrics are marked as complete finally
         updatePerformanceMetrics(accumulatedTokenCount, true);
       });
 

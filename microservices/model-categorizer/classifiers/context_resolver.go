@@ -48,9 +48,9 @@ func NewContextResolver() *ContextResolver {
 	}
 }
 
-// getContextSize determines a model's context window based on its name
-func (cr *ContextResolver) getContextSize(modelName string) int {
-	modelLower := strings.ToLower(modelName)
+// GetContextSize determines a model's context window based on its ID
+func (cr *ContextResolver) GetContextSize(modelID string) int {
+	modelLower := strings.ToLower(modelID)
 
 	// Check for exact matches first
 	for model, size := range cr.contextSizes {

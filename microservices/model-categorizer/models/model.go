@@ -11,6 +11,7 @@ type Model struct {
 	ContextSize    int32             `json:"context_size,omitempty"`
 	MaxTokens      int32             `json:"max_tokens,omitempty"`
 	Provider       string            `json:"provider"`
+	OriginalProvider string          `json:"-"` // Store original provider but don't serialize
 	DisplayName    string            `json:"display_name,omitempty"`
 	Description    string            `json:"description,omitempty"`
 	CostPerToken   float64           `json:"cost_per_token,omitempty"`

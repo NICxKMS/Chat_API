@@ -27,15 +27,15 @@ func NewDefaultModels() *DefaultModels {
 	}
 }
 
-// isDefault checks if a model is a default version
-func (dm *DefaultModels) isDefault(modelName string) bool {
+// IsDefaultModel checks if a model is a default version
+func (dm *DefaultModels) IsDefaultModel(modelID string) bool {
 	// Check direct match in default models map
-	if dm.defaultModels[modelName] {
+	if dm.defaultModels[modelID] {
 		return true
 	}
 
 	// Check for normalized version (case insensitive)
-	modelLower := strings.ToLower(modelName)
+	modelLower := strings.ToLower(modelID)
 	for model := range dm.defaultModels {
 		if modelLower == strings.ToLower(model) {
 			return true

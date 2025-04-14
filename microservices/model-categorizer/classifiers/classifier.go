@@ -15,6 +15,7 @@ const (
 	ProviderMeta       = "meta"
 	ProviderMistral    = "mistral"
 	ProviderOther      = "other"
+	ProviderOpenrouter = "openrouter"
 
 	// Series
 	SeriesClaude3 = "Claude 3"
@@ -89,10 +90,9 @@ func NewModelClassifier() *ModelClassifier {
 	}
 }
 
-// ClassifyModel takes a model name and returns a structured metadata object
-func (mc *ModelClassifier) ClassifyModel(modelName, providerHint string) ModelMetadata {
-	origName := modelName
-	modelLower := strings.ToLower(modelName)
+// ClassifyModel takes a model id and returns a structured metadata object
+func (mc *ModelClassifier) ClassifyModel(modelID, providerHint string) ModelMetadata {
+	modelLower := strings.ToLower(modelID)
 	var metadata ModelMetadata
 	if mc.isImageGenerationModel(modelLower) {
 		metadata = mc.createImageGenerationMetadata(modelLower, providerHint)
@@ -101,7 +101,6 @@ func (mc *ModelClassifier) ClassifyModel(modelName, providerHint string) ModelMe
 	} else {
 		metadata = mc.buildStandardModelMetadata(modelLower, providerHint)
 	}
-	metadata.DisplayName = strings.ReplaceAll(origName, "-", " ")
 	return metadata
 }
 
@@ -147,7 +146,7 @@ func (mc *ModelClassifier) buildStandardModelMetadata(modelName, providerHint st
 	metadata.Variant = mc.determineVariant(modelName, metadata.Provider, metadata.Series)
 
 	// Determine context size
-	metadata.Context = mc.getContextSize(modelName)
+	metadata.Context = mc.GetContextSize(modelName)
 
 	// Determine capabilities
 	metadata.Capabilities = mc.detectCapabilities(modelName, metadata.Provider, metadata.Series)
@@ -352,25 +351,25 @@ func (mc *ModelClassifier) isExperimental(modelName string) bool {
 
 // IsDefaultModelName checks if a model is a default version
 func (mc *ModelClassifier) IsDefaultModelName(modelName string) bool {
-	return mc.defaults.isDefault(modelName) ||
+	return mc.defaults.IsDefaultModel(modelName) ||
 		strings.Contains(strings.ToLower(modelName), "latest")
 }
 
 // getContextSize determines a model's context window based on its name
-func (mc *ModelClassifier) getContextSize(modelName string) int {
-	return mc.context.getContextSize(modelName)
+func (mc *ModelClassifier) GetContextSize(modelName string) int {
+	return mc.context.GetContextSize(modelName)
 }
 
 // GetModelHierarchy returns hierarchy information (provider, series, type, variant)
-func (mc *ModelClassifier) GetModelHierarchy(modelName string, provider string) (string, string, string, string) {
-	metadata := mc.ClassifyModel(modelName, provider)
+func (mc *ModelClassifier) GetModelHierarchy(modelID string, provider string) (string, string, string, string) {
+	metadata := mc.ClassifyModel(modelID, provider)
 	return metadata.Provider, metadata.Series, metadata.Type, metadata.Variant
 }
 
 // GetSeriesAndVariant (maintained for backward compatibility)
-func GetSeriesAndVariant(modelName string) (string, string) {
+func GetSeriesAndVariant(modelID string) (string, string) {
 	classifier := NewModelClassifier()
-	metadata := classifier.ClassifyModel(modelName, "")
+	metadata := classifier.ClassifyModel(modelID, "")
 	return metadata.Series, metadata.Variant
 }
 
@@ -382,7 +381,7 @@ func NormalizeModelName(modelID, provider string) string {
 		parts := strings.SplitN(modelID, "/", 2)
 		if len(parts) == 2 {
 			// List of known providers
-			knownProviders := []string{"anthropic", "openai", "google", "meta-llama", "mistralai"}
+			knownProviders := []string{"anthropic", "openai", "google", "gemini", "meta-llama", "mistralai"}
 			subProvider := strings.ToLower(parts[0])
 
 			for _, provider := range knownProviders {

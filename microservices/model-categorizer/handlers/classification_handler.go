@@ -110,6 +110,10 @@ func (h *ModelClassificationHandler) ClassifyModels(ctx context.Context, req *pr
 	log.Printf("[DEBUG] Building model hierarchy from %d enhanced models...", len(enhancedModels))
 	rootGroups := h.buildModelHierarchy(enhancedModels)
 
+	// Restore original providers AFTER building the hierarchy (which uses classified providers)
+	// but BEFORE converting to proto (so the display shows original providers)
+	// h.restoreOriginalProviders(enhancedModels) // No longer needed as hierarchy uses original provider
+
 	// Convert internal root groups to proto format
 	for _, group := range rootGroups {
 		protoGroup := convertInternalHierarchicalGroupToProto(group)
@@ -163,6 +167,9 @@ func (h *ModelClassificationHandler) ClassifyModelsWithCriteria(ctx context.Cont
 		log.Printf("Using hierarchical classification by provider > type > version")
 		rootGroups := h.buildModelHierarchy(enhancedModels)
 
+		// Restore original providers AFTER building the hierarchy
+		// h.restoreOriginalProviders(enhancedModels) // No longer needed
+
 		// Convert internal root groups to proto format and add to response
 		for _, group := range rootGroups {
 			protoGroup := convertInternalHierarchicalGroupToProto(group)
@@ -173,6 +180,11 @@ func (h *ModelClassificationHandler) ClassifyModelsWithCriteria(ctx context.Cont
 			len(result.HierarchicalGroups), len(filteredModels))
 	} else {
 		// Use flat classification (original behavior)
+		// Create classification groups for each property
+
+		// For flat classification, restore original providers BEFORE creating groups
+		// h.restoreOriginalProviders(enhancedModels) // Not needed if Provider field isn't overwritten
+
 		// Create classification groups for each property
 		for _, property := range properties {
 			groups := h.classifyModelsByProperty(enhancedModels, property)
@@ -226,7 +238,7 @@ func (h *ModelClassificationHandler) enhanceModels(modelsList []*models.Model) [
 	log.Printf("[DEBUG] Starting model enhancement for %d models...", len(modelsList))
 	for i, model := range modelsList {
 		// Use the unified ClassifyModel method to get all metadata at once
-		metadata := h.classifier.ClassifyModel(model.Name, model.Provider)
+		metadata := h.classifier.ClassifyModel(model.ID, model.Provider)
 		h.applyModelMetadata(model, metadata)
 		if i%10 == 0 && i > 0 {
 			log.Printf("[DEBUG] Enhanced %d/%d models...", i, len(modelsList))
@@ -238,8 +250,15 @@ func (h *ModelClassificationHandler) enhanceModels(modelsList []*models.Model) [
 
 // applyModelMetadata applies the classification metadata to a model
 func (h *ModelClassificationHandler) applyModelMetadata(model *models.Model, metadata classifiers.ModelMetadata) {
+	// Save the original provider before updating
+	originalProvider := model.OriginalProvider
+
 	// Always overwrite with classifier results to ensure consistency
 	model.Provider = metadata.Provider // Also ensure provider is consistent
+	
+	// Preserve original provider
+	model.OriginalProvider = originalProvider
+	
 	model.Family = metadata.Series
 	model.Type = metadata.Type
 	model.Series = metadata.Series // Assuming Family and Series are the same here based on previous logic
@@ -256,8 +275,8 @@ func (h *ModelClassificationHandler) applyModelMetadata(model *models.Model, met
 
 	// Set version information if it's not already set
 	if model.Version == "" {
-		// Extract standardized version number from model name and variant
-		standardizedVersion := h.classifier.GetStandardizedVersion(model.Name)
+		// Extract standardized version number from model ID and variant
+		standardizedVersion := h.classifier.GetStandardizedVersion(model.ID)
 		if standardizedVersion != "" {
 			model.Version = standardizedVersion
 		}
@@ -266,31 +285,29 @@ func (h *ModelClassificationHandler) applyModelMetadata(model *models.Model, met
 	// Set multimodal flag based on metadata and other checks
 	model.IsMultimodal = metadata.IsMultimodal ||
 		containsAny(model.Capabilities, []string{"vision", "multimodal"}) ||
-		strings.Contains(strings.ToLower(model.Name), "vision") ||
-		strings.Contains(strings.ToLower(model.Name), "gpt-4") ||
-		strings.Contains(strings.ToLower(model.Name), "claude-3") ||
-		strings.Contains(strings.ToLower(model.Name), "gemini")
+		strings.Contains(strings.ToLower(model.ID), "vision") ||
+		strings.Contains(strings.ToLower(model.ID), "gpt-4") ||
+		strings.Contains(strings.ToLower(model.ID), "claude-3") ||
+		strings.Contains(strings.ToLower(model.ID), "gemini")
 
 	// Set experimental flag based on metadata and name patterns
 	model.IsExperimental = metadata.IsExperimental || // Base on classifier result first
-		strings.Contains(strings.ToLower(model.Name), "preview") ||
-		strings.Contains(strings.ToLower(model.Name), "experimental")
+		strings.Contains(strings.ToLower(model.ID), "preview") ||
+		strings.Contains(strings.ToLower(model.ID), "experimental")
 
 	// Check if model is a default one
-	model.IsDefault = h.classifier.IsDefaultModelName(model.Name)
+	model.IsDefault = h.classifier.IsDefaultModelName(model.ID)
 	if metadata.DisplayName != "" {
 		model.DisplayName = metadata.DisplayName
 	} else {
-		model.DisplayName = strings.ReplaceAll(model.Name, "-", " ")
+		model.DisplayName = strings.ReplaceAll(model.ID, "-", " ")
 	}
 	
 	// Only set context size for Gemini models
-	if strings.EqualFold(model.Provider, "gemini") || strings.Contains(strings.ToLower(model.Name), "gemini") {
-		if model.ContextSize == 0 && len(model.Name) > 0 {
+	if strings.EqualFold(model.Provider, "gemini") || strings.Contains(strings.ToLower(model.ID), "gemini") {
+		if model.ContextSize == 0 && len(model.ID) > 0 {
 			// Check for standard size in map
 			if size, exists := StandardContextSizes[model.ID]; exists {
-				model.ContextSize = size
-			} else if size, exists := StandardContextSizes[model.Name]; exists {
 				model.ContextSize = size
 			} else if metadata.Context > 0 {
 				model.ContextSize = int32(metadata.Context)
@@ -667,9 +684,14 @@ func (h *ModelClassificationHandler) buildModelHierarchy(modelsList []*models.Mo
 
 	for i, model := range modelsList {
 		// Determine provider, type, and version/variant for the current model
-		provider := model.Provider
+		// Use OriginalProvider for top-level grouping
+		provider := model.OriginalProvider // Changed from model.Provider
 		if provider == "" {
-			provider = "Other"
+			// Fallback if OriginalProvider is somehow empty
+			provider = model.Provider
+			if provider == "" {
+				provider = "Other"
+			}
 		}
 		modelType := model.Type
 		if modelType == "" {
@@ -747,6 +769,7 @@ func convertProtoModelsToInternal(protoModels []*proto.Model) []*models.Model {
 			ContextSize:    protoModel.ContextSize,
 			MaxTokens:      protoModel.MaxTokens,
 			Provider:       protoModel.Provider,
+			OriginalProvider: protoModel.Provider, // Store the original provider
 			DisplayName:    protoModel.DisplayName,
 			Description:    protoModel.Description,
 			CostPerToken:   protoModel.CostPerToken,
@@ -777,7 +800,7 @@ func convertInternalModelsToProto(internalModels []*models.Model) []*proto.Model
 			Name:           model.Name,
 			ContextSize:    model.ContextSize,
 			MaxTokens:      model.MaxTokens,
-			Provider:       model.Provider,
+			Provider:       model.Provider, // This will use the current provider (could be original or classified)
 			DisplayName:    model.DisplayName,
 			Description:    model.Description,
 			CostPerToken:   model.CostPerToken,
@@ -861,3 +884,14 @@ func convertProtoHierarchicalGroupToInternal(protoGroup *proto.HierarchicalModel
 
 	return internalGroup
 }
+
+// restoreOriginalProviders is no longer needed if hierarchy uses OriginalProvider
+// func (h *ModelClassificationHandler) restoreOriginalProviders(modelsList []*models.Model) {
+// 	for _, model := range modelsList {
+// 		// If the original provider is OpenRouter, restore it
+// 		if strings.EqualFold(model.OriginalProvider, "openrouter") {
+// 			model.Provider = model.OriginalProvider
+// 		}
+// 		// Potentially add other original providers here if needed in the future
+// 	}
+// }

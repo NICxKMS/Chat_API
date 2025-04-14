@@ -121,6 +121,21 @@ const ChatMessage = ({ message, isStreaming }) => {
     });
   };
   
+  // === BUTTON JSX (Moved here for reuse) ===
+  const copyButtonJsx = (
+    <button
+      className={`${styles.copyMessageButton} ${ // Apply conditional class later
+        (message.role === 'assistant' && shouldShowMetrics) ? styles.copyButtonInMetrics : styles.copyButtonBottomRight
+      }`}
+      onClick={handleCopyMessage}
+      aria-label="Copy message"
+      title="Copy message"
+    >
+      {messageCopied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
+    </button>
+  );
+  // ==========================================
+  
   // Process message content to format code blocks
   const processContent = (content) => {
     if (!content) return '';
@@ -203,7 +218,7 @@ const ChatMessage = ({ message, isStreaming }) => {
       .replace(/"/g, '\\"');
   };
   
-  // Render performance metrics
+  // Render performance metrics (Now includes the button)
   const renderMetrics = () => {
     if (!shouldShowMetrics || !message.metrics) return null;
     
@@ -242,6 +257,8 @@ const ChatMessage = ({ message, isStreaming }) => {
             Generating...
           </span>
         )}
+        {/* Render the button here for assistant messages with metrics */}
+        {copyButtonJsx}
       </div>
     );
   };
@@ -267,7 +284,7 @@ const ChatMessage = ({ message, isStreaming }) => {
     );
   };
   
-  // For non-streaming messages, use the standard ReactMarkdown rendering
+  // Main return
   return (
     <div className={styles.message + ' ' + messageClass}>
       {/* Avatar section */}
@@ -277,26 +294,20 @@ const ChatMessage = ({ message, isStreaming }) => {
       
       {/* Message content section */}
       <div className={styles.messageContentWrapper}>
-        {/* Copy message button */}
-        <button
-          className={styles.copyMessageButton}
-          onClick={handleCopyMessage}
-          aria-label="Copy message"
-          title="Copy message"
-        >
-          {messageCopied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
-        </button>
-        
         <div className={styles.messageContent}>
           {message.role === 'assistant' ? (
-            // Use StreamingMessage for all assistant messages to ensure consistent rendering
             <StreamingMessage content={message.content} />
           ) : (
-            // Use our custom rendering for user messages
             renderMarkdown(message.content || '')
           )}
         </div>
-        {renderMetrics()}
+
+        {/* Render metrics (which now includes the button if applicable) */}
+        {message.role === 'assistant' && renderMetrics()}
+
+        {/* Render button at bottom-right for non-assistant OR assistant without metrics */}
+        {(message.role !== 'assistant' || !shouldShowMetrics) && copyButtonJsx}
+
       </div>
     </div>
   );

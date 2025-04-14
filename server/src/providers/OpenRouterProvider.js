@@ -148,7 +148,7 @@ class OpenRouterProvider extends BaseProvider {
           logger.error(`Auth details: ${error.response.headers["x-clerk-auth-message"]}`);
         }
       } else if (status === 400) {
-        logger.error(`OpenRouter bad request (400): ${JSON.stringify(data)}`);
+        logger.error({ data }, `OpenRouter bad request (400)`);
       } else {
         logger.error(`${context}: ${error.message}`);
       }
@@ -426,11 +426,12 @@ class OpenRouterProvider extends BaseProvider {
                   firstChunk = false;
                 }
                 
-                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency, response.data.choices[0]?.finish_reason, response.data.usage);
+                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency);
                 yield normalizedChunk;
 
               } catch (jsonError) {
-                logger.error(`Error parsing JSON from OpenRouter stream: ${jsonError.message}`, dataStr);
+                // Log the error and the problematic string data correctly
+                logger.error(`Error processing OpenRouter stream chunk: ${jsonError.message}`, { dataStr });
                 // Log error but continue processing other messages
               }
             }
@@ -439,7 +440,7 @@ class OpenRouterProvider extends BaseProvider {
           
           // If multiple messages were processed, log it
           if (processedMessages > 1) {
-            logger.debug(`Processed ${processedMessages} messages from buffer in one chunk`);
+            // logger.debug(`Processed ${processedMessages} messages from buffer in one chunk`);
           }
           
           // Check for [DONE] outside of complete messages to handle edge cases
@@ -456,7 +457,7 @@ class OpenRouterProvider extends BaseProvider {
             if (dataStr && dataStr !== "[DONE]") {
               try {
                 const data = JSON.parse(dataStr);
-                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency, response.data.choices[0]?.finish_reason, response.data.usage);
+                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency);
                 yield normalizedChunk;
               } catch (jsonError) {
                 logger.error(`Error parsing final JSON from buffer: ${jsonError.message}`, buffer);
@@ -494,15 +495,21 @@ class OpenRouterProvider extends BaseProvider {
    * @param {object} chunk - The raw, parsed JSON object from an SSE data line.
    * @param {string} model - The model name used for the request.
    * @param {number} latency - The latency to the first chunk (milliseconds).
-   * @param {string} finishReason - The finish reason from the API.
-   * @param {object} usage - Current accumulated usage data.
    * @returns {object} A standardized chunk object matching the API schema.
    */
-  _normalizeStreamChunk(chunk, model, latency, finishReason, usage) {
+  _normalizeStreamChunk(chunk, model, latency) {
     try {
       // OpenRouter stream chunks often follow OpenAI's format
       const choice = chunk.choices?.[0];
       const delta = choice?.delta;
+      
+      // Extract finish_reason and usage *from the chunk* if available
+      const finishReason = choice?.finish_reason || "unknown";
+      const usage = chunk.usage || { // Initialize usage, OpenRouter might send it in the last chunk
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0
+      };
 
       return {
         id: chunk.id,
@@ -511,9 +518,9 @@ class OpenRouterProvider extends BaseProvider {
         createdAt: chunk.created ? new Date(chunk.created * 1000).toISOString() : new Date().toISOString(),
         content: delta?.content || null,
         toolCalls: delta?.tool_calls || null, // Include tool call deltas
-        usage: usage,
+        usage: usage, // Use usage extracted from chunk or default
         latency: latency,
-        finishReason: finishReason,
+        finishReason: finishReason, // Use finishReason extracted from chunk or default
         raw: chunk
       };
     } catch (error) {

@@ -47,10 +47,13 @@ class ChatController {
         return reply.status(400).send({ error: "Missing or invalid messages array" });
       }
       
-      // Extract provider name and model name (logic unchanged)
-      if (model.includes("/")) {
-        [providerName, modelName] = model.split("/", 2);
+      // Extract provider name and model name
+      const separatorIndex = model.indexOf("/");
+      if (separatorIndex !== -1) { // Check if "/" exists
+        providerName = model.substring(0, separatorIndex); // Part before the first "/"
+        modelName = model.substring(separatorIndex + 1); // Part after the first "/"
       } else {
+        // Fallback logic (unchanged)
         const defaultProvider = providerFactory.getProvider();
         providerName = defaultProvider.name;
         modelName = model;
@@ -185,6 +188,7 @@ class ChatController {
     let streamStartTime = null;
     let ttfbRecorded = false;
     let chunkCounter = 0;
+    let lastProviderChunk = null; // Variable to store the last chunk
 
     // Create a PassThrough stream with a low highWaterMark for immediate flushing
     const { PassThrough } = await import('node:stream');
@@ -194,9 +198,13 @@ class ChatController {
     });
 
     // Set up stream ending utility function
-    const safelyEndStream = (message, errorType = null) => {
+    const safelyEndStream = (message, errorType = null, finalChunk = null) => {
       if (!streamClosed) {
         logger.info(`${message} (sent ${chunkCounter} chunks)`);
+        if (finalChunk && errorType === null) { // Log only on normal completion
+          // logger.debug('[SERVER LAST RAW CHUNK]'); // REMOVING THIS
+        }
+
         streamClosed = true;
         
         if (heartbeatInterval) { clearInterval(heartbeatInterval); }
@@ -241,10 +249,13 @@ class ChatController {
         return reply.status(400).send({ error: "Missing or invalid messages array" });
       }
 
-      // Extract provider/model name
-      if (model.includes("/")) {
-        [providerName, modelName] = model.split("/", 2);
+      // Extract provider name and model name
+      const separatorIndex = model.indexOf("/");
+      if (separatorIndex !== -1) { // Check if "/" exists
+        providerName = model.substring(0, separatorIndex); // Part before the first "/"
+        modelName = model.substring(separatorIndex + 1); // Part after the first "/"
       } else {
+        // Fallback logic (unchanged)
         const defaultProvider = providerFactory.getProvider();
         providerName = defaultProvider.name;
         modelName = model;
@@ -308,11 +319,16 @@ class ChatController {
       if (frequency_penalty !== undefined) options.frequency_penalty = parseFloat(frequency_penalty);
       if (presence_penalty !== undefined) options.presence_penalty = parseFloat(presence_penalty);
 
+      // ---> ADDED LOGGING HERE <---
+      // logger.debug(`Options being passed to provider ${providerName}/${modelName}`, { options }); // REMOVING THIS
+      // ---> END ADDED LOGGING <---
+
       // Get provider stream
       const providerStream = provider.chatCompletionStream(options);
       
       // Optimized stream processing with immediate chunk writing
       for await (const chunk of providerStream) {
+        lastProviderChunk = chunk; // Store the latest chunk
         if (streamClosed) { break; }
         lastActivityTime = Date.now(); 
         chunkCounter++;
@@ -325,7 +341,8 @@ class ChatController {
         metrics.incrementStreamChunkCount(providerName, modelName);
 
         const sseFormattedChunk = `data: ${JSON.stringify(chunk)}\n\n`;
-        
+        // logger.debug(`[SSE SENT] Chunk ${chunkCounter} for ${providerName}/${modelName}`, { sseChunk: sseFormattedChunk }); // REMOVING THIS
+
         if (!streamClosed && !stream.writableEnded) {
           try {
             // Write each chunk immediately without buffering
@@ -343,8 +360,8 @@ class ChatController {
         }
       }
       
-      // If loop completes normally, end the stream
-      safelyEndStream(`Stream finished normally for ${providerName}/${modelName}`);
+      // If loop completes normally, end the stream and pass the last chunk
+      safelyEndStream(`Stream finished normally for ${providerName}/${modelName}`, null, lastProviderChunk);
       
     } catch (error) {
       // Handle errors
@@ -360,10 +377,12 @@ class ChatController {
         
         // Determine appropriate status code from error if possible
         const statusCode = error.status || 500;
-        reply.status(statusCode).send({ 
-          error: "Stream processing error", 
-          message: error.message 
-        });
+        reply.status(statusCode)
+          .type('application/json') // Explicitly set content type
+          .send(JSON.stringify({  // Explicitly stringify
+            error: "Stream processing error", 
+            message: error.message 
+          }));
         
         // Record error metric
         if (providerName && modelName) {

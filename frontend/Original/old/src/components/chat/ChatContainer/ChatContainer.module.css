@@ -136,13 +136,6 @@
   position: relative;
 }
 
-/* Base style for controls (applies to fixedInputArea by default) */
-.inputControlsWrapper > :global(.ChatControls_controls__*) {
-}
-
-/* Static Input Area specific positioning for controls */
-.staticInputArea .inputControlsWrapper {
-}
 
 /* Position controls absolutely in static/empty state */
 .staticInputArea :global(.ChatControls_controls__*) {
@@ -222,6 +215,57 @@
   border-radius: 8px;
 }
 
+/* Wrapper for chat area and scroll button */
+.chatAreaWrapper {
+  flex-grow: 1;
+  position: relative; /* Needed for absolute positioning of the button */
+  display: flex; /* Ensure chatArea takes up space */
+  flex-direction: column;
+  min-height: 0; /* Prevent flex item from expanding indefinitely */
+}
+
+.chatArea {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative; /* Keep relative if needed for other children */
+  width: 100%;
+  margin: 0 auto;
+  min-height: 0;
+  /* Remove padding if handled by wrapper or scrollInner */
+  /* padding: 1rem 0; */
+}
+
+/* Scroll to Bottom Button */
+.scrollToBottomButton {
+  position: absolute;
+  bottom: calc(1rem + 93px + 10px); /* Position above fixed input area (adjust 80px if inputArea height changes) */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15; /* Above chat content, below input area maybe */
+  background-color: var(--chat-bg);
+  color: var(--text);
+  border: 1px solid var(--border-pronounced);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  opacity: 0.9;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+.scrollToBottomButton:hover {
+  opacity: 1;
+}
+
+.scrollToBottomButton:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .chatContainer {
@@ -250,16 +294,17 @@
     bottom: 0.5rem;
   }
   
-  .activeChat .chatArea {
-  }
-
+ 
   /* Fixed input area controls alignment (ensure they stay in line) */
-  .fixedInputArea .inputControlsWrapper {
-  }
+
 
   /* Static Input Area controls positioning (bottom right relative to input) */
   .staticInputArea :global(.ChatControls_controls__*) {
     bottom: -3rem;
     right: 0;
+  }
+
+  .scrollToBottomButton {
+    bottom: calc(0.5rem + 80px + 10px); /* Adjust bottom position for mobile */
   }
 } 

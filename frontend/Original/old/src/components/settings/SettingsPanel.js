@@ -101,7 +101,7 @@ const SettingsPanel = ({ isOpen, onClose }) => {
                 description = "Controls randomness (0=deterministic, 2=very random).";
                 break;
               case 'max_tokens':
-                inputProps = { ...inputProps, min: 1, max: 8192, step: 1 }; // Allow wider range
+                inputProps = { ...inputProps, min: 1000, max: 2000000, step: 500 }; // Allow wider range
                  description = "Max response length.";
                 break;
               case 'top_p':
