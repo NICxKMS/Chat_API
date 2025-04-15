@@ -8,6 +8,7 @@ import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTheme } from '../../../contexts/ThemeContext';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
+import remarkEmoji from 'remark-emoji';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
@@ -111,7 +112,7 @@ const StreamingMessage = ({ content, isStreaming }) => {
   return (
     <div className={markdownClassName}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
+        remarkPlugins={[remarkGfm, remarkMath, remarkEmoji]}
         rehypePlugins={[rehypeKatex, rehypeRaw, rehypeSanitize]} // Add relevant rehype plugins
         components={markdownComponents}
       >

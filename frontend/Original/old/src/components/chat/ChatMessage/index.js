@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkEmoji from 'remark-emoji';
 import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon } from '@primer/octicons-react';
 import StreamingMessage from './StreamingMessage';
 import styles from './ChatMessage.module.css';
@@ -258,7 +259,7 @@ const ChatMessage = ({ message, isStreaming }) => {
     return (
       <ReactMarkdown
         className={styles.markdown}
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkEmoji]}
       >
         {content}
       </ReactMarkdown>
