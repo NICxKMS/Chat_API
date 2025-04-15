@@ -222,7 +222,8 @@ const ChatMessage = ({ message, isStreaming }) => {
   const renderMetrics = () => {
     if (!shouldShowMetrics || !message.metrics) return null;
     
-    const isGenerating = isWaitingForResponse;
+    // Use the specific isStreaming prop passed down to determine if THIS message is generating
+    const isGenerating = isStreaming;
     const { elapsedTime, tokenCount, tokensPerSecond, timeToFirstToken } = message.metrics;
     
     return (
@@ -296,7 +297,7 @@ const ChatMessage = ({ message, isStreaming }) => {
       <div className={styles.messageContentWrapper}>
         <div className={styles.messageContent}>
           {message.role === 'assistant' ? (
-            <StreamingMessage content={message.content} />
+            <StreamingMessage content={message.content} isStreaming={isStreaming} />
           ) : (
             renderMarkdown(message.content || '')
           )}

@@ -182,6 +182,25 @@ export const ChatProvider = ({ children }) => {
     });
   }, [currentMessageMetrics]);
 
+  // Helper function to update the last assistant message placeholder on error
+  const _updatePlaceholderOnError = useCallback(() => {
+    setChatHistory(prev => {
+      const newHistory = [...prev];
+      const lastMessage = newHistory[newHistory.length - 1];
+      // Ensure we're targeting the correct placeholder
+      if (lastMessage && lastMessage.role === 'assistant' && lastMessage.content === '') {
+        lastMessage.content = 'No response'; // Set error message content
+        lastMessage.metrics = { 
+          ...(lastMessage.metrics || {}), // Keep existing metrics like startTime
+          isComplete: true, 
+          error: true, // Add an error flag
+          endTime: Date.now() 
+        };
+      }
+      return newHistory;
+    });
+  }, [setChatHistory]); // Dependency on setChatHistory
+
   // Process streaming message using Fetch API with ReadableStream for optimal performance
   const streamMessageWithFetch = useCallback(async (message) => {
     if (!message || !selectedModel) {
@@ -284,10 +303,15 @@ export const ChatProvider = ({ children }) => {
 
       if (!response.ok) {
         let errorMessage = `API error: ${response.status}`;
+        let errorData = null; // Variable to hold the parsed error data
         try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
+          errorData = await response.json();
+          // Log the full error object received from the server
+          console.error('Server Error Response:', errorData);
+          // Extract message, fallback to status code if no structured error message
+          errorMessage = errorData?.error?.message || errorData?.message || `API error: ${response.status}`;
         } catch (e) {
+          console.warn('Could not parse error response as JSON:', e);
           // Use default error message if parsing fails
         }
         throw new Error(errorMessage);
@@ -435,24 +459,35 @@ export const ChatProvider = ({ children }) => {
         }
       } // End of while loop
 
-      // Final update to ensure all content is displayed and metrics marked complete
-      window.requestAnimationFrame(() => {
-        updateChatWithContent(accumulatedContent);
-        // Ensure performance metrics are marked as complete finally
-        updatePerformanceMetrics(accumulatedTokenCount, true);
-      });
+      // Ensure final update after loop completes
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+        updateTimeoutRef.current = null;
+        updateChatWithContent(streamingTextRef.current);
+      }
 
-      // Stream is complete
-      setIsWaitingForResponse(false);
+      // Finalize metrics
+      updatePerformanceMetrics(accumulatedTokenCount, true);
+      console.log('Stream completed, finalizing metrics');
+
+      // Handle empty response after streaming finishes
+      if (!accumulatedContent.trim()) {
+        accumulatedContent = 'No Response returned';
+        updateChatWithContent(accumulatedContent); // Update history with the placeholder
+      }
+
       return accumulatedContent;
 
     } catch (error) {
       console.error('Error in fetch streaming:', error);
       setError(error.message || 'An error occurred during streaming');
-      setIsWaitingForResponse(false);
+      // Update the placeholder message to indicate error
+      _updatePlaceholderOnError(); // Use the helper function
       return null;
     } finally {
-      clearTimeout(timeoutId);
+      // Ensure loading state is always reset
+      clearTimeout(timeoutId); // Also clear timeout here
+      setIsWaitingForResponse(false);
     }
   }, [
     apiUrl, selectedModel, chatHistory, getModelAdjustedSettings,
@@ -490,6 +525,13 @@ export const ChatProvider = ({ children }) => {
     // Set loading state
     setIsWaitingForResponse(true);
     setError(null);
+
+    // Add assistant placeholder message for non-streaming
+    const initialMetrics = { 
+      startTime: currentMessageMetrics.startTime, // Use timer already started
+      isComplete: false 
+    };
+    addMessageToHistory('assistant', '', initialMetrics);
 
     try {
       // Get adjusted settings based on model
@@ -533,10 +575,15 @@ export const ChatProvider = ({ children }) => {
 
       if (!response.ok) {
         let errorMessage = `API error: ${response.status}`;
+        let errorData = null; // Variable to hold the parsed error data
         try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
+          errorData = await response.json();
+          // Log the full error object received from the server
+          console.error('Server Error Response:', errorData);
+          // Extract message, fallback to status code if no structured error message
+          errorMessage = errorData?.error?.message || errorData?.message || `API error: ${response.status}`;
         } catch (e) {
+          console.warn('Could not parse error response as JSON:', e);
           // Use default error message if parsing fails
         }
         throw new Error(errorMessage);
@@ -545,7 +592,8 @@ export const ChatProvider = ({ children }) => {
       // Parse response
       const data = await response.json();
       // console.log('[DEBUG] Received non-streamed message:', data);
-      const content = data.content || '';
+      // Handle empty response and set placeholder if necessary
+      const content = data.content || 'No Response returned';
 
       // Add AI response to history
       addMessageToHistory('assistant', content);
@@ -558,6 +606,8 @@ export const ChatProvider = ({ children }) => {
     } catch (error) {
       console.error('Error sending message:', error);
       setError(error.message);
+      // Update the placeholder message to indicate error
+      _updatePlaceholderOnError(); // Use the helper function
       return null;
     } finally {
       setIsWaitingForResponse(false);

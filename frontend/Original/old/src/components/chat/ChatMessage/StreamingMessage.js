@@ -31,7 +31,7 @@ const CheckIcon = () => (
 /**
  * StreamingMessage component using react-markdown for rendering the entire content.
  */
-const StreamingMessage = ({ content }) => {
+const StreamingMessage = ({ content, isStreaming }) => {
   const { isDark } = useTheme();
   const { isWaitingForResponse } = useChat();
   const [copiedCodeMap, setCopiedCodeMap] = useState({}); // Use a map for multiple blocks
@@ -102,9 +102,13 @@ const StreamingMessage = ({ content }) => {
     // Potentially add customizations for other elements like 'a', 'img', 'table' if needed
   }), [CodeBlock]); // CodeBlock is the dependency
 
-  // Add a blinking cursor effect at the end if streaming
-  const streamingContent = isWaitingForResponse ? `${content}|` : content;
-  const markdownClassName = `${styles.markdown} ${styles.streamingContent} ${isWaitingForResponse ? styles.streaming : ''}`;
+  // Apply streaming class based on the passed-in prop
+  const markdownClassName = `${styles.markdown} ${styles.streamingContent} ${isStreaming ? styles.streaming : ''}`;
+
+  // Ensure ReactMarkdown has something to render when streaming starts, even if content is initially empty
+  // Use a zero-width space for this purpose.
+  const actualContent = typeof content === 'string' ? content : String(content || '');
+  const contentToRender = isStreaming && !actualContent ? '\u200B' : actualContent;
 
   return (
     <div className={markdownClassName}>
@@ -112,17 +116,16 @@ const StreamingMessage = ({ content }) => {
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex, rehypeRaw, rehypeSanitize]} // Add relevant rehype plugins
         components={markdownComponents}
-        // Ensure children is a string, handle potential non-string content gracefully
-        // Add skipHtml={false} if you need rehypeRaw to work
       >
-        {typeof streamingContent === 'string' ? streamingContent : String(streamingContent || '')}
+        {contentToRender}
       </ReactMarkdown>
     </div>
   );
 };
 
 StreamingMessage.propTypes = {
-  content: PropTypes.string // Content should ideally always be a string now
+  content: PropTypes.string,
+  isStreaming: PropTypes.bool // Add prop type for isStreaming
 };
 
 export default StreamingMessage; 

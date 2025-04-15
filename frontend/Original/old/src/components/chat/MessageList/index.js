@@ -82,7 +82,8 @@ const MessageList = forwardRef(({ messages, error }, ref) => {
           const isLastMessage = index === finalMessages.length - 1;
           const isStreaming = message.role === 'assistant' && 
                               isLastMessage && 
-                              isWaitingForResponse;
+                              isWaitingForResponse &&
+                              !message.metrics?.isComplete;
           
           // Process message content for images and text
           const { images, text } = processMessageContent(message.content);
