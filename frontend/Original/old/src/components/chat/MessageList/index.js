@@ -1,6 +1,8 @@
 import { forwardRef, useState, useMemo, memo } from 'react';
 import styles from './MessageList.module.css';
 import { useChat } from '../../../contexts/ChatContext';
+import ChatMessage from '../ChatMessage';
+import ImageOverlay from '../../common/ImageOverlay';
 
 /**
  * Simple message list without virtualization

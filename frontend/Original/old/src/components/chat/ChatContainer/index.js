@@ -1,5 +1,7 @@
-import { memo, lazy, useRef, useEffect, useState, useCallback } from 'react';
+import { memo, lazy, useRef, useEffect, useState, useCallback, Suspense } from 'react';
 import { useChatLogic } from '../../../hooks/useChatLogic';
+import Spinner from '../../common/Spinner';
+import { ChevronDownIcon } from '@primer/octicons-react';
 import styles from './ChatContainer.module.css';
 
 // Lazy-loaded components
@@ -27,12 +29,10 @@ const ChatContainer = memo(({
     error,
     metrics, 
     selectedModel: modelFromLogic,
-    settings,
     handleSendMessage,
   } = useChatLogic();
 
   const messageListRef = useRef(null);
-  const chatAreaRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const isActiveChat = chatHistory.length > 0;
   const [showScrollToBottomButton, setShowScrollToBottomButton] = useState(false);

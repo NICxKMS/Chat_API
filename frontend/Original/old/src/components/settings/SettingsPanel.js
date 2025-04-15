@@ -1,5 +1,7 @@
 import { useSettings } from '../../contexts/SettingsContext';
 import { useCacheToggle } from '../../hooks/useCacheToggle';
+import { IoMdClose } from 'react-icons/io';
+import SettingsSwitch from './SettingsSwitch';
 import styles from './SettingsPanel.module.css';
 
 const SettingsPanel = ({ isOpen, onClose }) => {

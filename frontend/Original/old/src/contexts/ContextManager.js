@@ -1,4 +1,9 @@
 import { createContext, useContext, useMemo } from 'react';
+import { ThemeProvider } from './ThemeContext';
+import { ApiProvider } from './ApiContext';
+import { ModelProvider } from './ModelContext';
+import { SettingsProvider } from './SettingsContext';
+import { ChatProvider } from './ChatContext';
 
 // Create a context for managing initialization state
 const InitializationContext = createContext(null);

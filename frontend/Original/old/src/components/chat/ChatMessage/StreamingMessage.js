@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import styles from './ChatMessage.module.css';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -9,7 +11,6 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
-import { useChat } from '../../../contexts/ChatContext';
 
 // Copy Icon SVG (simple inline version)
 const CopyIcon = () => (
@@ -31,7 +32,6 @@ const CheckIcon = () => (
  */
 const StreamingMessage = ({ content, isStreaming }) => {
   const { isDark } = useTheme();
-  const { isWaitingForResponse } = useChat();
   const [copiedCodeMap, setCopiedCodeMap] = useState({}); // Use a map for multiple blocks
 
   const syntaxTheme = isDark ? atomDark : prism;

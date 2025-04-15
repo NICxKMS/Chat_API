@@ -494,7 +494,7 @@ export const ChatProvider = ({ children }) => {
     addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics,
     startPerformanceTimer, updatePerformanceMetrics,
     setError, setIsWaitingForResponse, updateChatWithContent,
-    idToken
+    idToken, _updatePlaceholderOnError, currentMessageMetrics
   ]);
 
   // Send message to API - decide between streaming and non-streaming
@@ -617,7 +617,7 @@ export const ChatProvider = ({ children }) => {
     addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics,
     startPerformanceTimer, updatePerformanceMetrics, extractTokenCount,
     setError, setIsWaitingForResponse, streamMessageWithFetch,
-    idToken
+    idToken, _updatePlaceholderOnError, currentMessageMetrics
   ]);
 
   // Reset chat history

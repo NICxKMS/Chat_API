@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { SignInIcon, SignOutIcon } from '@primer/octicons-react';
 // Import icons using the correct paths
 import styles from './AuthButton.module.css';
 

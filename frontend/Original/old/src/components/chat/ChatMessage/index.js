@@ -1,8 +1,10 @@
 import { memo, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
+import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon } from '@primer/octicons-react';
 import { useChat } from '../../../contexts/ChatContext';
+import StreamingMessage from './StreamingMessage';
 import styles from './ChatMessage.module.css';
 
 // Import prism theme for final rendered content
@@ -29,7 +31,6 @@ const formatTime = (ms) => {
  */
 const ChatMessage = ({ message, isStreaming }) => {
   const { isWaitingForResponse } = useChat();
-  const { isDark } = useTheme();
   const [copiedCodeIndex, setCopiedCodeIndex] = useState(-1);
   const [messageCopied, setMessageCopied] = useState(false);
   
@@ -75,15 +76,6 @@ const ChatMessage = ({ message, isStreaming }) => {
   }, [message.role, message.metrics]);
   
   // console.log('Should show metrics:', shouldShowMetrics, { role: message.role, metrics: message.metrics });
-  
-  // Determine if this message should use streaming optimization
-  const shouldUseStreamingOptimization = isStreaming && message.role === 'assistant';
-  
-  // Determine if we should use direct text updates for streaming optimization
-  // This applies to assistant messages that are currently streaming
-  const shouldUseDirectTextUpdate = message.role === 'assistant' && 
-                                   isWaitingForResponse && 
-                                   isStreaming;
   
   // Handle copying code to clipboard
   const handleCopyCode = (code, index) => {

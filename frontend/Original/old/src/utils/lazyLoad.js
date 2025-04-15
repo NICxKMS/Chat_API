@@ -54,9 +54,13 @@ export const preloadComponentsIdle = (importFns, timeout = 2000) => {
   }
 };
 
-export default {
+// Create a named export object first
+const lazyLoadUtils = {
   lazyLoad,
   preloadComponent,
   preloadComponents,
   preloadComponentsIdle
-}; 
+};
+
+// Then export the object as default
+export default lazyLoadUtils; 

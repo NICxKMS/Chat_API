@@ -6,6 +6,8 @@ import React, {
   useState
 } from 'react';
 import { useModel, useModelFilter } from '../../../contexts/ModelContext';
+import ModelItem from '../ModelItem';
+import ModelSearch from '../ModelSearch';
 import styles from './ModelDropdown.module.css';
 
 /**
@@ -119,41 +121,6 @@ const ModelList = React.memo(({ isLoading, groupedModels, selectedModel, onSelec
 ));
 
 /**
- * Fast string search function that uses direct character comparison
- * Much faster than toLowerCase().includes() for short searches
- */
-function fastSearch(haystack, needle) {
-  if (!haystack || !needle) return false;
-  
-  // Convert search to lowercase once
-  const searchLower = needle.toLowerCase();
-  const searchLen = searchLower.length;
-  const targetLen = haystack.length;
-  
-  if (searchLen === 0 || searchLen > targetLen) return false;
-  
-  // Fast direct character comparison loop
-  for (let i = 0; i <= targetLen - searchLen; i++) {
-    let found = true;
-    for (let j = 0; j < searchLen; j++) {
-      // Convert haystack char to lowercase on the fly (faster than converting the whole string)
-      const haystackChar = haystack.charCodeAt(i + j);
-      const lowerChar = haystackChar >= 65 && haystackChar <= 90 
-        ? haystackChar + 32 // A-Z -> a-z by adding 32 to ASCII code
-        : haystackChar;
-      
-      if (lowerChar !== searchLower.charCodeAt(j)) {
-        found = false;
-        break;
-      }
-    }
-    if (found) return true;
-  }
-  
-  return false;
-}
-
-/**
  * SearchContainer component for model searching
  */
 const SearchContainer = React.memo(({ searchTerm, onSearchChange, totalCount }) => (
@@ -235,23 +202,23 @@ const shouldIncludeModel = (model, showExperimental, searchTerm, provider, forma
   return true;
 };
 
-// Restore ExperimentalToggle component
-const ExperimentalToggle = React.memo(({ isEnabled, onToggle }) => (
-  <div className={styles.experimentalToggle}>
-    <label className={styles.toggleLabel}>
-      <input
-        type="checkbox"
-        checked={isEnabled}
-        onChange={onToggle}
-        className={styles.toggleInput}
-      />
-      <span className={styles.toggleTrack}>
-        <span className={styles.toggleThumb} />
-      </span>
-      <span className={styles.toggleText}>Show experimental models</span>
-    </label>
-  </div>
-));
+// ExperimentalToggle component is not currently used, commented out
+// const ExperimentalToggle = React.memo(({ isEnabled, onToggle }) => (
+//   <div className={styles.experimentalToggle}>
+//     <label className={styles.toggleLabel}>
+//       <input
+//         type="checkbox"
+//         checked={isEnabled}
+//         onChange={onToggle}
+//         className={styles.toggleInput}
+//       />
+//       <span className={styles.toggleTrack}>
+//         <span className={styles.toggleThumb} />
+//       </span>
+//       <span className={styles.toggleText}>Show experimental models</span>
+//     </label>
+//   </div>
+// ));
 
 /**
  * Main ModelSelection component that orchestrates all model selection UI
@@ -262,7 +229,6 @@ const ModelSelection = () => {
     processedModels, 
     selectedModel, 
     isLoading, 
-    error, 
     selectModel, 
     showExperimental,
     toggleExperimentalModels
@@ -270,7 +236,6 @@ const ModelSelection = () => {
   
   const {
     modelFilter,
-    updateCategoryFilter, 
     updateSearchFilter
   } = useModelFilter();
   

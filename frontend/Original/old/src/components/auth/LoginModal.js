@@ -9,6 +9,10 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword 
 } from 'firebase/auth';
+import { IoMdClose } from 'react-icons/io';
+import { FcGoogle } from 'react-icons/fc';
+import { FaGithub } from 'react-icons/fa';
+import Spinner from '../common/Spinner';
 import styles from './LoginModal.module.css';
 // Assuming a Spinner component exists
 
@@ -21,7 +25,6 @@ const LoginModal = ({ onClose }) => {
   const [error, setError] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isEmailPasswordMode, setIsEmailPasswordMode] = useState(true); // Default to Email/Password mode
 
   // Clear local error when auth context error changes (e.g., token fetch error)
   useEffect(() => {

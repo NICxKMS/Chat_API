@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import styles from './MainContent.module.css';
 
 // Lazily loaded components

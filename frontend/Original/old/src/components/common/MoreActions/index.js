@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { KebabHorizontalIcon } from '@primer/octicons-react';
 import styles from './MoreActions.module.css';
 
 /**

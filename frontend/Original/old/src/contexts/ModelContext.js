@@ -292,7 +292,6 @@ export const ModelProvider = ({ children }) => {
     getCachedModels, 
     cacheModels, 
     processModels, 
-    normalizeModelName,
     selectedModel,
     idToken
   ]);

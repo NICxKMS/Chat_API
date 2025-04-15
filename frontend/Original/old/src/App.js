@@ -1,5 +1,7 @@
-import { lazy, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { ContextManager } from './contexts/ContextManager';
 import { performanceMonitor, PERFORMANCE_MARKS, PERFORMANCE_MEASURES } from './utils/performance';
 import { preloadComponentsIdle } from './utils/lazyLoad';
 

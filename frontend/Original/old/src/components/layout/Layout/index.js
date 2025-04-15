@@ -1,10 +1,11 @@
-import { lazy, useState, useCallback } from 'react';
+import { lazy, useState, useCallback, Suspense } from 'react';
 import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
 import { useChat } from '../../../contexts/ChatContext';
 // Import useApi if needed for apiUrl, but not for status
 // import { useApi } from '../../../contexts/ApiContext'; 
 import { useAuth } from '../../../contexts/AuthContext'; // Import useAuth
+import { GearIcon, PlusIcon, TrashIcon, DownloadIcon } from '@primer/octicons-react';
 import styles from './Layout.module.css';
 // Import icons using the correct paths
 // Import only the specific icons needed
