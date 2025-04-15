@@ -1,23 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFirebaseAuth } from '../../firebaseConfig';
 // Import Firebase auth functions using the correct paths
 import { 
   GoogleAuthProvider, 
   signInWithPopup, 
-  EmailAuthProvider, 
   GithubAuthProvider, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword 
 } from 'firebase/auth';
 import styles from './LoginModal.module.css';
-import Spinner from '../common/Spinner'; // Assuming a Spinner component exists
+// Assuming a Spinner component exists
 
 // Import icons using the correct paths
-import { FcGoogle } from 'react-icons/fc';
-import { FaGithub } from 'react-icons/fa';
-import { IoMdClose } from "react-icons/io";
-import { MdOutlineEmail } from "react-icons/md"; // Icon for email/pass
+// Icon for email/pass
 
 const LoginModal = ({ onClose }) => {
   const { setIsLoggingIn, error: authContextError } = useAuth();

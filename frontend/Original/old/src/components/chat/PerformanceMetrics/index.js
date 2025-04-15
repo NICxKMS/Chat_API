@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import styles from './PerformanceMetrics.module.css';
 
 /**

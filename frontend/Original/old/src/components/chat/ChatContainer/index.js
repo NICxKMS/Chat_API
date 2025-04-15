@@ -1,8 +1,6 @@
-import React, { memo, lazy, Suspense, useRef, useEffect, useState, useCallback } from 'react';
+import { memo, lazy, useRef, useEffect, useState, useCallback } from 'react';
 import { useChatLogic } from '../../../hooks/useChatLogic';
 import styles from './ChatContainer.module.css';
-import Spinner from '../../common/Spinner';
-import { ChevronDownIcon } from '@primer/octicons-react';
 
 // Lazy-loaded components
 const MessageList = lazy(() => import('../MessageList'));

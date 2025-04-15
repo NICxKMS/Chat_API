@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react';
 import { useApi } from './ApiContext';
 import { useModel } from './ModelContext';
 import { useSettings } from './SettingsContext';

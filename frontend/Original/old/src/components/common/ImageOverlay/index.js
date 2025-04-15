@@ -1,4 +1,3 @@
-import React from 'react';
 import ReactDOM from 'react-dom'; // Import ReactDOM
 import PropTypes from 'prop-types';
 import styles from './ImageOverlay.module.css';

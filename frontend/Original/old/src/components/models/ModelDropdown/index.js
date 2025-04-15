@@ -6,8 +6,6 @@ import React, {
   useState
 } from 'react';
 import { useModel, useModelFilter } from '../../../contexts/ModelContext';
-import ModelItem from '../ModelItem';
-import ModelSearch from '../ModelSearch';
 import styles from './ModelDropdown.module.css';
 
 /**

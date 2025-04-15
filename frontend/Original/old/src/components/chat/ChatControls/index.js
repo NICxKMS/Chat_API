@@ -1,8 +1,7 @@
-import React, { memo, useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { memo, useState, useEffect, useRef, lazy } from 'react';
 import PropTypes from 'prop-types';
 import styles from './ChatControls.module.css';
 // Restore necessary icons
-import { TrashIcon, DownloadIcon, ChevronUpIcon, GearIcon, PlusIcon } from '@primer/octicons-react';
 import { useSettings } from '../../../contexts/SettingsContext';
 
 // Restore lazy loads

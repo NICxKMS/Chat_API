@@ -1,6 +1,4 @@
-import React, { forwardRef, useEffect, useState, useRef, useMemo, memo } from 'react';
-import ChatMessage from '../ChatMessage';
-import ImageOverlay from '../../common/ImageOverlay';
+import { forwardRef, useState, useMemo, memo } from 'react';
 import styles from './MessageList.module.css';
 import { useChat } from '../../../contexts/ChatContext';
 

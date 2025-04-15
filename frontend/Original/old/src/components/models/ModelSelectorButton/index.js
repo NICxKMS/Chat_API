@@ -1,6 +1,4 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import { ChevronDownIcon } from '@primer/octicons-react';
 import styles from './ModelSelectorButton.module.css';
 
 /**

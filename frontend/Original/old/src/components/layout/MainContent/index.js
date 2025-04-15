@@ -1,5 +1,4 @@
-import React, { lazy, Suspense } from 'react';
-import { useIsDesktop } from '../../../hooks/useMediaQuery';
+import { lazy } from 'react';
 import styles from './MainContent.module.css';
 
 // Lazily loaded components

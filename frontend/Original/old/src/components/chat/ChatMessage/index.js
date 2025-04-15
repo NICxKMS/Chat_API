@@ -1,21 +1,11 @@
-import React, { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useChat } from '../../../contexts/ChatContext';
 import styles from './ChatMessage.module.css';
-import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CopyIcon, CheckIcon, ClockIcon, PulseIcon } from '@primer/octicons-react';
-import StreamingMessage from './StreamingMessage';
 
 // Import prism theme for final rendered content
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import prismDark from 'react-syntax-highlighter/dist/esm/styles/prism/atom-dark';
-import prismLight from 'react-syntax-highlighter/dist/esm/styles/prism/prism';
 
 /**
  * Format time in milliseconds to a human-readable format

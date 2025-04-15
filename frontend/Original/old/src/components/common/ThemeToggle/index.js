@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import styles from './ThemeToggle.module.css';
 

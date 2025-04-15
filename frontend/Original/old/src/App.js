@@ -1,8 +1,7 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { ContextManager } from './contexts/ContextManager';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { lazy, useEffect, useState } from 'react';
+import { useAuth } from './contexts/AuthContext';
 import { performanceMonitor, PERFORMANCE_MARKS, PERFORMANCE_MEASURES } from './utils/performance';
-import { lazyLoad, preloadComponentsIdle } from './utils/lazyLoad';
+import { preloadComponentsIdle } from './utils/lazyLoad';
 
 // Lazy-loaded components with preload hints
 const Layout = lazy(() => import(/* webpackChunkName: "layout" */ './components/layout/Layout'));

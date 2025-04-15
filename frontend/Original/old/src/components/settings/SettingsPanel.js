@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useCacheToggle } from '../../hooks/useCacheToggle';
 import styles from './SettingsPanel.module.css';
-import { IoMdClose } from 'react-icons/io';
-import SettingsSwitch from './SettingsSwitch';
 
 const SettingsPanel = ({ isOpen, onClose }) => {
   const { settings, updateSetting, resetSettings } = useSettings();

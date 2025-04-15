@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 // Import Firebase auth service (ensure firebaseConfig.js runs first)
 import { getFirebaseAuth } from '../firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';

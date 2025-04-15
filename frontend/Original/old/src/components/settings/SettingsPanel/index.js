@@ -1,4 +1,4 @@
-import React, { memo, lazy, Suspense } from 'react';
+import { memo, lazy } from 'react';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useModel } from '../../../contexts/ModelContext';
 import styles from './SettingsPanel.module.css';

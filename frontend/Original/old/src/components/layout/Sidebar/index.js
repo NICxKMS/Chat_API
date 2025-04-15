@@ -1,5 +1,4 @@
-import React, { memo } from 'react';
-import { PlusIcon, GearIcon } from '@primer/octicons-react';
+import { memo } from 'react';
 import styles from './Sidebar.module.css';
 // Remove unused icons if PlusIcon/GearIcon only used for floating buttons
 // import { GearIcon, PlusIcon } from '@primer/octicons-react'; 

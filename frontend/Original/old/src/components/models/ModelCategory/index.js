@@ -1,6 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import ModelItem from '../ModelItem';
 import styles from './ModelCategory.module.css';
 
 // --- Sub-component for Type Group (e.g., GPT 4, Flash) ---

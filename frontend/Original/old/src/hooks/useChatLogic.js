@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useChat } from '../contexts/ChatContext';
 import { useModel } from '../contexts/ModelContext';
 import { useSettings } from '../contexts/SettingsContext';

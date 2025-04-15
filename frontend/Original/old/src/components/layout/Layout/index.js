@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useCallback, useEffect } from 'react';
+import { lazy, useState, useCallback } from 'react';
 import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
 import { useChat } from '../../../contexts/ChatContext';
@@ -7,11 +7,9 @@ import { useChat } from '../../../contexts/ChatContext';
 import { useAuth } from '../../../contexts/AuthContext'; // Import useAuth
 import styles from './Layout.module.css';
 // Import icons using the correct paths
-import { PlusIcon, GearIcon, TrashIcon, DownloadIcon } from '@primer/octicons-react';
 // Import only the specific icons needed
 // const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Removed
-import { useSettings } from '../../../contexts/SettingsContext';
-import { lazyLoad } from '../../../utils/lazyLoad'; // Assuming lazyLoad utility path
+// Assuming lazyLoad utility path
 
 // Lazily loaded components with preload hints
 const Sidebar = lazy(() => import(/* webpackPrefetch: true */ '../Sidebar'));

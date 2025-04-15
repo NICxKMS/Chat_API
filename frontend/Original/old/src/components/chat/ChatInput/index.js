@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
-import { PaperAirplaneIcon, PlusIcon, XIcon } from '@primer/octicons-react';
 import styles from './ChatInput.module.css';
 
 /**

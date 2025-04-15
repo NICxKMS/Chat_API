@@ -1,6 +1,5 @@
-import React, { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { SearchIcon, XIcon } from '@primer/octicons-react';
 import styles from './ModelSearch.module.css';
 
 /**
