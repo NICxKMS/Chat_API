@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon } from '@primer/octicons-react';
-import { useChat } from '../../../contexts/ChatContext';
 import StreamingMessage from './StreamingMessage';
 import styles from './ChatMessage.module.css';
 
@@ -30,7 +29,6 @@ const formatTime = (ms) => {
  * @returns {JSX.Element} - Rendered component
  */
 const ChatMessage = ({ message, isStreaming }) => {
-  const { isWaitingForResponse } = useChat();
   const [copiedCodeIndex, setCopiedCodeIndex] = useState(-1);
   const [messageCopied, setMessageCopied] = useState(false);
   
