@@ -3,19 +3,14 @@ import { useAuth } from './contexts/AuthContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ContextManager } from './contexts/ContextManager';
 import { performanceMonitor, PERFORMANCE_MARKS, PERFORMANCE_MEASURES } from './utils/performance';
-import { preloadComponentsIdle } from './utils/lazyLoad';
+import { initFeatureLoader, preloadFeature } from './utils/featureLoader';
 
-// Lazy-loaded components with preload hints
-const Layout = lazy(() => import(/* webpackChunkName: "layout" */ './components/layout/Layout'));
-const LoadingSpinner = lazy(() => import(/* webpackChunkName: "spinner" */ './components/common/Spinner'));
-const LoginModal = lazy(() => import(/* webpackChunkName: "loginModal" */ './components/auth/LoginModal'));
+// Critical UI components - imported directly for faster initial render
+import { Layout } from './features/layout';
+import { Spinner } from './features/common';
 
-// Define components to preload
-const componentsToPreload = [
-  () => import('./components/layout/Layout'),
-  () => import('./components/common/Spinner'),
-  () => import('./components/auth/LoginModal')
-];
+// Non-critical components - lazy loaded after initial render
+const LoginModal = lazy(() => import('./components/auth/LoginModal'));
 
 /**
  * Main App component
@@ -23,13 +18,17 @@ const componentsToPreload = [
  */
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Mark app start
     performanceMonitor.mark(PERFORMANCE_MARKS.APP_START);
 
-    // Start preloading components after initial render
-    preloadComponentsIdle(componentsToPreload);
+    // Initialize feature-based code splitting
+    initFeatureLoader();
+    
+    // Preload auth components (will be needed soon)
+    preloadFeature('auth');
     
     // Use requestAnimationFrame to ensure smooth initialization
     requestAnimationFrame(() => {
@@ -37,14 +36,23 @@ function App() {
       setIsInitialized(true);
     });
 
+    // Timer to hide loading indicator - this ensures minimal flash of loading screen
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      // After initial render, preload other important features
+      preloadFeature('chat');
+      preloadFeature('models');
+    }, 100);
+
     // Cleanup performance marks on unmount
     return () => {
       performanceMonitor.clear();
+      clearTimeout(timer);
     };
   }, []);
 
   useEffect(() => {
-    if (isInitialized) {
+    if (isInitialized && !isLoading) {
       performanceMonitor.mark(PERFORMANCE_MARKS.APP_READY);
       performanceMonitor.measure(
         PERFORMANCE_MEASURES.TOTAL_LOAD,
@@ -52,10 +60,15 @@ function App() {
         PERFORMANCE_MARKS.APP_READY
       );
       performanceMonitor.logMetrics();
+      
+      // Preload remaining features after app is ready
+      setTimeout(() => {
+        preloadFeature('settings');
+      }, 2000);
     }
-  }, [isInitialized]);
+  }, [isInitialized, isLoading]);
 
-  if (!isInitialized) {
+  if (!isInitialized || isLoading) {
     return <LoadingScreen />;
   }
 
@@ -73,14 +86,14 @@ function AppContent() {
   const { isLoggingIn, setIsLoggingIn } = useAuth();
 
   return (
-    <Suspense fallback={<LoadingScreen />}>
+    <>
       <Layout />
       {isLoggingIn && (
         <Suspense fallback={<LoadingScreen />}>
           <LoginModal onClose={() => setIsLoggingIn(false)} />
         </Suspense>
       )}
-    </Suspense>
+    </>
   );
 }
 
@@ -89,13 +102,8 @@ function AppContent() {
  */
 function LoadingScreen() {
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh' 
-    }}>
-      <LoadingSpinner size="large" />
+    <div className="loading-screen">
+      <Spinner size="large" />
     </div>
   );
 }
