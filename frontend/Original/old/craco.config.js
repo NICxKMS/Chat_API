@@ -18,7 +18,6 @@ module.exports = {
   webpack: {
     configure: (webpackConfig, { env, paths }) => {
       if (env === 'production') {
-        // Optimize chunks for initial load
         webpackConfig.optimization = {
           ...webpackConfig.optimization,
           usedExports: true,
@@ -32,125 +31,62 @@ module.exports = {
                   pure_funcs: ['console.log']
                 }
               }
-            }),
-            new CssMinimizerPlugin({
-              minimizerOptions: {
-                preset: ['default', { discardComments: { removeAll: true } }]
-              }
             })
           ],
-          // Configure initial chunk loading
-          runtimeChunk: {
-            name: 'runtime', // Extract runtime into separate chunk
-          },
           splitChunks: {
             chunks: 'all',
             minSize: 20000,
-            maxSize: 70000,
+            maxSize: 244000,
             minChunks: 1,
-            maxAsyncRequests: 15,
-            maxInitialRequests: 8,
+            maxAsyncRequests: 30,
+            maxInitialRequests: 30,
             cacheGroups: {
-              // Critical UI - highest priority
-              criticalUI: {
-                test: module => {
-                  return module && module.context &&
-                  (
-                    /[\\/]src[\\/]components[\\/](layout|common)[\\/]/.test(module.context) ||
-                    /[\\/]src[\\/]features[\\/](layout|common)[\\/]/.test(module.context) ||
-                    (module.resource && /Layout\.js/.test(module.resource)) ||
-                    (module.resource && /Spinner\.js/.test(module.resource)) ||
-                    (module.resource && /index\.css/.test(module.resource))
-                  );
+              defaultVendors: {
+                test: /[\\/]node_modules[\\/]/,
+                priority: -10,
+                reuseExistingChunk: true,
+                name(module) {
+                  const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1];
+                  return `npm.${packageName ? packageName.replace(/[^a-zA-Z0-9]/g, '_') : 'vendor'}`;
                 },
-                name: 'critical-ui',
-                chunks: 'all',
-                priority: 40,
-                enforce: true,
-                reuseExistingChunk: true
               },
-              // CSS handling - high priority for initial render
-              styles: {
-                name: 'styles',
-                test: /\.css$/,
-                chunks: 'all',
-                enforce: true,
-                priority: 30,
-              },
-              // Core React bundle - needed for any UI rendering
-              react: {
-                test: /[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types)[\\/]/,
+              reactVendor: {
+                test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
                 name: 'vendor-react',
-                chunks: 'all',
-                priority: 25,
-                enforce: true
-              },
-              // Firebase auth - may be needed early 
-              firebase: {
-                test: /[\\/]node_modules[\\/](firebase|@firebase)[\\/]/,
-                name: 'vendor-firebase',
-                chunks: 'all',
-                priority: 15,
-                enforce: true
-              },
-              // UI components - may be visible in initial render
-              ui: {
-                test: /[\\/]node_modules[\\/](react-icons|@primer|react-virtualized|react-window)[\\/]/,
-                name: 'vendor-ui',
-                chunks: 'all',
-                priority: 20,
-                enforce: true
-              },
-              // Markdown components - typically needed after initial UI is visible
-              markdown: {
-                test: /[\\/]node_modules[\\/](react-markdown|rehype|remark|react-syntax-highlighter)[\\/]/,
-                name: 'vendor-markdown',
                 chunks: 'all',
                 priority: 10,
                 enforce: true
               },
-              // Main node_modules catch-all
-              vendors: {
-                test: /[\\/]node_modules[\\/]/,
-                name: 'vendors',
-                chunks: 'all',
-                priority: -10,
-                reuseExistingChunk: true,
-              },
-              // App code by type/feature
-              app: {
-                test: /[\\/]src[\\/]/,
-                name: chunk => {
-                  if (chunk.context) {
-                    const module = chunk.context.match(/[\\/]src[\\/](.*?)([\\/]|$)/);
-                    const directory = module && module[1];
-                    
-                    if (directory === 'components') {
-                      const componentType = chunk.context.match(/[\\/]components[\\/](.*?)([\\/]|$)/);
-                      return `app.${componentType ? componentType[1] : 'components'}`;
-                    }
-                    
-                    return `app.${directory || 'core'}`;
-                  }
-                  return 'app.unknown';
-                },
+              firebaseVendor: {
+                test: /[\\/]node_modules[\\/]firebase[\\/]/,
+                name: 'vendor-firebase',
                 chunks: 'all',
                 priority: 5,
-                minSize: 0,
                 enforce: true
               },
-              // Default catch-all
+              commons: {
+                name: 'commons',
+                chunks: 'initial',
+                minChunks: 2,
+                priority: -20,
+                reuseExistingChunk: true
+              },
+              sharedAsync: {
+                name: 'shared-async',
+                chunks: 'async',
+                minChunks: 2,
+                priority: -30,
+                reuseExistingChunk: true
+              },
               default: {
                 minChunks: 2,
                 priority: -40,
-                reuseExistingChunk: true,
-                minSize: 50000
-              }
+                reuseExistingChunk: true
+              },
             }
           }
         };
 
-        // Add bundle analyzer if requested
         if (process.env.ANALYZE === 'true' && BundleAnalyzerPlugin) {
           webpackConfig.plugins.push(
             new BundleAnalyzerPlugin({

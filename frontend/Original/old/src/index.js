@@ -5,32 +5,20 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
-// Preloading resources hint for browsers that support it
-// Note: These will be used by webpack during build
-import(/* webpackPrefetch: true */ './features/layout');
-import(/* webpackPrefetch: true */ './features/common');
-
-/**
- * Custom loading component with minimal UI
- */
-const LoadingApp = () => (
-  <div style={{ 
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    height: '100vh',
-    color: 'var(--text-color)',
-    fontFamily: 'system-ui, -apple-system, sans-serif'
-  }}>
-    Loading application...
-  </div>
-);
-
-// Create root and render app with Suspense for top-level code splitting
+// Create root and render app with Suspense
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <Suspense fallback={<LoadingApp />}>
+    <Suspense fallback={
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        Loading...
+      </div>
+    }>
       <App />
     </Suspense>
   </React.StrictMode>
@@ -39,6 +27,18 @@ root.render(
 // Report web vitals for performance monitoring
 reportWebVitals(console.log);
 
-// Unregister service worker to prevent 404 errors
-// You can re-enable this later by generating proper service worker files
-serviceWorkerRegistration.unregister(); 
+// Register service worker for PWA support
+serviceWorkerRegistration.register({
+  onUpdate: registration => {
+    // When new content is available, show a notification
+    const waitingServiceWorker = registration.waiting;
+    if (waitingServiceWorker) {
+      waitingServiceWorker.addEventListener("statechange", event => {
+        if (event.target.state === "activated") {
+          window.location.reload();
+        }
+      });
+      waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
+    }
+  }
+}); 
