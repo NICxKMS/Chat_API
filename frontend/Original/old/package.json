@@ -64,7 +64,7 @@
     "test:watch": "craco test --watch",
     "lint": "eslint src/**/*.{js,jsx}",
     "lint:fix": "eslint src/**/*.{js,jsx} --fix",
-    "analyze": "source-map-explorer 'build/static/js/*.js'",
+    "analyze": "cross-env REACT_APP_ENV=production GENERATE_SOURCEMAP=true craco build && source-map-explorer 'build/static/js/*.js'",
     "eject": "react-scripts eject",
     "clean": "rimraf build node_modules",
     "reinstall": "npm run clean && npm install",

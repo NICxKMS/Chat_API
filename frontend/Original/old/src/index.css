@@ -86,6 +86,9 @@
   --dark-slider-track-bg: #575757; /* --clr-surface-a30 */
   --dark-slider-thumb-bg: var(--dark-button-bg); /* Use button color */
   --dark-elevated-bg: #333333; /* Slightly lighter than chat-bg for elevated components - NEW */
+
+  /* Add CSS variable for RGB version of primary color for opacity control */
+  --primary-color-rgb: 0, 123, 255; /* Default blue */
 }
 
 /* Apply theme based on body class and system preferences */
@@ -301,4 +304,38 @@ svg {
   display: inline-block;
   /* Add transition for potential color changes if applicable */
   transition: color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+/* Lightweight pulse loader for ultra fast initial rendering */
+.pulse-loader {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(var(--primary-color-rgb, 0, 123, 255), 0.2);
+  animation: pulse 1.2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb, 0, 123, 255), 0.5);
+  }
+  
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(var(--primary-color-rgb, 0, 123, 255), 0);
+  }
+  
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb, 0, 123, 255), 0);
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #121212;
+    --primary-color-rgb: 66, 165, 245;
+  }
 } 
