@@ -8,9 +8,7 @@ const PERFORMANCE_MARKS = {
   APP_START: 'app-start',
   CONTEXT_INIT: 'context-init',
   COMPONENT_LOAD: 'component-load',
-  CRITICAL_COMPONENTS_LOADED: 'critical-components-loaded',
   IMPORTANT_COMPONENTS_LOADED: 'important-components-loaded',
-  SHELL_VISIBLE: 'shell-visible',
   FIRST_PAINT: 'first-paint',
   FIRST_CONTENTFUL_PAINT: 'first-contentful-paint',
   APP_INTERACTIVE: 'app-interactive',
@@ -22,9 +20,7 @@ const PERFORMANCE_MEASURES = {
   TOTAL_LOAD: 'total-load-time',
   CONTEXT_INIT: 'context-init-time',
   COMPONENT_LOAD: 'component-load-time',
-  TIME_TO_SHELL: 'time-to-shell',
   TIME_TO_INTERACTIVE: 'time-to-interactive',
-  CRITICAL_LOAD_TIME: 'critical-load-time',
   IMPORTANT_LOAD_TIME: 'important-load-time'
 };
 
