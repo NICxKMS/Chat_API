@@ -59,7 +59,6 @@
 
 .categoryContent {
   padding: 0.6rem;
-  background-color: var(--card-bg);
 }
 
 /* Provider Group Styles */
@@ -69,12 +68,22 @@
   overflow: hidden;
   border: 1px solid rgba(var(--primary-rgb), 0.1);
   background-color: var(--card-bg);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing),
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .providerGroup:hover {
   transform: translateY(-1px);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(var(--primary-rgb), 0.08);
+  background-color: var(--card-bg);
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing),
+    box-shadow 0.2s ease;
 }
 
 .providerHeader {
@@ -120,7 +129,6 @@
 
 .providerContent {
   padding: 0.5rem 0.6rem;
-  background-color: var(--card-bg);
 }
 
 /* Type Group Styles */
@@ -130,7 +138,10 @@
   overflow: hidden;
   border: 1px solid rgba(var(--primary-rgb), 0.08);
   background-color: var(--card-bg);
-  transition: all 0.2s ease;
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing),
+    box-shadow 0.2s ease;
 }
 
 .typeGroup:hover {

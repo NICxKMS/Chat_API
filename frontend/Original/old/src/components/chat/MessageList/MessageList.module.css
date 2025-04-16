@@ -29,7 +29,6 @@
   padding: 0.75rem 1.25rem;
   padding-bottom: 12px;
   box-sizing: border-box;
-  transition: background-color 0.2s ease;
   /* Improve performance during scrolling/resizing */
   will-change: transform;
   contain: layout; /* Optimize layout containment */

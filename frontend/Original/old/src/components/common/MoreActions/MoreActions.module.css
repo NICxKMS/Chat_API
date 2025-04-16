@@ -55,7 +55,7 @@
 
 .actionsMenu {
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
   right: 0;
   background-color: var(--chat-bg);
   border: 1px solid var(--border);
@@ -64,8 +64,8 @@
   min-width: 180px;
   opacity: 0;
   visibility: hidden;
-  transform-origin: bottom right;
-  transform: scale(0.95) translateY(10px);
+  transform-origin: top right;
+  transform: scale(0.95) translateY(-10px);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
 }
@@ -134,14 +134,7 @@
   .actionsMenu {
     position: absolute;
     top: calc(100% + 8px);
-    right: 0;
-    bottom: auto;
     min-width: 200px;
-    background-color: var(--chat-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: var(--shadow-lg);
-    z-index: 1000;
   }
 
   .actionButton {

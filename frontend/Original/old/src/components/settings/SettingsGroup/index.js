@@ -16,7 +16,7 @@ const SettingsGroup = ({
   };
 
   return (
-    <div className={styles.group} id={id}>
+    <div className={`${styles.group} ${isExpanded ? styles.expanded : ''}`} id={id}>
       <div 
         className={styles.header}
         onClick={toggleExpanded}

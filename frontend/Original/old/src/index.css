@@ -55,7 +55,7 @@
   /* Dark theme variables - APPLYING NEW PALETTE */
   --dark-bg: #121212; /* --clr-surface-a0 */
   --dark-chat-bg: #282828; /* --clr-surface-a10 */
-  --dark-sidebar-bg: #1a1e1e; /* --clr-surface-tonal-a0 */
+  --dark-sidebar-bg: #171717; /* --clr-surface-tonal-a0 */
   --dark-text: #ffffff; /* --clr-light-a0 */
   --dark-secondary-text: #8b8b8b; /* --clr-surface-a50 */
   --dark-border: #3f3f3f; /* --clr-surface-a20 */
@@ -86,6 +86,15 @@
   --dark-slider-track-bg: #575757; /* --clr-surface-a30 */
   --dark-slider-thumb-bg: var(--dark-button-bg); /* Use button color */
   --dark-elevated-bg: #333333; /* Slightly lighter than chat-bg for elevated components - NEW */
+  
+  /* Color palette for theming */
+  --gray-750: #313131;
+  --gray-800: #292929;
+  --gray-900: #1e1e1e;
+  
+  /* Simplified sidebar styling */
+  --dark-sidebar-text: #ededed;
+  --dark-sidebar-icon: #a4a4a4;
 
   /* Add CSS variable for RGB version of primary color for opacity control */
   --primary-color-rgb: 0, 123, 255; /* Default blue */
@@ -147,6 +156,8 @@ body.dark-mode {
   --chat-bg: var(--dark-chat-bg);
   --elevated-bg: var(--dark-elevated-bg); /* NEW MAPPING */
   --sidebar-bg: var(--dark-sidebar-bg);
+  --sidebar-text: var(--dark-sidebar-text);
+  --sidebar-icon: var(--dark-sidebar-icon);
   --text: var(--dark-text);
   --secondary-text: var(--dark-secondary-text);
   --border: var(--dark-border);
@@ -211,7 +222,7 @@ body {
 }
 
 /* Apply consistent transitions to common elements */
-button, input, textarea, select, header, footer, aside, main, div, span, p, li {
+button, input, textarea, select, header, footer, aside, main {
   /* Apply ONLY to color/background/border unless element needs others */
   /* Note: This might be overridden by more specific component styles */
   transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),

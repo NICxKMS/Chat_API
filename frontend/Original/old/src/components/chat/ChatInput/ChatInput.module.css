@@ -4,7 +4,7 @@
   width: 100%;
   gap: 8px;
   padding: 12px;
-  background-color: var(--elevated-bg);
+  /* background-color: var(--elevated-bg); */
   border-top: 1px solid var(--border-color);
   position: relative;
 }
@@ -61,7 +61,6 @@
   /* Match control button style */
   border-radius: 12px;
   border: 1px solid var(--border-pronounced);
-  background-color: var(--elevated-bg);
   color: var(--secondary-text);
   box-shadow: var(--shadow);
   cursor: pointer;
@@ -110,9 +109,8 @@
   /* Match control button style */
   border-radius: 12px;
   border: 1px solid var(--border-pronounced);
-  background: var(--button-bg); /* Keep primary color for send? Or use input-bg? Let's try input-bg first */
-  background-color: var(--elevated-bg);
-  color: var(--secondary-text); /* Match text color */
+  background: var(--button-bg);
+  color: var(--secondary-text);
   box-shadow: var(--shadow);
   font-weight: 500;
   cursor: pointer;
@@ -147,8 +145,7 @@
   /* Match control button disabled */
   opacity: 0.5;
   cursor: not-allowed;
-  background: var(--elevated-bg); /* Ensure disabled bg matches */
-  border-color: var(--border-pronounced); /* Keep border */
+  border-color: var(--border-pronounced);
   box-shadow: none;
 }
 

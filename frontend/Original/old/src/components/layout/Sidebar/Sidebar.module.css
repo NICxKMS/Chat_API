@@ -1,7 +1,7 @@
 .sidebar {
   width: 300px;
   height: 100%;
-  background: var(--sidebar-bg);
+  background: var(--sidebar-bg, var(--sidebar-surface));
   border-right: 1px solid var(--border);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -23,12 +23,12 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-color);
-  background: var(--sidebar-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
   z-index: 2;
+  background: var(--sidebar-surface-secondary, var(--sidebar-bg));
 }
 
 .headerControls {
@@ -42,8 +42,8 @@
   margin: 0;
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--text);
-  background: linear-gradient(to right, var(--text), color-mix(in srgb, var(--text) 80%, var(--accent)));
+  color: var(--sidebar-title-primary, var(--text));
+  background: linear-gradient(to right, var(--sidebar-title-primary, var(--text)), color-mix(in srgb, var(--sidebar-title-primary, var(--text)) 80%, var(--accent)));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -81,7 +81,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: color-mix(in srgb, var(--sidebar-bg) 97%, var(--accent));
+  background: var(--sidebar-surface-secondary, color-mix(in srgb, var(--sidebar-bg) 97%, var(--accent)));
   position: sticky;
   bottom: 0;
   margin-top: auto;
@@ -169,10 +169,15 @@
   height: 36px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
-  background: var(--input-bg);
-  color: var(--text);
+  background: var(--sidebar-surface-tertiary, var(--input-bg));
+  color: var(--sidebar-icon, var(--text));
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-timing),
+    color var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing),
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   padding: 0;
   box-shadow: var(--shadow-sm);
 }
@@ -192,21 +197,33 @@
 
 /* Specific styles for New Chat Button */
 .newChatButton {
-  background: var(--accent);
-  color: var(--button-text);
-  border-color: var(--accent);
+  background: var(--sidebar-surface-tertiary, var(--input-bg));
+  color: var(--sidebar-icon, var(--text));
+  border-color: var(--border-color);
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-timing),
+    color var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing),
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .newChatButton:hover {
-  background: color-mix(in srgb, var(--accent) 90%, white);
-  color: var(--button-text);
-  border-color: color-mix(in srgb, var(--accent) 90%, white);
+  background: var(--hover);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 /* Specific styles for Settings Button */
 .settingsButton {
-  background: var(--input-bg);
-  color: var(--text);
+  background: var(--sidebar-surface-tertiary, var(--input-bg));
+  color: var(--sidebar-icon, var(--text));
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-timing),
+    color var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing),
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .settingsButton:hover {
@@ -256,7 +273,7 @@
   padding: 0.6rem 0.75rem;
   border: none;
   background: transparent;
-  color: var(--secondary-text);
+  color: var(--sidebar-body-primary, var(--secondary-text));
   cursor: pointer;
   text-align: left;
   border-radius: 6px;

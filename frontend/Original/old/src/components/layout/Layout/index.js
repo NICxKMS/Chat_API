@@ -5,6 +5,7 @@ import { useChat } from '../../../contexts/ChatContext';
 // Import useApi if needed for apiUrl, but not for status
 // import { useApi } from '../../../contexts/ApiContext'; 
 import { useAuth } from '../../../contexts/AuthContext'; // Import useAuth
+import { useTheme } from '../../../contexts/ThemeContext'; // Import ThemeContext
 import { GearIcon, PlusIcon, TrashIcon, DownloadIcon } from '@primer/octicons-react';
 import styles from './Layout.module.css';
 // Import icons using the correct paths
@@ -46,6 +47,7 @@ const Layout = () => {
   const { selectedModel, isLoadingModels } = useModel(); // Get model data
   const { chatHistory, resetChat, downloadChatHistory } = useChat();
   const { currentUser, isAuthenticated, login, logout, loading: authLoading } = useAuth(); // Get auth context
+  const { theme, toggleTheme } = useTheme(); // Get theme context
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen(prev => !prev);
@@ -131,6 +133,7 @@ const Layout = () => {
           {/* More Actions Menu */}
           <MoreActions 
             actions={[
+              // Always included actions
               {
                 icon: <PlusIcon size={16} />,
                 label: 'New Chat',
@@ -145,7 +148,28 @@ const Layout = () => {
                 icon: <DownloadIcon size={16} />,
                 label: 'Download Chat',
                 onClick: handleDownloadChat
-              }
+              },
+              // Mobile-specific actions (will only be visible on mobile)
+              ...(isDesktop ? [] : [
+                // Theme toggle action
+                {
+                  icon: theme === 'dark' ? <span style={{ fontSize: '16px' }}>☀️</span> : <span style={{ fontSize: '16px' }}>🌙</span>,
+                  label: `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`,
+                  onClick: toggleTheme
+                },
+                // Settings action
+                {
+                  icon: <GearIcon size={16} />,
+                  label: 'Settings',
+                  onClick: toggleSettings
+                },
+                // Login/Logout action
+                {
+                  icon: isAuthenticated ? <span style={{ fontSize: '16px' }}>👤</span> : <span style={{ fontSize: '16px' }}>🔑</span>,
+                  label: isAuthenticated ? `Logout (${currentUser?.displayName || currentUser?.email || 'User'})` : 'Login',
+                  onClick: isAuthenticated ? logout : login
+                }
+              ])
             ]}
           />
         </div>

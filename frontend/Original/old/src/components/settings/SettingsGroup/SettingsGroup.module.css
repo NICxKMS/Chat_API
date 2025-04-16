@@ -1,23 +1,25 @@
 .group {
   margin-bottom: 1.5rem;
   background-color: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   transition: box-shadow 0.2s, 
               background-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .group:hover {
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 
 .header {
-  padding: 1rem 1.25rem;
+  padding: 1.2rem 1.5rem;
   cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
-  transition: background-color 0.2s;
+  border-bottom: 1px solid transparent;
+  transition: background-color 0.2s, border-color 0.2s;
 }
 
 .header:hover {
@@ -40,6 +42,7 @@
   font-weight: 600;
   color: var(--text);
   margin: 0;
+  letter-spacing: 0.01em;
 }
 
 .description {
@@ -52,15 +55,16 @@
 .expandButton {
   background: transparent;
   border: none;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   color: var(--secondary-text);
-  transition: background-color 0.2s, transform 0.2s;
+  transition: background-color 0.2s, transform 0.2s, color 0.2s;
+  margin-left: 12px;
 }
 
 .expandButton:hover {
@@ -78,8 +82,10 @@
 }
 
 .content {
-  padding: 0.5rem 1.25rem 1.25rem;
+  padding: 0.5rem 1.5rem 1.5rem;
   animation: slideDown 0.2s ease-out;
+  background-color: color-mix(in srgb, var(--bg-secondary) 97%, var(--accent) 3%);
+  border-top: 1px solid var(--border);
 }
 
 @keyframes slideDown {
@@ -91,6 +97,11 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.expanded .header {
+  border-bottom-color: var(--border);
+  background-color: color-mix(in srgb, var(--bg-secondary) 97%, var(--accent) 3%);
 }
 
 .groupHeader {

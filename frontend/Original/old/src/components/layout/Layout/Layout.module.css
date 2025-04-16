@@ -20,7 +20,11 @@
   flex-shrink: 0;
   position: relative;
   z-index: 50;
-  transition: width 0.3s ease, transform 0.3s ease, padding 0.3s ease, border 0.3s ease;
+  transition: 
+    width 0.3s ease, 
+    transform 0.3s ease, 
+    padding 0.3s ease, 
+    border-color var(--theme-transition-duration) var(--theme-transition-timing);
   width: var(--sidebar-width-full);
   padding: 0;
   border-right: 1px solid var(--border);
@@ -206,6 +210,9 @@
   border-radius: 12px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 /* Ensure AuthButton fits within the container */
@@ -253,11 +260,53 @@
   transform: none;
 }
 
-/* Media Query for mobile view */
+/* Media Query for mobile view (small screens) */
 @media (max-width: 768px) {
   .mobileActionsContainer {
     display: block;
   }
+  
+  /* Hide individual action buttons in mobile view */
+  .mobileActions > *:not(:last-child) {
+    display: none;
+  }
+  
+  /* Ensure the MoreActions component is visible */
+  .mobileActions > *:last-child {
+    display: block;
+  }
+  
+  /* Make the mobile actions container more compact */
+  .mobileActions {
+    padding: 0.25rem;
+    gap: 0;
+  }
+}
+
+/* Media Query for tablet/medium screens */
+@media (min-width: 769px) and (max-width: 1023px) {
+  .mobileActionsContainer {
+    display: block;
+  }
+  
+  /* For medium screens, either show all actions or only the dropdown */
+  .mobileActions > *:not(:last-child) {
+    display: none;
+  }
+  
+  .mobileActions > *:last-child {
+    display: block;
+  }
+  
+  .mobileActions {
+    padding: 0.25rem;
+  }
 }
 
 /* Media Query for desktop view */
+@media (min-width: 1024px) {
+  /* On desktop, show all actions */
+  .mobileActions > * {
+    display: flex;
+  }
+}

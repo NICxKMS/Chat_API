@@ -12,7 +12,10 @@
   border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 0.5rem;
-  transition: all 0.2s ease;
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-timing),
+    border-color var(--theme-transition-duration) var(--theme-transition-timing),
+    box-shadow 0.2s ease;
 }
 
 .inputWrapper:focus-within {
@@ -51,7 +54,9 @@
   padding: 0.25rem;
   border-radius: 4px;
   margin-left: 0.5rem;
-  transition: all 0.2s ease;
+  transition: 
+    background-color var(--theme-transition-duration) var(--theme-transition-timing),
+    color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .clearButton:hover {
