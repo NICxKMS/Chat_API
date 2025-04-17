@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	defaultPort = "8080"
+	defaultPort = "8090"
 )
 
 func main() {
@@ -30,10 +30,10 @@ func main() {
 	flag.Parse()
 
 	// Get port from environment or use default
-	envPort := os.Getenv("PORT")
+	/* envPort := os.Getenv("PORT")
 	if envPort != "" {
 		*port = envPort
-	}
+	} */ // Removing this block to hardcode the port
 
 	// Create listener
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", *port))
@@ -70,8 +70,6 @@ func main() {
 	if *enableLogging {
 		log.Printf("Detailed request/response logging is enabled")
 	}
-	log.Printf("The service will classify models according to: provider, family, type, capabilities")
-	log.Printf("Models are organized hierarchically by provider > type > version by default. Set hierarchical=false to use flat classification.")
 
 	// Handle graceful shutdown
 	go func() {

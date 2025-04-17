@@ -26,27 +26,34 @@ dotenv.config({ override: false }); // Load .env but don't override existing env
 // Create Fastify application
 // const app = express(); // Removed
 const fastify = Fastify({ logger: true }); // Added (with logger)
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
-// --- Initialize Firebase Admin SDK --- 
+// --- Initialize Firebase Admin SDK ---
 try {
-  // Check if GOOGLE_APPLICATION_CREDENTIALS is set
-  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    throw new Error('GOOGLE_APPLICATION_CREDENTIALS environment variable not set. Firebase Admin SDK cannot initialize.');
+  // Check if either credential method is available
+  if (process.env.FIREBASE_CONFIG) {
+    // Use the FIREBASE_CONFIG environment variable directly
+    const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG);
+    admin.initializeApp({
+      credential: admin.credential.cert(firebaseConfig)
+    });
+    logger.info("Firebase Admin SDK initialized successfully with FIREBASE_CONFIG.");
+  } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    // Fall back to application default credentials if FIREBASE_CONFIG not available
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
+    logger.info("Firebase Admin SDK initialized successfully with application default credentials.");
+  } else {
+    throw new Error('No Firebase credentials found. Set FIREBASE_CONFIG or GOOGLE_APPLICATION_CREDENTIALS environment variable.');
   }
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    // Optionally add databaseURL if using Realtime Database features
-    // databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`
-  });
-  logger.info("Firebase Admin SDK initialized successfully.");
 } catch (error) {
   logger.error("Firebase Admin SDK initialization error:", error);
   process.exit(1); // Exit if Firebase Admin fails to initialize
 }
 // ------------------------------------
 
-// --- Legacy Firebase Authentication Hook --- 
+// --- Legacy Firebase Authentication Hook ---
 // Keeping this for reference - now replaced with authenticateUser middleware
 async function firebaseAuthHook(request, reply) {
   logger.debug('=========== FIREBASE AUTH HOOK START ===========');
@@ -61,11 +68,11 @@ async function firebaseAuthHook(request, reply) {
       // Verify the ID token using Firebase Admin SDK
       const decodedToken = await admin.auth().verifyIdToken(idToken);
       // Attach decoded user information if token is valid
-      request.user = { 
+      request.user = {
         uid: decodedToken.uid,
         email: decodedToken.email,
         // Add other properties from decodedToken as needed
-      }; 
+      };
       logger.debug(`Authenticated user via hook: ${request.user.uid}`);
     } catch (error) {
       // Token provided but invalid/expired. Log warning but allow request to proceed
@@ -88,10 +95,37 @@ const start = async () => {
     // Register essential plugins
     await fastify.register(fastifyCors, {
       // origin: 'http://localhost:3001', // Temporarily commented out
-      origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3001', 'http://localhost:3000','http://192.168.1.100:3001', 'http://localhost:3002','*'],
+      // origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3001', 'http://localhost:3000','http://192.168.1.100:3001', 'http://localhost:3002','*'], // OLD CORS logic
+      origin: (origin, cb) => {
+        const allowedOrigins = [
+          'http://localhost:3000'
+        ];
+        const allowedPattern = /\\.chat-api-9ru\\.pages\\.dev$/; // Regex for allowed Cloudflare Pages domain
+
+        if (process.env.NODE_ENV !== 'production') {
+          // Allow common dev origins and wildcard in non-production
+          const devOrigins = ['http://localhost:3001', 'http://localhost:3000','http://192.168.1.100:3001', 'http://localhost:3002'];
+          if (!origin || devOrigins.includes(origin) || origin.includes('localhost')) { // Allow requests with no origin (like curl) and common dev hosts
+            cb(null, true);
+            return;
+          }
+          // For non-production, you might still want to allow the production pattern or be more permissive
+          // Example: allow anything if not production
+           cb(null, true); // Allow everything in non-prod for simplicity here
+           return;
+        } else {
+           // Production CORS logic
+          if (!origin || allowedOrigins.includes(origin) || allowedPattern.test(origin)) {
+            cb(null, true); // Allow the origin
+          } else {
+            logger.warn(`CORS denied for origin: ${origin}`);
+            cb(new Error('Not allowed by CORS'), false); // Deny the origin
+          }
+        }
+      },
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: [
-        'Content-Type', 
+        'Content-Type',
         'Authorization',
         'Accept',
         'Cache-Control',
@@ -104,11 +138,11 @@ const start = async () => {
       maxAge: 86400 // 24 hours
     });
     await fastify.register(fastifyHelmet, {
-        // TODO: Review Helmet options for production.
-        // Disabling CSP/COEP might be insecure.
-        // Consider default policies or configuring them properly.
-        contentSecurityPolicy: false,
-        crossOriginEmbedderPolicy: false
+      // TODO: Review Helmet options for production.
+      // Disabling CSP/COEP might be insecure.
+      // Consider default policies or configuring them properly.
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false
     });
     await fastify.register(fastifyCompress);
 
@@ -134,8 +168,8 @@ const start = async () => {
     });
 
     // Register main API plugin
-    await fastify.register(mainApiRoutes, { 
-        prefix: "/api"
+    await fastify.register(mainApiRoutes, {
+      prefix: "/api"
     });
 
     // --- Register Error Handler ---
@@ -144,7 +178,6 @@ const start = async () => {
     // --- Start Server ---
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
     // Logger automatically logs listen address
-    console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
 
     // Determine Base Path from Environment Variable
     logger.info(`Cache enabled: ${isCacheEnabled()}`);
@@ -167,4 +200,3 @@ signals.forEach(signal => {
 });
 
 start();
-

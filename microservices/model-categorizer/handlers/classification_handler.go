@@ -65,13 +65,13 @@ func (h *ModelClassificationHandler) logRequest(method string, req interface{}) 
 		return
 	}
 
-	requestJSON, err := json.MarshalIndent(req, "", "  ")
+	_,err := json.MarshalIndent(req, "", "  ")
 	if err != nil {
 		log.Printf("Error serializing request for logging: %v", err)
 		return
 	}
 
-	log.Printf("REQUEST [%s]:\n%s", method, string(requestJSON))
+	// log.Printf("REQUEST [%s]:\n%s", method, string(requestJSON))
 }
 
 // logResponse logs the response if logging is enabled
@@ -91,12 +91,10 @@ func (h *ModelClassificationHandler) logResponse(method string, resp interface{}
 
 // ClassifyModels classifies a list of models
 func (h *ModelClassificationHandler) ClassifyModels(ctx context.Context, req *proto.LoadedModelList) (*proto.ClassifiedModelResponse, error) {
-	log.Printf("Received request to classify %d models", len(req.Models))
-	h.logRequest("ClassifyModels", req)
+	// h.logRequest("ClassifyModels", req)
 
 	// Convert proto models to our internal model representation
 	internalModels := convertProtoModelsToInternal(req.Models)
-	log.Printf("[DEBUG] Converted %d proto models to internal models", len(internalModels))
 
 	// Enhance and classify models with hierarchical structure by default
 	result := &proto.ClassifiedModelResponse{
@@ -107,7 +105,6 @@ func (h *ModelClassificationHandler) ClassifyModels(ctx context.Context, req *pr
 	enhancedModels := h.enhanceModels(internalModels)
 
 	// Build hierarchical model groups by default
-	log.Printf("[DEBUG] Building model hierarchy from %d enhanced models...", len(enhancedModels))
 	rootGroups := h.buildModelHierarchy(enhancedModels)
 
 	// Restore original providers AFTER building the hierarchy (which uses classified providers)
@@ -164,7 +161,7 @@ func (h *ModelClassificationHandler) ClassifyModelsWithCriteria(ctx context.Cont
 	// Check if hierarchical classification is requested or defaulted
 	if useHierarchical {
 		// Use hierarchical classification
-		log.Printf("Using hierarchical classification by provider > type > version")
+		// log.Printf("Using hierarchical classification by provider > type > version") // Removed
 		rootGroups := h.buildModelHierarchy(enhancedModels)
 
 		// Restore original providers AFTER building the hierarchy
@@ -176,8 +173,10 @@ func (h *ModelClassificationHandler) ClassifyModelsWithCriteria(ctx context.Cont
 			result.HierarchicalGroups = append(result.HierarchicalGroups, protoGroup)
 		}
 
+		/* // Removed block
 		log.Printf("Returning hierarchical classification with %d root groups and %d models",
 			len(result.HierarchicalGroups), len(filteredModels))
+		*/
 	} else {
 		// Use flat classification (original behavior)
 		// Create classification groups for each property
@@ -235,16 +234,16 @@ func (h *ModelClassificationHandler) buildClassificationResponse(modelsList []*m
 
 // enhanceModels enhances models with classification properties
 func (h *ModelClassificationHandler) enhanceModels(modelsList []*models.Model) []*models.Model {
-	log.Printf("[DEBUG] Starting model enhancement for %d models...", len(modelsList))
+	// log.Printf("[DEBUG] Starting model enhancement for %d models...", len(modelsList)) // Removed
 	for i, model := range modelsList {
 		// Use the unified ClassifyModel method to get all metadata at once
 		metadata := h.classifier.ClassifyModel(model.ID, model.Provider)
 		h.applyModelMetadata(model, metadata)
 		if i%10 == 0 && i > 0 {
-			log.Printf("[DEBUG] Enhanced %d/%d models...", i, len(modelsList))
+			// log.Printf("[DEBUG] Enhanced %d/%d models...", i, len(modelsList)) // Removed
 		}
 	}
-	log.Printf("[DEBUG] Finished model enhancement for %d models.", len(modelsList))
+	// log.Printf("[DEBUG] Finished model enhancement for %d models.", len(modelsList)) // Removed
 	return modelsList
 }
 
@@ -665,16 +664,16 @@ func (h *ModelClassificationHandler) sortModels(modelsList []*models.Model) {
 // buildModelHierarchy creates a hierarchical grouping of models by provider, type, and version,
 // preserving the order established by sortModels.
 func (h *ModelClassificationHandler) buildModelHierarchy(modelsList []*models.Model) []*models.HierarchicalModelGroup {
-	log.Printf("[DEBUG] buildModelHierarchy: Received %d models to build hierarchy.", len(modelsList))
+	// log.Printf("[DEBUG] buildModelHierarchy: Received %d models to build hierarchy.", len(modelsList)) // Removed
 
 	// 1. Sort models according to the specified criteria FIRST.
 	h.sortModels(modelsList)
-	log.Printf("[DEBUG] buildModelHierarchy: Finished sorting %d models.", len(modelsList))
+	// log.Printf("[DEBUG] buildModelHierarchy: Finished sorting %d models.", len(modelsList)) // Removed
 
 	// 2. Build the hierarchy in a single pass over the sorted list.
 	var rootGroups []*models.HierarchicalModelGroup
 	if len(modelsList) == 0 {
-		log.Printf("[DEBUG] buildModelHierarchy: No models to build hierarchy for.")
+		// log.Printf("[DEBUG] buildModelHierarchy: No models to build hierarchy for.") // Removed
 		return rootGroups
 	}
 
@@ -704,7 +703,7 @@ func (h *ModelClassificationHandler) buildModelHierarchy(modelsList []*models.Mo
 
 		// Check if Provider changed or if it's the first model
 		if i == 0 || currentProviderGroup == nil || provider != currentProviderGroup.GroupValue {
-			log.Printf("[DEBUG] buildModelHierarchy: Creating new provider group: %s", provider)
+			// log.Printf("[DEBUG] buildModelHierarchy: Creating new provider group: %s", provider) // Removed
 			currentProviderGroup = &models.HierarchicalModelGroup{
 				GroupName:  "provider",
 				GroupValue: provider,
@@ -717,7 +716,7 @@ func (h *ModelClassificationHandler) buildModelHierarchy(modelsList []*models.Mo
 
 		// Check if Type changed or if it's the first model in this provider group
 		if currentTypeGroup == nil || modelType != currentTypeGroup.GroupValue {
-			log.Printf("[DEBUG] buildModelHierarchy:   Creating new type group: %s (under %s)", modelType, provider)
+			// log.Printf("[DEBUG] buildModelHierarchy:   Creating new type group: %s (under %s)", modelType, provider) // Removed
 			currentTypeGroup = &models.HierarchicalModelGroup{
 				GroupName:  "type",
 				GroupValue: modelType,
@@ -729,7 +728,7 @@ func (h *ModelClassificationHandler) buildModelHierarchy(modelsList []*models.Mo
 
 		// Check if Version/Variant changed or if it's the first model in this type group
 		if currentVersionGroup == nil || version != currentVersionGroup.GroupValue {
-			log.Printf("[DEBUG] buildModelHierarchy:     Creating new version group: %s (under %s > %s)", version, provider, modelType)
+			// log.Printf("[DEBUG] buildModelHierarchy:     Creating new version group: %s (under %s > %s)", version, provider, modelType) // Removed
 			currentVersionGroup = &models.HierarchicalModelGroup{
 				GroupName:  "version", // Corresponds to Variant in the model
 				GroupValue: version,
@@ -743,7 +742,7 @@ func (h *ModelClassificationHandler) buildModelHierarchy(modelsList []*models.Mo
 		currentVersionGroup.Models = append(currentVersionGroup.Models, model)
 	}
 
-	log.Printf("[DEBUG] buildModelHierarchy: Finished building hierarchy, returning %d root groups.", len(rootGroups))
+	// log.Printf("[DEBUG] buildModelHierarchy: Finished building hierarchy, returning %d root groups.", len(rootGroups)) // Removed
 	return rootGroups
 }
 
@@ -885,13 +884,3 @@ func convertProtoHierarchicalGroupToInternal(protoGroup *proto.HierarchicalModel
 	return internalGroup
 }
 
-// restoreOriginalProviders is no longer needed if hierarchy uses OriginalProvider
-// func (h *ModelClassificationHandler) restoreOriginalProviders(modelsList []*models.Model) {
-// 	for _, model := range modelsList {
-// 		// If the original provider is OpenRouter, restore it
-// 		if strings.EqualFold(model.OriginalProvider, "openrouter") {
-// 			model.Provider = model.OriginalProvider
-// 		}
-// 		// Potentially add other original providers here if needed in the future
-// 	}
-// }

@@ -460,23 +460,27 @@ export const ChatProvider = ({ children }) => {
       } // End of while loop
 
       // Ensure final update after loop completes
-      if (updateTimeoutRef.current) {
+      if (updateTimeoutRef.current) { // Clear any pending throttled update
         clearTimeout(updateTimeoutRef.current);
         updateTimeoutRef.current = null;
-        updateChatWithContent(streamingTextRef.current);
       }
+      // Always update with the final accumulated content from the ref
+      updateChatWithContent(streamingTextRef.current);
+
 
       // Finalize metrics
       updatePerformanceMetrics(accumulatedTokenCount, true);
       console.log('Stream completed, finalizing metrics');
 
       // Handle empty response after streaming finishes
-      if (!accumulatedContent.trim()) {
-        accumulatedContent = 'No Response returned';
-        updateChatWithContent(accumulatedContent); // Update history with the placeholder
+      // This check should run *after* the unconditional final update
+      if (!streamingTextRef.current.trim()) { // Check the ref directly now
+        const emptyMessageContent = 'No Response returned';
+        updateChatWithContent(emptyMessageContent); // Update history with the placeholder
       }
 
-      return accumulatedContent;
+      // Return the final content from the ref
+      return streamingTextRef.current;
 
     } catch (error) {
       console.error('Error in fetch streaming:', error);
