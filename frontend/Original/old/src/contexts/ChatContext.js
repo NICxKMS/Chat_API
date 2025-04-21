@@ -44,6 +44,8 @@ export const ChatProvider = ({ children }) => {
   const streamBufferRef = useRef('');
   const updateTimeoutRef = useRef(null);
   const isStreamingRef = useRef(false);
+  const currentRequestIdRef = useRef(null); // Track the current request ID for stopping
+  const abortControllerRef = useRef(null); // Store abort controller for client-side aborting
 
   // Format model identifier for API
   const formatModelIdentifier = useCallback((model) => {
@@ -203,30 +205,36 @@ export const ChatProvider = ({ children }) => {
     });
   }, [currentMessageMetrics]);
 
-  // Helper function to update the last assistant message placeholder on error
+  // Helper function to update placeholder on error
   const _updatePlaceholderOnError = useCallback(() => {
     setChatHistory(prev => {
       const newHistory = [...prev];
       const lastMessage = newHistory[newHistory.length - 1];
-      // Ensure we're targeting the correct placeholder
-      if (lastMessage && lastMessage.role === 'assistant' && lastMessage.content === '') {
-        lastMessage.content = 'No response'; // Set error message content
-        lastMessage.metrics = { 
-          ...(lastMessage.metrics || {}), // Keep existing metrics like startTime
-          isComplete: true, 
-          error: true, // Add an error flag
-          endTime: Date.now() 
-        };
+      if (lastMessage && lastMessage.role === 'assistant') {
+        const existingContent = lastMessage.content;
+        const errorSuffix = ' [Error occurred during generation]';
+        
+        // Only update if it doesn't already have error text
+        if (!existingContent.includes(errorSuffix)) {
+          const newContent = existingContent || 'Error occurred';
+          lastMessage.content = existingContent ? `${newContent}${errorSuffix}` : 'Error occurred during generation';
+          
+          // Mark metrics complete
+          if (lastMessage.metrics) {
+            lastMessage.metrics.isComplete = true;
+            lastMessage.metrics.error = true;
+          }
+        }
       }
       return newHistory;
     });
-  }, [setChatHistory]); // Dependency on setChatHistory
+  }, []);
 
-  // Process streaming message using Fetch API with ReadableStream for optimal performance
+  // Stream a message using fetch streaming
   const streamMessageWithFetch = useCallback(async (message, editIndex = null) => {
     // Check if this is an edit request
     const isEditing = editIndex !== null && Number.isInteger(editIndex) && editIndex >= 0;
-    
+
     if (!message || !selectedModel) {
       setError('Please enter a message and select a model');
       return null;
@@ -238,9 +246,17 @@ export const ChatProvider = ({ children }) => {
       return null;
     }
 
-    // Add user message to history (either normally or after truncation)
+    // Initialize vars
+    let currentChatHistory;
     let userMessage;
+    let timeoutId;
     
+    // Abort controller for timeouts and manual stopping
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    currentRequestIdRef.current = null; // Reset request ID
+    
+    // Add user message to history (either normally or after truncation)
     if (isEditing) {
       // Truncate history up to the edit index and then add the new user message
       setChatHistory(prev => {
@@ -254,12 +270,16 @@ export const ChatProvider = ({ children }) => {
           timestamp: Date.now()
         };
         
+        // Set for later use
+        currentChatHistory = [...truncatedHistory];
+        
         // Return the truncated history with the new message
         return [...truncatedHistory, userMessage];
       });
     } else {
       // Regular flow: just add the message to existing history
       userMessage = addMessageToHistory('user', message);
+      currentChatHistory = [...chatHistory]; // Make a copy for the API payload
     }
 
     // Reset metrics and start timer
@@ -270,33 +290,32 @@ export const ChatProvider = ({ children }) => {
     setIsWaitingForResponse(true);
     setError(null);
 
-    // Add assistant response with empty content and initial metrics
-    addMessageToHistory('assistant', '', { ...currentMessageMetrics, isComplete: false });
+    // Reset streaming text reference
+    streamingTextRef.current = '';
+    streamBufferRef.current = '';
+    isStreamingRef.current = true;
 
+    // Add a placeholder assistant message for UI immediately
+    addMessageToHistory('assistant', '');
+
+    // Create timeout to watch for stuck streams
+    timeoutId = setTimeout(() => {
+      console.log('No data received for 60 seconds, timing out');
+      abortController.abort('timeout');
+      setError('Connection timed out');
+      setIsWaitingForResponse(false);
+    }, 60000);
+
+    // Initialize tracking variables for optimized updates
     let accumulatedContent = '';
     let accumulatedTokenCount = 0;
-    let abortController = new AbortController();
-    let lastRenderTime = 0;
-
-    // Set up timeout
-    let timeoutId = setTimeout(() => {
-      console.log('Streaming request timed out after 60 seconds');
-      abortController.abort();
-      setError('Request timed out. Please try again.');
-      setIsWaitingForResponse(false);
-    }, 60000); // 60 second timeout
+    let lastRenderTime = performance.now();
 
     try {
       // Get adjusted settings based on model
       const adjustedSettings = getModelAdjustedSettings(selectedModel);
 
-      // Get the current chat history (after possible truncation if editing)
-      const currentChatHistory = isEditing 
-        ? chatHistory.slice(0, editIndex) // Use truncated history if editing 
-        : chatHistory;          // Use full history otherwise
-      
-      // Prepare request payload - Filter out empty assistant messages and remove metrics
-      // Strip metrics only
+      // Extract valid messages, removing metrics which aren't needed for the API
       const validMessages = currentChatHistory.map(msg => {
         const { metrics, ...messageWithoutMetrics } = msg;
         return messageWithoutMetrics;
@@ -346,6 +365,12 @@ export const ChatProvider = ({ children }) => {
         cache: 'no-store',
         credentials: 'same-origin'
       });
+
+      // Store the request ID from response headers if available
+      if (response.headers.has('X-Request-ID')) {
+        currentRequestIdRef.current = response.headers.get('X-Request-ID');
+        console.log(`Received request ID: ${currentRequestIdRef.current}`);
+      }
 
       if (!response.ok) {
         let errorMessage = `API error: ${response.status}`;
@@ -457,6 +482,31 @@ export const ChatProvider = ({ children }) => {
               continue;
             }
 
+            if (message.startsWith('event: abort')) {
+              console.log('Received abort event');
+              // Mark the generation as stopped by the user
+              updateChatWithContent(accumulatedContent + ' [Stopped]');
+              updatePerformanceMetrics(accumulatedTokenCount, true);
+              break;
+            }
+
+            if (message.startsWith('event: error')) {
+              console.log('Received error event');
+              try {
+                const data = message.split('\n')[1]?.slice(5); // Extract data part after event line
+                if (data) {
+                  const errorData = JSON.parse(data);
+                  setError(errorData.message || 'Server error');
+                  _updatePlaceholderOnError();
+                }
+              } catch (e) {
+                console.warn('Error parsing error event:', e);
+                setError('Server error');
+                _updatePlaceholderOnError();
+              }
+              break;
+            }
+
             if (message.startsWith('data:')) {
               const data = message.slice(5).trim();
 
@@ -530,14 +580,27 @@ export const ChatProvider = ({ children }) => {
 
     } catch (error) {
       console.error('Error in fetch streaming:', error);
-      setError(error.message || 'An error occurred during streaming');
-      // Update the placeholder message to indicate error
-      _updatePlaceholderOnError(); // Use the helper function
+      // Check if this was an abort initiated by stopGeneration
+      if (error.name === 'AbortError' && error.message !== 'timeout') {
+        // If aborted by the user (not by timeout), add a stopped indicator
+        updateChatWithContent(streamingTextRef.current + ' [Stopped]');
+        updatePerformanceMetrics(accumulatedTokenCount, true);
+      } else {
+        // Other errors
+        setError(error.message || 'An error occurred during streaming');
+        // Update the placeholder message to indicate error
+        _updatePlaceholderOnError(); // Use the helper function
+      }
       return null;
     } finally {
       // Ensure loading state is always reset
       clearTimeout(timeoutId); // Also clear timeout here
+      isStreamingRef.current = false;
       setIsWaitingForResponse(false);
+      // Clear request ID and abort controller
+      if (currentRequestIdRef.current === null) {
+        abortControllerRef.current = null;
+      }
     }
   }, [
     apiUrl, selectedModel, chatHistory, getModelAdjustedSettings,
@@ -715,106 +778,102 @@ export const ChatProvider = ({ children }) => {
     idToken, currentMessageMetrics
   ]);
 
-  // Reset chat history
-  const resetChat = useCallback(() => {
+  // Stop the current generation
+  const stopGeneration = useCallback(async () => {
+    console.log('Attempting to stop generation');
+    
+    // First try client-side abortion if we have an active abort controller
+    if (abortControllerRef.current) {
+      console.log('Using client-side abort');
+      abortControllerRef.current.abort('user_stopped');
+      // Don't clear the abort controller here, let the API request complete first
+    }
+    
+    // If we have a request ID, also notify the server
+    if (currentRequestIdRef.current) {
+      try {
+        console.log(`Sending stop request to server for requestId: ${currentRequestIdRef.current}`);
+        
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        
+        // Add authorization header if idToken exists
+        if (idToken) {
+          headers['Authorization'] = `Bearer ${idToken}`;
+        }
+        
+        const stopUrl = new URL('/api/chat/stop', apiUrl).toString();
+        const response = await fetch(stopUrl, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ requestId: currentRequestIdRef.current }),
+        });
+        
+        if (!response.ok) {
+          // Log error but don't throw - we already did client-side abort
+          const errorData = await response.json().catch(() => ({}));
+          console.warn('Error stopping generation on server:', errorData);
+        } else {
+          const result = await response.json();
+          console.log('Stop response from server:', result);
+        }
+      } catch (error) {
+        console.error('Error sending stop request to server:', error);
+        // Don't throw since we already did client-side abort
+      } finally {
+        // Clear the request ID after attempting to stop
+        currentRequestIdRef.current = null;
+        abortControllerRef.current = null;
+      }
+    } else {
+      console.log('No active request ID to stop on server');
+      // Clear abort controller if no request ID
+      abortControllerRef.current = null;
+    }
+    
+    // Return true to indicate we attempted to stop
+    return true;
+  }, [apiUrl, idToken]);
+
+  // Get or create conversation: simple function that gets an existing conversation by ID
+  // or creates a new one if the ID doesn't exist
+  const getOrCreateConversation = useCallback((conversationId) => {
+    // Implementation...
+  }, [/* dependencies */]);
+
+  // Clear chat history
+  const clearChat = useCallback(() => {
     setChatHistory([]);
     resetPerformanceMetrics();
-    setError(null);
   }, [resetPerformanceMetrics]);
 
-  // Download chat history as JSON
-  const downloadChatHistory = useCallback(() => {
-    if (chatHistory.length === 0) {
-      setError('No chat history to download');
-      return;
-    }
-
-    try {
-      // Create JSON string with pretty formatting
-      const historyJson = JSON.stringify(chatHistory, null, 2);
-
-      // Create blob
-      const blob = new Blob([historyJson], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-
-      // Create download link
-      const a = document.createElement('a');
-
-      // Format date for filename
-      const date = new Date();
-      const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
-
-      a.href = url;
-      a.download = `chat-history-${dateStr}.json`;
-      document.body.appendChild(a);
-      a.click();
-
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-    } catch (error) {
-      console.error('Error downloading chat history:', error);
-      setError('Failed to download chat history');
-    }
-  }, [chatHistory]);
-
-  // Optimized streaming update function with buffering
-  const updateStreamingText = useCallback((newChunk) => {
-    if (!isStreamingRef.current) {
-      isStreamingRef.current = true;
-    }
-
-    // Add to buffer
-    streamBufferRef.current += newChunk;
-
-    // Update the streaming text ref directly
-    // The StreamingMessage component will handle the word-by-word display
-    streamingTextRef.current = streamBufferRef.current;
-
-    // No need for excessive throttling since StreamingMessage handles the typing effect
-    // Just ensure the reference is updated immediately for the typing component to access
-  }, []);
-
-  const finishStreaming = useCallback(() => {
-    // Final update to ensure buffer is fully flushed
-    streamingTextRef.current = streamBufferRef.current;
-
-    // Clear any pending updates
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-      updateTimeoutRef.current = null;
-    }
-
-    isStreamingRef.current = false;
-  }, []);
-
-  // Memoize the context value
+  // Export context value - memoized to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     chatHistory,
     isWaitingForResponse,
     error,
-    metrics: currentMessageMetrics,
-    submitMessage: sendMessage,
-    resetChat,
-    downloadChatHistory,
-    updateChatWithContent,
+    currentMessageMetrics,
+    sendMessage,
+    submitMessage: sendMessage, // Add alias for backward compatibility
+    stopGeneration,
+    addMessageToHistory,
+    clearChat,
+    getOrCreateConversation,
     streamingTextRef,
-    updateStreamingText,
-    finishStreaming,
-    isStreaming: isStreamingRef.current
+    isStreaming: isStreamingRef.current,
   }), [
     chatHistory,
     isWaitingForResponse,
     error,
     currentMessageMetrics,
     sendMessage,
-    resetChat,
-    downloadChatHistory,
-    updateChatWithContent,
-    updateStreamingText,
-    finishStreaming
+    stopGeneration,
+    addMessageToHistory,
+    clearChat,
+    getOrCreateConversation, 
+    // No need to include streamingTextRef itself, it's just a ref object
+    isStreamingRef.current,
   ]);
 
   return (

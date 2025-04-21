@@ -166,6 +166,7 @@ const ChatContainer = memo(({
               editingMessage={editingMessage}
               onCancelEdit={handleCancelEdit}
               isStreaming={isWaitingForResponse}
+              toggleModelSelector={toggleModelSelector}
             />
           </Suspense>
         </div>

@@ -259,7 +259,6 @@
   }
 
   .modelButtonContainer {
-    top: 4rem; /* Move down below the sidebar toggle */
     width: auto;
     max-width: calc(100% - 6rem); /* Leave space for side buttons */
     left: 50%;

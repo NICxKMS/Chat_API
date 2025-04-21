@@ -43,7 +43,7 @@ const ModelSelectorButton = ({
   // Apply width to button when width is determined
   useEffect(() => {
     if (buttonWidth > 0 && buttonRef.current) {
-      buttonRef.current.style.width = `${buttonWidth}px`;
+      buttonRef.current.style.width = `${buttonWidth+10}px`;
     }
   }, [buttonWidth]);
   
@@ -84,7 +84,7 @@ const ModelSelectorButton = ({
     }
     
     if (!providerName || !showProvider) {
-      return isMobile ? selectedModelName : `Model: ${selectedModelName}`;
+      return selectedModelName;
     } else {
       return getFormattedProvider();
     }

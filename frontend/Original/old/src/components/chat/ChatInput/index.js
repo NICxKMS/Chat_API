@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
-import { PlusIcon, PaperAirplaneIcon, XIcon, CheckIcon, GlobeIcon, KebabHorizontalIcon, ImageIcon } from '@primer/octicons-react';
+import { PlusIcon, PaperAirplaneIcon, XIcon, CheckIcon, GlobeIcon, KebabHorizontalIcon, ImageIcon, ChevronDownIcon, SearchIcon, LightBulbIcon } from '@primer/octicons-react';
 import styles from './ChatInput.module.css';
+import { useChat } from '../../../contexts/ChatContext';
 
 /**
  * Reads a file and returns its base64 representation.
@@ -28,6 +29,7 @@ const readFileAsBase64 = (file) => {
  * @param {Object} [props.editingMessage=null] - Message being edited, or null if not in edit mode
  * @param {Function} [props.onCancelEdit] - Function to cancel edit mode
  * @param {boolean} [props.isStreaming=false] - Flag indicating if the input is in streaming mode
+ * @param {Function} [props.toggleModelSelector] - Function to toggle model selector
  * @returns {JSX.Element} - Rendered component
  */
 const ChatInput = memo(({ 
@@ -38,7 +40,8 @@ const ChatInput = memo(({
   isStaticLayout = false,
   editingMessage = null,
   onCancelEdit,
-  isStreaming = false
+  isStreaming = false,
+  toggleModelSelector
 }) => {
   const [message, setMessage] = useState('');
   const [selectedImages, setSelectedImages] = useState([]);
@@ -46,6 +49,7 @@ const ChatInput = memo(({
   const fileInputRef = useRef(null);
   const isEditing = !!editingMessage;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+  const { isWaitingForResponse, stopGeneration } = useChat();
   
   // Set up window resize listener to detect mobile view
   useEffect(() => {
@@ -116,7 +120,11 @@ const ChatInput = memo(({
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      // Only send message if not waiting for a response
+      if (!isWaitingForResponse) {
+        handleSend();
+      }
+      // No action for Enter key while waiting for response
     } else if (isEditing && e.key === 'Escape') {
       e.preventDefault();
       handleCancelEdit();
@@ -185,6 +193,11 @@ const ChatInput = memo(({
     setMessage('');
   };
 
+  // Stop the response generation
+  const handleStop = () => {
+    stopGeneration();
+  };
+
   // Send message and reset input
   const handleSend = () => {
     // Ensure there's either text or images to send, and not disabled
@@ -228,13 +241,24 @@ const ChatInput = memo(({
     }
   };
   
+  // Determine button action and appearance based on state
+  const handleButtonClick = () => {
+    if (isWaitingForResponse) {
+      handleStop();
+    } else {
+      handleSend();
+    }
+  };
+  
   // Determine placeholder text based on editing state
   const placeholderText = isEditing 
     ? 'Edit your message...' 
-    : 'Ask anything';
+    : isWaitingForResponse
+      ? 'Type your next message while waiting...'
+      : 'Ask anything';
   
   return (
-    <div className={`${styles.inputContainer} ${isEditing ? styles.editing : ''}`}>
+    <div className={`${styles.inputContainer} ${isEditing ? styles.editing : ''} ${isWaitingForResponse ? styles.waitingForResponse : ''}`}>
       {/* Hidden file input */}
       <input
         type="file"
@@ -259,19 +283,24 @@ const ChatInput = memo(({
           aria-label="Chat message input"
         />
         
-        {/* Send button positioned inside the textarea */}
+        {/* Send/Stop button positioned inside the textarea */}
         <button
-          className={styles.sendButtonInline}
-          onClick={handleSend}
-          disabled={(!message.trim() && selectedImages.length === 0) || disabled || !selectedModel}
-          aria-label={isEditing ? "Save edit" : "Send message"}
-          title={isEditing ? "Save edit (Enter)" : "Send message (Enter)"}
+          className={`${styles.sendButtonInline} ${isWaitingForResponse ? styles.stopButton : ''}`}
+          onClick={handleButtonClick}
+          disabled={(!isWaitingForResponse && ((!message.trim() && selectedImages.length === 0) || disabled || !selectedModel))}
+          aria-label={isWaitingForResponse ? "Stop generation" : isEditing ? "Save edit" : "Send message"}
+          title={isWaitingForResponse ? "Stop generation" : isEditing ? "Save edit (Enter)" : "Send message (Enter)"}
           type="button"
         >
-          {isEditing ? 
-            <CheckIcon size={21} /> : 
+          {isWaitingForResponse ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            </svg>
+          ) : isEditing ? (
+            <CheckIcon size={21} />
+          ) : (
             <PaperAirplaneIcon size={21} />
-          }
+          )}
         </button>
       </div>
       
@@ -294,12 +323,13 @@ const ChatInput = memo(({
           )}
           
           <button
-            className={styles.actionButton}
+            className={`${styles.textButton} ${isMobile ? styles.iconOnlyButton : ''}`}
             aria-label="Search"
             title="Search"
             type="button"
           >
-            <GlobeIcon size={16} />
+            <SearchIcon size={16} />
+            {!isMobile && <span className={styles.buttonText}>Search</span>}
           </button>
           
           <button
@@ -308,13 +338,8 @@ const ChatInput = memo(({
             title="Reason mode"
             type="button"
           >
-            {isMobile ? (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 1C4.13438 1 1 4.13438 1 8C1 11.8656 4.13438 15 8 15C11.8656 15 15 11.8656 15 8C15 4.13438 11.8656 1 8 1ZM8.5 12.5H7.5V11.5H8.5V12.5ZM9.76562 8.14062L9.18125 8.74375C8.69687 9.2375 8.5 9.625 8.5 10.5H7.5V10.25C7.5 9.5875 7.69687 9 8.18125 8.50625L8.97188 7.68438C9.22188 7.44375 9.375 7.1125 9.375 6.75C9.375 6.0375 8.8125 5.475 8.1 5.475C7.3875 5.475 6.825 6.0375 6.825 6.75H5.825C5.825 5.48438 6.84688 4.475 8.1 4.475C9.35312 4.475 10.375 5.48438 10.375 6.75C10.375 7.29375 10.1438 7.79688 9.76562 8.14062Z" fill="currentColor" />
-              </svg>
-            ) : (
-              "Reason"
-            )}
+            <LightBulbIcon size={16} />
+            {!isMobile && <span className={styles.buttonText}>Reason</span>}
           </button>
           
           <button
@@ -356,6 +381,7 @@ const ChatInput = memo(({
           {/* AI model button */}
           <button
             className={styles.modelButton}
+            onClick={toggleModelSelector}
             aria-label="Select AI model"
             title="Select AI model"
             type="button"
@@ -398,6 +424,7 @@ const ChatInput = memo(({
   );
 });
 
+// PropTypes for documentation and type checking
 ChatInput.propTypes = {
   onSendMessage: PropTypes.func.isRequired,
   onNewChat: PropTypes.func.isRequired,
@@ -406,9 +433,8 @@ ChatInput.propTypes = {
   isStaticLayout: PropTypes.bool,
   editingMessage: PropTypes.object,
   onCancelEdit: PropTypes.func,
-  isStreaming: PropTypes.bool
+  isStreaming: PropTypes.bool,
+  toggleModelSelector: PropTypes.func
 };
-
-ChatInput.displayName = 'ChatInput';
 
 export default ChatInput; 
