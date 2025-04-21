@@ -7,7 +7,6 @@ req.json
 .env
 .env.local
 .env.test
-.env.production
 authkey.json
 # Logs
 logs/

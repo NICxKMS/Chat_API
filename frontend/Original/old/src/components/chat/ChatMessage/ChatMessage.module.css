@@ -48,6 +48,7 @@
   align-items: flex-start;
   will-change: transform, opacity;
   contain: content;
+  position: relative;
 }
 
 /* Message variants based on role */
@@ -197,6 +198,11 @@
 
 .userMessage .messageContentWrapper {
   order: 1;
+}
+
+/* Make copy button always visible in user messages, not just on hover */
+.userMessage .copyMessageButton {
+  opacity: 1;
 }
 
 /* Message content */
@@ -911,4 +917,74 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* Edit message button styles - similar to copy button but different position */
+.editMessageButton {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 2.8rem; /* Position to the left of copy button */
+  opacity: 1;  /* Visible by default */
+  background-color: var(--hover);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  z-index: 5;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Add margin spacing to user message container to make room for buttons */
+.userMessage .messageContent {
+  margin-bottom: 1.5rem; /* Add space at bottom to prevent content overlap with buttons */
+}
+
+.editMessageButton:hover {
+  background-color: var(--active);
+  color: var(--text-primary);
+}
+
+/* User message buttons container - directly in the message */
+.userButtonContainer {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem; 
+  font-size: 0.75rem;
+  color: var(--secondary-text);
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
+  opacity: 1; /* Changed from 0.85 to 1 to ensure buttons are always visible */
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.userButtonContainer:hover {
+  opacity: 1;
+}
+
+/* When buttons are in the user button container, they don't need absolute positioning */
+.userButtonContainer .copyMessageButton,
+.userButtonContainer .editMessageButton {
+  position: static;
+  opacity: 1;
+  margin: 0;
+  /* Keep other styles consistent */
+  background-color: var(--hover);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  z-index: 5;
+  flex-shrink: 0;
 }

@@ -97,9 +97,8 @@
 /* Base Input Area styles (Common to static and fixed) */
 .inputArea {
 
-  padding: 0.75rem 1rem;
   background-color: var(--elevated-bg);
-  border-radius: 12px;
+  border-radius: 18px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   transition: box-shadow 0.3s ease-in-out,
@@ -134,22 +133,6 @@
   align-items: center;
   gap: 0.5rem;
   position: relative;
-}
-
-
-/* Position controls absolutely in static/empty state */
-.staticInputArea :global(.ChatControls_controls__*) {
-  position: absolute;
-  bottom: -2.5rem;
-  right: 0;
-}
-
-/* Container for the spinner next to input */
-.inputSpinnerContainer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-left: 0.5rem;
 }
 
 /* Placeholder styles with shimmer animation */
@@ -194,25 +177,6 @@
   border-radius: 12px;
   margin: 0 1rem 0.75rem;
   overflow: hidden;
-}
-
-.controlsPlaceholder {
-  height: 40px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin: 0 1rem 1rem;
-  overflow: hidden;
-}
-
-.controlsPlaceholder::before,
-.controlsPlaceholder::after {
-  content: '';
-  width: 80px;
-  height: 100%;
-  background-color: var(--hover);
-  border-radius: 8px;
 }
 
 /* Wrapper for chat area and scroll button */
@@ -281,10 +245,6 @@
     margin: 0 0.75rem 0.5rem;
   }
   
-  .controlsPlaceholder {
-    margin: 0 0.75rem 0.75rem;
-  }
-
   .staticInputArea {
     max-width: calc(100% - 2rem);
   }
@@ -294,17 +254,26 @@
     bottom: 0.5rem;
   }
   
- 
-  /* Fixed input area controls alignment (ensure they stay in line) */
-
-
-  /* Static Input Area controls positioning (bottom right relative to input) */
-  .staticInputArea :global(.ChatControls_controls__*) {
-    bottom: -3rem;
-    right: 0;
-  }
-
   .scrollToBottomButton {
     bottom: calc(0.5rem + 80px + 10px); /* Adjust bottom position for mobile */
   }
+
+  .modelButtonContainer {
+    top: 4rem; /* Move down below the sidebar toggle */
+    width: auto;
+    max-width: calc(100% - 6rem); /* Leave space for side buttons */
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* Edit mode styles */
+.editingMode .scrollContainer {
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.editingMode .fixedInputArea {
+  border-top: 2px solid var(--accent-color);
+  background-color: var(--hover);
 } 

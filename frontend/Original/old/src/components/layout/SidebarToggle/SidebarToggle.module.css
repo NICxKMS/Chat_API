@@ -6,6 +6,21 @@
   pointer-events: none;
 }
 
+/* Media queries for mobile view */
+@media (max-width: 768px) {
+  .toggleContainer {
+    /* Keep at top-left corner */
+    top: 1rem;
+    left: 1rem;
+    z-index: 900; /* Keep high z-index to stay above other elements */
+  }
+  
+  .toggleButton {
+    width: 38px;
+    height: 38px;
+  }
+}
+
 .toggleButton {
   width: 40px;
   height: 40px;

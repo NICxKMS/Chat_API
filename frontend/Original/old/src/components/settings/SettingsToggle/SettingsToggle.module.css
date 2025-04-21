@@ -49,4 +49,146 @@
 .toggleIcon {
   transition: transform 0.3s, 
               color var(--theme-transition-duration) var(--theme-transition-timing);
-} 
+}
+
+/* Common styles for boolean controls */
+.toggleContainer, .switchContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 0;
+}
+
+.toggleContainer.disabled, .switchContainer.disabled { opacity: 0.6; cursor: not-allowed; }
+
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.labelText {
+  color: var(--text-primary, #fff);
+  font-size: 0.95rem;
+}
+
+/* Toggle variant */
+.toggleTrack {
+  position: relative;
+  width: 42px;
+  height: 22px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 34px;
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+
+.toggleThumb {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.toggleTrack.checked { background-color: var(--button-bg-color, rgba(87, 157, 152, 0.75)); }
+.toggleTrack.checked .toggleThumb { transform: translateX(20px); }
+
+/* Switch variant */
+.switchTrack {
+  position: relative;
+  width: 38px;
+  height: 20px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 34px;
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+
+.switchThumb {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.switchTrack.checked { background-color: var(--button-bg-color, rgba(87, 157, 152, 0.75)); }
+.switchTrack.checked .switchThumb { transform: translateX(18px); }
+
+/* Size variants */
+.small .toggleTrack { width: 34px; height: 18px; }
+.small .toggleThumb { height: 14px; width: 14px; }
+.small .toggleTrack.checked .toggleThumb { transform: translateX(16px); }
+
+.small .switchTrack { width: 30px; height: 16px; }
+.small .switchThumb { height: 12px; width: 12px; }
+.small .switchTrack.checked .switchThumb { transform: translateX(14px); }
+
+.large .toggleTrack { width: 50px; height: 26px; }
+.large .toggleThumb { height: 22px; width: 22px; }
+.large .toggleTrack.checked .toggleThumb { transform: translateX(24px); }
+
+.large .switchTrack { width: 46px; height: 24px; }
+.large .switchThumb { height: 20px; width: 20px; }
+.large .switchTrack.checked .switchThumb { transform: translateX(22px); }
+
+/* Utility classes */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.infoIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary, #a0a0a0);
+}
+
+.tooltip:hover::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 200px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: rgba(40, 40, 40, 0.95);
+  color: #fff;
+  font-size: 0.8rem;
+  text-align: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.hiddenInput {
+  opacity: 0;
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.disabled { pointer-events: none; } 

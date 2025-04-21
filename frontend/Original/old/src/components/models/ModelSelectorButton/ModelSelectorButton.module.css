@@ -12,6 +12,12 @@
   --btn-disabled-bg: #e9ecef;
   --btn-disabled-text: #adb5bd;
   --btn-active-inner-bg: #e9ecef;
+  
+  /* Button sizing */
+  --btn-width-desktop: 350px;
+  --btn-width-mobile: 250px;
+  --btn-icon-width: 20px;
+  --btn-padding-h: 1.2rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -55,6 +61,8 @@
   cursor: pointer;
   transition: box-shadow var(--theme-transition-duration) var(--theme-transition-timing),
               background-image var(--theme-transition-duration) var(--theme-transition-timing);
+  min-width: 160px;
+  max-width: 350px;
 }
 
 .modelSelectorButton:active,
@@ -65,7 +73,7 @@
 .innerContent {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   background-color: var(--btn-inner-bg);
   color: var(--btn-text);
   padding: 0.7rem 1.2rem;
@@ -101,6 +109,51 @@
 
 .buttonText {
   margin-right: 0.6rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+  min-height: 1.2em;
+  display: block;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Animation for provider display */
+.showProvider {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Scrolling text animation for overflow */
+.scrollText {
+  animation: scrollText 6s linear infinite;
+  display: inline-block;
+  padding-right: 1rem;
+}
+
+@keyframes scrollText {
+  0% {
+    transform: translateX(0%);
+  }
+  10% {
+    transform: translateX(0%);
+  }
+  45% {
+    transform: translateX(calc(-100% + 150px));
+  }
+  55% {
+    transform: translateX(calc(-100% + 150px));
+  }
+  90% { 
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
 }
 
 .buttonIcon {
@@ -108,6 +161,7 @@
   transition: opacity 0.2s ease,
               color var(--theme-transition-duration) var(--theme-transition-timing);
   color: currentColor;
+  flex-shrink: 0;
 }
 
 .modelSelectorButton:hover:not(:disabled) .buttonIcon {
@@ -119,6 +173,22 @@
 }
 
 /* Optional: Responsive adjustments */
+@media (max-width: 768px) {
+  .modelSelectorButton {
+    font-size: 0.8rem;
+    min-width: 130px;
+    max-width: 250px;
+  }
+  
+  .innerContent {
+    padding: 0.6rem 0.8rem; /* Reduce padding */
+  }
+  
+  .buttonText {
+    max-width: 180px;
+  }
+}
+
 /* @media (min-width: 768px) {
   .modelSelectorButton {
     font-size: 1rem;

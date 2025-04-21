@@ -264,6 +264,15 @@
 @media (max-width: 768px) {
   .mobileActionsContainer {
     display: block;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100; /* Keep z-index high enough to stay above other elements */
+  }
+  
+  /* Make the mobile actions container more compact */
+  .mobileActions {
+    padding: 0.25rem;
+    gap: 0;
   }
   
   /* Hide individual action buttons in mobile view */
@@ -276,10 +285,10 @@
     display: block;
   }
   
-  /* Make the mobile actions container more compact */
-  .mobileActions {
-    padding: 0.25rem;
-    gap: 0;
+  /* Adjust button size for better tap targets */
+  .mobileActionButton {
+    width: 38px;
+    height: 38px;
   }
 }
 

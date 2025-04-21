@@ -7,7 +7,6 @@ import styles from './ChatContainer.module.css';
 // Lazy-loaded components
 const MessageList = lazy(() => import('../MessageList'));
 const ChatInput = lazy(() => import('../ChatInput'));
-const ChatControls = lazy(() => import('../ChatControls'));
 const GlobalMetricsBar = lazy(() => import('../GlobalMetricsBar'));
 const ModelSelectorButton = lazy(() => import('../../models/ModelSelectorButton'));
 
@@ -31,6 +30,9 @@ const ChatContainer = memo(({
     selectedModel: modelFromLogic,
     handleSendMessage,
   } = useChatLogic();
+
+  // Add state to track which message is being edited
+  const [editingMessage, setEditingMessage] = useState(null);
 
   const messageListRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -107,17 +109,44 @@ const ChatContainer = memo(({
 
   // Use the selected model passed down for the button, but model from logic elsewhere
   const displayModelName = passedSelectedModel?.name;
+  const displayProviderName = passedSelectedModel?.provider;
+
+  // Handle edit message request from a message
+  const handleEditMessage = useCallback((message) => {
+    // Can't edit while waiting for response
+    if (isWaitingForResponse) return;
+    setEditingMessage(message);
+    // Scroll to input area if needed
+    setTimeout(() => {
+      const inputArea = document.querySelector(`.${styles.fixedInputArea}`);
+      if (inputArea) {
+        inputArea.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  }, [isWaitingForResponse]);
+
+  // Handle cancel edit
+  const handleCancelEdit = useCallback(() => {
+    setEditingMessage(null);
+  }, []);
+
+  // Disable editing if the model starts responding
+  useEffect(() => {
+    if (isWaitingForResponse && editingMessage) {
+      setEditingMessage(null);
+    }
+  }, [isWaitingForResponse, editingMessage]);
 
   // Classes for the main container
-  const chatContainerClasses = `${styles.chatContainer} ${isActiveChat ? styles.activeChat : styles.emptyChat}`;
+  const chatContainerClasses = `${styles.chatContainer} ${isActiveChat ? styles.activeChat : styles.emptyChat} ${editingMessage ? styles.editingMode : ''}`;
 
   // Helper function to render the input area contents
   const renderInputAreaContents = (isFixedLayout) => {
-    const isStaticLayout = !isFixedLayout; // Flag for empty state layout
+    const isStaticLayout = !isFixedLayout;
     return (
       <>
         {/* Global Metrics: Only show when fixed */} 
-        {isFixedLayout && (
+        {isFixedLayout && !editingMessage && (
           <Suspense fallback={<div className={styles.globalMetricsPlaceholder} />}>
             <GlobalMetricsBar 
               metrics={metrics?.session}
@@ -127,11 +156,6 @@ const ChatContainer = memo(({
         )}
 
         <div className={styles.inputControlsWrapper}> 
-          {isWaitingForResponse && (
-            <div className={styles.inputSpinnerContainer}>
-              <Spinner size="small" />
-            </div>
-          )}
           <Suspense fallback={<div className={styles.inputPlaceholder} />}>
             <ChatInput
               onSendMessage={handleSendMessage}
@@ -139,17 +163,9 @@ const ChatContainer = memo(({
               selectedModel={modelFromLogic} 
               onNewChat={onNewChat}
               isStaticLayout={isStaticLayout}
-            />
-          </Suspense>
-          <Suspense fallback={<div className={styles.controlsPlaceholder} />}>
-            <ChatControls
-              onReset={onResetChat}
-              onDownload={onDownloadChat}
-              isGenerating={isWaitingForResponse}
-              hasMessages={isActiveChat}
-              isStaticLayout={isStaticLayout}
-              onNewChat={onNewChat}
-              onToggleSettings={onToggleSettings}
+              editingMessage={editingMessage}
+              onCancelEdit={handleCancelEdit}
+              isStreaming={isWaitingForResponse}
             />
           </Suspense>
         </div>
@@ -164,6 +180,7 @@ const ChatContainer = memo(({
         <Suspense fallback={null}> 
           <ModelSelectorButton 
             selectedModelName={displayModelName}
+            providerName={displayProviderName}
             onClick={toggleModelSelector}
             disabled={isLoadingModels}
           />
@@ -181,6 +198,7 @@ const ChatContainer = memo(({
                     ref={messageListRef}
                     messages={chatHistory}
                     error={error}
+                    onEditMessage={handleEditMessage}
                   />
                 </Suspense>
               </div>

@@ -3,15 +3,17 @@ import styles from './MessageList.module.css';
 import { useChat } from '../../../contexts/ChatContext';
 import ChatMessage from '../ChatMessage';
 import ImageOverlay from '../../common/ImageOverlay';
+import PropTypes from 'prop-types';
 
 /**
  * Simple message list without virtualization
  * @param {Object} props - Component props
  * @param {Array} props.messages - Array of message objects
  * @param {string} props.error - Error message to display
+ * @param {Function} props.onEditMessage - Function to handle message edit requests
  * @returns {JSX.Element} - Rendered component
  */
-const MessageList = forwardRef(({ messages, error }, ref) => {
+const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
   const { isWaitingForResponse } = useChat();
   const [overlayImageSrc, setOverlayImageSrc] = useState(null);
 
@@ -115,6 +117,7 @@ const MessageList = forwardRef(({ messages, error }, ref) => {
                 <ChatMessage
                   message={{ ...message, content: text || message.content }}
                   isStreaming={isStreaming}
+                  onEditMessage={message.role === 'user' ? onEditMessage : undefined}
                 />
               )}
             </div>
@@ -129,5 +132,11 @@ const MessageList = forwardRef(({ messages, error }, ref) => {
 });
 
 MessageList.displayName = 'MessageList';
+
+MessageList.propTypes = {
+  messages: PropTypes.array.isRequired,
+  error: PropTypes.string,
+  onEditMessage: PropTypes.func
+};
 
 export default memo(MessageList); 

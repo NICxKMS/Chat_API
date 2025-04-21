@@ -138,7 +138,28 @@ export const ChatProvider = ({ children }) => {
   // Add message to chat history with metrics
   const addMessageToHistory = useCallback((role, content, metrics = null) => {
     setChatHistory(prev => {
-      const newMessage = { role, content };
+      // Create message object with basic properties
+      const newMessage = { 
+        role, 
+        content,
+        timestamp: Date.now()
+      };
+
+      // Preserve uniqueId if it exists in the content object
+      if (typeof content === 'object' && content !== null) {
+        if (content.uniqueId) {
+          newMessage.uniqueId = content.uniqueId;
+        }
+        // For array content with uniqueId
+        if (Array.isArray(content) && content.length > 0 && content[0].uniqueId) {
+          newMessage.uniqueId = content[0].uniqueId;
+        }
+      }
+      
+      // If no uniqueId was found, generate one
+      if (!newMessage.uniqueId) {
+        newMessage.uniqueId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      }
 
       // If metrics are provided, add them to the message
       if (metrics) {
@@ -202,7 +223,10 @@ export const ChatProvider = ({ children }) => {
   }, [setChatHistory]); // Dependency on setChatHistory
 
   // Process streaming message using Fetch API with ReadableStream for optimal performance
-  const streamMessageWithFetch = useCallback(async (message) => {
+  const streamMessageWithFetch = useCallback(async (message, editIndex = null) => {
+    // Check if this is an edit request
+    const isEditing = editIndex !== null && Number.isInteger(editIndex) && editIndex >= 0;
+    
     if (!message || !selectedModel) {
       setError('Please enter a message and select a model');
       return null;
@@ -214,8 +238,29 @@ export const ChatProvider = ({ children }) => {
       return null;
     }
 
-    // Add user message to history
-    const userMessage = addMessageToHistory('user', message);
+    // Add user message to history (either normally or after truncation)
+    let userMessage;
+    
+    if (isEditing) {
+      // Truncate history up to the edit index and then add the new user message
+      setChatHistory(prev => {
+        // Slice history up to the edit point (inclusive)
+        const truncatedHistory = prev.slice(0, editIndex);
+        
+        // Create the new user message
+        userMessage = {
+          role: 'user',
+          content: message,
+          timestamp: Date.now()
+        };
+        
+        // Return the truncated history with the new message
+        return [...truncatedHistory, userMessage];
+      });
+    } else {
+      // Regular flow: just add the message to existing history
+      userMessage = addMessageToHistory('user', message);
+    }
 
     // Reset metrics and start timer
     resetPerformanceMetrics();
@@ -245,19 +290,20 @@ export const ChatProvider = ({ children }) => {
       // Get adjusted settings based on model
       const adjustedSettings = getModelAdjustedSettings(selectedModel);
 
+      // Get the current chat history (after possible truncation if editing)
+      const currentChatHistory = isEditing 
+        ? chatHistory.slice(0, editIndex) // Use truncated history if editing 
+        : chatHistory;          // Use full history otherwise
+      
       // Prepare request payload - Filter out empty assistant messages and remove metrics
-      // strip metrics only
-      const validMessages = chatHistory.map(msg => {
+      // Strip metrics only
+      const validMessages = currentChatHistory.map(msg => {
         const { metrics, ...messageWithoutMetrics } = msg;
         return messageWithoutMetrics;
       });
 
-      // then add the new user message (unstripped, if it has no metrics field it's fine)
+      // Then add the new user message (unstripped, if it has no metrics field it's fine)
       validMessages.push(userMessage);
-
-
-      // Add only the user message
-      // validMessages.push(userMessage);
 
       // Create the final payload
       const payload = {
@@ -271,7 +317,7 @@ export const ChatProvider = ({ children }) => {
       };
 
       // Log payload before streaming request
-      console.log('[DEBUG] Streaming request payload:', payload);
+      console.log(`[DEBUG] ${isEditing ? 'Editing' : 'Streaming'} request payload:`, payload);
 
       // Prepare optimized headers for streaming
       const headers = {
@@ -502,10 +548,13 @@ export const ChatProvider = ({ children }) => {
   ]);
 
   // Send message to API - decide between streaming and non-streaming
-  const sendMessage = useCallback(async (message) => {
+  const sendMessage = useCallback(async (message, editIndex = null) => {
+    // Check if this is an edit request
+    const isEditing = editIndex !== null && Number.isInteger(editIndex) && editIndex >= 0;
+    
     // Use streaming if enabled in settings
     if (settings.streaming) {
-      return streamMessageWithFetch(message);
+      return streamMessageWithFetch(message, isEditing ? editIndex : null);
     }
 
     if (!message || !selectedModel) {
@@ -519,8 +568,29 @@ export const ChatProvider = ({ children }) => {
       return null;
     }
 
-    // Add user message to history
-    const userMessage = addMessageToHistory('user', message);
+    // Add user message to history (either normally or after truncation)
+    let userMessage;
+    
+    if (isEditing) {
+      // Truncate history up to the edit index and then add the new user message
+      setChatHistory(prev => {
+        // Slice history up to the edit point (inclusive)
+        const truncatedHistory = prev.slice(0, editIndex);
+        
+        // Create the new user message
+        userMessage = {
+          role: 'user',
+          content: message,
+          timestamp: Date.now()
+        };
+        
+        // Return the truncated history with the new message
+        return [...truncatedHistory, userMessage];
+      });
+    } else {
+      // Regular flow: just add the message to existing history
+      userMessage = addMessageToHistory('user', message);
+    }
 
     // Reset metrics and start timer
     resetPerformanceMetrics();
@@ -530,12 +600,8 @@ export const ChatProvider = ({ children }) => {
     setIsWaitingForResponse(true);
     setError(null);
 
-    // Add assistant placeholder message for non-streaming
-    const initialMetrics = { 
-      startTime: currentMessageMetrics.startTime, // Use timer already started
-      isComplete: false 
-    };
-    addMessageToHistory('assistant', '', initialMetrics);
+    // Remove the placeholder message creation for non-streaming
+    // We'll create only one message after we get the response
 
     try {
       // Get adjusted settings based on model
@@ -552,13 +618,28 @@ export const ChatProvider = ({ children }) => {
         headers['Authorization'] = `Bearer ${idToken}`;
       }
 
-      // Prepare request payload
+      // Get the current chat history (after possible truncation)
+      const currentHistory = chatHistory.map(msg => {
+        const { metrics, ...messageWithoutMetrics } = msg;
+        return messageWithoutMetrics;
+      });
+
+      // Add the user message at the end if we're in an edit case
+      if (isEditing) {
+        // Use the userMessage created during truncation
+        const { metrics, ...userMessageWithoutMetrics } = userMessage;
+        currentHistory.push(userMessageWithoutMetrics);
+      }
+
+      // Prepare request payload with potentially truncated history
       const payload = {
         model: modelId,
-        messages: [...chatHistory, userMessage].map(msg => {
-          const { metrics, ...messageWithoutMetrics } = msg;
-          return messageWithoutMetrics;
-        }),
+        messages: isEditing 
+          ? currentHistory // Use the potentially truncated history from above
+          : [...chatHistory, userMessage].map(msg => { // Use standard approach for non-edit
+              const { metrics, ...messageWithoutMetrics } = msg;
+              return messageWithoutMetrics;
+            }),
         temperature: adjustedSettings.temperature,
         max_tokens: adjustedSettings.max_tokens,
         top_p: adjustedSettings.top_p,
@@ -567,7 +648,7 @@ export const ChatProvider = ({ children }) => {
       };
 
       // Log payload before non-streaming request
-      console.log('[DEBUG] Non-streaming request payload:', payload);
+      console.log(`[DEBUG] ${isEditing ? 'Editing' : 'Non-streaming'} request payload:`, payload);
 
       // Construct URL safely
       const completionsUrl = new URL('/api/chat/completions', apiUrl).toString();
@@ -599,19 +680,29 @@ export const ChatProvider = ({ children }) => {
       // Handle empty response and set placeholder if necessary
       const content = data.content || 'No Response returned';
 
-      // Add AI response to history
-      addMessageToHistory('assistant', content);
-
-      // Calculate token count and update metrics
+      // Calculate token count for metrics
       const tokenCount = extractTokenCount(data, content);
-      updatePerformanceMetrics(tokenCount, true);
+      
+      // Create final metrics
+      const finalMetrics = {
+        startTime: currentMessageMetrics.startTime,
+        endTime: Date.now(),
+        elapsedTime: Date.now() - currentMessageMetrics.startTime,
+        tokenCount: tokenCount,
+        tokensPerSecond: tokenCount / ((Date.now() - currentMessageMetrics.startTime) / 1000),
+        isComplete: true,
+        timeToFirstToken: Date.now() - currentMessageMetrics.startTime
+      };
+
+      // Add AI response directly with complete metrics (without placeholder)
+      addMessageToHistory('assistant', content, finalMetrics);
 
       return content;
     } catch (error) {
       console.error('Error sending message:', error);
       setError(error.message);
-      // Update the placeholder message to indicate error
-      _updatePlaceholderOnError(); // Use the helper function
+      // Create an error message directly instead of updating a placeholder
+      addMessageToHistory('error', error.message || 'An error occurred during processing');
       return null;
     } finally {
       setIsWaitingForResponse(false);
@@ -621,7 +712,7 @@ export const ChatProvider = ({ children }) => {
     addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics,
     startPerformanceTimer, updatePerformanceMetrics, extractTokenCount,
     setError, setIsWaitingForResponse, streamMessageWithFetch,
-    idToken, _updatePlaceholderOnError, currentMessageMetrics
+    idToken, currentMessageMetrics
   ]);
 
   // Reset chat history

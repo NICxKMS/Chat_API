@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
-import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon } from '@primer/octicons-react';
+import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon, PencilIcon } from '@primer/octicons-react';
 import StreamingMessage from './StreamingMessage';
 import styles from './ChatMessage.module.css';
 
@@ -29,7 +29,7 @@ const formatTime = (ms) => {
  * @param {boolean} props.isStreaming - Whether this message is currently streaming
  * @returns {JSX.Element} - Rendered component
  */
-const ChatMessage = ({ message, isStreaming }) => {
+const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
   const [copiedCodeIndex, setCopiedCodeIndex] = useState(-1);
   const [messageCopied, setMessageCopied] = useState(false);
   
@@ -115,6 +115,18 @@ const ChatMessage = ({ message, isStreaming }) => {
       {messageCopied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
     </button>
   );
+
+  // Edit button only for user messages
+  const editButtonJsx = message.role === 'user' ? (
+    <button
+      className={styles.editMessageButton}
+      onClick={() => onEditMessage && onEditMessage(message)}
+      aria-label="Edit message"
+      title="Edit message"
+    >
+      <PencilIcon size={16} />
+    </button>
+  ) : null;
   // ==========================================
   
   // Process message content to format code blocks
@@ -287,10 +299,17 @@ const ChatMessage = ({ message, isStreaming }) => {
         {/* Render metrics (which now includes the button if applicable) */}
         {message.role === 'assistant' && renderMetrics()}
 
-        {/* Render button at bottom-right for non-assistant OR assistant without metrics */}
-        {(message.role !== 'assistant' || !shouldShowMetrics) && copyButtonJsx}
-
+        {/* Render copy button at bottom-right for non-user assistant without metrics */}
+        {message.role !== 'user' && (message.role !== 'assistant' || !shouldShowMetrics) && copyButtonJsx}
       </div>
+
+      {/* User message buttons container - moved to be direct child of message */}
+      {message.role === 'user' && (
+        <div className={styles.userButtonContainer}>
+          {editButtonJsx}
+          {copyButtonJsx}
+        </div>
+      )}
     </div>
   );
 };
@@ -303,7 +322,8 @@ ChatMessage.propTypes = {
       PropTypes.array
     ]).isRequired
   }).isRequired,
-  isStreaming: PropTypes.bool
+  isStreaming: PropTypes.bool,
+  onEditMessage: PropTypes.func
 };
 
 export default memo(ChatMessage); 

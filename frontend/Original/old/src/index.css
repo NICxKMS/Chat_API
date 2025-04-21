@@ -24,6 +24,7 @@
   --light-chat-bg: #ffffff; /* --clr-surface-a0 */
   --light-sidebar-bg: #ececec; /* --clr-surface-tonal-a0 */
   --light-text: #000000; /* --clr-dark-a0 */
+  --light-text-primary: #000000; /* Primary text color */
   --light-secondary-text: #7c59b4; /* --clr-primary-a50 */
   --light-border: #e1e1e1; /* --clr-surface-a20 */
   --border-pronounced-light: #d3d3d3; /* --clr-surface-a30 - New */
@@ -54,20 +55,34 @@
   
   /* Dark theme variables - APPLYING NEW PALETTE */
   --dark-bg: #121212; /* --clr-surface-a0 */
-  --dark-chat-bg: #282828; /* --clr-surface-a10 */
-  --dark-sidebar-bg: #171717; /* --clr-surface-tonal-a0 */
+  --dark-chat-bg: #212121; /* Updated for new design */
+  --dark-sidebar-bg: #171717; /* Updated for new design */
   --dark-text: #ffffff; /* --clr-light-a0 */
+  --dark-text-primary: #fff; /* Primary text color */
   --dark-secondary-text: #8b8b8b; /* --clr-surface-a50 */
   --dark-border: #3f3f3f; /* --clr-surface-a20 */
   --border-pronounced-dark: #575757; /* --clr-surface-a30 - New */
-  --dark-input-bg: #282828; /* --clr-surface-a10 */
+  --dark-input-bg: #303030; /* Updated for new design */
+  --dark-input-bg-color: #303030; /* Match input-bg for consistency */
+  --dark-input-container-bg: #262626;
+  --dark-input-text-color: #e0e0e0;
+  --dark-button-text-color: #e0e0e0;
+  --dark-button-border-color: #4a4a4a;
+  --dark-scrollbar-thumb-color: rgba(255, 255, 255, 0.2);
+  --dark-scrollbar-track-color: rgba(0, 0, 0, 0.1);
+  --dark-scrollbar-thumb-hover-color: rgba(255, 255, 255, 0.3);
+  --dark-placeholder-color: #999;
+  --dark-button-bg-color: rgba(87, 157, 152, 0.75);
+  --dark-button-hover-bg-color: rgba(107, 168, 163, 0.9);
+  --dark-button-hover-border-color: rgba(255, 255, 255, 0.3);
+  --dark-shadow-color: rgba(0, 0, 0, 0.1);
   --dark-button-bg: transparent; /* --clr-primary-a0 */
   --dark-button-hover: #6ba8a3; /* --clr-primary-a10 */
   --dark-button-text: #000000; /* --clr-dark-a0 */
   --dark-message-user-bg: rgba(87, 157, 152, 0.1); /* Use Dark Primary RGB */
   --dark-message-assistant-bg: #2f3333; /* --clr-surface-tonal-a10 */
   --dark-code-bg: #121212; /* --clr-surface-a0 */
-  --dark-settings-bg: #282828; /* --clr-surface-a10 */
+  --dark-settings-bg: #2f2f2f; /* Updated for new design */
   --dark-hover: rgba(87, 157, 152, 0.05); /* Use Dark Primary RGB */
   --dark-scroll-track: #282828; /* --clr-surface-a10 */
   --dark-scroll-thumb: #575757; /* --clr-surface-a30 */
@@ -95,6 +110,36 @@
   /* Simplified sidebar styling */
   --dark-sidebar-text: #ededed;
   --dark-sidebar-icon: #a4a4a4;
+  --light-sidebar-text: #333333;
+  --light-sidebar-icon: #555555;
+  
+  /* Additional sidebar and input surface variables for light theme */
+  --light-sidebar-surface: #f5f5f5;
+  --light-sidebar-surface-secondary: #ececec;
+  --light-sidebar-surface-tertiary: #ffffff;
+  --light-input-bg-color: #f0f0f0;
+  --light-input-container-bg: #f5f5f5;
+  --light-input-text-color: #333333;
+  --light-button-text-color: #333333;
+  --light-button-border-color: #d3d3d3;
+  --light-scrollbar-thumb-color: rgba(0, 0, 0, 0.2);
+  --light-scrollbar-track-color: rgba(0, 0, 0, 0.05);
+  --light-scrollbar-thumb-hover-color: rgba(0, 0, 0, 0.3);
+  --light-placeholder-color: #888888;
+  --light-button-bg-color: rgba(86, 18, 244, 0.75);
+  --light-button-hover-bg-color: rgba(98, 40, 231, 0.9);
+  --light-button-hover-border-color: rgba(0, 0, 0, 0.1);
+  --light-shadow-color: rgba(0, 0, 0, 0.1);
+  
+  /* Settings panel light theme variables */
+  --light-panel-bg: #f5f5f5;
+  --light-panel-border: rgba(0, 0, 0, 0.1);
+  --light-panel-shadow: rgba(0, 0, 0, 0.1);
+  --light-card-bg: rgba(255, 255, 255, 0.9);
+  --light-card-bg-hover: rgba(255, 255, 255, 1);
+  --light-border-accent: rgba(0, 0, 0, 0.15);
+  --light-accent-bg-soft: rgba(86, 18, 244, 0.1);
+  --light-accent-bg-softer: rgba(86, 18, 244, 0.05);
 
   /* Add CSS variable for RGB version of primary color for opacity control */
   --primary-color-rgb: 0, 123, 255; /* Default blue */
@@ -118,7 +163,40 @@ body.light-mode {
   --chat-bg: var(--light-chat-bg);
   --elevated-bg: var(--light-elevated-bg); /* NEW MAPPING */
   --sidebar-bg: var(--light-sidebar-bg);
+  --sidebar-text: var(--light-sidebar-text);
+  --sidebar-icon: var(--light-sidebar-icon);
+  --sidebar-surface: var(--light-sidebar-surface);
+  --sidebar-surface-secondary: var(--light-sidebar-surface-secondary);
+  --sidebar-surface-tertiary: var(--light-sidebar-surface-tertiary);
+  --sidebar-title-primary: var(--light-text);
+  
+  /* Chat input specific styling */
+  --input-bg-color: var(--light-input-bg-color);
+  --input-container-bg: var(--light-input-container-bg);
+  --input-text-color: var(--light-input-text-color);
+  --button-text-color: var(--light-button-text-color);
+  --button-border-color: var(--light-button-border-color);
+  --scrollbar-thumb-color: var(--light-scrollbar-thumb-color);
+  --scrollbar-track-color: var(--light-scrollbar-track-color);
+  --scrollbar-thumb-hover-color: var(--light-scrollbar-thumb-hover-color);
+  --placeholder-color: var(--light-placeholder-color);
+  --button-bg-color: var(--light-button-bg-color);
+  --button-hover-bg-color: var(--light-button-hover-bg-color);
+  --button-hover-border-color: var(--light-button-hover-border-color);
+  --shadow-color: var(--light-shadow-color);
+  
+  /* Settings panel variables */
+  --panel-bg: var(--light-panel-bg);
+  --panel-border: var(--light-panel-border);
+  --panel-shadow: var(--light-panel-shadow);
+  --card-bg: var(--light-card-bg);
+  --card-bg-hover: var(--light-card-bg-hover);
+  --border-accent: var(--light-border-accent);
+  --accent-bg-soft: var(--light-accent-bg-soft);
+  --accent-bg-softer: var(--light-accent-bg-softer);
+  
   --text: var(--light-text);
+  --text-primary: var(--light-text-primary);
   --secondary-text: var(--light-secondary-text);
   --border: var(--light-border);
   --border-pronounced: var(--border-pronounced-light); /* Add mapping */
@@ -138,7 +216,6 @@ body.light-mode {
   --toggle-button: var(--light-toggle-button);
   --status-online: var(--light-status-online);
   --status-offline: var(--light-status-offline);
-  --card-bg: var(--light-card-bg);
   --gradient-primary: var(--light-gradient-primary);
   --gradient-accent: var(--light-gradient-accent);
   --dropdown-bg: var(--light-dropdown-bg);
@@ -158,7 +235,34 @@ body.dark-mode {
   --sidebar-bg: var(--dark-sidebar-bg);
   --sidebar-text: var(--dark-sidebar-text);
   --sidebar-icon: var(--dark-sidebar-icon);
+  
+  /* Settings panel variables */
+  --panel-bg: var(--dark-settings-bg);
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --panel-shadow: rgba(0, 0, 0, 0.25);
+  --card-bg: rgba(40, 40, 40, 0.6);
+  --card-bg-hover: rgba(50, 50, 50, 0.8);
+  --border-accent: rgba(255, 255, 255, 0.15);
+  --accent-bg-soft: rgba(87, 157, 152, 0.15);
+  --accent-bg-softer: rgba(87, 157, 152, 0.05);
+  
+  /* Input and scrollbar variables */
+  --input-bg-color: var(--dark-input-bg-color);
+  --input-container-bg: var(--dark-input-container-bg);
+  --input-text-color: var(--dark-input-text-color);
+  --button-text-color: var(--dark-button-text-color);
+  --button-border-color: var(--dark-button-border-color);
+  --scrollbar-thumb-color: var(--dark-scrollbar-thumb-color);
+  --scrollbar-track-color: var(--dark-scrollbar-track-color);
+  --scrollbar-thumb-hover-color: var(--dark-scrollbar-thumb-hover-color);
+  --placeholder-color: var(--dark-placeholder-color);
+  --button-bg-color: var(--dark-button-bg-color);
+  --button-hover-bg-color: var(--dark-button-hover-bg-color);
+  --button-hover-border-color: var(--dark-button-hover-border-color);
+  --shadow-color: var(--dark-shadow-color);
+  
   --text: var(--dark-text);
+  --text-primary: var(--dark-text-primary);
   --secondary-text: var(--dark-secondary-text);
   --border: var(--dark-border);
   --border-pronounced: var(--border-pronounced-dark); /* Add mapping */
