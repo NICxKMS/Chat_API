@@ -277,65 +277,6 @@
   transition: all 0.2s ease;
 }
 
-/* Image Preview Container */
-.imagePreviewContainer {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
-  background-color: var(--input-bg-color, #303030);
-  border-radius: 8px 8px 0 0;
-  border: 1px solid var(--border-color, #3f3f3f);
-  border-bottom: none;
-  max-height: 150px;
-  overflow-y: auto;
-  z-index: 10;
-  margin-bottom: 4px;
-}
-
-/* Image Preview Item */
-.imagePreviewItem {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--border-color, #3a3a3a);
-}
-
-/* Image Preview Thumbnail */
-.imagePreviewThumbnail {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Remove Image Button */
-.removeImageButton {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
-}
-
-.removeImageButton:hover {
-  background-color: rgba(0, 0, 0, 0.7);
-}
-
 /* Edit mode styles */
 .inputContainer.editing {
   border: 1px solid var(--edit-border-color, #4a4a4a);
@@ -357,17 +298,62 @@
   font-style: italic;
 }
 
+/* Mobile view specific class - applied directly by component */
+.mobileView {
+  border-top: 1px solid var(--border-color, #3f3f3f);
+}
+
+.mobileView .chatInput {
+  background-color: var(--input-wrapper-bg, #303030);
+  border-radius: 20px;
+}
+
+.mobileView .actionRow {
+  margin-top: 4px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
+  /* Simplify input container in mobile view */
+  .inputContainer {
+    padding: 8px 4px;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    box-shadow: none;
+    background-color: var(--input-bg-color, #1e1e1e);
+  }
+
+  /* Simplify input wrapper */
+  .inputWrapper {
+    margin-bottom: 4px;
+  }
+
+  /* Adjust action row to be more compact */
   .actionRow {
-    flex-wrap: wrap;
-    gap: 10px;
+    gap: 4px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+    padding-bottom: 4px;
+  }
+  
+  /* Hide scrollbar for Chrome/Safari */
+  .actionRow::-webkit-scrollbar {
+    display: none;
   }
   
   .leftButtons, .rightButtons {
-    justify-content: center;
-    width: 100%;
-    margin-top: 5px;
+    justify-content: flex-start;
+    margin-top: 0;
+    width: auto;
+    flex-wrap: nowrap;
+  }
+  
+  .rightButtons {
+    margin-left: auto;
   }
   
   /* Convert text buttons to icon buttons on mobile */
@@ -376,40 +362,45 @@
     border-radius: 50%;
     width: 36px;
     height: 36px;
+    border-width: 1px;
   }
   
   .textButton .buttonText {
     display: none;
   }
   
-  /* Ensure all buttons have consistent spacing */
+  /* Ensure all buttons have consistent styling */
   .actionButton, .uploadButton, .textButton, .modelButton {
-    margin: 0 4px;
+    margin: 0 2px;
+    border-width: 1px;
+    min-width: 32px;
+    min-height: 32px;
+    width: 32px;
+    height: 32px;
   }
 
-  /* Reduce input container height in mobile view */
-  .inputContainer {
-    padding: 8px;
-    padding-right: 6px;
-  }
-
-  /* Reduce input area height for mobile */
+  /* Style text input to match mobile mockup */
   .chatInput {
     height: 40px;
     min-height: 20px;
     max-height: 120px;
-    padding: 8px;
+    padding: 10px;
     padding-right: 44px;
     font-size: 0.95rem;
+    border-radius: 20px;
+    background-color: var(--input-wrapper-bg, #303030);
   }
 
-  /* Make send button slightly smaller but with a larger touch target */
+  /* Make send button appear correctly inside the text input */
   .sendButtonInline {
-    width: 36px;
-    height: 36px;
-    right: 2px;
-    /* Add a pseudo-element for larger touch target without changing visual size */
-    position: relative;
+    width: 32px;
+    height: 32px;
+    right: 6px;
+    top: 50%; 
+    transform: translateY(-50%);
+    position: absolute;
+    z-index: 10;
+    border: none;
   }
   
   /* Invisible touch target extension */
@@ -422,6 +413,18 @@
     left: -8px;
     z-index: -1;
   }
+
+  /* Style for the input area when no model is selected */
+  .inputWrapper.noModelSelected:after {
+    display: none; /* Hide the "Select model" text on mobile to save space */
+  }
+  
+  /* Make the button more obvious when no model is selected on mobile */
+  .mobileView .sendButtonInline.noModelSelected {
+    background-color: var(--model-button-bg, #fff);
+    color: var(--model-button-color, #1a1a1a);
+    border: none;
+  }
 }
 
 /* Add this CSS for the stop button */
@@ -432,4 +435,87 @@
 
 .stopButton:hover {
   background-color: #d32f2f !important;
+}
+
+.mobileView .sendButtonInline {
+  width: 32px;
+  height: 32px;
+  right: 4px;
+  background-color: var(--button-bg-color, rgba(87, 157, 152, 0.9));
+  border: none;
+}
+
+/* Style for send button when no model is selected */
+.sendButtonInline.noModelSelected {
+  background-color: var(--model-button-bg, #fff);
+  color: var(--model-button-color, #1a1a1a);
+}
+
+/* Style for the input area when no model is selected */
+.inputWrapper.noModelSelected:after {
+  content: 'Select model';
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--placeholder-color, #999);
+  font-size: 0.9rem;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Add styles for Image Previews */
+.imagePreviewContainer {
+  display: flex; /* Arrange previews horizontally */
+  overflow-x: auto; /* Allow horizontal scrolling if needed */
+  padding: 5px 0; /* Add some vertical padding */
+  width: 100%; /* Take full width */
+  box-sizing: border-box;
+  margin-bottom: 8px; /* Add margin below the preview container */
+}
+
+.imagePreviewWrapper {
+  position: relative; /* For positioning the remove button */
+  margin-right: 8px; /* Space between images */
+  flex-shrink: 0; /* Prevent images from shrinking */
+  background: none; /* Ensure no background */
+}
+
+.imagePreview {
+  display: block; /* Remove extra space below image */
+  max-height: 120px; /* Set a fixed height for previews */
+  width: auto; /* Maintain aspect ratio */
+  max-width: 170px; /* Limit maximum width */
+  border-radius: 4px; /* Slightly rounded corners */
+  object-fit: cover; /* Cover the area nicely */
+  background: none; /* Ensure no background */
+}
+
+.removeImageButton {
+  position: absolute;
+  top: -3px;
+  right: 0px;
+  background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+  color: white;
+  border: none;
+  border-radius: 50%; /* Circular button */
+  width: 23px;
+  height: 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 0; /* Ensure icon is centered */
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.removeImageButton:hover {
+  opacity: 1;
+}
+
+.removeImageButton svg {
+  width: 10px; /* Adjust icon size */
+  height: 10px;
 } 

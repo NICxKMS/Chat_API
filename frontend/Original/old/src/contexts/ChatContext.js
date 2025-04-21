@@ -322,6 +322,17 @@ export const ChatProvider = ({ children }) => {
         return messageWithoutMetrics;
       });
 
+      // Add system message if specified in settings and not already at beginning of chat
+      if (adjustedSettings.systemPrompt && 
+          (!validMessages.length || validMessages[0].role !== 'system')) {
+        const systemMessage = {
+          role: 'system',
+          content: adjustedSettings.systemPrompt,
+          timestamp: Date.now() - 1 // Ensure it appears before other messages
+        };
+        validMessages.unshift(systemMessage);
+      }
+
       // Then add the new user message (unstripped, if it has no metrics field it's fine)
       validMessages.push(userMessage);
 
@@ -671,22 +682,22 @@ export const ChatProvider = ({ children }) => {
       // Get adjusted settings based on model
       const adjustedSettings = getModelAdjustedSettings(selectedModel);
 
-      // Prepare request headers conditionally
-      const headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      };
-
-      // Add authorization header if idToken exists
-      if (idToken) {
-        headers['Authorization'] = `Bearer ${idToken}`;
-      }
-
       // Get the current chat history (after possible truncation)
       const currentHistory = chatHistory.map(msg => {
         const { metrics, ...messageWithoutMetrics } = msg;
         return messageWithoutMetrics;
       });
+
+      // Add system message if specified in settings and not already at beginning of chat
+      if (adjustedSettings.systemPrompt && 
+          (!currentHistory.length || currentHistory[0].role !== 'system')) {
+        const systemMessage = {
+          role: 'system',
+          content: adjustedSettings.systemPrompt,
+          timestamp: Date.now() - 1 // Ensure it appears before other messages
+        };
+        currentHistory.unshift(systemMessage);
+      }
 
       // Add the user message at the end if we're in an edit case
       if (isEditing) {
@@ -699,11 +710,29 @@ export const ChatProvider = ({ children }) => {
       const payload = {
         model: modelId,
         messages: isEditing 
-          ? currentHistory // Use the potentially truncated history from above
-          : [...chatHistory, userMessage].map(msg => { // Use standard approach for non-edit
-              const { metrics, ...messageWithoutMetrics } = msg;
-              return messageWithoutMetrics;
-            }),
+          ? currentHistory // Use the potentially truncated history with system message
+          : (() => {
+              // Create a new array with messages from chatHistory
+              const messages = [...chatHistory].map(msg => {
+                const { metrics, ...messageWithoutMetrics } = msg;
+                return messageWithoutMetrics;
+              });
+              
+              // Add system message if needed
+              if (adjustedSettings.systemPrompt && 
+                  (!messages.length || messages[0].role !== 'system')) {
+                messages.unshift({
+                  role: 'system',
+                  content: adjustedSettings.systemPrompt,
+                  timestamp: Date.now() - 1
+                });
+              }
+              
+              // Add user message
+              messages.push(userMessage);
+              
+              return messages;
+            })(),
         temperature: adjustedSettings.temperature,
         max_tokens: adjustedSettings.max_tokens,
         top_p: adjustedSettings.top_p,
@@ -716,6 +745,18 @@ export const ChatProvider = ({ children }) => {
 
       // Construct URL safely
       const completionsUrl = new URL('/api/chat/completions', apiUrl).toString();
+      
+      // Prepare headers
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      
+      // Add authorization header if idToken exists
+      if (idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+      }
+      
       const response = await fetch(completionsUrl, {
         method: 'POST',
         headers: headers,

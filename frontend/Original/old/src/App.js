@@ -56,9 +56,6 @@ function App() {
             PERFORMANCE_MARKS.APP_START,
             PERFORMANCE_MARKS.IMPORTANT_COMPONENTS_LOADED
           );
-          
-          // After loading important components, load formatting components
-          preloadFormattingComponents();
         });
       
       // Load eventual components during idle time
@@ -89,6 +86,9 @@ function App() {
         PERFORMANCE_MARKS.APP_START,
         PERFORMANCE_MARKS.APP_READY
       );
+      
+      // Load formatting components after app is fully initialized and ready
+      preloadFormattingComponents();
       
       // Log all collected metrics
       setTimeout(() => {

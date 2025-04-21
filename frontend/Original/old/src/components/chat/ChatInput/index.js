@@ -123,9 +123,14 @@ const ChatInput = memo(({
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      // Only send message if not waiting for a response
-      if (!isWaitingForResponse) {
-        handleSend();
+      // Only process if there is text and not waiting for a response
+      if (!isWaitingForResponse && message.trim()) {
+        if (!selectedModel && toggleModelSelector) {
+          // If no model is selected, show the model selector
+          toggleModelSelector();
+        } else {
+          handleSend();
+        }
       }
       // No action for Enter key while waiting for response
     } else if (isEditing && e.key === 'Escape') {
@@ -207,7 +212,15 @@ const ChatInput = memo(({
     const hasText = message.trim().length > 0;
     // In edit mode, we only support editing text, not adding images
     const hasImages = !isEditing && selectedImages.length > 0;
-    if ((!hasText && !hasImages) || disabled || !selectedModel) return;
+    
+    // If no model is selected but there's something to send, show model selector
+    if ((!hasText && !hasImages) || disabled) return;
+    
+    // If no model is selected, show model selector
+    if (!selectedModel && toggleModelSelector) {
+      toggleModelSelector();
+      return;
+    }
 
     // ALWAYS construct payload as an array of parts
     const contentPayload = [];
@@ -252,6 +265,11 @@ const ChatInput = memo(({
     
     if (isWaitingForResponse) {
       handleStop();
+    } else if (!selectedModel && (message.trim() || selectedImages.length > 0)) {
+      // If no model is selected but there's content to send, show model selector
+      if (toggleModelSelector) {
+        toggleModelSelector();
+      }
     } else {
       handleSend();
     }
@@ -326,161 +344,22 @@ const ChatInput = memo(({
   }, [isMobile, textareaRef, onFocus]);
   
   return (
-    <div className={`${styles.inputContainer} ${isEditing ? styles.editing : ''} ${isWaitingForResponse ? styles.waitingForResponse : ''}`}>
-      {/* Hidden file input */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        accept="image/jpeg, image/png, image/gif, image/webp"
-        multiple
-        onChange={handleImageSelection}
-      />
-
-      {/* Text input area with send button inside */}
-      <div className={styles.inputWrapper}>
-        <textarea
-          ref={textareaRef}
-          className={styles.chatInput}
-          placeholder={placeholderText}
-          value={message}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          disabled={disabled || !selectedModel}
-          rows={1}
-          aria-label="Chat message input"
-        />
-        
-        {/* Send/Stop button positioned inside the textarea */}
-        <button
-          className={`${styles.sendButtonInline} ${isWaitingForResponse ? styles.stopButton : ''}`}
-          onClick={handleButtonClick}
-          disabled={(!isWaitingForResponse && ((!message.trim() && selectedImages.length === 0) || disabled || !selectedModel))}
-          aria-label={isWaitingForResponse ? "Stop generation" : isEditing ? "Save edit" : "Send message"}
-          title={isWaitingForResponse ? "Stop generation" : isEditing ? "Save edit (Enter)" : "Send message (Enter)"}
-          type="button"
-        >
-          {isWaitingForResponse ? (
-            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            </svg>
-          ) : isEditing ? (
-            <CheckIcon size={21} />
-          ) : (
-            <PaperAirplaneIcon size={21} />
-          )}
-        </button>
-      </div>
-      
-      {/* Buttons in a single row */}
-      <div className={styles.actionRow}>
-        {/* Left side buttons */}
-        <div className={styles.leftButtons}>
-          {/* Upload button (Only when not editing) - moved to left side */}
-          {!isEditing && (
-            <button
-              className={styles.uploadButton}
-              onClick={triggerFileInput}
-              disabled={disabled || !selectedModel?.capabilities?.includes('vision')}
-              aria-label="Upload images"
-              title={selectedModel?.capabilities?.includes('vision') ? "Upload images" : "Model doesn't support images"}
-              type="button"
-            >
-              <ImageIcon size={16} />
-            </button>
-          )}
-          
-          <button
-            className={`${styles.textButton} ${isMobile ? styles.iconOnlyButton : ''}`}
-            aria-label="Search"
-            title="Search"
-            type="button"
-          >
-            <SearchIcon size={16} />
-            {!isMobile && <span className={styles.buttonText}>Search</span>}
-          </button>
-          
-          <button
-            className={`${styles.textButton} ${isMobile ? styles.iconOnlyButton : ''}`}
-            aria-label="Reason mode"
-            title="Reason mode"
-            type="button"
-          >
-            <LightBulbIcon size={16} />
-            {!isMobile && <span className={styles.buttonText}>Reason</span>}
-          </button>
-          
-          <button
-            className={styles.actionButton}
-            aria-label="More options"
-            title="More options"
-            type="button"
-          >
-            <KebabHorizontalIcon size={16} />
-          </button>
-        </div>
-        
-        {/* Right side buttons */}
-        <div className={styles.rightButtons}>
-          {/* New chat button - moved to right side */}
-          <button 
-            className={styles.actionButton}
-            onClick={onNewChat}
-            aria-label="New chat"
-            title="New chat"
-            type="button"
-          >
-            <PlusIcon size={16} />
-          </button>
-          
-          {/* Cancel edit button (Only when editing) */}
-          {isEditing && (
-            <button
-              className={styles.uploadButton}
-              onClick={handleCancelEdit}
-              aria-label="Cancel edit"
-              title="Cancel edit (Esc)"
-              type="button"
-            >
-              <XIcon size={16} />
-            </button>
-          )}
-          
-          {/* AI model button */}
-          <button
-            className={styles.modelButton}
-            onClick={toggleModelSelector}
-            aria-label="Select AI model"
-            title="Select AI model"
-            type="button"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="3" y="3" width="2" height="2" fill="currentColor" />
-              <rect x="7" y="3" width="2" height="2" fill="currentColor" />
-              <rect x="11" y="3" width="2" height="2" fill="currentColor" />
-              <rect x="3" y="7" width="2" height="2" fill="currentColor" />
-              <rect x="7" y="7" width="2" height="2" fill="currentColor" />
-              <rect x="11" y="7" width="2" height="2" fill="currentColor" />
-              <rect x="3" y="11" width="2" height="2" fill="currentColor" />
-              <rect x="7" y="11" width="2" height="2" fill="currentColor" />
-              <rect x="11" y="11" width="2" height="2" fill="currentColor" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Image Preview Area - hide when editing */}
-      {!isEditing && selectedImages.length > 0 && (
+    <>
+      {/* Image Previews Container - Moved outside inputContainer */}
+      {selectedImages.length > 0 && (
         <div className={styles.imagePreviewContainer}>
           {selectedImages.map((image, index) => (
-            <div key={index} className={styles.imagePreviewItem}>
-              <img src={image.url} alt={`Preview ${image.name}`} className={styles.imagePreviewThumbnail} />
-              <button
-                className={styles.removeImageButton}
+            <div key={index} className={styles.imagePreviewWrapper}>
+              <img 
+                src={image.url} 
+                alt={`preview ${index}`} 
+                className={styles.imagePreview} 
+              />
+              <button 
+                className={styles.removeImageButton} 
                 onClick={() => removeImage(index)}
-                aria-label={`Remove ${image.name}`}
-                title={`Remove ${image.name}`}
-                type="button"
+                aria-label={`Remove image ${index + 1}`}
+                title={`Remove image ${index + 1}`}
               >
                 <XIcon size={12} />
               </button>
@@ -488,7 +367,163 @@ const ChatInput = memo(({
           ))}
         </div>
       )}
-    </div>
+
+      <div className={`${styles.inputContainer} ${isEditing ? styles.editing : ''} ${isWaitingForResponse ? styles.waitingForResponse : ''} ${isMobile ? styles.mobileView : ''}`}>
+        {/* Hidden file input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          accept="image/jpeg, image/png, image/gif, image/webp"
+          multiple
+          onChange={handleImageSelection}
+        />
+
+        {/* Text input area with send button inside */}
+        <div className={`${styles.inputWrapper} ${!selectedModel ? styles.noModelSelected : ''}`}>
+          <textarea
+            ref={textareaRef}
+            className={styles.chatInput}
+            placeholder={placeholderText}
+            value={message}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            disabled={disabled}
+            rows={1}
+            aria-label="Chat message input"
+          />
+          
+          {/* Send/Stop button positioned inside the textarea */}
+          <button
+            className={`${styles.sendButtonInline} ${isWaitingForResponse ? styles.stopButton : ''} ${!selectedModel ? styles.noModelSelected : ''}`}
+            onClick={handleButtonClick}
+            disabled={(!isWaitingForResponse && ((!message.trim() && selectedImages.length === 0) || disabled))}
+            aria-label={isWaitingForResponse ? "Stop generation" : !selectedModel ? "Select model" : isEditing ? "Save edit" : "Send message"}
+            title={isWaitingForResponse ? "Stop generation" : !selectedModel ? "Select a model" : isEditing ? "Save edit (Enter)" : "Send message (Enter)"}
+            type="button"
+          >
+            {isWaitingForResponse ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              </svg>
+            ) : !selectedModel ? (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="3" width="2" height="2" fill="currentColor" />
+                <rect x="7" y="3" width="2" height="2" fill="currentColor" />
+                <rect x="11" y="3" width="2" height="2" fill="currentColor" />
+                <rect x="3" y="7" width="2" height="2" fill="currentColor" />
+                <rect x="7" y="7" width="2" height="2" fill="currentColor" />
+                <rect x="11" y="7" width="2" height="2" fill="currentColor" />
+                <rect x="3" y="11" width="2" height="2" fill="currentColor" />
+                <rect x="7" y="11" width="2" height="2" fill="currentColor" />
+                <rect x="11" y="11" width="2" height="2" fill="currentColor" />
+              </svg>
+            ) : isEditing ? (
+              <CheckIcon size={21} />
+            ) : (
+              <PaperAirplaneIcon size={21} />
+            )}
+          </button>
+        </div>
+        
+        {/* Buttons in a single row */}
+        <div className={styles.actionRow}>
+          {/* Left side buttons */}
+          <div className={styles.leftButtons}>
+            {/* Upload button (Only when not editing) - moved to left side */}
+            {!isEditing && (
+              <button
+                className={styles.uploadButton}
+                onClick={toggleModelSelector ? (selectedModel ? triggerFileInput : toggleModelSelector) : triggerFileInput}
+                disabled={disabled}
+                aria-label={selectedModel?.capabilities?.includes('vision') ? "Upload images" : "Select model for image upload"}
+                title={selectedModel?.capabilities?.includes('vision') ? "Upload images" : "Select model for image upload"}
+                type="button"
+              >
+                <ImageIcon size={16} />
+              </button>
+            )}
+            
+            <button
+              className={`${styles.textButton} ${isMobile ? styles.iconOnlyButton : ''}`}
+              aria-label="Search"
+              title="Search"
+              type="button"
+            >
+              <SearchIcon size={16} />
+              {!isMobile && <span className={styles.buttonText}>Search</span>}
+            </button>
+            
+            <button
+              className={`${styles.textButton} ${isMobile ? styles.iconOnlyButton : ''}`}
+              aria-label="Reason mode"
+              title="Reason mode"
+              type="button"
+            >
+              <LightBulbIcon size={16} />
+              {!isMobile && <span className={styles.buttonText}>Reason</span>}
+            </button>
+            
+            <button
+              className={styles.actionButton}
+              aria-label="More options"
+              title="More options"
+              type="button"
+            >
+              <KebabHorizontalIcon size={16} />
+            </button>
+          </div>
+          
+          {/* Right side buttons */}
+          <div className={styles.rightButtons}>
+            {/* New chat button - moved to right side */}
+            <button 
+              className={styles.actionButton}
+              onClick={onNewChat}
+              aria-label="New chat"
+              title="New chat"
+              type="button"
+            >
+              <PlusIcon size={16} />
+            </button>
+            
+            {/* Cancel edit button (Only when editing) */}
+            {isEditing && (
+              <button
+                className={styles.uploadButton}
+                onClick={handleCancelEdit}
+                aria-label="Cancel edit"
+                title="Cancel edit (Esc)"
+                type="button"
+              >
+                <XIcon size={16} />
+              </button>
+            )}
+            
+            {/* AI model button */}
+            <button
+              className={styles.modelButton}
+              onClick={toggleModelSelector}
+              aria-label="Select AI model"
+              title="Select AI model"
+              type="button"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="3" width="2" height="2" fill="currentColor" />
+                <rect x="7" y="3" width="2" height="2" fill="currentColor" />
+                <rect x="11" y="3" width="2" height="2" fill="currentColor" />
+                <rect x="3" y="7" width="2" height="2" fill="currentColor" />
+                <rect x="7" y="7" width="2" height="2" fill="currentColor" />
+                <rect x="11" y="7" width="2" height="2" fill="currentColor" />
+                <rect x="3" y="11" width="2" height="2" fill="currentColor" />
+                <rect x="7" y="11" width="2" height="2" fill="currentColor" />
+                <rect x="11" y="11" width="2" height="2" fill="currentColor" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 });
 

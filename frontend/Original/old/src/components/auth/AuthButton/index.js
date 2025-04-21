@@ -11,6 +11,7 @@ import styles from './AuthButton.module.css';
  * @param {Function} props.onLogout - Function to handle logout
  * @param {string} props.userName - User's display name or email
  * @param {boolean} props.isLoading - Whether authentication is in progress
+ * @param {Object} props.currentUser - Firebase user object with photoURL
  * @returns {JSX.Element} - Rendered component
  */
 const AuthButton = memo(({ 
@@ -18,7 +19,8 @@ const AuthButton = memo(({
   onLogin, 
   onLogout, 
   userName,
-  isLoading 
+  isLoading,
+  currentUser
 }) => {
   return (
     <button 
@@ -31,7 +33,17 @@ const AuthButton = memo(({
       {isLoading ? (
         <div className={styles.spinner}></div>
       ) : isAuthenticated ? (
-        <SignOutIcon size={20} className={styles.icon} />
+        currentUser?.photoURL ? (
+          <img 
+            src={currentUser.photoURL} 
+            alt={`${userName}'s profile`}
+            className={styles.userAvatar}
+          />
+        ) : (
+          <div className={styles.userInitial}>
+            {userName.charAt(0).toUpperCase()}
+          </div>
+        )
       ) : (
         <SignInIcon size={20} className={styles.icon} />
       )}

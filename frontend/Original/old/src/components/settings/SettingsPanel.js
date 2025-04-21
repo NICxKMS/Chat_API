@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useCacheToggle } from '../../hooks/useCacheToggle';
-import { BooleanControl, SettingsSlider, SettingsGroup } from './index';
+import { useAuth } from '../../contexts/AuthContext';
+import { BooleanControl, SettingsSlider, SettingsGroup, TextAreaControl } from './index';
 import { 
   IconSlider, 
   IconStream, 
@@ -9,8 +10,9 @@ import {
   IconOutput, 
   IconRepeat, 
   IconClose, 
-  IconRefresh 
+  IconRefresh
 } from './icons';
+import { IconSystem } from './icons.js';
 import styles from './SettingsPanel.module.css';
 
 /**
@@ -25,8 +27,12 @@ import styles from './SettingsPanel.module.css';
 const SettingsPanel = ({ isOpen, onClose }) => {
   const { settings, updateSetting, resetSettings } = useSettings();
   const { cacheEnabled, toggleCache, refreshModels } = useCacheToggle();
+  const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
   const [animateItems, setAnimateItems] = useState(false);
+  
+  // Get the default user name to use consistently throughout the app
+  const userName = currentUser?.displayName || currentUser?.email || 'Sir';
   
   // Animation handling
   useEffect(() => {
@@ -102,12 +108,21 @@ const SettingsPanel = ({ isOpen, onClose }) => {
       type: 'boolean',
       description: "Receive responses in real-time as they're generated instead of waiting for the complete reply.",
       tab: 'general'
+    },
+    systemPrompt: {
+      id: 'systemPrompt',
+      label: 'System Prompt',
+      type: 'textarea',
+      description: "Default instructions given to the AI at the start of every conversation. Used to guide the AI's behavior and capabilities.",
+      placeholder: "You are a helpful AI assistant...",
+      tab: 'system'
     }
   }), []);
 
   // Tab definitions
   const tabs = [
     { id: 'general', label: 'General', icon: <IconStream /> },
+    { id: 'system', label: 'System', icon: <IconSystem /> },
     { id: 'generation', label: 'Generation', icon: <IconSlider /> },
     { id: 'output', label: 'Output', icon: <IconOutput /> },
     { id: 'repetition', label: 'Repetition', icon: <IconRepeat /> }
@@ -118,8 +133,14 @@ const SettingsPanel = ({ isOpen, onClose }) => {
     const config = settingConfig[settingId];
     if (!config) return null;
     
-    const value = settings[settingId];
+    let value = settings[settingId];
     const itemClass = `${styles.settingItem} ${animateItems ? styles.animate : ''}`;
+    
+    // If this is the system prompt, customize it with the user's name
+    if (settingId === 'systemPrompt') {
+      // Don't modify the actual stored settings, just what's displayed
+      value = value.replace(/Nikhil/g, userName);
+    }
     
     switch (config.type) {
       case 'boolean':
@@ -148,6 +169,30 @@ const SettingsPanel = ({ isOpen, onClose }) => {
               onChange={val => updateSetting(config.id, val)}
               tooltip={config.description}
               allowDirectInput={config.allowDirectInput}
+            />
+          </div>
+        );
+        
+      case 'textarea':
+        return (
+          <div key={config.id} className={itemClass}>
+            <TextAreaControl
+              id={config.id}
+              label={config.label}
+              value={value}
+              onChange={(val) => {
+                // Special handling for systemPrompt to preserve "Nikhil" in storage
+                if (config.id === 'systemPrompt') {
+                  // If user has changed something other than the name, we need to make sure
+                  // we save with "Nikhil" always used in the storage
+                  const standardizedVal = val.replace(new RegExp(userName, 'g'), 'Nikhil');
+                  updateSetting(config.id, standardizedVal);
+                } else {
+                  updateSetting(config.id, val);
+                }
+              }}
+              tooltip={config.description}
+              placeholder={config.placeholder}
             />
           </div>
         );
@@ -182,6 +227,25 @@ const SettingsPanel = ({ isOpen, onClose }) => {
         {/* Header */}
         <div className={styles.header}>
           <h2 id="settings-title" className={styles.title}>Settings</h2>
+          
+          {/* User Profile Section */}
+          {currentUser && (
+            <div className={styles.userProfile}>
+              {currentUser.photoURL ? (
+                <img 
+                  src={currentUser.photoURL} 
+                  alt={`${userName}'s profile`}
+                  className={styles.userAvatar}
+                />
+              ) : (
+                <div className={styles.userInitial}>
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className={styles.userName}>{userName}</span>
+            </div>
+          )}
+          
           <button 
             onClick={onClose} 
             className={styles.closeButton} 

@@ -88,6 +88,49 @@
   min-height: 40px;
 }
 
+/* User Profile Styles */
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  width: 100%;
+  flex-grow: 1;
+}
+
+.userAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--accent-color, rgba(87, 157, 152, 0.75));
+}
+
+.userInitial {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--accent-color, rgba(87, 157, 152, 0.75));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.userName {
+  font-size: 0.9rem;
+  color: var(--sidebar-text, var(--text-primary));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-grow: 1;
+}
+
 /* Style for the placeholder text span if needed */
 .footerPlaceholderText {
   font-size: 0.75rem;

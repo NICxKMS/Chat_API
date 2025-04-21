@@ -10,6 +10,7 @@ const PERFORMANCE_MARKS = {
   COMPONENT_LOAD: 'component-load',
   IMPORTANT_COMPONENTS_LOADED: 'important-components-loaded',
   FORMATTING_COMPONENTS_LOADED: 'formatting-components-loaded',
+  MODEL_SELECTOR_COMPONENTS_LOADED: 'model-selector-components-loaded',
   FIRST_PAINT: 'first-paint',
   FIRST_CONTENTFUL_PAINT: 'first-contentful-paint',
   APP_INTERACTIVE: 'app-interactive',
@@ -23,7 +24,8 @@ const PERFORMANCE_MEASURES = {
   COMPONENT_LOAD: 'component-load-time',
   TIME_TO_INTERACTIVE: 'time-to-interactive',
   IMPORTANT_LOAD_TIME: 'important-load-time',
-  FORMATTING_LOAD_TIME: 'formatting-load-time'
+  FORMATTING_LOAD_TIME: 'formatting-load-time',
+  MODEL_SELECTOR_LOAD_TIME: 'model-selector-load-time'
 };
 
 class PerformanceMonitor {

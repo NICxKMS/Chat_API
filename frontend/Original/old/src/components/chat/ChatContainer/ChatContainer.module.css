@@ -97,13 +97,7 @@
 /* Base Input Area styles (Common to static and fixed) */
 .inputArea {
 
-  background-color: var(--elevated-bg);
   border-radius: 18px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  transition: box-shadow 0.3s ease-in-out,
-              background-color var(--theme-transition-duration) var(--theme-transition-timing),
-              border-color var(--theme-transition-duration) var(--theme-transition-timing);
   width: 100%;
 }
 
@@ -133,6 +127,7 @@
   align-items: center;
   gap: 0.5rem;
   position: relative;
+  flex-direction: column;
 }
 
 /* Placeholder styles with shimmer animation */

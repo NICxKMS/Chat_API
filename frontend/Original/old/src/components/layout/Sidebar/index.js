@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { PlusIcon, GearIcon } from '@primer/octicons-react';
+import { useAuth } from '../../../contexts/AuthContext';
 import styles from './Sidebar.module.css';
 // Remove unused icons if PlusIcon/GearIcon only used for floating buttons
 // import { GearIcon, PlusIcon } from '@primer/octicons-react'; 
@@ -25,6 +26,10 @@ const sampleSessions = [
  * @returns {JSX.Element} - Rendered sidebar
  */
 const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
+  const { currentUser, isAuthenticated } = useAuth();
+  
+  const userName = currentUser?.displayName || currentUser?.email || 'Sir';
+  
   // Handle button clicks with fallbacks
   const handleNewChat = (e) => {
     e.preventDefault();
@@ -85,11 +90,24 @@ const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
 
       {/* Footer */}
       <div className={styles.footer}>
-        {/* Remove ApiStatus */}
-        {/* Remove ThemeToggle */}
-        {/* Remove Settings Button */}
-        {/* Add a placeholder or style the empty footer if needed */}
-         <span className={styles.footerPlaceholderText}></span> 
+        {isAuthenticated ? (
+          <div className={styles.userProfile}>
+            {currentUser?.photoURL ? (
+              <img 
+                src={currentUser.photoURL} 
+                alt={`${userName}'s profile`}
+                className={styles.userAvatar}
+              />
+            ) : (
+              <div className={styles.userInitial}>
+                {userName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <span className={styles.userName}>{userName}</span>
+          </div>
+        ) : (
+          <span className={styles.footerPlaceholderText}></span>
+        )}
       </div>
     </div>
   );

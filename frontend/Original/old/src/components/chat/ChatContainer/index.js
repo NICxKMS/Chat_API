@@ -145,11 +145,6 @@ const ChatContainer = memo(({
   const renderInputAreaContents = (isFixedLayout) => {
     const isStaticLayout = !isFixedLayout;
     
-    // Preload formatting components when input is focused
-    const handleInputFocus = () => {
-      preloadFormattingComponents();
-    };
-    
     return (
       <>
         {/* Global Metrics: Only show when fixed */} 
@@ -174,7 +169,6 @@ const ChatContainer = memo(({
               onCancelEdit={handleCancelEdit}
               isStreaming={isWaitingForResponse}
               toggleModelSelector={toggleModelSelector}
-              onFocus={handleInputFocus}
             />
           </Suspense>
         </div>

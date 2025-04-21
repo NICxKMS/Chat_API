@@ -18,12 +18,22 @@ const formattingImports = [
   () => import('rehype-sanitize')
 ];
 
+// Define model selector components to preload
+const modelSelectorImports = [
+  () => import('../components/models/ModelDropdown'),
+  () => import('../components/models/ModelItem'),
+  () => import('../components/models/ModelSearch'),
+  () => import('../components/models/ModelSelectorButton')
+];
+
 /**
  * Preload all formatting-related components eagerly
  * @returns {Promise} Promise that resolves when all components are loaded
  */
 export const preloadFormattingComponents = () => {
   const startTime = performance.now();
+  
+  // First preload formatting components
   return preloadComponents(formattingImports)
     .then(() => {
       performanceMonitor.mark(PERFORMANCE_MARKS.FORMATTING_COMPONENTS_LOADED);
@@ -34,6 +44,23 @@ export const preloadFormattingComponents = () => {
       );
       const endTime = performance.now();
       console.debug(`Formatting components preloaded in ${endTime - startTime}ms`);
+      
+      // Then preload model selector components
+      const modelSelectorStartTime = performance.now();
+      return preloadComponents(modelSelectorImports)
+        .then(() => {
+          performanceMonitor.mark(PERFORMANCE_MARKS.MODEL_SELECTOR_COMPONENTS_LOADED);
+          performanceMonitor.measure(
+            PERFORMANCE_MEASURES.MODEL_SELECTOR_LOAD_TIME,
+            PERFORMANCE_MARKS.FORMATTING_COMPONENTS_LOADED,
+            PERFORMANCE_MARKS.MODEL_SELECTOR_COMPONENTS_LOADED
+          );
+          const modelSelectorEndTime = performance.now();
+          console.debug(`Model selector components preloaded in ${modelSelectorEndTime - modelSelectorStartTime}ms`);
+        })
+        .catch(error => {
+          console.error('Error preloading model selector components:', error);
+        });
     })
     .catch(error => {
       console.error('Error preloading formatting components:', error);
@@ -46,11 +73,16 @@ export const preloadFormattingComponents = () => {
  */
 export const preloadFormattingComponentsIdle = (timeout = 2000) => {
   preloadComponentsIdle(formattingImports, timeout);
+  // Also preload model selector components in idle time after a small delay
+  setTimeout(() => {
+    preloadComponentsIdle(modelSelectorImports, timeout);
+  }, 200);
 };
 
 // Export as default object
 export default {
   preloadFormattingComponents,
   preloadFormattingComponentsIdle,
-  formattingImports
+  formattingImports,
+  modelSelectorImports
 }; 
