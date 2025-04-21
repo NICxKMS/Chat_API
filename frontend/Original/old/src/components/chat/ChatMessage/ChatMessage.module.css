@@ -261,6 +261,8 @@
   font-size: 1rem;
   line-height: 1.5;
   contain: content;
+  min-height: 1.5em; /* Ensure there's always space for content */
+  transition: none; /* No transitions that might cause content to disappear */
 }
 
 /* Typing cursor - only show during streaming */

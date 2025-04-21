@@ -30,6 +30,7 @@ const readFileAsBase64 = (file) => {
  * @param {Function} [props.onCancelEdit] - Function to cancel edit mode
  * @param {boolean} [props.isStreaming=false] - Flag indicating if the input is in streaming mode
  * @param {Function} [props.toggleModelSelector] - Function to toggle model selector
+ * @param {Function} [props.onFocus] - Function to call when input is focused
  * @returns {JSX.Element} - Rendered component
  */
 const ChatInput = memo(({ 
@@ -41,7 +42,8 @@ const ChatInput = memo(({
   editingMessage = null,
   onCancelEdit,
   isStreaming = false,
-  toggleModelSelector
+  toggleModelSelector,
+  onFocus
 }) => {
   const [message, setMessage] = useState('');
   const [selectedImages, setSelectedImages] = useState([]);
@@ -49,6 +51,7 @@ const ChatInput = memo(({
   const fileInputRef = useRef(null);
   const isEditing = !!editingMessage;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const { isWaitingForResponse, stopGeneration } = useChat();
   
   // Set up window resize listener to detect mobile view
@@ -241,12 +244,21 @@ const ChatInput = memo(({
     }
   };
   
-  // Determine button action and appearance based on state
-  const handleButtonClick = () => {
+  // Handle button click for send or stop
+  const handleButtonClick = (e) => {
+    // Prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (isWaitingForResponse) {
       handleStop();
     } else {
       handleSend();
+    }
+    
+    // On mobile, blur the input to hide the keyboard after sending
+    if (isMobile && textareaRef.current) {
+      textareaRef.current.blur();
     }
   };
   
@@ -256,6 +268,62 @@ const ChatInput = memo(({
     : isWaitingForResponse
       ? 'Type your next message while waiting...'
       : 'Ask anything';
+  
+  // Detect virtual keyboard on mobile
+  useEffect(() => {
+    if (!isMobile) return;
+
+    // Function to detect if keyboard is open based on viewport height changes
+    const detectKeyboard = () => {
+      // Consider keyboard open if window height significantly decreases
+      const isKeyboard = window.innerHeight < window.outerHeight * 0.75;
+      setIsKeyboardOpen(isKeyboard);
+      
+      // Add a class to the body element when keyboard is open
+      if (isKeyboard) {
+        document.body.classList.add('keyboard-open');
+      } else {
+        document.body.classList.remove('keyboard-open');
+      }
+    };
+
+    window.addEventListener('resize', detectKeyboard);
+    
+    // Handle focus/blur events to detect keyboard
+    const handleFocus = () => {
+      if (isMobile) {
+        setIsKeyboardOpen(true);
+        document.body.classList.add('keyboard-open');
+        
+        // Scroll the input into view with a delay
+        setTimeout(() => {
+          textareaRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+      
+      // Call onFocus callback if provided - for preloading formatting components
+      if (onFocus && typeof onFocus === 'function') {
+        onFocus();
+      }
+    };
+    
+    const handleBlur = () => {
+      if (isMobile) {
+        setIsKeyboardOpen(false);
+        document.body.classList.remove('keyboard-open');
+      }
+    };
+    
+    textareaRef.current?.addEventListener('focus', handleFocus);
+    textareaRef.current?.addEventListener('blur', handleBlur);
+    
+    return () => {
+      window.removeEventListener('resize', detectKeyboard);
+      textareaRef.current?.removeEventListener('focus', handleFocus);
+      textareaRef.current?.removeEventListener('blur', handleBlur);
+      document.body.classList.remove('keyboard-open');
+    };
+  }, [isMobile, textareaRef, onFocus]);
   
   return (
     <div className={`${styles.inputContainer} ${isEditing ? styles.editing : ''} ${isWaitingForResponse ? styles.waitingForResponse : ''}`}>
@@ -434,7 +502,8 @@ ChatInput.propTypes = {
   editingMessage: PropTypes.object,
   onCancelEdit: PropTypes.func,
   isStreaming: PropTypes.bool,
-  toggleModelSelector: PropTypes.func
+  toggleModelSelector: PropTypes.func,
+  onFocus: PropTypes.func
 };
 
 export default ChatInput; 

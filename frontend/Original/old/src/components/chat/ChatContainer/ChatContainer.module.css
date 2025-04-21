@@ -252,15 +252,26 @@
   .fixedInputArea {
     max-width: calc(100% - 2rem);
     bottom: 0.5rem;
+    position: fixed;
+    bottom: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 96%;
+    z-index: 100;
+  }
+
+  .fixedInputArea:focus-within {
+    position: fixed;
+    bottom: 0.5rem;
   }
   
   .scrollToBottomButton {
-    bottom: calc(0.5rem + 80px + 10px); /* Adjust bottom position for mobile */
+    bottom: calc(0.5rem + 80px + 10px);
   }
 
   .modelButtonContainer {
     width: auto;
-    max-width: calc(100% - 6rem); /* Leave space for side buttons */
+    max-width: calc(100% - 6rem);
     left: 50%;
     transform: translateX(-50%);
   }

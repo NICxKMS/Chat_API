@@ -3,6 +3,7 @@ import { useAuth } from './contexts/AuthContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ContextManager } from './contexts/ContextManager';
 import { performanceMonitor, PERFORMANCE_MARKS, PERFORMANCE_MEASURES } from './utils/performance';
+import { preloadFormattingComponents } from './utils/preloadFormatting';
 
 // Components loaded with dynamic imports
 const Layout = lazy(() => import(/* webpackChunkName: "important" */ './components/layout/Layout'));
@@ -55,6 +56,9 @@ function App() {
             PERFORMANCE_MARKS.APP_START,
             PERFORMANCE_MARKS.IMPORTANT_COMPONENTS_LOADED
           );
+          
+          // After loading important components, load formatting components
+          preloadFormattingComponents();
         });
       
       // Load eventual components during idle time

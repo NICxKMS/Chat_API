@@ -386,6 +386,42 @@
   .actionButton, .uploadButton, .textButton, .modelButton {
     margin: 0 4px;
   }
+
+  /* Reduce input container height in mobile view */
+  .inputContainer {
+    padding: 8px;
+    padding-right: 6px;
+  }
+
+  /* Reduce input area height for mobile */
+  .chatInput {
+    height: 40px;
+    min-height: 20px;
+    max-height: 120px;
+    padding: 8px;
+    padding-right: 44px;
+    font-size: 0.95rem;
+  }
+
+  /* Make send button slightly smaller but with a larger touch target */
+  .sendButtonInline {
+    width: 36px;
+    height: 36px;
+    right: 2px;
+    /* Add a pseudo-element for larger touch target without changing visual size */
+    position: relative;
+  }
+  
+  /* Invisible touch target extension */
+  .sendButtonInline::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    bottom: -8px;
+    left: -8px;
+    z-index: -1;
+  }
 }
 
 /* Add this CSS for the stop button */

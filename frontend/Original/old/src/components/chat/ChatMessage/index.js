@@ -221,7 +221,8 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
     
     return (
       <div className={styles.metricsContainer}>
-        {timeToFirstToken && (
+        {/* Only show TTFT for streaming messages where timeToFirstToken exists */}
+        {timeToFirstToken !== null && (
           <span className={styles.metric}>
             <ClockIcon size={14} className={styles.metricIcon} />
             First Token: {formatTime(timeToFirstToken)}

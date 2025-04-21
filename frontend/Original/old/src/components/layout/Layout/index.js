@@ -68,12 +68,16 @@ const Layout = () => {
 
   // Implement new chat functionality
   const handleNewChat = useCallback(() => {
-    resetChat();
     // Close sidebar on mobile after starting new chat
     if (!isDesktop) {
       setIsSidebarOpen(false);
     }
-  }, [resetChat, isDesktop]);
+    
+    // Clear chat history if there are messages
+    if (chatHistory.length > 0) {
+      resetChat();
+    }
+  }, [isDesktop, chatHistory.length, resetChat]);
 
   // Implement reset chat functionality
   const handleResetChat = useCallback(() => {
@@ -81,13 +85,56 @@ const Layout = () => {
     
     if (window.confirm('Are you sure you want to clear the current chat?')) {
       resetChat();
+      
+      // Show confirmation to the user
+      const notification = document.createElement('div');
+      notification.style.position = 'fixed';
+      notification.style.bottom = '20px';
+      notification.style.left = '50%';
+      notification.style.transform = 'translateX(-50%)';
+      notification.style.backgroundColor = 'var(--hover)';
+      notification.style.color = 'var(--text)';
+      notification.style.padding = '10px 20px';
+      notification.style.borderRadius = '8px';
+      notification.style.zIndex = '9999';
+      notification.textContent = 'Chat has been cleared';
+      document.body.appendChild(notification);
+      
+      // Remove notification after 3 seconds
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 3000);
     }
   }, [chatHistory.length, resetChat]);
 
   // Implement download chat functionality
   const handleDownloadChat = useCallback(() => {
     if (chatHistory.length === 0) return;
-    downloadChatHistory();
+    try {
+      downloadChatHistory();
+      
+      // Show confirmation to the user (especially useful for mobile)
+      const notification = document.createElement('div');
+      notification.style.position = 'fixed';
+      notification.style.bottom = '20px';
+      notification.style.left = '50%';
+      notification.style.transform = 'translateX(-50%)';
+      notification.style.backgroundColor = 'var(--hover)';
+      notification.style.color = 'var(--text)';
+      notification.style.padding = '10px 20px';
+      notification.style.borderRadius = '8px';
+      notification.style.zIndex = '9999';
+      notification.textContent = 'Chat downloaded successfully';
+      document.body.appendChild(notification);
+      
+      // Remove notification after 3 seconds
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 3000);
+    } catch (error) {
+      console.error("Error downloading chat:", error);
+      alert("Failed to download chat. Please try again.");
+    }
   }, [chatHistory.length, downloadChatHistory]);
   
   // Determine layout classes based on state and viewport

@@ -195,6 +195,7 @@ export const ChatProvider = ({ children }) => {
       const newHistory = [...prev];
       const lastMessage = newHistory[newHistory.length - 1];
       if (lastMessage && lastMessage.role === 'assistant') {
+        // Ensure we always use the content parameter directly, never replacing already shown text
         lastMessage.content = content;
         // Always update metrics for assistant messages
         if (currentMessageMetrics.tokenCount !== null) {
@@ -532,18 +533,16 @@ export const ChatProvider = ({ children }) => {
                   // Update the streaming text ref
                   streamingTextRef.current = accumulatedContent;
 
-                  // Optimize UI updates
-                  const now = performance.now();
-                  if (now - lastRenderTime > 16) { // ~60fps update rate
-                    const currentContent = accumulatedContent;
-                    const currentTokenCount = accumulatedTokenCount;
-                    window.requestAnimationFrame(() => {
-                      updateChatWithContent(currentContent);
-                      // Update metrics but don't mark as complete here
-                      updatePerformanceMetrics(currentTokenCount, false);
-                    });
-                    lastRenderTime = now;
-                  }
+                  // Optimize UI updates - always render immediately for each chunk when received
+                  // instead of throttling based on timing to ensure all text is visible
+                  const currentContent = accumulatedContent;
+                  const currentTokenCount = accumulatedTokenCount;
+                  window.requestAnimationFrame(() => {
+                    updateChatWithContent(currentContent);
+                    // Update metrics but don't mark as complete here
+                    updatePerformanceMetrics(currentTokenCount, false);
+                  });
+                  lastRenderTime = performance.now();
                 }
               } catch (parseError) {
                 console.warn('Error parsing message data:', parseError, data);
@@ -560,8 +559,11 @@ export const ChatProvider = ({ children }) => {
         clearTimeout(updateTimeoutRef.current);
         updateTimeoutRef.current = null;
       }
+      
       // Always update with the final accumulated content from the ref
-      updateChatWithContent(streamingTextRef.current);
+      // This ensures we render all content received, even if it wasn't rendered during streaming
+      const finalContent = streamingTextRef.current;
+      updateChatWithContent(finalContent);
 
 
       // Finalize metrics
@@ -655,9 +657,8 @@ export const ChatProvider = ({ children }) => {
       userMessage = addMessageToHistory('user', message);
     }
 
-    // Reset metrics and start timer
-    resetPerformanceMetrics();
-    startPerformanceTimer();
+    // Capture the exact request start time
+    const requestStartTime = Date.now();
 
     // Set loading state
     setIsWaitingForResponse(true);
@@ -746,15 +747,19 @@ export const ChatProvider = ({ children }) => {
       // Calculate token count for metrics
       const tokenCount = extractTokenCount(data, content);
       
-      // Create final metrics
+      // Calculate the response time (request end time - request start time)
+      const requestEndTime = Date.now();
+      const responseTime = requestEndTime - requestStartTime;
+      
+      // Create simple metrics based on actual request timing
       const finalMetrics = {
-        startTime: currentMessageMetrics.startTime,
-        endTime: Date.now(),
-        elapsedTime: Date.now() - currentMessageMetrics.startTime,
+        startTime: requestStartTime,
+        endTime: requestEndTime,
+        elapsedTime: responseTime,
         tokenCount: tokenCount,
-        tokensPerSecond: tokenCount / ((Date.now() - currentMessageMetrics.startTime) / 1000),
+        tokensPerSecond: tokenCount / (responseTime / 1000),
         isComplete: true,
-        timeToFirstToken: Date.now() - currentMessageMetrics.startTime
+        timeToFirstToken: null // Not applicable for non-streaming
       };
 
       // Add AI response directly with complete metrics (without placeholder)
@@ -848,6 +853,46 @@ export const ChatProvider = ({ children }) => {
     resetPerformanceMetrics();
   }, [resetPerformanceMetrics]);
 
+  // Download chat history as text
+  const downloadChatHistory = useCallback(() => {
+    if (chatHistory.length === 0) return;
+    
+    // Format the chat history into a readable text format
+    const formattedChat = chatHistory.map(msg => {
+      const role = msg.role === 'user' ? 'You' : 
+                 msg.role === 'assistant' ? (selectedModel?.name || 'Assistant') : 
+                 msg.role.charAt(0).toUpperCase() + msg.role.slice(1);
+      
+      const content = typeof msg.content === 'string' ? msg.content :
+                      Array.isArray(msg.content) ? 
+                        msg.content.map(part => part.type === 'text' ? part.text : '[Image]').join(' ') :
+                        'Content unavailable';
+                        
+      return `${role}: ${content}\n`;
+    }).join('\n');
+    
+    // Create a blob with the chat text
+    const blob = new Blob([formattedChat], { type: 'text/plain' });
+    
+    // Create a URL for the blob
+    const url = URL.createObjectURL(blob);
+    
+    // Create a link element to trigger the download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat_${new Date().toISOString().replace(/:/g, '-')}.txt`;
+    
+    // Append link to body, click it, then remove it
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up by removing the link and revoking the URL
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }, [chatHistory, selectedModel?.name]);
+
   // Export context value - memoized to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     chatHistory,
@@ -859,9 +904,11 @@ export const ChatProvider = ({ children }) => {
     stopGeneration,
     addMessageToHistory,
     clearChat,
+    resetChat: clearChat, // Add resetChat as an alias for clearChat
     getOrCreateConversation,
     streamingTextRef,
     isStreaming: isStreamingRef.current,
+    downloadChatHistory,
   }), [
     chatHistory,
     isWaitingForResponse,
@@ -874,6 +921,7 @@ export const ChatProvider = ({ children }) => {
     getOrCreateConversation, 
     // No need to include streamingTextRef itself, it's just a ref object
     isStreamingRef.current,
+    downloadChatHistory,
   ]);
 
   return (

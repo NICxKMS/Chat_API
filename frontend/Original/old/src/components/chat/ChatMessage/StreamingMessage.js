@@ -107,7 +107,9 @@ const StreamingMessage = ({ content, isStreaming }) => {
   // Ensure ReactMarkdown has something to render when streaming starts, even if content is initially empty
   // Use a zero-width space for this purpose.
   const actualContent = typeof content === 'string' ? content : String(content || '');
-  const contentToRender = isStreaming && !actualContent ? '\u200B' : actualContent;
+  
+  // Never render empty content when already streaming started
+  const contentToRender = !actualContent ? '\u200B' : actualContent;
 
   return (
     <div className={markdownClassName}>
@@ -115,6 +117,7 @@ const StreamingMessage = ({ content, isStreaming }) => {
         remarkPlugins={[remarkGfm, remarkMath, remarkEmoji]}
         rehypePlugins={[rehypeKatex, rehypeRaw, rehypeSanitize]} // Add relevant rehype plugins
         components={markdownComponents}
+        skipHtml={false} // Ensure HTML is not skipped
       >
         {contentToRender}
       </ReactMarkdown>

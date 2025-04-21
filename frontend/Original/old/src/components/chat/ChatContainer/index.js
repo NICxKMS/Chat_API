@@ -3,6 +3,7 @@ import { useChatLogic } from '../../../hooks/useChatLogic';
 import Spinner from '../../common/Spinner';
 import { ChevronDownIcon } from '@primer/octicons-react';
 import styles from './ChatContainer.module.css';
+import { preloadFormattingComponents } from '../../../utils/preloadFormatting';
 
 // Lazy-loaded components
 const MessageList = lazy(() => import('../MessageList'));
@@ -143,6 +144,12 @@ const ChatContainer = memo(({
   // Helper function to render the input area contents
   const renderInputAreaContents = (isFixedLayout) => {
     const isStaticLayout = !isFixedLayout;
+    
+    // Preload formatting components when input is focused
+    const handleInputFocus = () => {
+      preloadFormattingComponents();
+    };
+    
     return (
       <>
         {/* Global Metrics: Only show when fixed */} 
@@ -167,6 +174,7 @@ const ChatContainer = memo(({
               onCancelEdit={handleCancelEdit}
               isStreaming={isWaitingForResponse}
               toggleModelSelector={toggleModelSelector}
+              onFocus={handleInputFocus}
             />
           </Suspense>
         </div>
