@@ -107,17 +107,15 @@ const StreamingMessage = ({ content, isStreaming }) => {
 
   // Use a zero-width space for this purpose.
   const actualContent = typeof content === 'string' ? content : String(content || '');
-  
-  // Convert TeX notation and ensure non-empty for initial render
   const contentToRender = !actualContent ? '\u200B' : convertTeXToMathDollars(actualContent);
 
   return (
     <div className={markdownClassName}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkEmoji, remarkMath]}
-        rehypePlugins={[rehypeRaw, rehypeKatex]} 
+        rehypePlugins={[rehypeRaw, rehypeKatex]}
         components={markdownComponents}
-        skipHtml={false} // Ensure HTML is not skipped
+        skipHtml={false}
       >
         {contentToRender}
       </ReactMarkdown>

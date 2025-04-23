@@ -310,47 +310,40 @@ export const formatMessageContent = (content) => {
  */
 export const convertTeXToMathDollars = (text) => {
   if (!text) return '';
-  
+
   // Split the text by code blocks to prevent processing LaTeX inside code blocks
   const codeBlockRegex = /(```[\s\S]*?```)/g;
   const parts = text.split(codeBlockRegex);
-  
-  // Process each part - only apply LaTeX conversion to non-code-block parts
+
   const processed = parts.map((part, index) => {
-    // Skip processing for code blocks (odd indices in the split result)
     if (index % 2 === 1 && part.startsWith('```')) {
-      return part; // Return code blocks unchanged
+      return part; // Skip processing code blocks
     }
-    
-    // Process non-code-block parts for LaTeX
-    
-    // Handle the specific pattern where indented block formula is followed by indented text
-    let result = part.replace(/^(\s{4,})\\\[\s*([\s\S]*?)\s*\\\](\s*?\n\s{4,}.*(?:\n\s{4,}.*)*)/gm, 
-      (match, indent, formulaContent, textAfter) => {
-        const cleanedText = textAfter.replace(/^\s{4,}/gm, '');
-        return `\n$$\n${formulaContent.trim()}\n$$\n${cleanedText}`;
+
+    // Handle special case: indented block math inside list items or with following text
+    let result = part.replace(
+      /^(\s*)\\\[\s*([\s\S]*?)\s*\\\](\s*?\n(?:\s{4,}.*(?:\n\s{4,}.*)*))?/gm,
+      (_, indent, formulaContent, trailingText = '') => {
+        const cleanedTrailing = trailingText.replace(/^\s{4,}/gm, '');
+        return `\n$$\n${formulaContent.trim()}\n$$\n${cleanedTrailing}`;
       }
     );
-    
-    // Handle remaining indented LaTeX blocks
-    result = result.replace(/^(\s{4,})\\\[\s*([\s\S]*?)\s*\\\]/gm, 
-      (match, spaces, content) => `\n$$\n${content.trim()}\n$$\n`
-    );
-    
+
     // Convert \( ... \) to $...$ for inline math
     result = result.replace(/\\\(\s*(.*?)\s*\\\)/g, (_, content) => `$${content}$`);
-    
-    // Convert remaining \[ ... \] to $$ ... $$ for block math, wrapped in newlines
-    result = result.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_, content) => `\n$$\n${content}\n$$\n`);
-    
-    // Normalize existing $$...$$ blocks (ensure newlines around them)
+
+    // Convert \[ ... \] to $$ ... $$ for block math (non-indented)
+    result = result.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_, content) => `\n$$\n${content.trim()}\n$$\n`);
+
+    // Normalize existing $$...$$ blocks with line breaks around them
     result = result.replace(/([^\n])(\$\$[\s\S]*?\$\$)([^\n])/g, (_, a, b, c) => `${a}\n${b}\n${c}`);
     result = result.replace(/([^\n])(\$\$[\s\S]*?\$\$)/g, (_, a, b) => `${a}\n${b}`);
     result = result.replace(/(\$\$[\s\S]*?\$\$)([^\n])/g, (_, a, b) => `${a}\n${b}`);
-    
+    result = result.replace(/\n{3,}/g, '\n\n'); // Optional: reduce multiple newlines
+
     return result;
   });
-  
-  // Rejoin the parts
+
   return processed.join('');
 };
+
