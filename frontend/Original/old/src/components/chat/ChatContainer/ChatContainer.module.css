@@ -197,8 +197,8 @@
 
 /* Scroll to Bottom Button */
 .scrollToBottomButton {
-  position: absolute;
-  bottom: calc(1rem + 93px + 10px); /* Position above fixed input area (adjust 80px if inputArea height changes) */
+  position: fixed;
+  bottom: calc(var(--input-height, 80px) + 1.5rem); /* Use CSS variable to handle dynamic input height */
   left: 50%;
   transform: translateX(-50%);
   z-index: 15; /* Above chat content, below input area maybe */
@@ -214,7 +214,7 @@
   cursor: pointer;
   box-shadow: var(--shadow-lg);
   opacity: 0.9;
-  transition: opacity 0.2s ease, transform 0.1s ease;
+  transition: opacity 0.2s ease, transform 0.1s ease, bottom 0.2s ease;
 }
 
 .scrollToBottomButton:hover {
@@ -248,7 +248,6 @@
     max-width: calc(100% - 2rem);
     bottom: 0.5rem;
     position: fixed;
-    bottom: 0.5rem;
     left: 50%;
     transform: translateX(-50%);
     width: 96%;
@@ -261,7 +260,9 @@
   }
   
   .scrollToBottomButton {
-    bottom: calc(0.5rem + 80px + 10px);
+    bottom: calc(var(--input-height, 60px) + 1rem); /* Adjust for mobile view */
+    width: 36px; /* Slightly smaller on mobile */
+    height: 36px;
   }
 
   .modelButtonContainer {

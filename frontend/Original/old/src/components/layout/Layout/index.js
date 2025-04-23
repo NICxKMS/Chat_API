@@ -15,7 +15,7 @@ import styles from './Layout.module.css';
 
 // Lazily loaded components with preload hints
 const Sidebar = lazy(() => import(/* webpackPrefetch: true */ '../Sidebar'));
-const MainContent = lazy(() => import(/* webpackPrefetch: true */ '../MainContent'));
+const MainContent = lazy(() => import(/* webpackPreload: true, webpackChunkName: "layout-main" */ '../MainContent'));
 // import ModelSelectorButton from '../../models/ModelSelectorButton'; // Remove this import
 const ModelDropdown = lazy(() => import(/* webpackPrefetch: true */ '../../models/ModelDropdown'));
 const Spinner = lazy(() => import(/* webpackPrefetch: true */ '../../common/Spinner'));
@@ -164,6 +164,7 @@ const Layout = () => {
               onLogout={logout}
               userName={currentUser?.displayName || currentUser?.email || 'User'}
               isLoading={authLoading}
+              currentUser={currentUser}
             />
           </Suspense>
           
@@ -266,6 +267,7 @@ const Layout = () => {
             selectedModel={selectedModel}
             isLoadingModels={isLoadingModels}
             toggleModelSelector={toggleModelSelector}
+            isModelSelectorOpen={isModelSelectorOpen}
             onNewChat={handleNewChat}
             onToggleSettings={toggleSettings}
             onResetChat={handleResetChat}

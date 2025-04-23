@@ -5,7 +5,7 @@ import { preloadComponents, preloadComponentsIdle } from './lazyLoad';
 import { performanceMonitor, PERFORMANCE_MARKS, PERFORMANCE_MEASURES } from './performance';
 
 // Define formatting components to preload
-const formattingImports = [
+export const formattingImports = [
   () => import('../components/chat/ChatMessage/StreamingMessage'),
   () => import('react-markdown'),
   () => import('react-syntax-highlighter'),
@@ -13,11 +13,10 @@ const formattingImports = [
   () => import('remark-gfm'),
   () => import('remark-emoji'),
   () => import('rehype-raw'),
-  () => import('rehype-sanitize')
 ];
 
 // Define model selector components to preload
-const modelSelectorImports = [
+export const modelSelectorImports = [
   () => import('../components/models/ModelDropdown'),
   () => import('../components/models/ModelItem'),
   () => import('../components/models/ModelSearch'),

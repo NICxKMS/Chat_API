@@ -16,6 +16,8 @@ const ChatContainer = lazy(() => import('../../chat/ChatContainer'));
  * @param {Function} props.onResetChat - Function to handle reset chat
  * @param {Function} props.onDownloadChat - Function to handle download chat
  * @param {Function} props.onToggleSettings - Function to handle settings toggle
+ * @param {boolean} props.isSettingsOpen - Whether the settings panel is open
+ * @param {boolean} props.isModelSelectorOpen - Whether the model selector is open
  * @returns {JSX.Element} - Rendered component
  */
 const MainContent = ({ 
@@ -27,7 +29,9 @@ const MainContent = ({
   onNewChat,
   onResetChat,
   onDownloadChat,
-  onToggleSettings
+  onToggleSettings,
+  isSettingsOpen,
+  isModelSelectorOpen
 }) => {
   return (
     <main className={styles.mainContent}>
@@ -41,6 +45,9 @@ const MainContent = ({
           onResetChat={onResetChat}
           onDownloadChat={onDownloadChat}
           onToggleSettings={onToggleSettings}
+          isSidebarOpen={isSidebarOpen}
+          isSettingsOpen={isSettingsOpen}
+          isModelSelectorOpen={isModelSelectorOpen}
         />
       </Suspense>
     </main>

@@ -107,6 +107,13 @@ const ChatInput = memo(({
     // Set height to scrollHeight (content height) + some padding
     const newHeight = Math.min(textarea.scrollHeight + 2, 200);
     textarea.style.height = `${newHeight}px`;
+
+    // Update the parent container
+    const inputContainer = textarea.closest('.inputContainer') || textarea.closest(`.${styles.inputContainer}`);
+    if (inputContainer) {
+      // The ResizeObserver in ChatContainer will detect this height change
+      inputContainer.style.height = 'auto';
+    }
   }, []);
   
   // Update height when message changes
@@ -124,7 +131,7 @@ const ChatInput = memo(({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       // Only process if there is text and not waiting for a response
-      if (!isWaitingForResponse && message.trim()) {
+      if (!isWaitingForResponse && (message.trim() || selectedImages.length > 0)) {
         if (!selectedModel && toggleModelSelector) {
           // If no model is selected, show the model selector
           toggleModelSelector();
@@ -181,6 +188,51 @@ const ChatInput = memo(({
      if (fileInputRef.current) {
          fileInputRef.current.value = "";
      }
+  };
+
+  // Handle clipboard paste events for images
+  const handlePaste = async (e) => {
+    if (isEditing) return; // Don't handle paste in edit mode
+    
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    // Find image items in the clipboard
+    const imageItems = Array.from(items).filter(item => item.type.startsWith('image/'));
+    if (imageItems.length === 0) return;
+    
+    // Limit the number of images (e.g., to 5)
+    const MAX_IMAGES = 5;
+    if (selectedImages.length + imageItems.length > MAX_IMAGES) {
+      alert(`You can upload a maximum of ${MAX_IMAGES} images.`);
+      return;
+    }
+    
+    try {
+      const imagePromises = imageItems.map(async (item) => {
+        const file = item.getAsFile();
+        // Basic validation (size)
+        const MAX_SIZE_MB = 5; // Example: 5MB limit per image
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+          throw new Error(`Pasted image exceeds the ${MAX_SIZE_MB}MB size limit.`);
+        }
+        
+        const base64 = await readFileAsBase64(file);
+        return { name: 'pasted-image-' + Date.now(), url: base64 };
+      });
+      
+      const newImages = await Promise.all(imagePromises);
+      setSelectedImages((prevImages) => [...prevImages, ...newImages]);
+      
+      // If a paste event is detected and handled as an image, prevent the default behavior
+      // to avoid also pasting the image as text
+      if (newImages.length > 0) {
+        e.preventDefault();
+      }
+    } catch (error) {
+      console.error("Error processing pasted images:", error);
+      alert(`Error processing pasted images: ${error.message}`);
+    }
   };
 
   // Function to remove an image
@@ -343,6 +395,14 @@ const ChatInput = memo(({
     };
   }, [isMobile, textareaRef, onFocus]);
   
+  // Auto-focus textarea when component mounts or app state changes
+  useEffect(() => {
+    // Focus the textarea when the component mounts
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, []);
+  
   return (
     <>
       {/* Image Previews Container - Moved outside inputContainer */}
@@ -388,6 +448,7 @@ const ChatInput = memo(({
             value={message}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             disabled={disabled}
             rows={1}
             aria-label="Chat message input"

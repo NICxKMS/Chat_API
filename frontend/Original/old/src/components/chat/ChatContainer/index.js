@@ -21,7 +21,10 @@ const ChatContainer = memo(({
   onNewChat,
   onResetChat,
   onDownloadChat,
-  onToggleSettings
+  onToggleSettings,
+  isSidebarOpen,
+  isSettingsOpen,
+  isModelSelectorOpen
 }) => {
   const {
     chatHistory,
@@ -37,9 +40,77 @@ const ChatContainer = memo(({
 
   const messageListRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const chatInputRef = useRef(null);
   const isActiveChat = chatHistory.length > 0;
   const [showScrollToBottomButton, setShowScrollToBottomButton] = useState(false);
   const prevChatHistoryLength = useRef(chatHistory.length);
+  const prevWaitingForResponse = useRef(isWaitingForResponse);
+
+  // Effect to update input height CSS variable for scroll button positioning
+  useEffect(() => {
+    const updateInputHeight = () => {
+      const inputContainer = document.querySelector('.inputContainer') || 
+                            document.querySelector(`.${styles.fixedInputArea}`);
+      if (inputContainer) {
+        const height = inputContainer.offsetHeight;
+        document.documentElement.style.setProperty('--input-height', `${height}px`);
+      }
+    };
+
+    // Initial update
+    updateInputHeight();
+
+    // Set up observer to track input container height changes
+    const resizeObserver = new ResizeObserver(updateInputHeight);
+    const inputContainer = document.querySelector('.inputContainer') || 
+                          document.querySelector(`.${styles.fixedInputArea}`);
+    
+    if (inputContainer) {
+      resizeObserver.observe(inputContainer);
+    }
+
+    // Clean up observer on unmount
+    return () => {
+      if (inputContainer) {
+        resizeObserver.unobserve(inputContainer);
+      }
+      resizeObserver.disconnect();
+    };
+  }, [chatHistory, editingMessage]); // Re-run when chat history changes or edit mode changes
+
+  // Function to ensure the input field is focused
+  const focusInputField = useCallback(() => {
+    // Use a timeout to ensure the component is fully rendered and mounted
+    setTimeout(() => {
+      // Try to find the textarea within the ChatInput component
+      const inputField = document.querySelector('textarea.'+styles.chatInput) || 
+                         document.querySelector('textarea[aria-label="Chat message input"]');
+      if (inputField) {
+        inputField.focus();
+      }
+    }, 100);
+  }, []);
+
+  // Focus the input field when the component is mounted
+  useEffect(() => {
+    focusInputField();
+  }, [focusInputField]);
+
+  // Focus input when response is completed, only if UI elements aren't open
+  useEffect(() => {
+    // Check if response has just completed (was waiting, now not waiting)
+    if (prevWaitingForResponse.current && !isWaitingForResponse) {
+      // Only focus if no UI elements are open
+      const noUIElementsOpen = !isSidebarOpen && !isSettingsOpen && !isModelSelectorOpen && !editingMessage;
+      
+      if (noUIElementsOpen) {
+        focusInputField();
+      }
+    }
+    
+    // Update the ref for the next check
+    prevWaitingForResponse.current = isWaitingForResponse;
+  }, [isWaitingForResponse, isSidebarOpen, isSettingsOpen, isModelSelectorOpen, editingMessage, focusInputField]);
 
   // Function to smoothly scroll to the bottom
   const scrollToBottom = useCallback((behavior = 'smooth') => {
@@ -169,6 +240,7 @@ const ChatContainer = memo(({
               onCancelEdit={handleCancelEdit}
               isStreaming={isWaitingForResponse}
               toggleModelSelector={toggleModelSelector}
+              onFocus={focusInputField}
             />
           </Suspense>
         </div>
