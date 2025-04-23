@@ -100,15 +100,22 @@ module.exports = {
         } else if (process.env.ANALYZE === 'true') {
            console.warn('Analysis requested (ANALYZE=true), but webpack-bundle-analyzer is not installed or failed to load.');
         }
-        // Generate gzip versions of assets and delete originals
+        // Generate gzip and Brotli versions of assets
         webpackConfig.plugins.push(
           new CompressionPlugin({
             filename: '[path][base].gz',
             algorithm: 'gzip',
-            test: /\.(js|css|html)$/,
-            threshold: 0,
-            minRatio: 0.8,
-            deleteOriginalAssets: true
+            test: /\.(js|css|html)$/, 
+            threshold: 10240,
+            minRatio: 0.8
+          }),
+          new CompressionPlugin({
+            filename: '[path][base].br',
+            algorithm: 'brotliCompress',
+            test: /\.(js|css|html)$/, 
+            compressionOptions: { level: 11 },
+            threshold: 10240,
+            minRatio: 0.8
           })
         );
       }
