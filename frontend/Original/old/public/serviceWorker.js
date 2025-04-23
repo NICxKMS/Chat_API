@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   '/static/css/main.*.css',
   '/static/css/*.chunk.css',
   '/manifest.json',
-  '/favicon.ico'
+  '/image.webp'
 ];
 
 // Dynamic cache for runtime resources
