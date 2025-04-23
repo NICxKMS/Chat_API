@@ -3,9 +3,13 @@ import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon, PencilIcon } from '@primer/octicons-react';
 import StreamingMessage from './StreamingMessage';
 import styles from './ChatMessage.module.css';
+import { convertTeXToMathDollars } from '../../../utils/formatters';
 
 // Import prism theme for final rendered content
 
@@ -260,9 +264,12 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
   
   // Process markdown content safely
   const renderMarkdown = (content) => {
+    // Convert TeX notation if content is a string
+    const processedContent = typeof content === 'string' ? convertTeXToMathDollars(content) : content;
+    
     // Use custom HTML processing for non-streaming
     if (message.role === 'assistant') {
-      const processed = processContent(content);
+      const processed = processContent(processedContent);
       return (
         <div className={styles.markdown} dangerouslySetInnerHTML={{ __html: processed }} />
       );
@@ -272,9 +279,10 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
     return (
       <ReactMarkdown
         className={styles.markdown}
-        remarkPlugins={[remarkGfm, remarkEmoji]}
+        remarkPlugins={[remarkGfm, remarkEmoji, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     );
   };

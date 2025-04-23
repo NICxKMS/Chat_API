@@ -11,9 +11,7 @@ const formattingImports = [
   () => import('react-syntax-highlighter'),
   () => import('react-syntax-highlighter/dist/esm/styles/prism'),
   () => import('remark-gfm'),
-  () => import('remark-math'),
   () => import('remark-emoji'),
-  () => import('rehype-katex'),
   () => import('rehype-raw'),
   () => import('rehype-sanitize')
 ];

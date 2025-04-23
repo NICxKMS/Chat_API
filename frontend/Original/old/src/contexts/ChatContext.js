@@ -762,7 +762,7 @@ export const ChatProvider = ({ children }) => {
         headers: headers,
         body: JSON.stringify(payload)
       });
-
+      
       if (!response.ok) {
         let errorMessage = `API error: ${response.status}`;
         let errorData = null; // Variable to hold the parsed error data

@@ -7,11 +7,12 @@ import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTheme } from '../../../contexts/ThemeContext';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
 import remarkEmoji from 'remark-emoji';
+import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
+import 'katex/dist/katex.min.css';
+import { convertTeXToMathDollars } from '../../../utils/formatters';
 
 // Copy Icon SVG (simple inline version)
 const CopyIcon = () => (
@@ -104,18 +105,17 @@ const StreamingMessage = ({ content, isStreaming }) => {
   // Apply streaming class based on the passed-in prop
   const markdownClassName = `${styles.markdown} ${styles.streamingContent} ${isStreaming ? styles.streaming : ''}`;
 
-  // Ensure ReactMarkdown has something to render when streaming starts, even if content is initially empty
   // Use a zero-width space for this purpose.
   const actualContent = typeof content === 'string' ? content : String(content || '');
   
-  // Never render empty content when already streaming started
-  const contentToRender = !actualContent ? '\u200B' : actualContent;
+  // Convert TeX notation and ensure non-empty for initial render
+  const contentToRender = !actualContent ? '\u200B' : convertTeXToMathDollars(actualContent);
 
   return (
     <div className={markdownClassName}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath, remarkEmoji]}
-        rehypePlugins={[rehypeKatex, rehypeRaw, rehypeSanitize]} // Add relevant rehype plugins
+        remarkPlugins={[remarkGfm, remarkEmoji, remarkMath]}
+        rehypePlugins={[rehypeRaw, rehypeKatex]} 
         components={markdownComponents}
         skipHtml={false} // Ensure HTML is not skipped
       >
