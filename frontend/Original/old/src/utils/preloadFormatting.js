@@ -1,21 +1,28 @@
 /**
  * Utility functions for preloading formatting-related components
  */
-import { preloadComponents, preloadComponentsIdle } from './lazyLoad';
-import { performanceMonitor, PERFORMANCE_MARKS, PERFORMANCE_MEASURES } from './performance';
+import {  PERFORMANCE_MARKS, PERFORMANCE_MEASURES } from './performance';
 
-// Define formatting components to preload
-export const formattingImports = [
+// Phase 2: Basic Formatting Components
+export const basicFormattingImports = [
   () => import('../components/chat/ChatMessage/StreamingMessage'),
   () => import('react-markdown'),
-  () => import('react-syntax-highlighter'),
-  () => import('react-syntax-highlighter/dist/esm/styles/prism'),
   () => import('remark-gfm'),
   () => import('remark-emoji'),
   () => import('rehype-raw'),
 ];
 
-// Define model selector components to preload
+// Background Load: Advanced Formatting Components
+export const advancedFormattingImports = [
+  () => import('react-syntax-highlighter/dist/esm/prism'),
+  () => import('react-syntax-highlighter/dist/esm/styles/prism/atom-dark'),
+  () => import('react-syntax-highlighter/dist/esm/styles/prism/prism'),
+  () => import('rehype-katex'), 
+  () => import('katex/dist/katex.min.css'), 
+  // () => import('react-katex'),
+];
+
+// Phase 2: Model Selector Components
 export const modelSelectorImports = [
   () => import('../components/models/ModelDropdown'),
   () => import('../components/models/ModelItem'),
@@ -23,63 +30,20 @@ export const modelSelectorImports = [
   () => import('../components/models/ModelSelectorButton')
 ];
 
-/**
- * Preload all formatting-related components eagerly
- * @returns {Promise} Promise that resolves when all components are loaded
- */
-export const preloadFormattingComponents = () => {
-  const startTime = performance.now();
-  
-  // First preload formatting components
-  return preloadComponents(formattingImports)
-    .then(() => {
-      performanceMonitor.mark(PERFORMANCE_MARKS.FORMATTING_COMPONENTS_LOADED);
-      performanceMonitor.measure(
-        PERFORMANCE_MEASURES.FORMATTING_LOAD_TIME,
-        PERFORMANCE_MARKS.APP_START,
-        PERFORMANCE_MARKS.FORMATTING_COMPONENTS_LOADED
-      );
-      const endTime = performance.now();
-      console.debug(`Formatting components preloaded in ${endTime - startTime}ms`);
-      
-      // Then preload model selector components
-      const modelSelectorStartTime = performance.now();
-      return preloadComponents(modelSelectorImports)
-        .then(() => {
-          performanceMonitor.mark(PERFORMANCE_MARKS.MODEL_SELECTOR_COMPONENTS_LOADED);
-          performanceMonitor.measure(
-            PERFORMANCE_MEASURES.MODEL_SELECTOR_LOAD_TIME,
-            PERFORMANCE_MARKS.FORMATTING_COMPONENTS_LOADED,
-            PERFORMANCE_MARKS.MODEL_SELECTOR_COMPONENTS_LOADED
-          );
-          const modelSelectorEndTime = performance.now();
-          console.debug(`Model selector components preloaded in ${modelSelectorEndTime - modelSelectorStartTime}ms`);
-        })
-        .catch(error => {
-          console.error('Error preloading model selector components:', error);
-        });
-    })
-    .catch(error => {
-      console.error('Error preloading formatting components:', error);
-    });
-};
+// Removed preloadFormattingComponents and preloadFormattingComponentsIdle functions
+// Loading logic will be handled directly in App.js
 
-/**
- * Preload formatting components during idle time
- * @param {number} timeout - Timeout in ms
- */
-export const preloadFormattingComponentsIdle = (timeout = 2000) => {
-  preloadComponentsIdle(formattingImports, timeout);
-  // Also preload model selector components in idle time after a small delay
-  setTimeout(() => {
-    preloadComponentsIdle(modelSelectorImports, timeout);
-  }, 200);
-};
+// Keep performance monitoring utilities if they are used elsewhere,
+// but the specific measurement logic tied to the removed functions is gone.
+// Export constants if needed elsewhere
+export { PERFORMANCE_MARKS, PERFORMANCE_MEASURES };
 
-// Export as default object
-export default {
-  preloadFormattingComponents,
-  preloadFormattingComponentsIdle,
-  formattingImports,
+// Example of how you might export all imports if needed elsewhere,
+// but individual phase arrays are likely more useful now.
+const formattingUtils = {
+  basicFormattingImports,
+  advancedFormattingImports,
   modelSelectorImports
-}; 
+};
+
+export default formattingUtils; 

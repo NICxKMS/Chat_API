@@ -105,6 +105,7 @@ const SettingsSelect = ({
         tabIndex={disabled ? -1 : 0}
         role="combobox"
         aria-expanded={isOpen}
+        aria-controls={`${id}-listbox`}
         aria-haspopup="listbox"
         aria-disabled={disabled}
         aria-labelledby={labelId}
@@ -121,6 +122,7 @@ const SettingsSelect = ({
           ref={dropdownRef}
           className={styles.dropdown}
           role="listbox"
+          id={`${id}-listbox`}
           aria-labelledby={id}
         >
           {options.map((option) => (

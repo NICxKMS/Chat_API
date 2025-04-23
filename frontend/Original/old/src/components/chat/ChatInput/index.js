@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
-import { PlusIcon, PaperAirplaneIcon, XIcon, CheckIcon, GlobeIcon, KebabHorizontalIcon, ImageIcon, ChevronDownIcon, SearchIcon, LightBulbIcon } from '@primer/octicons-react';
+import { PlusIcon, PaperAirplaneIcon, XIcon, CheckIcon,  KebabHorizontalIcon, ImageIcon,  SearchIcon, LightBulbIcon } from '@primer/octicons-react';
 import styles from './ChatInput.module.css';
 import { useChat } from '../../../contexts/ChatContext';
 
@@ -51,7 +51,6 @@ const ChatInput = memo(({
   const fileInputRef = useRef(null);
   const isEditing = !!editingMessage;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const { isWaitingForResponse, stopGeneration } = useChat();
   
   // Set up window resize listener to detect mobile view
@@ -339,15 +338,15 @@ const ChatInput = memo(({
       ? 'Type your next message while waiting...'
       : 'Ask anything';
   
-  // Detect virtual keyboard on mobile
+  // Focus textarea and handle keyboard detection
   useEffect(() => {
+    // This effect is for mobile keyboard detection
     if (!isMobile) return;
-
-    // Function to detect if keyboard is open based on viewport height changes
+    
+    // Set up event listeners for detecting virtual keyboard
     const detectKeyboard = () => {
       // Consider keyboard open if window height significantly decreases
       const isKeyboard = window.innerHeight < window.outerHeight * 0.75;
-      setIsKeyboardOpen(isKeyboard);
       
       // Add a class to the body element when keyboard is open
       if (isKeyboard) {
@@ -356,42 +355,42 @@ const ChatInput = memo(({
         document.body.classList.remove('keyboard-open');
       }
     };
-
-    window.addEventListener('resize', detectKeyboard);
     
-    // Handle focus/blur events to detect keyboard
     const handleFocus = () => {
       if (isMobile) {
-        setIsKeyboardOpen(true);
         document.body.classList.add('keyboard-open');
         
-        // Scroll the input into view with a delay
-        setTimeout(() => {
-          textareaRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+        // On some devices, we need to detect keyboard using window resizing
+        window.addEventListener('resize', detectKeyboard);
       }
       
-      // Call onFocus callback if provided - for preloading formatting components
-      if (onFocus && typeof onFocus === 'function') {
+      // Call onFocus prop if provided
+      if (onFocus) {
         onFocus();
       }
     };
     
     const handleBlur = () => {
       if (isMobile) {
-        setIsKeyboardOpen(false);
         document.body.classList.remove('keyboard-open');
+        window.removeEventListener('resize', detectKeyboard);
       }
     };
     
-    textareaRef.current?.addEventListener('focus', handleFocus);
-    textareaRef.current?.addEventListener('blur', handleBlur);
+    // Capture ref value in closure to avoid stale ref in cleanup function
+    const textarea = textareaRef.current;
+    
+    if (textarea) {
+      textarea.addEventListener('focus', handleFocus);
+      textarea.addEventListener('blur', handleBlur);
+    }
     
     return () => {
+      if (textarea) {
+        textarea.removeEventListener('focus', handleFocus);
+        textarea.removeEventListener('blur', handleBlur);
+      }
       window.removeEventListener('resize', detectKeyboard);
-      textareaRef.current?.removeEventListener('focus', handleFocus);
-      textareaRef.current?.removeEventListener('blur', handleBlur);
-      document.body.classList.remove('keyboard-open');
     };
   }, [isMobile, textareaRef, onFocus]);
   

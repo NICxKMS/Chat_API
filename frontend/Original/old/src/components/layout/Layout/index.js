@@ -13,19 +13,19 @@ import styles from './Layout.module.css';
 // const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Removed
 // Assuming lazyLoad utility path
 
-// Lazily loaded components with preload hints
-const Sidebar = lazy(() => import(/* webpackPrefetch: true */ '../Sidebar'));
+// Lazily loaded components - Prefetch hints removed for manual loading
+const Sidebar = lazy(() => import(/* webpackChunkName: "layout-sidebar" */ '../Sidebar'));
 const MainContent = lazy(() => import(/* webpackPreload: true, webpackChunkName: "layout-main" */ '../MainContent'));
 // import ModelSelectorButton from '../../models/ModelSelectorButton'; // Remove this import
-const ModelDropdown = lazy(() => import(/* webpackPrefetch: true */ '../../models/ModelDropdown'));
-const Spinner = lazy(() => import(/* webpackPrefetch: true */ '../../common/Spinner'));
-const ThemeToggle = lazy(() => import(/* webpackPrefetch: true */ '../../common/ThemeToggle'));
+const ModelDropdown = lazy(() => import(/* webpackChunkName: "models-dropdown" */ '../../models/ModelDropdown'));
+const Spinner = lazy(() => import(/* webpackChunkName: "common-spinner" */ '../../common/Spinner'));
+const ThemeToggle = lazy(() => import(/* webpackChunkName: "common-theme" */ '../../common/ThemeToggle'));
 // Remove ApiStatus import
 // const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Removed
-const SettingsPanel = lazy(() => import(/* webpackPrefetch: true */ '../../settings/SettingsPanel'));
-const SidebarToggle = lazy(() => import(/* webpackPrefetch: true */ '../SidebarToggle'));
-const MoreActions = lazy(() => import(/* webpackPrefetch: true */ '../../common/MoreActions'));
-const AuthButton = lazy(() => import(/* webpackPrefetch: true */ '../../auth/AuthButton')); // Import AuthButton
+const SettingsPanel = lazy(() => import(/* webpackChunkName: "settings-panel" */ '../../settings/SettingsPanel'));
+const SidebarToggle = lazy(() => import(/* webpackChunkName: "layout-sidebar-toggle" */ '../SidebarToggle'));
+const MoreActions = lazy(() => import(/* webpackChunkName: "common-more-actions" */ '../../common/MoreActions'));
+const AuthButton = lazy(() => import(/* webpackChunkName: "auth-button" */ '../../auth/AuthButton'));
 
 // Loading fallback component
 const LoadingFallback = () => (

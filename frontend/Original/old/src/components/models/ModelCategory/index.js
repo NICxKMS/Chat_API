@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import styles from './ModelCategory.module.css';
+import ModelItem from '../ModelItem';
 
 // --- Sub-component for Type Group (e.g., GPT 4, Flash) ---
 const TypeGroup = ({ typeGroupName, models, onSelectModel, selectedModelId, searchTerm, showExperimental }) => {

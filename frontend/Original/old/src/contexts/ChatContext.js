@@ -310,7 +310,6 @@ export const ChatProvider = ({ children }) => {
     // Initialize tracking variables for optimized updates
     let accumulatedContent = '';
     let accumulatedTokenCount = 0;
-    let lastRenderTime = performance.now();
 
     try {
       // Get adjusted settings based on model
@@ -553,7 +552,6 @@ export const ChatProvider = ({ children }) => {
                     // Update metrics but don't mark as complete here
                     updatePerformanceMetrics(currentTokenCount, false);
                   });
-                  lastRenderTime = performance.now();
                 }
               } catch (parseError) {
                 console.warn('Error parsing message data:', parseError, data);

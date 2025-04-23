@@ -1,9 +1,7 @@
 import { memo, lazy, useRef, useEffect, useState, useCallback, Suspense } from 'react';
 import { useChatLogic } from '../../../hooks/useChatLogic';
-import Spinner from '../../common/Spinner';
 import { ChevronDownIcon } from '@primer/octicons-react';
 import styles from './ChatContainer.module.css';
-import { preloadFormattingComponents } from '../../../utils/preloadFormatting';
 
 // Lazy-loaded components
 const MessageList = lazy(() => import('../MessageList'));
@@ -40,7 +38,6 @@ const ChatContainer = memo(({
 
   const messageListRef = useRef(null);
   const scrollContainerRef = useRef(null);
-  const chatInputRef = useRef(null);
   const isActiveChat = chatHistory.length > 0;
   const [showScrollToBottomButton, setShowScrollToBottomButton] = useState(false);
   const prevChatHistoryLength = useRef(chatHistory.length);
