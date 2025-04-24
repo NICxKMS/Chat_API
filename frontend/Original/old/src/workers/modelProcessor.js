@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-globals */
 // modelProcessor.js
 // Web Worker for processing model list data in the background
 

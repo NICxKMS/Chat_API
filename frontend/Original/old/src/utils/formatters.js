@@ -304,46 +304,29 @@ export const formatMessageContent = (content) => {
 };
 
 /**
- * Converts LaTeX formatting from \( ... \) to $...$ format for remark-math
- * @param {string} text - Text with LaTeX expressions in \( ... \) format
- * @returns {string} - Text with LaTeX expressions in $...$ format
+ * Converts LaTeX formatting from \( ... \) to $...$ format for remark-math,
+ * and \[ ... \] to $$ ... $$ for block math. Leaves existing $$ untouched.
+ * @param {string} text - Text with LaTeX expressions in \(...\) or \[...\] format
+ * @returns {string} - Text with LaTeX expressions converted to math delimiters
  */
 export const convertTeXToMathDollars = (text) => {
   if (!text) return '';
-
-  // Split the text by code blocks to prevent processing LaTeX inside code blocks
+  // Avoid converting inside code fences
   const codeBlockRegex = /(```[\s\S]*?```)/g;
   const parts = text.split(codeBlockRegex);
-
-  const processed = parts.map((part, index) => {
+  return parts.map((part, index) => {
+    // Skip code blocks
     if (index % 2 === 1 && part.startsWith('```')) {
-      return part; // Skip processing code blocks
+      return part;
     }
-
-    // Handle special case: indented block math inside list items or with following text
-    let result = part.replace(
-      /^(\s*)\\\[\s*([\s\S]*?)\s*\\\](\s*?\n(?:\s{4,}.*(?:\n\s{4,}.*)*))?/gm,
-      (_, indent, formulaContent, trailingText = '') => {
-        const cleanedTrailing = trailingText.replace(/^\s{4,}/gm, '');
-        return `\n$$\n${formulaContent.trim()}\n$$\n${cleanedTrailing}`;
-      }
-    );
-
-    // Convert \( ... \) to $...$ for inline math
+    let result = part;
+    // Inline math: \( ... \) → $...$
     result = result.replace(/\\\(\s*(.*?)\s*\\\)/g, (_, content) => `$${content}$`);
-
-    // Convert \[ ... \] to $$ ... $$ for block math (non-indented)
-    result = result.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_, content) => `\n$$\n${content.trim()}\n$$\n`);
-
-    // Normalize existing $$...$$ blocks with line breaks around them
-    result = result.replace(/([^\n])(\$\$[\s\S]*?\$\$)([^\n])/g, (_, a, b, c) => `${a}\n${b}\n${c}`);
-    result = result.replace(/([^\n])(\$\$[\s\S]*?\$\$)/g, (_, a, b) => `${a}\n${b}`);
-    result = result.replace(/(\$\$[\s\S]*?\$\$)([^\n])/g, (_, a, b) => `${a}\n${b}`);
-    result = result.replace(/\n{3,}/g, '\n\n'); // Optional: reduce multiple newlines
-
+    // Block math: \[ ... \] → $$ ... $$ (on its own lines)
+    result = result.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_, content) => `$$
+${content.trim()}
+$$`);
     return result;
-  });
-
-  return processed.join('');
+  }).join('');
 };
 

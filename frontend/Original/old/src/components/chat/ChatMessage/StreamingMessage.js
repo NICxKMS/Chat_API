@@ -50,14 +50,12 @@ const StreamingMessage = ({ content, isStreaming }) => {
 
   // Custom component for rendering code blocks
   const CodeBlock = useCallback(({ node, inline, className, children, ...props }) => {
+    // Only treat content wrapped in triple backticks as code blocks (ignore indents)
     const match = /language-(\w+)/.exec(className || '');
     const language = match ? match[1] : 'plaintext'; // Default to plaintext if no language class
     const codeContent = String(children).replace(/\n$/, ''); // Get code content
 
     // Use index from node's position if available, fallback to content hash or similar
-    // Note: Relying on node properties might be unstable depending on markdown parser versions.
-    // A more robust key might involve hashing the codeContent + language.
-    // For simplicity, we'll use a basic key generation strategy.
     const codeBlockKey = node?.position?.start?.offset ?? codeContent.substring(0, 20); // Example key
     const isCopied = copiedCodeMap[codeBlockKey];
 
@@ -94,12 +92,11 @@ const StreamingMessage = ({ content, isStreaming }) => {
         {children}
       </code>
     );
-  }, [syntaxTheme, handleCopyCode, copiedCodeMap]); // Added dependencies
+  }, [syntaxTheme, handleCopyCode, copiedCodeMap]);
 
   // Define components for ReactMarkdown
   const markdownComponents = useMemo(() => ({
     code: CodeBlock,
-    // Potentially add customizations for other elements like 'a', 'img', 'table' if needed
   }), [CodeBlock]); // CodeBlock is the dependency
 
   // Apply streaming class based on the passed-in prop
@@ -128,4 +125,4 @@ StreamingMessage.propTypes = {
   isStreaming: PropTypes.bool // Add prop type for isStreaming
 };
 
-export default StreamingMessage; 
+export default StreamingMessage;

@@ -1,11 +1,12 @@
+// eslint-disable import/first
 import React, { memo, useMemo, useState, lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
 import LazyMarkdownRenderer from '../../common/LazyMarkdownRenderer';
-// Dynamically load StreamingMessage to defer heavy modules
-const StreamingMessage = lazy(() => import('./StreamingMessage'));
 import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon, PencilIcon } from '@primer/octicons-react';
 import styles from './ChatMessage.module.css';
 import { convertTeXToMathDollars } from '../../../utils/formatters';
+// Dynamically load StreamingMessage to defer heavy modules
+const StreamingMessage = lazy(() => import('./StreamingMessage'));
 
 /**
  * Format time in milliseconds to a human-readable format
@@ -28,7 +29,6 @@ const formatTime = (ms) => {
  * @returns {JSX.Element} - Rendered component
  */
 const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
-  const [copiedCodeIndex, setCopiedCodeIndex] = useState(-1);
   const [messageCopied, setMessageCopied] = useState(false);
   
   // Choose appropriate icon based on message role
@@ -74,14 +74,6 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
   
   // console.log('Should show metrics:', shouldShowMetrics, { role: message.role, metrics: message.metrics });
   
-  // Handle copying code to clipboard
-  const handleCopyCode = (code, index) => {
-    navigator.clipboard.writeText(code).then(() => {
-      setCopiedCodeIndex(index);
-      setTimeout(() => setCopiedCodeIndex(-1), 2000);
-    });
-  };
-  
   // Copy message content to clipboard
   const handleCopyMessage = () => {
     // If content is an array (multimodal message), extract just the text
@@ -126,88 +118,6 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
     </button>
   ) : null;
   // ==========================================
-  
-  // Process message content to format code blocks
-  const processContent = (content) => {
-    if (!content) return '';
-    
-    const codeBlockRegex = /```([a-zA-Z0-9_-]*)\s*\n?([\s\S]*?)```/g;
-    let match;
-    let lastIndex = 0;
-    let result = '';
-    let codeBlockIndex = 0;
-    
-    while ((match = codeBlockRegex.exec(content)) !== null) {
-      // Add text before code block
-      if (match.index > lastIndex) {
-        result += content.substring(lastIndex, match.index);
-      }
-      
-      // Get language and code content
-      const language = match[1] || 'plaintext';
-      const code = match[2] || '';
-      const isCopied = codeBlockIndex === copiedCodeIndex;
-      
-      // Add formatted code block
-      result += `
-        <div class="${styles.codeBlockContainer}">
-          <div class="${styles.codeHeader}">
-            <span class="${styles.language}">${language}</span>
-            <button 
-              class="${styles.copyButton}"
-              onclick="document.dispatchEvent(new CustomEvent('copy-code', {detail: {index: ${codeBlockIndex}, code: \`${escapeForHtml(code)}\`}}))"
-            >
-              ${isCopied ? 
-                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"><path fill-rule="evenodd" d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"></path></svg> Copied!` : 
-                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"><path fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path><path fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path></svg> Copy`
-              }
-            </button>
-          </div>
-          <pre class="${styles.pre}"><code class="language-${language}">${escapeHtml(code)}</code></pre>
-        </div>
-      `;
-      
-      lastIndex = match.index + match[0].length;
-      codeBlockIndex++;
-    }
-    
-    // Add remaining text
-    if (lastIndex < content.length) {
-      result += content.substring(lastIndex);
-    }
-    
-    // Setup copy code event listener
-    if (typeof window !== 'undefined' && codeBlockIndex > 0) {
-      setTimeout(() => {
-        document.addEventListener('copy-code', (e) => {
-          handleCopyCode(e.detail.code, e.detail.index);
-        }, { once: false });
-      }, 0);
-    }
-    
-    return result;
-  };
-  
-  // Escape HTML for code blocks
-  const escapeHtml = (text) => {
-    if (!text) return '';
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  };
-  
-  // Escape for HTML attributes in JS
-  const escapeForHtml = (text) => {
-    if (!text) return '';
-    return text
-      .replace(/\\/g, '\\\\')
-      .replace(/`/g, '\\`')
-      .replace(/\$/g, '\\$')
-      .replace(/"/g, '\\"');
-  };
   
   // Render performance metrics (Now includes the button)
   const renderMetrics = () => {

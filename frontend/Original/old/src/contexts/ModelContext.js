@@ -4,7 +4,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useAuth } from './AuthContext';
 
 // Cache expiry time in milliseconds (5 minutes)
-const CACHE_EXPIRY_TIME = 5 * 60 * 1000;
+const CACHE_EXPIRY_TIME = 5*60 * 60 * 1000;
 
 // Create separate contexts for models and filtering
 const ModelContext = createContext();
@@ -75,27 +75,6 @@ export const ModelProvider = ({ children }) => {
     };
   }, [isCacheValid]);
   
-  // Get cached models from localStorage
-  const getCachedModels = useCallback(() => {
-    try {
-      const cacheStr = localStorage.getItem('modelDropdownCache');
-      if (!cacheStr) return null;
-      
-      const cache = JSON.parse(cacheStr);
-      if (!isCacheValid(cache)) return null;
-      
-      return {
-        allModels: cache.allModels,
-        processedModels: cache.processedModels,
-        experimentalModels: cache.experimentalModels,
-        timestamp: cache.timestamp
-      };
-    } catch (error) {
-      console.error('Error reading model cache:', error);
-      return null;
-    }
-  }, [isCacheValid]);
-  
   // Cache models to localStorage
   const cacheModels = useCallback((data) => {
     try {
@@ -111,83 +90,6 @@ export const ModelProvider = ({ children }) => {
       console.error('Error caching models:', error);
     }
   }, []);
-  
-  // Normalize model display name
-  const normalizeModelName = useCallback((model) => {
-    const name = model.id || '';
-    return name.split('/').pop() || name;
-  }, []);
-  
-  // Process hierarchical model groups (Restored)
-  const processModels = useCallback((data) => {
-    if (!data || !data.hierarchical_groups) {
-      console.error('Invalid hierarchical model data format received:', data);
-      throw new Error('Invalid model data format');
-    }
-    
-    const allModels = [];
-    const experimentalModels = [];
-    const processedModels = {}; // Structure: { Category: { Provider: { Type: [Model] } } }
-    
-    data.hierarchical_groups.forEach(providerGroup => {
-      const provider = providerGroup.group_value;
-      
-      if (!providerGroup.children || !Array.isArray(providerGroup.children)) return;
-
-      providerGroup.children.forEach(typeGroup => {
-        const type = typeGroup.group_value; 
-
-        if (!typeGroup.children || !Array.isArray(typeGroup.children)) return;
-        
-        typeGroup.children.forEach(versionGroup => {
-          const version = versionGroup.group_value; 
-          
-          if (!versionGroup.models || !Array.isArray(versionGroup.models)) return;
-
-          versionGroup.models.forEach(model => {
-            // Determine category (simplified assumption, adjust if needed)
-            let category = 'Chat';
-            if (model.type && model.type.toLowerCase().includes('image')) {
-              category = 'Image';
-            } else if (model.type && model.type.toLowerCase().includes('embedding')) {
-               category = 'Embedding';
-            }
-            
-            const processedModel = {
-              id: model.id,
-              name: model.name || model.display_name || normalizeModelName(model), 
-              provider,
-              type: model.type || type,
-              version: model.version || version,
-              category,
-              is_experimental: model.is_experimental,
-              is_multimodal: model.is_multimodal,
-              capabilities: model.capabilities,
-              family: model.family || type, 
-              series: model.series || version
-            };
-            
-            allModels.push(processedModel);
-            
-            if (model.is_experimental) {
-              experimentalModels.push(processedModel);
-            }
-            
-            if (!processedModels[category]) processedModels[category] = {};
-            if (!processedModels[category][provider]) processedModels[category][provider] = {};
-            if (!processedModels[category][provider][type]) processedModels[category][provider][type] = [];
-            processedModels[category][provider][type].push(processedModel);
-          });
-        });
-      });
-    });
-    
-    return {
-      allModels,
-      processedModels,
-      experimentalModels
-    };
-  }, [normalizeModelName]);
   
   // Update category filter
   const updateCategoryFilter = useCallback((category, isChecked) => {
@@ -221,21 +123,6 @@ export const ModelProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     
-    // Check cache first
-    const cachedData = getCachedModels();
-    if (cachedData) {
-      console.log("Loading models from valid cache.");
-      setAllModels(cachedData.allModels);
-      setProcessedModels(cachedData.processedModels);
-      setExperimentalModels(cachedData.experimentalModels);
-      // Restore previous logic: select first model if none selected
-      if (!selectedModel && cachedData.allModels.length > 0) {
-        setSelectedModel(cachedData.allModels[0]);
-        }
-        setIsLoading(false);
-      return; // Don't fetch if cache is valid
-    }
-
     console.log("Fetching models from API...");
     try {
       // Prepare request headers conditionally
@@ -304,9 +191,7 @@ export const ModelProvider = ({ children }) => {
     }
   }, [
     apiUrl,
-    getCachedModels,
     cacheModels,
-    selectedModel,
     idToken
   ]);
   

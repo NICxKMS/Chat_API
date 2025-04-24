@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ContextManager } from './contexts/ContextManager';
@@ -8,13 +9,11 @@ import { basicFormattingImports, advancedFormattingImports, modelSelectorImports
 
 // === Phase 1: Critical (lazy) components ===
 const Layout = lazy(() => import(/* webpackPreload: true, webpackChunkName: "layout" */ './components/layout/Layout'));
-const MainContent = lazy(() => import(/* webpackPreload: true, webpackChunkName: "main-content" */ './components/layout/MainContent'));
 const LoginModal = lazy(() => import(/* webpackChunkName: "login-modal" */ './components/auth/LoginModal'));
 
 // === Preload lists ===
 const CORE_IMPORTS = [
   () => import(/* webpackPreload: true */ './components/layout/Layout'),
-  () => import(/* webpackPreload: true */ './components/layout/MainContent'),
   () => import(/* webpackPreload: true */ './components/chat/ChatContainer'),
   () => import(/* webpackPreload: true */ './components/chat/ChatInput'),
 ];

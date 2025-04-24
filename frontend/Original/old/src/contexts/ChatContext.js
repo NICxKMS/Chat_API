@@ -42,10 +42,9 @@ export const ChatProvider = ({ children }) => {
   // Reference for streaming text content - used for direct DOM updates
   const streamingTextRef = useRef('');
   const streamBufferRef = useRef('');
-  const updateTimeoutRef = useRef(null);
-  const isStreamingRef = useRef(false);
   const currentRequestIdRef = useRef(null); // Track the current request ID for stopping
   const abortControllerRef = useRef(null); // Store abort controller for client-side aborting
+  const isStreamingRef = useRef(false);
 
   // Format model identifier for API
   const formatModelIdentifier = useCallback((model) => {
@@ -552,7 +551,7 @@ export const ChatProvider = ({ children }) => {
     addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics,
     startPerformanceTimer, updatePerformanceMetrics,
     setError, setIsWaitingForResponse, updateChatWithContent,
-    idToken, _updatePlaceholderOnError, currentMessageMetrics
+    idToken, _updatePlaceholderOnError
   ]);
 
   // Send message to API - decide between streaming and non-streaming
@@ -750,10 +749,10 @@ export const ChatProvider = ({ children }) => {
     }
   }, [
     apiUrl, selectedModel, chatHistory, settings, getModelAdjustedSettings,
-    addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics,
-    startPerformanceTimer, updatePerformanceMetrics, extractTokenCount,
+    addMessageToHistory, formatModelIdentifier,
+    extractTokenCount,
     setError, setIsWaitingForResponse, streamMessageWithFetch,
-    idToken, currentMessageMetrics
+    idToken
   ]);
 
   // Stop the current generation
@@ -893,7 +892,6 @@ export const ChatProvider = ({ children }) => {
     clearChat,
     getOrCreateConversation, 
     // No need to include streamingTextRef itself, it's just a ref object
-    isStreamingRef.current,
     downloadChatHistory,
   ]);
 

@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-globals */
+
 // streamProcessor.js
 // Web Worker to parse SSE streaming chunks into content + tokenCount
 
