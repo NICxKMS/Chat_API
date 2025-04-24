@@ -1,14 +1,5 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getFirebaseAuth } from '../../firebaseConfig';
-// Import Firebase auth functions using the correct paths
-import { 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  GithubAuthProvider, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword 
-} from 'firebase/auth';
 import { IoMdClose } from 'react-icons/io';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
@@ -34,6 +25,9 @@ const LoginModal = ({ onClose }) => {
   }, [authContextError]);
 
   const handleSignIn = async (provider) => {
+    // Dynamically import Firebase auth to defer load
+    const { getFirebaseAuth } = await import('../../firebaseConfig');
+    const { signInWithPopup } = await import('firebase/auth');
     const auth = getFirebaseAuth();
     if (!auth) {
       setError("Firebase not initialized. Cannot sign in.");
@@ -73,6 +67,8 @@ const LoginModal = ({ onClose }) => {
 
   const handleEmailSignIn = async (e) => {
     e.preventDefault(); // Prevent form submission reload
+    const { getFirebaseAuth } = await import('../../firebaseConfig');
+    const { signInWithEmailAndPassword } = await import('firebase/auth');
     const auth = getFirebaseAuth();
     if (!auth) {
       setError("Firebase not initialized.");
@@ -97,6 +93,8 @@ const LoginModal = ({ onClose }) => {
 
   const handleEmailSignUp = async (e) => {
     e.preventDefault(); // Prevent form submission reload
+    const { getFirebaseAuth } = await import('../../firebaseConfig');
+    const { createUserWithEmailAndPassword } = await import('firebase/auth');
     const auth = getFirebaseAuth();
     if (!auth) {
       setError("Firebase not initialized.");
@@ -119,12 +117,16 @@ const LoginModal = ({ onClose }) => {
     }
   };
 
-  const handleGoogleSignIn = () => {
+  // Dynamically import GoogleAuthProvider to avoid bundling and missing reference
+  const handleGoogleSignIn = async () => {
+    const { GoogleAuthProvider } = await import('firebase/auth');
     const googleProvider = new GoogleAuthProvider();
     handleSignIn(googleProvider);
   };
 
-  const handleGithubSignIn = () => {
+  // Dynamically import GithubAuthProvider to avoid missing reference
+  const handleGithubSignIn = async () => {
+    const { GithubAuthProvider } = await import('firebase/auth');
     const githubProvider = new GithubAuthProvider();
     handleSignIn(githubProvider);
   };

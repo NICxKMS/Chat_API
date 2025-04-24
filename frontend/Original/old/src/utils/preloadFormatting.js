@@ -8,8 +8,7 @@ export const basicFormattingImports = [
   () => import('../components/chat/ChatMessage/StreamingMessage'),
   () => import('react-markdown'),
   () => import('remark-gfm'),
-  () => import('remark-emoji'),
-  () => import('rehype-raw'),
+
 ];
 
 // Background Load: Advanced Formatting Components
@@ -19,7 +18,8 @@ export const advancedFormattingImports = [
   () => import('react-syntax-highlighter/dist/esm/styles/prism/prism'),
   () => import('rehype-katex'), 
   () => import('katex/dist/katex.min.css'), 
-  // () => import('react-katex'),
+  () => import('remark-emoji'),
+  () => import('rehype-raw'),
 ];
 
 // Phase 2: Model Selector Components

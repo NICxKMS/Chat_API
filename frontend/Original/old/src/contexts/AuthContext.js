@@ -1,7 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-// Import Firebase auth service (ensure firebaseConfig.js runs first)
-import { getFirebaseAuth } from '../firebaseConfig';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+// Firebase is dynamically imported to avoid blocking initial bundle
 
 const AuthContext = createContext();
 
@@ -29,67 +27,70 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    // Use Firebase signOut
+    // Dynamically import Firebase auth functions
+    const { getFirebaseAuth } = await import('../firebaseConfig');
+    const { signOut: firebaseSignOut } = await import('firebase/auth');
     const auth = getFirebaseAuth();
     if (!auth) {
       setError("Firebase not initialized.");
       return;
     }
     try {
-      await signOut(auth);
-      // onAuthStateChanged will handle setting user/token to null and loading to false
+      await firebaseSignOut(auth);
       console.log("Sign out successful.");
     } catch (err) {
       console.error("Logout failed:", err);
       setError(err.message || 'Failed to logout.');
-      // Reset state manually on error?
-      // setCurrentUser(null);
-      // setIdToken(null);
-      // setLoading(false); // Or rely on onAuthStateChanged?
     }
   };
 
   // Effect to listen for Firebase auth state changes
   useEffect(() => {
-    const auth = getFirebaseAuth();
-    if (!auth) {
-      console.warn("Auth service not available for onAuthStateChanged listener.");
-      setLoading(false); // Stop loading if Firebase isn't initialized
-      return;
-    }
-
-    console.log("Setting up Firebase onAuthStateChanged listener.");
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user) {
-        try {
-          // Force refresh is false by default, gets cached token if available
-          const token = await user.getIdToken();
-          setIdToken(token);
-          setError(null); // Clear previous errors on successful login
-          setIsLoggingIn(false); // Ensure login UI closes if open
-          console.log("User signed in, token obtained.");
-        } catch (err) {
-          console.error("Failed to get ID token:", err);
-          setError("Failed to get authentication token.");
-          setIdToken(null);
-          // Optionally sign out the user if token fetch fails critically
-          await signOut(auth); 
-        }
-      } else {
-        // User is signed out
-        setIdToken(null);
-        setIsLoggingIn(false); // Ensure login UI closes if open
-        console.log("User signed out.");
+    let unsubscribe;
+    (async () => {
+      // Dynamically import Firebase auth
+      const { getFirebaseAuth } = await import('../firebaseConfig');
+      const { onAuthStateChanged: firebaseOnAuthStateChanged } = await import('firebase/auth');
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        console.warn("Auth service not available for onAuthStateChanged listener.");
+        setLoading(false);
+        return;
       }
-      setLoading(false); // Auth state determined
-    });
+      console.log("Setting up Firebase onAuthStateChanged listener.");
+      unsubscribe = firebaseOnAuthStateChanged(auth, async (user) => {
+        setCurrentUser(user);
+        if (user) {
+          try {
+            // Force refresh is false by default, gets cached token if available
+            const token = await user.getIdToken();
+            setIdToken(token);
+            setError(null); // Clear previous errors on successful login
+            setIsLoggingIn(false); // Ensure login UI closes if open
+            console.log("User signed in, token obtained.");
+          } catch (err) {
+            console.error("Failed to get ID token:", err);
+            setError("Failed to get authentication token.");
+            setIdToken(null);
+            // Optionally sign out the user if token fetch fails critically
+            const { signOut: firebaseSignOut } = await import('firebase/auth');
+            await firebaseSignOut(auth);
+          }
+        } else {
+          // User is signed out
+          setIdToken(null);
+          setIsLoggingIn(false); // Ensure login UI closes if open
+          console.log("User signed out.");
+        }
+        setLoading(false); // Auth state determined
+      });
+    })();
 
     // Cleanup listener on component unmount
     return () => {
       console.log("Cleaning up Firebase onAuthStateChanged listener.");
-      unsubscribe();
-    }
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, []);
 
   const value = {

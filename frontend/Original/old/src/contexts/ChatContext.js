@@ -399,14 +399,17 @@ export const ChatProvider = ({ children }) => {
         throw new Error(errorMessage);
       }
 
-      // Get the response body as a stream with optimized settings
+      // Get the response body as a stream and set up the stream parser worker
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
-
-      // Variables for optimized chunk processing
-      let buffer = '';
-      let processingChunk = false;
-      let lastRawChunkReceived = null; // Variable to store the last raw chunk
+      // Initialize streamProcessor worker
+      const streamWorker = new Worker(new URL('../workers/streamProcessor.js', import.meta.url), { type: 'module' });
+      const parseStreamChunk = (chunk) => new Promise((resolve, reject) => {
+        streamWorker.onmessage = (e) => resolve(e.data);
+        streamWorker.onerror = reject;
+        streamWorker.postMessage(chunk);
+      });
+      let lastRawChunkReceived = null;
 
       // Begin reading the stream
       while (true) {
@@ -428,11 +431,11 @@ export const ChatProvider = ({ children }) => {
              console.log('[CLIENT LAST RAW CHUNK RECV]', lastRawChunkReceived);
           }
           // Process any remaining data in the buffer before breaking
-          if (buffer.trim()) { // Check if buffer has content
-              console.log('[DEBUG] Processing remaining buffer content after stream done:', buffer);
-              console.log(`[FRONTEND RECV RAW - FINAL] Char count: ${buffer.length}`);
+          if (accumulatedContent.trim()) { // Check if buffer has content
+              console.log('[DEBUG] Processing remaining buffer content after stream done:', accumulatedContent);
+              console.log(`[FRONTEND RECV RAW - FINAL] Char count: ${accumulatedContent.length}`);
               // Reuse the message processing logic
-              const messages = buffer.split('\n\n');
+              const messages = accumulatedContent.split('\n\n');
               // Don't need to save the last part now, process everything
               for (const message of messages) {
                   if (!message.trim()) continue;
@@ -472,108 +475,39 @@ export const ChatProvider = ({ children }) => {
           break; // Now break the loop
         }
 
-        // Decode the chunk
+        // Decode the chunk and parse it via worker
         const chunk = decoder.decode(value, { stream: true });
-        lastRawChunkReceived = chunk; // Store the latest raw chunk received
+        lastRawChunkReceived = chunk;
         console.log(`[FRONTEND RECV RAW] Char count: ${chunk.length}`);
-        buffer += chunk;
-
-        // Process all complete SSE messages in the buffer
-        if (!processingChunk) {
-          processingChunk = true;
-
-          const messages = buffer.split('\n\n');
-          buffer = messages.pop() || ''; // Keep incomplete message for next chunk
-
-          for (const message of messages) {
-            if (!message.trim()) continue;
-
-            if (message.startsWith(':heartbeat')) {
-              console.log('Received heartbeat');
-              continue;
-            }
-
-            if (message.startsWith('event: abort')) {
-              console.log('Received abort event');
-              // Mark the generation as stopped by the user
-              updateChatWithContent(accumulatedContent + ' [Stopped]');
+        try {
+          const parsedMsgs = await parseStreamChunk(chunk);
+          for (const msg of parsedMsgs) {
+            if (msg.isDone) {
+              // Final done marker
               updatePerformanceMetrics(accumulatedTokenCount, true);
-              break;
-            }
-
-            if (message.startsWith('event: error')) {
-              console.log('Received error event');
-              try {
-                const data = message.split('\n')[1]?.slice(5); // Extract data part after event line
-                if (data) {
-                  const errorData = JSON.parse(data);
-                  setError(errorData.message || 'Server error');
-                  _updatePlaceholderOnError();
-                }
-              } catch (e) {
-                console.warn('Error parsing error event:', e);
-                setError('Server error');
-                _updatePlaceholderOnError();
-              }
-              break;
-            }
-
-            if (message.startsWith('data:')) {
-              const data = message.slice(5).trim();
-
-              if (data === '[DONE]') {
-                console.log('Received [DONE] message from stream');
-                // Mark as complete when DONE is received normally
-                updatePerformanceMetrics(accumulatedTokenCount, true);
-                continue; // Skip further processing for [DONE]
-              }
-
-              try {
-                const parsedData = JSON.parse(data);
-                const content = parsedData.content || '';
-                console.log(`[FRONTEND PROC] Content char count: ${content.length}`);
-                if (content) {
-                  // Add to accumulated content
-                  accumulatedContent += content;
-
-                  // Update token count for this chunk and accumulate
-                  const chunkTokenCount = content.split(/\s+/).length || 0; // Basic token estimate
-                  accumulatedTokenCount += chunkTokenCount;
-
-                  // Update the streaming text ref
-                  streamingTextRef.current = accumulatedContent;
-
-                  // Optimize UI updates - always render immediately for each chunk when received
-                  // instead of throttling based on timing to ensure all text is visible
-                  const currentContent = accumulatedContent;
-                  const currentTokenCount = accumulatedTokenCount;
-                  window.requestAnimationFrame(() => {
-                    updateChatWithContent(currentContent);
-                    // Update metrics but don't mark as complete here
-                    updatePerformanceMetrics(currentTokenCount, false);
-                  });
-                }
-              } catch (parseError) {
-                console.warn('Error parsing message data:', parseError, data);
-              }
+            } else if (msg.content) {
+              accumulatedContent += msg.content;
+              accumulatedTokenCount += msg.tokenCount;
+              streamingTextRef.current = accumulatedContent;
+              // Update UI & metrics immediately
+              const currContent = accumulatedContent;
+              const currTokens = accumulatedTokenCount;
+              window.requestAnimationFrame(() => {
+                updateChatWithContent(currContent);
+                updatePerformanceMetrics(currTokens, false);
+              });
             }
           }
-
-          processingChunk = false;
+        } catch (e) {
+          console.error('[ChatContext] Stream worker error:', e);
         }
       } // End of while loop
 
-      // Ensure final update after loop completes
-      if (updateTimeoutRef.current) { // Clear any pending throttled update
-        clearTimeout(updateTimeoutRef.current);
-        updateTimeoutRef.current = null;
-      }
-      
-      // Always update with the final accumulated content from the ref
-      // This ensures we render all content received, even if it wasn't rendered during streaming
+      // Terminate stream worker
+      streamWorker.terminate();
+      // Ensure final accumulated content is rendered
       const finalContent = streamingTextRef.current;
       updateChatWithContent(finalContent);
-
 
       // Finalize metrics
       updatePerformanceMetrics(accumulatedTokenCount, true);

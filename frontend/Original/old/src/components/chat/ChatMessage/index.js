@@ -1,17 +1,11 @@
-import { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState, lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkEmoji from 'remark-emoji';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
+import LazyMarkdownRenderer from '../../common/LazyMarkdownRenderer';
+// Dynamically load StreamingMessage to defer heavy modules
+const StreamingMessage = lazy(() => import('./StreamingMessage'));
 import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon, PencilIcon } from '@primer/octicons-react';
-import StreamingMessage from './StreamingMessage';
 import styles from './ChatMessage.module.css';
 import { convertTeXToMathDollars } from '../../../utils/formatters';
-
-// Import prism theme for final rendered content
 
 /**
  * Format time in milliseconds to a human-readable format
@@ -267,23 +261,13 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
     // Convert TeX notation if content is a string
     const processedContent = typeof content === 'string' ? convertTeXToMathDollars(content) : content;
     
-    // Use custom HTML processing for non-streaming
-    if (message.role === 'assistant') {
-      const processed = processContent(processedContent);
-      return (
-        <div className={styles.markdown} dangerouslySetInnerHTML={{ __html: processed }} />
-      );
-    }
-    
-    // Use simple ReactMarkdown for user messages
+    // Use dynamic LazyMarkdownRenderer for non-blocking markdown rendering
     return (
-      <ReactMarkdown
-        className={styles.markdown}
-        remarkPlugins={[remarkGfm, remarkEmoji, remarkMath]}
-        rehypePlugins={[rehypeKatex]}
-      >
-        {processedContent}
-      </ReactMarkdown>
+      <Suspense fallback={null}>
+        <LazyMarkdownRenderer>
+          {processedContent}
+        </LazyMarkdownRenderer>
+      </Suspense>
     );
   };
   

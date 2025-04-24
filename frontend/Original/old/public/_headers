@@ -10,36 +10,11 @@
 /favicon.ico
   Content-Type: image/x-icon
 
-# Set content types and encoding for gzipped assets
-/static/js/*.gz
-  Content-Type: application/javascript
-  Content-Encoding: gzip
-/static/css/*.gz
-  Content-Type: text/css
-  Content-Encoding: gzip
-/*.js.gz
-  Content-Type: application/javascript
-  Content-Encoding: gzip
-/*.css.gz
-  Content-Type: text/css
-  Content-Encoding: gzip
-/index.html.gz
-  Content-Type: text/html
-  Content-Encoding: gzip
-
 # Cache hashed assets for a long time (1 year) in the browser
 /static/css/*.*.*.css
   Cache-Control: public, max-age=31536000, immutable
 /static/js/*.*.*.js
   Cache-Control: public, max-age=31536000, immutable
-
-# Cache hashed gzipped assets for a long time (1 year) in the browser
-/static/css/*.*.*.css.gz
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Encoding: gzip
-/static/js/*.*.*.js.gz
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Encoding: gzip
 
 # Fallback for other static assets (revalidate) - might inherit Cloudflare default
 #/static/*

@@ -259,39 +259,53 @@ export const ModelProvider = ({ children }) => {
         throw new Error(errorMsg);
       }
       
-      const data = await response.json();
-
-      // Process the fetched data using the new function
-      const { allModels: fetchedAllModels, processedModels: fetchedProcessedModels, experimentalModels: fetchedExperimentalModels } = processModels(data);
-      
-      setAllModels(fetchedAllModels);
-      setProcessedModels(fetchedProcessedModels);
-      setExperimentalModels(fetchedExperimentalModels);
-
-      // Cache the newly fetched data
-      cacheModels({
-        allModels: fetchedAllModels,
-        processedModels: fetchedProcessedModels,
-        experimentalModels: fetchedExperimentalModels
-      });
-      
-      // Restore previous logic: Select first model if none selected
-      if (!selectedModel && fetchedAllModels.length > 0) {
-        setSelectedModel(fetchedAllModels[0]);
-      }
-      
+      const rawData = await response.json();
+      console.log("[ModelContext] Spawning worker for model processing...");
+      // Offload model processing to Web Worker
+      const worker = new Worker(new URL('../workers/modelProcessor.js', import.meta.url), { type: 'module' });
+      worker.postMessage(rawData);
+      worker.onmessage = ({ data: msg }) => {
+        if (msg.error) {
+          console.error('[ModelContext] Worker error:', msg.error);
+          setError(msg.error);
+        } else {
+          const {
+            allModels: fetchedAllModels,
+            processedModels: fetchedProcessedModels,
+            experimentalModels: fetchedExperimentalModels
+          } = msg;
+          setAllModels(fetchedAllModels);
+          setProcessedModels(fetchedProcessedModels);
+          setExperimentalModels(fetchedExperimentalModels);
+          // Cache the processed results
+          cacheModels({
+            allModels: fetchedAllModels,
+            processedModels: fetchedProcessedModels,
+            experimentalModels: fetchedExperimentalModels
+          });
+          // Select first model if none selected
+          if (!selectedModel && fetchedAllModels.length > 0) {
+            setSelectedModel(fetchedAllModels[0]);
+          }
+        }
+        setIsLoading(false);
+        worker.terminate();
+      };
+      worker.onerror = (err) => {
+        console.error('[ModelContext] Worker unexpected error:', err);
+        setError(err.message);
+        setIsLoading(false);
+        worker.terminate();
+      };
     } catch (err) {
       console.error('Failed to fetch or process models:', err);
       setError(err.message || 'Failed to load model data');
       // Attempt to load from potentially expired cache as a last resort?
-    } finally {
-      setIsLoading(false);
     }
   }, [
-    apiUrl, 
-    getCachedModels, 
-    cacheModels, 
-    processModels, 
+    apiUrl,
+    getCachedModels,
+    cacheModels,
     selectedModel,
     idToken
   ]);

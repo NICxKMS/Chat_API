@@ -8,7 +8,6 @@ try {
 }
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const CompressionPlugin = require('compression-webpack-plugin');
 
 module.exports = {
   devServer: {
@@ -21,6 +20,47 @@ module.exports = {
       if (env === 'production') {
         webpackConfig.optimization = {
           ...webpackConfig.optimization,
+          runtimeChunk: { name: 'runtime' },
+          splitChunks: {
+            chunks: 'all',
+            minSize: 15000,
+            maxSize: 100000,
+            minRemainingSize: 0,
+            enforceSizeThreshold: 15000,
+            maxInitialRequests: 10,
+            maxAsyncRequests: 10,
+            cacheGroups: {
+              vendor: {
+                test: /[\\/]node_modules[\\/]/,
+                chunks: 'all',
+                priority: -10,
+                name(module, chunks, cacheGroupKey) {
+                  // Get the package name from module context
+                  const packageNameMatch = module.context.match(/[\\\\/]node_modules[\\\\/](.*?)([\\\\/]|$)/);
+                  const packageName = packageNameMatch && packageNameMatch[1]
+                    ? packageNameMatch[1].replace('@', '')
+                    : 'vendor';
+                  // e.g. vendors.react or vendors.lodash
+                  return `${cacheGroupKey}.${packageName}`;
+                },
+              },
+              styles: {
+                test: /\\.css$/,
+                name: 'styles',
+                chunks: 'all',
+                enforce: true
+              },
+              smallChunks: {
+                // Merge all modules smaller than 5KB into this bundle
+                test: module => module.size() < 5000,
+                name: 'small-chunks',
+                chunks: 'all',
+                priority: -5,            // run before vendor (-10)
+                reuseExistingChunk: true,
+                enforce: true
+              }
+            }
+          },
           usedExports: true,
           minimize: true,
           minimizer: [
@@ -32,60 +72,9 @@ module.exports = {
                   pure_funcs: ['console.log']
                 }
               }
-            })
-          ],
-          splitChunks: {
-            chunks: 'all',
-            minSize: 20000,
-            maxSize: 244000,
-            minChunks: 1,
-            maxAsyncRequests: 30,
-            maxInitialRequests: 30,
-            cacheGroups: {
-              defaultVendors: {
-                test: /[\\/]node_modules[\\/]/,
-                priority: -10,
-                reuseExistingChunk: true,
-                name(module) {
-                  const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1];
-                  return `npm.${packageName ? packageName.replace(/[^a-zA-Z0-9]/g, '_') : 'vendor'}`;
-                },
-              },
-              reactVendor: {
-                test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-                name: 'vendor-react',
-                chunks: 'all',
-                priority: 10,
-                enforce: true
-              },
-              firebaseVendor: {
-                test: /[\\/]node_modules[\\/]firebase[\\/]/,
-                name: 'vendor-firebase',
-                chunks: 'all',
-                priority: 5,
-                enforce: true
-              },
-              commons: {
-                name: 'commons',
-                chunks: 'initial',
-                minChunks: 2,
-                priority: -20,
-                reuseExistingChunk: true
-              },
-              sharedAsync: {
-                name: 'shared-async',
-                chunks: 'async',
-                minChunks: 2,
-                priority: -30,
-                reuseExistingChunk: true
-              },
-              default: {
-                minChunks: 2,
-                priority: -40,
-                reuseExistingChunk: true
-              },
-            }
-          }
+            }),
+            new CssMinimizerPlugin()
+          ]
         };
 
         if (process.env.ANALYZE === 'true' && BundleAnalyzerPlugin) {
@@ -98,26 +87,8 @@ module.exports = {
             })
           );
         } else if (process.env.ANALYZE === 'true') {
-           console.warn('Analysis requested (ANALYZE=true), but webpack-bundle-analyzer is not installed or failed to load.');
+          console.warn('Analysis requested (ANALYZE=true), but webpack-bundle-analyzer is not installed or failed to load.');
         }
-        // Generate gzip and Brotli versions of assets
-        webpackConfig.plugins.push(
-          new CompressionPlugin({
-            filename: '[path][base].gz',
-            algorithm: 'gzip',
-            test: /\.(js|css|html)$/, 
-            threshold: 10240,
-            minRatio: 0.8
-          }),
-          new CompressionPlugin({
-            filename: '[path][base].br',
-            algorithm: 'brotliCompress',
-            test: /\.(js|css|html)$/, 
-            compressionOptions: { level: 11 },
-            threshold: 10240,
-            minRatio: 0.8
-          })
-        );
       }
       return webpackConfig;
     }
