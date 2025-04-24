@@ -1,35 +1,83 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useEffect } from 'react';
 import styles from './PerformanceMetrics.module.css';
 
 /**
  * Component to display performance metrics for AI responses
  * @param {Object} props - Component props
- * @param {Object} props.metrics - Metrics data (elapsedTime, tokenCount, tokensPerSecond, isComplete)
+ * @param {Object} props.metrics - Metrics data including token counts and timing
  * @returns {JSX.Element|null} - Rendered component or null if no metrics
  */
 const PerformanceMetrics = memo(({ metrics }) => {
-  const { elapsedTime, tokenCount, tokensPerSecond, isComplete } = metrics || {};
+  const { 
+    elapsedTime, 
+    tokenCount, 
+    tokensPerSecond, 
+    isComplete, 
+    promptTokens, 
+    completionTokens, 
+    totalTokens,
+    finishReason
+  } = metrics || {};
   
-  // Format elapsed time - moved before early return
+  // Debug metrics data
+  useEffect(() => {
+    if (metrics) {
+      console.log('PerformanceMetrics received:', { 
+        promptTokens, 
+        completionTokens, 
+        totalTokens,
+        finishReason,
+        allMetrics: metrics 
+      });
+    }
+  }, [metrics, promptTokens, completionTokens, totalTokens, finishReason]);
+  
+  // Format elapsed time
   const formattedTime = useMemo(() => {
     if (!elapsedTime) return '';
     return `${(elapsedTime / 1000).toFixed(2)}s`;
   }, [elapsedTime]);
   
-  // Format token count - moved before early return
+  // Format token count with detailed info when available
   const formattedTokens = useMemo(() => {
+    // If we have detailed token breakdown
+    if (completionTokens) {
+      return `${completionTokens} tokens${isComplete ? '' : '...'}`;
+    }
+    
+    // Fallback to basic token count
     if (!tokenCount) return '';
-    return `${tokenCount} tokens${isComplete ? ' - Complete' : ''}`;
-  }, [tokenCount, isComplete]);
+    return `${tokenCount} tokens${isComplete ? '' : '...'}`;
+  }, [tokenCount, completionTokens, isComplete]);
+  
+  // Create tooltip with detailed token info
+  const tokenTooltip = useMemo(() => {
+    const parts = [];
+    
+    if (promptTokens) parts.push(`Prompt: ${promptTokens}`);
+    if (completionTokens) parts.push(`Completion: ${completionTokens}`);
+    if (totalTokens) parts.push(`Total: ${totalTokens}`);
+    if (finishReason) parts.push(`Finish: ${finishReason}`);
+    
+    if (parts.length > 0) {
+      return parts.join(' | ');
+    }
+    
+    return 'Token count';
+  }, [promptTokens, completionTokens, totalTokens, finishReason]);
+  
+  // Show detailed metrics when available
+  const showDetailedMetrics = useMemo(() => {
+    return !!(promptTokens && totalTokens);
+  }, [promptTokens, totalTokens]);
   
   // Only show TPS if we have token count, elapsed time > 0.5s, and calculated TPS
-  // moved before early return
   const showTps = useMemo(() => {
-    return tokenCount && elapsedTime > 500 && tokensPerSecond;
-  }, [tokenCount, elapsedTime, tokensPerSecond]);
+    return (tokenCount || completionTokens) && elapsedTime > 500 && tokensPerSecond;
+  }, [tokenCount, completionTokens, elapsedTime, tokensPerSecond]);
   
   // Skip rendering if no metrics available
-  if (!elapsedTime || !tokenCount) {
+  if (!elapsedTime || (!tokenCount && !completionTokens)) {
     return null;
   }
   
@@ -40,7 +88,7 @@ const PerformanceMetrics = memo(({ metrics }) => {
         {formattedTime}
       </span>
       
-      <span className={styles.tokenMetric} title="Token count">
+      <span className={styles.tokenMetric} title={tokenTooltip}>
         <TokenIcon className={styles.icon} />
         {formattedTokens}
       </span>
@@ -49,6 +97,13 @@ const PerformanceMetrics = memo(({ metrics }) => {
         <span className={styles.tpsMetric} title="Tokens per second">
           <SpeedIcon className={styles.icon} />
           {tokensPerSecond} TPS
+        </span>
+      )}
+      
+      {showDetailedMetrics && (
+        <span className={styles.detailedMetric} title={tokenTooltip}>
+          <InfoIcon className={styles.icon} />
+          P:{promptTokens}/T:{totalTokens}
         </span>
       )}
     </div>
@@ -105,6 +160,24 @@ const SpeedIcon = ({ className }) => (
   >
     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
     <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" />
+  </svg>
+);
+
+const InfoIcon = ({ className }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
   </svg>
 );
 

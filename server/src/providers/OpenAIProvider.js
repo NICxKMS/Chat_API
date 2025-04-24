@@ -343,12 +343,12 @@ class OpenAIProvider extends BaseProvider {
 
     try {
       const startTime = Date.now();
-      logger.debug({ openAIPayload: payload }, "Sending request to OpenAI");
+      // logger.debug({ openAIPayload: payload }, "Sending request to OpenAI");
 
       const response = await this.client.chat.completions.create(payload);
 
       const latency = Date.now() - startTime;
-      logger.debug({ openAIResponse: response }, "Received response from OpenAI");
+      logger.debug("Received response from OpenAI");
 
       // Normalize the response
       return this._normalizeResponse(response, modelName, latency);
@@ -404,6 +404,7 @@ class OpenAIProvider extends BaseProvider {
   async *chatCompletionStream(options) {
     let modelName;
     let streamStartTime;
+    let latency = 0;
     try {
       // Standardize and validate options
       const standardOptions = this.standardizeOptions(options);
@@ -423,6 +424,7 @@ class OpenAIProvider extends BaseProvider {
         messages: processedMessages,
         temperature: standardOptions.temperature,
         max_completion_tokens: standardOptions.max_tokens,
+        stream_options: {include_usage: true},
         stream: true,
         // Include other optional parameters
         ...(standardOptions.top_p !== undefined && { top_p: standardOptions.top_p }),
@@ -432,7 +434,7 @@ class OpenAIProvider extends BaseProvider {
         ...(standardOptions.response_format?.type === 'json_object' && { response_format: { type: 'json_object' } })
       };
 
-      logger.debug({ openAIStreamPayload: payload }, "Sending stream request to OpenAI");
+      // logger.debug({ openAIStreamPayload: payload }, "Sending stream request to OpenAI");
       streamStartTime = Date.now();
 
       // Use the OpenAI SDK's streaming method

@@ -38,6 +38,7 @@ const AuthButton = memo(({
             src={currentUser.photoURL} 
             alt={`${userName}'s profile`}
             className={styles.userAvatar}
+            loading="lazy"
           />
         ) : (
           <div className={styles.userInitial}>

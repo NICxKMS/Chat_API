@@ -142,6 +142,7 @@ class ChatController {
         }
         
         // Return the response using reply.send
+        console.log(response);
         return reply.send(response); // Explicit return
 
       } catch (providerError) {
@@ -372,10 +373,10 @@ class ChatController {
 
       // Get provider stream
       const providerStream = provider.chatCompletionStream(options);
-      
       // Optimized stream processing with immediate chunk writing
       for await (const chunk of providerStream) {
         lastProviderChunk = chunk; // Store the latest chunk
+        console.log(chunk);
         if (streamClosed) { break; }
         lastActivityTime = Date.now(); 
         chunkCounter++;

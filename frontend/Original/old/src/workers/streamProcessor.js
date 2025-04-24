@@ -18,11 +18,49 @@ self.onmessage = ({ data: chunk }) => {
       } else {
         try {
           const parsed = JSON.parse(payload);
+          
+          // Check if this is the final chunk with complete metadata
+          // Look for the specific format from the example
+          const isFinalChunk = parsed.id && parsed.model && parsed.usage;
+          
           const content = parsed.content || '';
+          
+          // Extract token details if available
+          let tokenInfo = null;
+          
+          if (parsed.usage) {
+            // Direct match to the provided example
+            tokenInfo = {
+              promptTokens: parsed.usage.promptTokens,
+              completionTokens: parsed.usage.completionTokens,
+              totalTokens: parsed.usage.totalTokens
+            };
+            console.log("[WORKER] Found usage data:", tokenInfo);
+          } else if (parsed.raw?.usageMetadata) {
+            tokenInfo = {
+              promptTokens: parsed.raw.usageMetadata.promptTokenCount,
+              completionTokens: parsed.raw.usageMetadata.candidatesTokenCount,
+              totalTokens: parsed.raw.usageMetadata.totalTokenCount
+            };
+            console.log("[WORKER] Found raw.usageMetadata:", tokenInfo);
+          }
+          
+          // Fallback token count calculation if no detailed info
           const tokenCount = content.split(/\s+/).filter(Boolean).length;
-          messages.push({ content, tokenCount });
+          
+          messages.push({ 
+            content, 
+            tokenCount,
+            tokenInfo,
+            finishReason: parsed.finishReason,
+            model: parsed.model,
+            provider: parsed.provider,
+            isFinalChunk,
+            rawChunk: parsed
+          });
         } catch (e) {
           // ignore parse errors
+          console.error("[WORKER] Parse error:", e);
         }
       }
     }

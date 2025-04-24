@@ -65,14 +65,10 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
   
   // Determine if we should show metrics (only for assistant messages)
   const shouldShowMetrics = useMemo(() => {
+    // Show metrics if this is an assistant message with any metrics
     if (message.role !== 'assistant' || !message.metrics) return false;
-    
-    // Check if we have any valid metrics values
-    const { elapsedTime, tokenCount, tokensPerSecond, timeToFirstToken } = message.metrics;
-    return elapsedTime !== null || tokenCount !== null || tokensPerSecond !== null || timeToFirstToken !== null;
+    return true;
   }, [message.role, message.metrics]);
-  
-  // console.log('Should show metrics:', shouldShowMetrics, { role: message.role, metrics: message.metrics });
   
   // Copy message content to clipboard
   const handleCopyMessage = () => {
@@ -125,33 +121,86 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
     
     // Use the specific isStreaming prop passed down to determine if THIS message is generating
     const isGenerating = isStreaming;
-    const { elapsedTime, tokenCount, tokensPerSecond, timeToFirstToken } = message.metrics;
+    const { 
+      elapsedTime, 
+      tokenCount, 
+      tokensPerSecond, 
+      timeToFirstToken, 
+      promptTokens, 
+      completionTokens, 
+      totalTokens,
+      finishReason 
+    } = message.metrics;
+    
+    // Check if we have any valid metrics to show
+    const hasValidMetrics = 
+      elapsedTime != null || 
+      tokenCount != null || 
+      tokensPerSecond != null || 
+      timeToFirstToken != null ||
+      promptTokens != null ||
+      completionTokens != null ||
+      totalTokens != null ||
+      finishReason != null;
+      
+    // Don't render anything if no valid metrics are found
+    if (!hasValidMetrics) return null;
     
     return (
       <div className={styles.metricsContainer}>
-        {/* Only show TTFT for streaming messages where timeToFirstToken exists */}
-        {timeToFirstToken !== null && (
+        {/* Time metrics */}
+        {timeToFirstToken != null && timeToFirstToken !== 0 && (
           <span className={styles.metric}>
             <ClockIcon size={14} className={styles.metricIcon} />
             First Token: {formatTime(timeToFirstToken)}
           </span>
         )}
-        {elapsedTime && (
+        {elapsedTime != null && elapsedTime !== 0 && (
           <span className={styles.metric}>
             <ClockIcon size={14} className={styles.metricIcon} />
             Total Time: {formatTime(elapsedTime)}
           </span>
         )}
-        {tokenCount && (
+        
+        {/* Token metrics */}
+        {tokenCount != null && tokenCount !== 0 && (
           <span className={styles.metric}>
             <CopilotIcon size={14} className={styles.metricIcon} />
             Tokens: {tokenCount}
           </span>
         )}
-        {tokensPerSecond && (
+        {promptTokens != null && promptTokens !== 0 && (
+          <span className={styles.metric}>
+            <CopilotIcon size={14} className={styles.metricIcon} />
+            Prompt: {promptTokens}
+          </span>
+        )}
+        {completionTokens != null && completionTokens !== 0 && (
+          <span className={styles.metric}>
+            <CopilotIcon size={14} className={styles.metricIcon} />
+            Completion: {completionTokens}
+          </span>
+        )}
+        {totalTokens != null && totalTokens !== 0 && (
+          <span className={styles.metric}>
+            <CopilotIcon size={14} className={styles.metricIcon} />
+            Total: {totalTokens}
+          </span>
+        )}
+        
+        {/* Speed metrics */}
+        {tokensPerSecond != null && tokensPerSecond !== 0 && (
           <span className={styles.metric}>
             <PulseIcon size={14} className={styles.metricIcon} />
             Speed: {tokensPerSecond} t/s
+          </span>
+        )}
+        
+        {/* Status */}
+        {finishReason != null && finishReason !== '' && (
+          <span className={styles.metric}>
+            <AlertIcon size={14} className={styles.metricIcon} />
+            {finishReason}
           </span>
         )}
         {isGenerating && (
@@ -160,7 +209,8 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
             Generating...
           </span>
         )}
-        {/* Render the button here for assistant messages with metrics */}
+        
+        {/* Copy button */}
         {copyButtonJsx}
       </div>
     );
@@ -206,7 +256,7 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
         {message.role !== 'user' && (message.role !== 'assistant' || !shouldShowMetrics) && copyButtonJsx}
       </div>
 
-      {/* User message buttons container - moved to be direct child of message */}
+      {/* User message buttons container */}
       {message.role === 'user' && (
         <div className={styles.userButtonContainer}>
           {editButtonJsx}

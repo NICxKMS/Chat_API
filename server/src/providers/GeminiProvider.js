@@ -382,7 +382,7 @@ class GeminiProvider extends BaseProvider {
     }
 
     try {
-      logger.debug({ geminiPayload: requestPayload }, "Sending request to Gemini"); // Log payload for debugging
+      // logger.debug({ geminiPayload: requestPayload }, "Sending request to Gemini"); // Log payload for debugging
 
       const result = await generativeModel.generateContent(requestPayload);
       const response = result.response; // Access the response object
@@ -393,7 +393,7 @@ class GeminiProvider extends BaseProvider {
         .labels(this.name, modelName, "200")
         .observe(latency / 1000); // Observe in seconds
 
-      logger.debug({ geminiResponse: response }, "Received response from Gemini");
+      // logger.debug({ geminiResponse: response }, "Received response from Gemini");
 
       // Extract text content safely
       const textContent = response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
