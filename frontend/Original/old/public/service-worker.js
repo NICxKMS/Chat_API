@@ -1,80 +1,56 @@
 /* eslint-disable no-restricted-globals */
-const CACHE_NAME = 'chat-app-cache-v1';
+const STATIC_CACHE = 'static-cache-v1.1';
+const DYNAMIC_CACHE = 'dynamic-cache-v1.1';
+const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/static/js/main.*.js',
-  '/static/js/*.chunk.js',
-  '/static/css/main.*.css',
-  '/static/css/*.chunk.css',
   '/manifest.json',
-  '/image.webp'
+  '/image.webp',
+
+  // Include built assets dynamically with patterns (if applicable in dev tools)
 ];
 
-// Dynamic cache for runtime resources
-const DYNAMIC_CACHE = 'chat-app-dynamic-v1';
-
-// Cache duration in milliseconds (7 days)
-const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000;
-
-// Install event - cache static assets
+// 📦 Install
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(STATIC_ASSETS);
-      })
+    caches.open(STATIC_CACHE).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
+    })
   );
 });
 
-// Activate event - clean up old caches
+// 🧹 Activate
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    Promise.all([
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME && cacheName !== DYNAMIC_CACHE) {
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      }),
-      // Clean up expired items from dynamic cache
-      caches.open(DYNAMIC_CACHE).then((cache) => {
-        return cache.keys().then((keys) => {
-          return Promise.all(
-            keys.map((request) => {
-              return cache.match(request).then((response) => {
-                if (response) {
-                  const date = new Date(response.headers.get('date'));
-                  if (date.getTime() + CACHE_DURATION < Date.now()) {
-                    return cache.delete(request);
-                  }
-                }
-              });
-            })
-          );
-        });
-      })
-    ])
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.map((key) => {
+          if (key !== STATIC_CACHE && key !== DYNAMIC_CACHE) {
+            return caches.delete(key);
+          }
+        })
+      )
+    )
   );
+  self.clients.claim();
 });
 
-// Helper function to determine if a request should be cached
+// 🧠 Should we cache this request?
 const shouldCache = (request) => {
   const url = new URL(request.url);
-  
-  // Don't cache API calls or authentication endpoints
-  if (url.pathname.startsWith('/api/') || 
-      url.pathname.includes('auth') || 
-      url.pathname.includes('login') ||
-      url.pathname.includes('token')) {
+
+  if (
+    url.origin !== location.origin || // Only cache same-origin
+    url.pathname.startsWith('/api/') || // No API caching
+    url.pathname.includes('auth') ||
+    url.pathname.includes('token')
+  ) {
     return false;
   }
 
-  // Cache static assets and HTML pages
   return request.method === 'GET' && (
     request.destination === 'style' ||
     request.destination === 'script' ||
@@ -84,64 +60,52 @@ const shouldCache = (request) => {
   );
 };
 
-// Fetch event - serve from cache, fall back to network
+// 🛰️ Fetch
 self.addEventListener('fetch', (event) => {
   if (!shouldCache(event.request)) {
     return;
   }
 
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          // Check if response is expired
-          const date = new Date(response.headers.get('date'));
-          if (date.getTime() + CACHE_DURATION > Date.now()) {
-            return response;
-          }
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        const cachedDate = new Date(cachedResponse.headers.get('date'));
+        if (cachedDate.getTime() + CACHE_DURATION > Date.now()) {
+          return cachedResponse;
         }
+      }
 
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(
-          (response) => {
-            // Check if we received a valid response
-            if(!response || response.status !== 200) {
-              return response;
-            }
-
-            // Clone the response
-            const responseToCache = response.clone();
-
-            // Cache the response
-            if (shouldCache(event.request)) {
-              const cache = event.request.destination === 'document' ? 
-                CACHE_NAME : DYNAMIC_CACHE;
-              
-              caches.open(cache)
-                .then((cache) => {
-                  const headers = new Headers(responseToCache.headers);
-                  headers.append('date', new Date().toUTCString());
-                  
-                  return cache.put(event.request, new Response(
-                    responseToCache.body,
-                    {
-                      status: responseToCache.status,
-                      statusText: responseToCache.statusText,
-                      headers: headers
-                    }
-                  ));
-                });
-            }
-
-            return response;
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (!networkResponse || networkResponse.status !== 200) {
+            return networkResponse;
           }
-        ).catch(() => {
-          // Network failed, try to return a cached response
+
+          const clonedResponse = networkResponse.clone();
+          const responseWithDate = new Response(clonedResponse.body, {
+            status: clonedResponse.status,
+            statusText: clonedResponse.statusText,
+            headers: new Headers({
+              ...Object.fromEntries(clonedResponse.headers.entries()),
+              date: new Date().toUTCString(),
+            }),
+          });
+
+          const cacheToUse = event.request.destination === 'document' ? STATIC_CACHE : DYNAMIC_CACHE;
+
+          caches.open(cacheToUse).then((cache) => {
+            cache.put(event.request, responseWithDate.clone());
+          });
+
+          return networkResponse;
+        })
+        .catch(() => {
+          // Offline fallback for navigation
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html');
+          }
           return caches.match(event.request);
         });
-      })
+    })
   );
-}); 
+});
