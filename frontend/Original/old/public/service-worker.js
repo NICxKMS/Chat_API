@@ -8,7 +8,8 @@ const STATIC_ASSETS = [
   '/static/css/main.*.css',
   '/static/css/*.chunk.css',
   '/manifest.json',
-  '/image.webp'
+  '/image.webp',
+  // You can add specific files from the media folder if needed or rely on the dynamic cache for all fonts
 ];
 
 // Dynamic cache for runtime resources
@@ -65,7 +66,7 @@ self.addEventListener('activate', (event) => {
 // Helper function to determine if a request should be cached
 const shouldCache = (request) => {
   const url = new URL(request.url);
-  
+
   // Don't cache API calls or authentication endpoints
   if (url.pathname.startsWith('/api/') || 
       url.pathname.includes('auth') || 
@@ -74,13 +75,14 @@ const shouldCache = (request) => {
     return false;
   }
 
-  // Cache static assets and HTML pages
+  // Cache static assets and HTML pages, including fonts from /static/media/
   return request.method === 'GET' && (
     request.destination === 'style' ||
     request.destination === 'script' ||
     request.destination === 'image' ||
-    request.destination === 'font' ||
-    request.destination === 'document'
+    request.destination === 'font' || // Ensure fonts are cached
+    request.destination === 'document' ||
+    url.pathname.startsWith('/static/media/') // Cache entire /static/media/ folder for fonts
   );
 };
 
@@ -108,7 +110,7 @@ self.addEventListener('fetch', (event) => {
         return fetch(fetchRequest).then(
           (response) => {
             // Check if we received a valid response
-            if(!response || response.status !== 200) {
+            if (!response || response.status !== 200) {
               return response;
             }
 
@@ -138,10 +140,10 @@ self.addEventListener('fetch', (event) => {
 
             return response;
           }
-        ).catch(() => {
-          // Network failed, try to return a cached response
-          return caches.match(event.request);
+        ).catch((err) => {
+          console.error("Network error: ", err);
+          return caches.match(event.request);  // Fallback to cache if network fails
         });
       })
   );
-}); 
+});
