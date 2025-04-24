@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
-const STATIC_CACHE = 'static-cache-v1';
-const DYNAMIC_CACHE = 'dynamic-cache-v1';
+const STATIC_CACHE = 'static-cache-v1.1';
+const DYNAMIC_CACHE = 'dynamic-cache-v1.1';
 const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const STATIC_ASSETS = [
