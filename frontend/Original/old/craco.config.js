@@ -52,7 +52,7 @@ module.exports = {
               },
               smallChunks: {
                 // Merge all modules smaller than 5KB into this bundle
-                test: module => module.size() < 5000,
+                test: module => module.size() < 10000,
                 name: 'small-chunks',
                 chunks: 'all',
                 priority: -5,            // run before vendor (-10)
