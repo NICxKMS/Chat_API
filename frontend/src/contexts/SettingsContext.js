@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 // Default settings values
 const DEFAULT_SETTINGS = {
@@ -9,27 +9,6 @@ const DEFAULT_SETTINGS = {
   presence_penalty: 0,
   streaming: true,
   systemPrompt: "You are ChatGPT, a helpful and knowledgeable AI assistant. Your primary role is to assist Nikhil, a university engineering student, by providing clear, concise, and technically accurate information. Adopt a friendly and approachable tone, akin to a knowledgeable peer or mentor. Enhance your responses with relevant emojis to convey tone and emotion, making interactions more engaging. Structure your answers logically, using bullet points or numbered lists where appropriate to enhance clarity. When applicable, incorporate interactive elements such as code snippets or diagrams to facilitate deeper understanding. Encourage curiosity by suggesting related topics or questions that Nikhil might explore further. Always tailor your assistance to support Nikhil's academic and personal growth in the field of engineering"
-};
-
-// Load settings from localStorage if available
-const loadSavedSettings = () => {
-  try {
-    const savedSettings = localStorage.getItem('chatSettings');
-    if (savedSettings) {
-      const parsed = JSON.parse(savedSettings);
-      
-      // Make sure streaming is explicitly defined 
-      if (parsed.streaming === undefined) {
-        parsed.streaming = DEFAULT_SETTINGS.streaming;
-      }
-      
-      console.log('[DEBUG] Loaded settings:', parsed);
-      return {...DEFAULT_SETTINGS, ...parsed};
-    }
-  } catch (e) {
-    console.error('Error loading settings from localStorage:', e);
-  }
-  return DEFAULT_SETTINGS;
 };
 
 // Create settings context
@@ -46,34 +25,24 @@ export const useSettings = () => {
 
 // Settings provider component
 export const SettingsProvider = ({ children }) => {
-  // Initialize settings state with defaults and saved values
-  const [settings, setSettings] = useState(loadSavedSettings());
-  
-  // Save settings to localStorage when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('chatSettings', JSON.stringify(settings));
-      console.log('[DEBUG] Saved settings:', settings);
-    } catch (e) {
-      console.error('Error saving settings to localStorage:', e);
-    }
-  }, [settings]);
+  // Initialize settings state with defaults
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   
   // Handle individual setting updates
   const updateSetting = useCallback((key, value) => {
     // Ensure the key is a valid setting we manage
     if (key in DEFAULT_SETTINGS) {
-      console.log(`[SettingsContext] Updating '${key}' from ${settings[key]} to ${value}`);
+      // console.log(`[SettingsContext] Updating '${key}' from ${settings[key]} to ${value}`);
       setSettings(prev => ({
         ...prev,
         [key]: value
       }));
     }
-  }, [settings]);
+  }, []);
   
   // Reset settings to defaults
   const resetSettings = useCallback(() => {
-    console.log("[SettingsContext] Resetting settings to default");
+    // console.log("[SettingsContext] Resetting settings to default");
     setSettings(DEFAULT_SETTINGS);
   }, []);
   

@@ -19,7 +19,6 @@ export const advancedFormattingImports = [
   () => import(/* webpackChunkName: "rehype-katex" */ 'rehype-katex'), 
   () => import(/* webpackChunkName: "katex-css" */ 'katex/dist/katex.min.css'), 
   () => import(/* webpackChunkName: "remark-emoji" */ 'remark-emoji'),
-  () => import(/* webpackChunkName: "rehype-raw" */ 'rehype-raw'),
   () => import(/* webpackChunkName: "remark-math" */ 'remark-math'),
 ];
 

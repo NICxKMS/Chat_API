@@ -17,7 +17,6 @@
     "react-virtualized-auto-sizer": "^1.0.20",
     "react-window": "^1.8.9",
     "rehype-katex": "^7.0.1",
-    "rehype-raw": "^7.0.0",
     "remark-emoji": "^5.0.1",
     "remark-gfm": "^3.0.1",
     "remark-math": "^5.1.1",

@@ -10,7 +10,6 @@ import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 import { convertTeXToMathDollars } from '../../../utils/formatters';
 
@@ -110,9 +109,9 @@ const StreamingMessage = ({ content, isStreaming }) => {
     <div className={markdownClassName}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkEmoji, remarkMath]}
-        rehypePlugins={[rehypeRaw, rehypeKatex]}
+        rehypePlugins={[rehypeKatex]}
         components={markdownComponents}
-        skipHtml={false}
+        // skipHtml={false}
       >
         {contentToRender}
       </ReactMarkdown>
