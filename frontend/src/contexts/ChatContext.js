@@ -375,6 +375,12 @@ export const ChatProvider = ({ children }) => {
 
   // Stream a message using fetch streaming
   const streamMessageWithFetch = useCallback(async (message, editIndex = null) => {
+    // Check if already streaming - prevent multiple concurrent streams
+    if (isStreamingRef.current) {
+      console.log('Already streaming, ignoring new request');
+      return null;
+    }
+
     // Check if this is an edit request
     const isEditing = editIndex !== null && Number.isInteger(editIndex) && editIndex >= 0;
 
@@ -393,6 +399,7 @@ export const ChatProvider = ({ children }) => {
     let currentChatHistory;
     let userMessage;
     let timeoutId;
+    let streamWorker = null;
     
     // Abort controller for timeouts and manual stopping
     const abortController = new AbortController();
@@ -545,171 +552,184 @@ export const ChatProvider = ({ children }) => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       // Initialize streamProcessor worker
-      const streamWorker = new Worker(new URL('../workers/streamProcessor.js', import.meta.url), { type: 'module' });
+      streamWorker = new Worker(new URL('../workers/streamProcessor.js', import.meta.url), { type: 'module' });
       const parseStreamChunk = (chunk) => new Promise((resolve, reject) => {
+        if (!streamWorker) {
+          reject(new Error('Stream worker was terminated'));
+          return;
+        }
         streamWorker.onmessage = (e) => resolve(e.data);
         streamWorker.onerror = reject;
         streamWorker.postMessage(chunk);
       });
       let lastRawChunkReceived = null;
 
-      // Begin reading the stream
-      while (true) {
-        const { done, value } = await reader.read();
+      try {
+        // Begin reading the stream
+        while (true) {
+          const { done, value } = await reader.read();
 
-        // Reset timeout on each chunk
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          console.log('No data received for 60 seconds, timing out');
-          abortController.abort();
-          setError('Connection timed out');
-          setIsWaitingForResponse(false);
-        }, 60000);
+          // Reset timeout on each chunk
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            console.log('No data received for 60 seconds, timing out');
+            abortController.abort();
+            setError('Connection timed out');
+            setIsWaitingForResponse(false);
+          }, 60000);
 
-        if (done) {
-          // Stream is complete
-          console.log('Stream complete');
-          if (lastRawChunkReceived) {
-             console.log('[CLIENT LAST RAW CHUNK RECV]', lastRawChunkReceived);
-          }
-          // Process any remaining data in the buffer before breaking
-          if (accumulatedContent.trim()) { // Check if buffer has content
-              console.log('[DEBUG] Processing remaining buffer content after stream done:', accumulatedContent);
-              console.log(`[FRONTEND RECV RAW - FINAL] Char count: ${accumulatedContent.length}`);
-              // Reuse the message processing logic
-              const messages = accumulatedContent.split('\n\n');
-              // Don't need to save the last part now, process everything
-              for (const message of messages) {
-                  if (!message.trim()) continue;
-
-                  if (message.startsWith(':heartbeat')) {
-                      // Ignore heartbeats in final processing
-                      continue;
-                  }
-
-                  if (message.startsWith('data:')) {
-                      const data = message.slice(5).trim();
-
-                      if (data === '[DONE]') {
-                          console.log('Received [DONE] message from final buffer processing');
-                          // Ensure metrics are marked as complete if DONE is found here
-                          updatePerformanceMetrics(accumulatedTokenCount, true);
-                          continue; // Skip further processing for [DONE]
-                      }
-
-                      try {
-                          const parsedData = JSON.parse(data);
-                          const content = parsedData.content || '';
-                          if (content) {
-                              accumulatedContent += content;
-                              const chunkTokenCount = content.split(/\s+/).length || 0; // Basic token estimate
-                              accumulatedTokenCount += chunkTokenCount;
-                              streamingTextRef.current = accumulatedContent;
-                              // Update metrics immediately for final content, but don't mark as complete yet
-                              updatePerformanceMetrics(accumulatedTokenCount, false);
-                          }
-                      } catch (parseError) {
-                          console.warn('Error parsing final message data:', parseError, data);
-                      }
-                  }
-              }
-          }
-          break; // Now break the loop
-        }
-
-        // Decode the chunk and parse it via worker
-        const chunk = decoder.decode(value, { stream: true });
-        lastRawChunkReceived = chunk;
-        console.log(`[FRONTEND RECV RAW] Char count: ${chunk.length}`);
-
-        // For debugging on last chunk
-        if (done && lastRawChunkReceived && lastRawChunkReceived.includes('usage')) {
-          console.log('[DEBUG] Using example metrics for final chunk');
-          // Force test metrics for debugging
-          const testMetrics = {
-            promptTokens: 2967,
-            completionTokens: 997,
-            totalTokens: 3964,
-            finishReason: 'MAX_TOKENS'
-          };
-          
-          // Directly set metrics on last message
-          setTokenMetricsForLastMessage(testMetrics);
-        }
-
-        try {
-          const parsedMsgs = await parseStreamChunk(chunk);
-          for (const msg of parsedMsgs) {
-            if (msg.isDone) {
-              // Final done marker
-              updatePerformanceMetrics(accumulatedTokenCount, true);
-            } else if (msg.content) {
-              accumulatedContent += msg.content;
-              accumulatedTokenCount += msg.tokenCount;
-              streamingTextRef.current = accumulatedContent;
-              
-              // Check if this matches our example format
-              if (msg.rawChunk) {
-                const processedData = processChunkResponse(msg.rawChunk);
-                if (processedData) {
-                  // This is a final chunk with complete token info
-                  console.log('[DEBUG] Successfully identified final chunk with token data');
-                  
-                  // Update UI & metrics with the complete token info
-                  const currContent = accumulatedContent;
-                  const currTokens = accumulatedTokenCount;
-                  window.requestAnimationFrame(() => {
-                    updateChatWithContent(currContent);
-                    updatePerformanceMetrics(
-                      currTokens, 
-                      false, 
-                      processedData.tokenInfo, 
-                      processedData.finishReason
-                    );
-                  });
-                  continue;
-                }
-              }
-              
-              // Check if this is the final chunk with token details
-              const isFinalChunk = msg.isFinalChunk;
-              let tokenInfo = null;
-              let finishReason = msg.finishReason;
-              
-              if (isFinalChunk && msg.rawChunk) {
-                console.log('[DEBUG] Processing final chunk with complete token data:', msg.rawChunk);
-                
-                // Extract token info from the format in the example
-                if (msg.rawChunk.usage) {
-                  tokenInfo = {
-                    promptTokens: msg.rawChunk.usage.promptTokens,
-                    completionTokens: msg.rawChunk.usage.completionTokens,
-                    totalTokens: msg.rawChunk.usage.totalTokens
-                  };
-                  console.log('[DEBUG] Extracted token info from final chunk:', tokenInfo);
-                  finishReason = msg.rawChunk.finishReason || finishReason;
-                }
-              } else if (msg.tokenInfo) {
-                // Use token info directly from the message if available
-                tokenInfo = msg.tokenInfo;
-              }
-              
-              // Update UI & metrics immediately
-              const currContent = accumulatedContent;
-              const currTokens = accumulatedTokenCount;
-              window.requestAnimationFrame(() => {
-                updateChatWithContent(currContent);
-                updatePerformanceMetrics(currTokens, false, tokenInfo, finishReason);
-              });
+          if (done) {
+            // Stream is complete
+            console.log('Stream complete');
+            if (lastRawChunkReceived) {
+               console.log('[CLIENT LAST RAW CHUNK RECV]', lastRawChunkReceived);
             }
+            // Process any remaining data in the buffer before breaking
+            if (accumulatedContent.trim()) { // Check if buffer has content
+                console.log('[DEBUG] Processing remaining buffer content after stream done:', accumulatedContent);
+                console.log(`[FRONTEND RECV RAW - FINAL] Char count: ${accumulatedContent.length}`);
+                // Reuse the message processing logic
+                const messages = accumulatedContent.split('\n\n');
+                // Don't need to save the last part now, process everything
+                for (const message of messages) {
+                    if (!message.trim()) continue;
+
+                    if (message.startsWith(':heartbeat')) {
+                        // Ignore heartbeats in final processing
+                        continue;
+                    }
+
+                    if (message.startsWith('data:')) {
+                        const data = message.slice(5).trim();
+
+                        if (data === '[DONE]') {
+                            console.log('Received [DONE] message from final buffer processing');
+                            // Ensure metrics are marked as complete if DONE is found here
+                            updatePerformanceMetrics(accumulatedTokenCount, true);
+                            continue; // Skip further processing for [DONE]
+                        }
+
+                        try {
+                            const parsedData = JSON.parse(data);
+                            const content = parsedData.content || '';
+                            if (content) {
+                                accumulatedContent += content;
+                                const chunkTokenCount = content.split(/\s+/).length || 0; // Basic token estimate
+                                accumulatedTokenCount += chunkTokenCount;
+                                streamingTextRef.current = accumulatedContent;
+                                // Update metrics immediately for final content, but don't mark as complete yet
+                                updatePerformanceMetrics(accumulatedTokenCount, false);
+                            }
+                        } catch (parseError) {
+                            console.warn('Error parsing final message data:', parseError, data);
+                        }
+                    }
+                }
+            }
+            break; // Now break the loop
           }
-        } catch (e) {
-          console.error('[ChatContext] Stream worker error:', e);
-        }
-      } // End of while loop
+
+          // Decode the chunk and parse it via worker
+          const chunk = decoder.decode(value, { stream: true });
+          lastRawChunkReceived = chunk;
+          console.log(`[FRONTEND RECV RAW] Char count: ${chunk.length}`);
+
+          // For debugging on last chunk
+          if (done && lastRawChunkReceived && lastRawChunkReceived.includes('usage')) {
+            console.log('[DEBUG] Using example metrics for final chunk');
+            // Force test metrics for debugging
+            const testMetrics = {
+              promptTokens: 2967,
+              completionTokens: 997,
+              totalTokens: 3964,
+              finishReason: 'MAX_TOKENS'
+            };
+            
+            // Directly set metrics on last message
+            setTokenMetricsForLastMessage(testMetrics);
+          }
+
+          try {
+            const parsedMsgs = await parseStreamChunk(chunk);
+            for (const msg of parsedMsgs) {
+              if (msg.isDone) {
+                // Final done marker
+                updatePerformanceMetrics(accumulatedTokenCount, true);
+              } else if (msg.content) {
+                accumulatedContent += msg.content;
+                accumulatedTokenCount += msg.tokenCount;
+                streamingTextRef.current = accumulatedContent;
+                
+                // Check if this matches our example format
+                if (msg.rawChunk) {
+                  const processedData = processChunkResponse(msg.rawChunk);
+                  if (processedData) {
+                    // This is a final chunk with complete token info
+                    console.log('[DEBUG] Successfully identified final chunk with token data');
+                    
+                    // Update UI & metrics with the complete token info
+                    const currContent = accumulatedContent;
+                    const currTokens = accumulatedTokenCount;
+                    window.requestAnimationFrame(() => {
+                      updateChatWithContent(currContent);
+                      updatePerformanceMetrics(
+                        currTokens, 
+                        false, 
+                        processedData.tokenInfo, 
+                        processedData.finishReason
+                      );
+                    });
+                    continue;
+                  }
+                }
+                
+                // Check if this is the final chunk with token details
+                const isFinalChunk = msg.isFinalChunk;
+                let tokenInfo = null;
+                let finishReason = msg.finishReason;
+                
+                if (isFinalChunk && msg.rawChunk) {
+                  console.log('[DEBUG] Processing final chunk with complete token data:', msg.rawChunk);
+                  
+                  // Extract token info from the format in the example
+                  if (msg.rawChunk.usage) {
+                    tokenInfo = {
+                      promptTokens: msg.rawChunk.usage.promptTokens,
+                      completionTokens: msg.rawChunk.usage.completionTokens,
+                      totalTokens: msg.rawChunk.usage.totalTokens
+                    };
+                    console.log('[DEBUG] Extracted token info from final chunk:', tokenInfo);
+                    finishReason = msg.rawChunk.finishReason || finishReason;
+                  }
+                } else if (msg.tokenInfo) {
+                  // Use token info directly from the message if available
+                  tokenInfo = msg.tokenInfo;
+                }
+                
+                // Update UI & metrics immediately
+                const currContent = accumulatedContent;
+                const currTokens = accumulatedTokenCount;
+                window.requestAnimationFrame(() => {
+                  updateChatWithContent(currContent);
+                  updatePerformanceMetrics(currTokens, false, tokenInfo, finishReason);
+                });
+              }
+            }
+          } catch (e) {
+            console.error('[ChatContext] Stream worker error:', e);
+          }
+        } // End of while loop
+      } finally {
+        // Release the reader when done or in case of error
+        reader.releaseLock();
+      }
 
       // Terminate stream worker
-      streamWorker.terminate();
+      if (streamWorker) {
+        streamWorker.terminate();
+        streamWorker = null;
+      }
+      
       // Ensure final accumulated content is rendered
       const finalContent = streamingTextRef.current;
       updateChatWithContent(finalContent);
@@ -747,6 +767,17 @@ export const ChatProvider = ({ children }) => {
       clearTimeout(timeoutId); // Also clear timeout here
       isStreamingRef.current = false;
       setIsWaitingForResponse(false);
+      
+      // Properly clean up stream worker
+      if (streamWorker) {
+        try {
+          streamWorker.terminate();
+          streamWorker = null;
+        } catch (e) {
+          console.error('Error terminating stream worker:', e);
+        }
+      }
+      
       // Clear request ID and abort controller
       if (currentRequestIdRef.current === null) {
         abortControllerRef.current = null;
@@ -762,12 +793,28 @@ export const ChatProvider = ({ children }) => {
 
   // Send message to API - decide between streaming and non-streaming
   const sendMessage = useCallback(async (message, editIndex = null) => {
+    // Prevent sending empty messages
+    if (!message || message.trim() === '') {
+      setError('Please enter a message');
+      return null;
+    }
+    
+    // Prevent sending a new message while waiting for a response
+    if (isWaitingForResponse) {
+      console.log('Already waiting for a response, ignoring new message');
+      return null;
+    }
+    
     // Check if this is an edit request
     const isEditing = editIndex !== null && Number.isInteger(editIndex) && editIndex >= 0;
     
     // Use streaming if enabled in settings
+    console.log(`[DEBUG] Streaming setting: ${settings.streaming}`);
     if (settings.streaming) {
+      console.log('[DEBUG] Using streaming mode');
       return streamMessageWithFetch(message, isEditing ? editIndex : null);
+    } else {
+      console.log('[DEBUG] Using non-streaming mode');
     }
 
     if (!message || !selectedModel) {

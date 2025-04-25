@@ -5,17 +5,23 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./frontend
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          persist-credentials: false  # so GH_TOKEN is not overridden
+          persist-credentials: false
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v3
