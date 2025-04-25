@@ -109,9 +109,10 @@ function AppShell() {
             let index = 0;
             
             function loadNext(deadline) {
-              while ((deadline.timeRemaining() > 0 || deadline.didTimeout) && index < HEAVY_IMPORTS.length) {
-                const currentIndex = index;
-                HEAVY_IMPORTS[index]()
+              let i = index;  // Create a local variable
+              while ((deadline.timeRemaining() > 0 || deadline.didTimeout) && i < HEAVY_IMPORTS.length) {
+                const currentIndex = i;
+                HEAVY_IMPORTS[currentIndex]()
                   .then(() => {
                     // Set firebaseReady when Firebase config import is complete
                     if (currentIndex === HEAVY_IMPORTS.length - 2) { // Firebase config import
@@ -122,8 +123,11 @@ function AppShell() {
                     }
                   })
                   .catch(err => console.error(`Idle load error for module ${currentIndex}:`, err));
-                index++;
+                i++;
               }
+              
+              // Update the outer index variable
+              index = i;
               
               if (index < HEAVY_IMPORTS.length) {
                 requestIdleCallback(loadNext, { timeout: 1000 });
@@ -152,11 +156,16 @@ function AppShell() {
                 const nonFirebaseImports = HEAVY_IMPORTS.slice(0, -2);
                 
                 function loadRemainingModules(deadline) {
-                  while ((deadline.timeRemaining() > 0 || deadline.didTimeout) && index < nonFirebaseImports.length) {
-                    nonFirebaseImports[index]()
-                      .catch(err => console.error(`Idle load error for module ${index}:`, err));
-                    index++;
+                  let j = index;  // Create a local variable
+                  while ((deadline.timeRemaining() > 0 || deadline.didTimeout) && j < nonFirebaseImports.length) {
+                    const currentModuleIndex = j;
+                    nonFirebaseImports[currentModuleIndex]()
+                      .catch(err => console.error(`Idle load error for module ${currentModuleIndex}:`, err));
+                    j++;
                   }
+                  
+                  // Update the outer index variable
+                  index = j;
                   
                   if (index < nonFirebaseImports.length) {
                     requestIdleCallback(loadRemainingModules, { timeout: 1000 });

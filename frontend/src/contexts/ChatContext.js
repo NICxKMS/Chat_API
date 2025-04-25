@@ -349,6 +349,30 @@ export const ChatProvider = ({ children }) => {
     });
   }, []);
 
+  // Direct function to set token metrics for the last message - for debugging/testing
+  const setTokenMetricsForLastMessage = useCallback((metrics) => {
+    console.log('[DEBUG] Directly setting token metrics:', metrics);
+    
+    setChatHistory(prev => {
+      const newHistory = [...prev];
+      const lastMessage = newHistory[newHistory.length - 1];
+      
+      if (lastMessage && lastMessage.role === 'assistant') {
+        // If message already has metrics, merge them
+        lastMessage.metrics = {
+          ...(lastMessage.metrics || {}),
+          ...metrics,
+          // Mark as complete
+          isComplete: true
+        };
+        
+        console.log('[DEBUG] Updated metrics for last message:', lastMessage.metrics);
+      }
+      
+      return newHistory;
+    });
+  }, []);
+
   // Stream a message using fetch streaming
   const streamMessageWithFetch = useCallback(async (message, editIndex = null) => {
     // Check if this is an edit request
@@ -733,7 +757,7 @@ export const ChatProvider = ({ children }) => {
     addMessageToHistory, formatModelIdentifier, resetPerformanceMetrics,
     startPerformanceTimer, updatePerformanceMetrics,
     setError, setIsWaitingForResponse, updateChatWithContent,
-    idToken, _updatePlaceholderOnError
+    idToken, _updatePlaceholderOnError, processChunkResponse, setTokenMetricsForLastMessage
   ]);
 
   // Send message to API - decide between streaming and non-streaming
@@ -920,6 +944,9 @@ export const ChatProvider = ({ children }) => {
           finishReason: 'MAX_TOKENS'
         };
         
+        // Create empty finalMetrics object for this test case
+        const finalMetrics = {};
+        
         // Add AI response with test metrics
         addMessageToHistory('assistant', content, {
           ...finalMetrics,
@@ -967,7 +994,7 @@ export const ChatProvider = ({ children }) => {
     addMessageToHistory, formatModelIdentifier,
     extractTokenCount,
     setError, setIsWaitingForResponse, streamMessageWithFetch,
-    idToken
+    idToken, processChunkResponse, extractTokenInfo
   ]);
 
   // Stop the current generation
@@ -1079,30 +1106,6 @@ export const ChatProvider = ({ children }) => {
       URL.revokeObjectURL(url);
     }, 100);
   }, [chatHistory, selectedModel?.name]);
-
-  // Direct function to set token metrics for the last message - for debugging/testing
-  const setTokenMetricsForLastMessage = useCallback((metrics) => {
-    console.log('[DEBUG] Directly setting token metrics:', metrics);
-    
-    setChatHistory(prev => {
-      const newHistory = [...prev];
-      const lastMessage = newHistory[newHistory.length - 1];
-      
-      if (lastMessage && lastMessage.role === 'assistant') {
-        // If message already has metrics, merge them
-        lastMessage.metrics = {
-          ...(lastMessage.metrics || {}),
-          ...metrics,
-          // Mark as complete
-          isComplete: true
-        };
-        
-        console.log('[DEBUG] Updated metrics for last message:', lastMessage.metrics);
-      }
-      
-      return newHistory;
-    });
-  }, []);
 
   // Export context value - memoized to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({

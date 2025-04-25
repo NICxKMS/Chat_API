@@ -115,9 +115,9 @@ export const ModelProvider = ({ children }) => {
   const selectModel = useCallback((model) => {
     // Check if the model is actually different to prevent unnecessary updates
     if (selectedModel?.id !== model?.id) { 
-    setSelectedModel(model);
+      setSelectedModel(model);
     }
-  }, [selectedModel]);
+  }, [selectedModel, setSelectedModel]);
   
   // Fetch models from API
   const fetchModels = useCallback(async () => {
@@ -177,10 +177,7 @@ export const ModelProvider = ({ children }) => {
             processedModels: fetchedProcessedModels,
             experimentalModels: fetchedExperimentalModels
           });
-          // Select first model if none selected
-          if (!selectedModel && fetchedAllModels.length > 0) {
-            setSelectedModel(fetchedAllModels[0]);
-          }
+          // Initial model selection moved to a separate useEffect
         }
         setIsLoading(false);
         worker.terminate();
@@ -209,6 +206,14 @@ export const ModelProvider = ({ children }) => {
     // Run only once on mount, or when fetchModels function reference changes
     // (which it shouldn't unless dependencies like apiUrl change)
   }, [fetchModels]);
+  
+  // Set initial model after models are loaded
+  useEffect(() => {
+    // Select first model if none selected and models are loaded
+    if (!selectedModel && allModels.length > 0) {
+      setSelectedModel(allModels[0]);
+    }
+  }, [allModels, selectedModel]);
   
   // Create toggleExperimentalModels callback at the top level
   const toggleExperimentalModels = useCallback(() => {

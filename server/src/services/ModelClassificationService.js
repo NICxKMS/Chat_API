@@ -114,11 +114,11 @@ export class ModelClassificationService {
         // Call the gRPC service with retry logic
         const attemptClassify = (retryCount = 0, maxRetries = 3) => {
           // Write request body to file
-          try {
-            fs.writeFileSync('req.json', JSON.stringify(modelList, null, 2));
-          } catch (writeError) {
-            logger.error(`[Debug] Error writing request body to req.json`, { error: writeError.message });
-          }
+          // try {
+          //   fs.writeFileSync('req.json', JSON.stringify(modelList, null, 2));
+          // } catch (writeError) {
+          //   logger.error(`[Debug] Error writing request body to req.json`, { error: writeError.message });
+          // }
           this.client.classifyModels(modelList, (error, response) => {
             clearTimeout(timeout); // Clear timeout once callback is received
             
