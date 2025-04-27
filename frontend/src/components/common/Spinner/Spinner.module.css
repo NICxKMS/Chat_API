@@ -22,7 +22,7 @@
   height: 100%;
   background: conic-gradient(
     transparent 0%,
-    rgba(var(--primary-rgb), 0.1) 50%,
+    rgb(var(--primary-rgb), 0.1) 50%,
     transparent 100%
   );
   animation: rotate 1.5s linear infinite;
@@ -87,6 +87,7 @@ body.dark-mode .spinner::before {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

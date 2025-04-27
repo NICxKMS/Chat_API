@@ -1,0 +1,237 @@
+
+> ai-chat-interface@0.1.0 analyze
+> cross-env REACT_APP_ENV=production GENERATE_SOURCEMAP=true craco build && source-map-explorer 'build/static/js/*.js'
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  76.45 kB             build\static\js\katex-ff6c5009.c41b7322.chunk.js
+  41.37 kB             build\static\js\framework-98710034.07922bbb.js
+  29.53 kB             build\static\js\vendor.emojilib-5aff3c09.ddc2c51c.chunk.js
+  25.37 kB             build\static\js\firebase-a8613230.72a78c71.chunk.js
+  17.39 kB             build\static\js\vendor.refractor-70d729d6.050eaacd.chunk.js
+  14.36 kB (+1.08 kB)  build\static\js\vendor.refractor-2069139d.3d75c9e6.chunk.js
+  13.81 kB (+6.93 kB)  build\static\js\vendor.refractor-914a1695.06f894a3.chunk.js
+  13.63 kB (+135 B)    build\static\js\vendor.refractor-6072c7a0.0dca7583.chunk.js
+  13.13 kB             build\static\js\vendor.refractor-3dcca97d.061d3ff3.chunk.js
+  13.08 kB (+8.61 kB)  build\static\js\vendor.refractor-96ca771b.397e633e.chunk.js
+  12.96 kB (+2.14 kB)  build\static\js\vendor.refractor-e13012a4.6893ec14.chunk.js
+  12.29 kB (+65 B)     build\static\js\vendor.refractor-b664c5f5.9babb387.chunk.js
+  11.97 kB (+6.21 kB)  build\static\js\vendor.refractor-0ff0ca8f.415afd4c.chunk.js
+  11.28 kB (+2.52 kB)  build\static\js\vendor.refractor-afec7163.b75a5be0.chunk.js
+  11.05 kB (+55 B)     build\static\js\vendor.primer.026173f9.chunk.js
+  10.91 kB             build\static\js\vendor.refractor-c934ee85.f3df8972.chunk.js
+  10.17 kB (-938 B)    build\static\js\vendor.refractor-1b8f8385.69826f1c.chunk.js
+  10.15 kB             build\static\js\vendor.refractor-750e2801.9fe478cb.chunk.js
+  8.18 kB (+34 B)      build\static\js\vendor.refractor-d5dfd146.39ff84fb.chunk.js
+  8.15 kB (+700 B)     build\static\js\vendor.refractor-509a7a9e.c61e1fec.chunk.js
+  8.07 kB (+63 B)      build\static\js\vendor.emojilib-e9ca9b0f.11c97c0c.chunk.js
+  8.04 kB              build\static\js\1506.bbdea150.chunk.js
+  7.38 kB (+3.1 kB)    build\static\js\vendor.refractor-bedfbe6f.8a89bab3.chunk.js
+  6.97 kB (-5 B)       build\static\js\main-31743c5a.92d9683a.js
+  6.75 kB (+51 B)      build\static\css\styles-fca0e37e.c08bb185.css
+  6.33 kB (+17 B)      build\static\js\vendor.property-information.ec1b7e6f.chunk.js
+  6.23 kB (+59 B)      build\static\js\vendor.hast-util-from-dom-07500810.22018c25.chunk.js
+  6.17 kB (+89 B)      build\static\js\settings-panel.5b50f5a2.chunk.js
+  5.97 kB              build\static\js\vendor.refractor-37070081.5d3a0acd.chunk.js
+  5.68 kB              build\static\js\vendor.refractor-c8fd5751.7d55f8ea.chunk.js
+  5.63 kB              build\static\js\6604.12fa8e65.chunk.js
+  5.51 kB (+102 B)     build\static\js\syntax-highlighter.fd2e4ee8.chunk.js
+  5.35 kB (-1.28 kB)   build\static\js\vendor.refractor-a81a7d65.5f43c1d2.chunk.js
+  5.19 kB (+66 B)      build\static\js\vendor.refractor-a3fa2601.7c3f60aa.chunk.js
+  5.15 kB (+45 B)      build\static\js\styles-31743c5a.82ed681b.js
+  5.13 kB (+51 B)      build\static\css\styles-b4afe919.67d874a3.css
+  4.84 kB              build\static\js\vendor.refractor-ba90f2ad.9c9aa34c.chunk.js
+  4.63 kB              build\static\js\vendor.refractor-b6f3a405.ee1a0c60.chunk.js
+  4.58 kB (-87 B)      build\static\js\markdown-7faaf570.bc399543.chunk.js
+  4.56 kB              build\static\js\9267.ddd084ec.chunk.js
+  4.43 kB (+48 B)      build\static\css\styles-b2c1640e.ad3f2f8f.css
+  4.38 kB (+6 B)       build\static\js\runtime.fe054914.js
+  4.33 kB (+54 B)      build\static\css\katex-9241dc7c.bc5e17da.chunk.css
+  4.32 kB (+39 B)      build\static\js\framework-27545368.58b09e5e.js
+  4.07 kB              build\static\js\vendor.refractor-928495cb.bf644440.chunk.js
+  3.81 kB (-87 B)      build\static\js\main-52f0199e.675eb46f.js
+  3.8 kB               build\static\js\vendor.refractor-2891055d.728f7902.chunk.js
+  3.74 kB              build\static\js\vendor.firebase-608eddd6.053c44be.chunk.js
+  3.41 kB (+51 B)      build\static\css\styles-84781932.885a3ed4.css
+  3.4 kB               build\static\js\vendor.firebase-15d6dbba.cd4e27cb.chunk.js
+  3.33 kB              build\static\js\5174.8b2767d7.chunk.js
+  3.28 kB              build\static\js\vendor.refractor-b29c7da6.9a4e7ffa.chunk.js
+  3.27 kB (+59 B)      build\static\js\markdown-35beb630.4257fcc8.chunk.js
+  3.22 kB (+48 B)      build\static\css\styles-fe5b6f8a.7deb6f76.css
+  3 kB (-9 B)          build\static\js\chat-container.2b33946a.chunk.js
+  2.95 kB (+65 B)      build\static\js\vendor.mdast-util-gfm-autolink-literal.76e3efbf.chunk.js
+  2.94 kB (+90 B)      build\static\js\chat-input.9f7fad6e.chunk.js
+  2.9 kB (+46 B)       build\static\js\chat-messagelist.2e76477a.chunk.js
+  2.83 kB (+66 B)      build\static\js\vendor.micromark-extension-gfm-table.a20c0921.chunk.js
+  2.69 kB (+50 B)      build\static\js\markdown-49ceb22a.8fef88d4.chunk.js
+  2.68 kB (+48 B)      build\static\js\web-vitals.74871588.chunk.js
+  2.67 kB              build\static\js\6572.f872a713.chunk.js
+  2.64 kB (+48 B)      build\static\js\models-dropdown.26b94103.chunk.js
+  2.64 kB (+65 B)      build\static\js\vendor.remark-rehype-bb555bc8.02bf763b.chunk.js
+  2.59 kB              build\static\js\markdown-489c6299.9cca764a.chunk.js
+  2.57 kB (+57 B)      build\static\js\markdown-b97dc607.4b7f3bef.chunk.js
+  2.47 kB              build\static\js\1327.5b390c58.chunk.js
+  2.38 kB              build\static\js\3189.fad4be18.chunk.js
+  2.37 kB (+63 B)      build\static\js\vendor.remark-rehype-baf9a434.7c617fbc.chunk.js
+  2.34 kB (+1.03 kB)   build\static\js\markdown-0bdb5f0a.fc780c3e.chunk.js
+  2.33 kB (+57 B)      build\static\js\vendor.mdast-util-to-markdown.3976c1c3.chunk.js
+  2.3 kB               build\static\js\2360.418b0b41.chunk.js
+  2.24 kB (+54 B)      build\static\js\vendor.refractor-f166f706.913c4a3a.chunk.js
+  2.21 kB (+25 B)      build\static\js\vendor.firebase-1b4271fd.3bd01917.chunk.js
+  2.2 kB (+43 B)       build\static\js\main-e96e9bea.42dd1303.js
+  2.16 kB (+58 B)      build\static\js\layout.894ed9bb.chunk.js
+  2.15 kB              build\static\js\markdown-6b467142.ade765b7.chunk.js
+  2.15 kB              build\static\js\5433.b7a7827d.chunk.js
+  2.04 kB              build\static\js\5932.9fbf64ad.chunk.js
+  1.87 kB (-975 B)     build\static\js\markdown-bbfa9bc6.a94ea96d.chunk.js
+  1.85 kB (+66 B)      build\static\js\vendor.hast-util-from-dom-fe9b1242.00e8732d.chunk.js
+  1.81 kB (+57 B)      build\static\js\markdown-62a6a3d0.cb0297f0.chunk.js
+  1.78 kB (+47 B)      build\static\js\firebase-config.f3e99671.chunk.js
+  1.77 kB (+71 B)      build\static\js\vendor.micromark-extension-gfm-strikethrough.25f687a8.chunk.js
+  1.74 kB              build\static\js\2500.b7dd735d.chunk.js
+  1.73 kB              build\static\js\markdown-c87989a4.920ce2d8.chunk.js
+  1.55 kB (+51 B)      build\static\js\streaming-message.65db8fc7.chunk.js
+  1.54 kB              build\static\js\markdown-686791a6.4999cf2a.chunk.js
+  1.45 kB (+45 B)      build\static\js\login-modal.d2ddaccc.chunk.js
+  1.43 kB (+49 B)      build\static\js\firebase-auth.d468a897.chunk.js
+  1.38 kB (-1.22 kB)   build\static\js\markdown-3594d56a.830c3818.chunk.js
+  1.17 kB (+53 B)      build\static\js\icons-f2a4f970.077c1b66.chunk.js
+  1.03 kB (+65 B)      build\static\js\vendor.remark-rehype-0036a4ec.a5e4137b.chunk.js
+  937 B (+46 B)        build\static\js\layout-sidebar.e0797a72.chunk.js
+  878 B                build\static\js\icons-c1b46ba6.bac429c5.chunk.js
+  860 B (+48 B)        build\static\js\model-selector-button.3db8167f.chunk.js
+  800 B (+47 B)        build\static\js\katex-9241dc7c.89e6b6b1.chunk.js
+  714 B                build\static\js\icons-8e8c8d13.fa6cc66f.chunk.js
+  702 B (+50 B)        build\static\js\common-theme.9f1721cb.chunk.js
+  648 B (+50 B)        build\static\js\common-more-actions.34c74988.chunk.js
+  583 B (+41 B)        build\static\js\auth-button.652ca7c8.chunk.js
+  573 B (+41 B)        build\static\js\layout-main.efa25959.chunk.js
+  540 B                build\static\js\6961.65cbcb08.chunk.js
+  515 B (+49 B)        build\static\js\chat-globalmetrics.a85a0b5f.chunk.js
+  455 B                build\static\media\streamProcessor.7f74b45c03eb330d0b23.js
+  426 B (+50 B)        build\static\js\layout-sidebar-toggle.4934ddf2.chunk.js
+  412 B                build\static\js\2465.fa19808c.chunk.js
+  404 B (+24 B)        build\static\js\firebase-19f9d112.fd7f62c9.chunk.js
+  383 B (+49 B)        build\static\js\vendor.tslib.7f0a6455.chunk.js
+  329 B                build\static\js\icons-4b3f4eb3.4cb1312e.chunk.js
+  313 B (+53 B)        build\static\js\markdown-renderer.98d5522a.chunk.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+build/static/js/vendor.emojilib-5aff3c09.ddc2c51c.chunk.js
+build/static/js/1327.5b390c58.chunk.js
+build/static/js/1506.bbdea150.chunk.js
+build/static/js/2360.418b0b41.chunk.js
+build/static/js/2465.fa19808c.chunk.js
+build/static/js/2500.b7dd735d.chunk.js
+build/static/js/3189.fad4be18.chunk.js
+build/static/js/5174.8b2767d7.chunk.js
+build/static/js/5433.b7a7827d.chunk.js
+build/static/js/5932.9fbf64ad.chunk.js
+build/static/js/6572.f872a713.chunk.js
+build/static/js/6604.12fa8e65.chunk.js
+build/static/js/9267.ddd084ec.chunk.js
+build/static/js/auth-button.652ca7c8.chunk.js
+build/static/js/chat-container.2b33946a.chunk.js
+build/static/js/chat-globalmetrics.a85a0b5f.chunk.js
+build/static/js/chat-input.9f7fad6e.chunk.js
+build/static/js/chat-messagelist.2e76477a.chunk.js
+build/static/js/common-more-actions.34c74988.chunk.js
+build/static/js/common-theme.9f1721cb.chunk.js
+build/static/js/firebase-19f9d112.fd7f62c9.chunk.js
+build/static/js/firebase-a8613230.72a78c71.chunk.js
+build/static/js/firebase-auth.d468a897.chunk.js
+build/static/js/firebase-config.f3e99671.chunk.js
+build/static/js/framework-27545368.58b09e5e.js
+build/static/js/framework-98710034.07922bbb.js
+build/static/js/icons-4b3f4eb3.4cb1312e.chunk.js
+build/static/js/icons-8e8c8d13.fa6cc66f.chunk.js
+build/static/js/icons-c1b46ba6.bac429c5.chunk.js
+build/static/js/icons-f2a4f970.077c1b66.chunk.js
+build/static/js/katex-9241dc7c.89e6b6b1.chunk.js
+build/static/js/katex-ff6c5009.c41b7322.chunk.js
+build/static/js/layout-main.efa25959.chunk.js
+build/static/js/layout-sidebar-toggle.4934ddf2.chunk.js
+build/static/js/layout-sidebar.e0797a72.chunk.js
+build/static/js/layout.894ed9bb.chunk.js
+build/static/js/login-modal.d2ddaccc.chunk.js
+build/static/js/main-31743c5a.92d9683a.js
+build/static/js/main-52f0199e.675eb46f.js
+build/static/js/main-e96e9bea.42dd1303.js
+build/static/js/markdown-0bdb5f0a.fc780c3e.chunk.js
+build/static/js/markdown-3594d56a.830c3818.chunk.js
+build/static/js/markdown-35beb630.4257fcc8.chunk.js
+build/static/js/markdown-489c6299.9cca764a.chunk.js
+build/static/js/markdown-49ceb22a.8fef88d4.chunk.js
+build/static/js/markdown-62a6a3d0.cb0297f0.chunk.js
+build/static/js/markdown-686791a6.4999cf2a.chunk.js
+build/static/js/markdown-6b467142.ade765b7.chunk.js
+build/static/js/markdown-7faaf570.bc399543.chunk.js
+build/static/js/markdown-b97dc607.4b7f3bef.chunk.js
+build/static/js/markdown-bbfa9bc6.a94ea96d.chunk.js
+build/static/js/markdown-c87989a4.920ce2d8.chunk.js
+build/static/js/markdown-renderer.98d5522a.chunk.js
+build/static/js/model-selector-button.3db8167f.chunk.js
+build/static/js/models-dropdown.26b94103.chunk.js
+build/static/js/runtime.fe054914.js
+build/static/js/settings-panel.5b50f5a2.chunk.js
+build/static/js/streaming-message.65db8fc7.chunk.js
+build/static/js/styles-31743c5a.82ed681b.js
+build/static/js/syntax-highlighter.fd2e4ee8.chunk.js
+build/static/js/vendor.emojilib-e9ca9b0f.11c97c0c.chunk.js
+build/static/js/vendor.firebase-15d6dbba.cd4e27cb.chunk.js
+build/static/js/vendor.firebase-1b4271fd.3bd01917.chunk.js
+build/static/js/vendor.firebase-608eddd6.053c44be.chunk.js
+build/static/js/vendor.hast-util-from-dom-07500810.22018c25.chunk.js
+build/static/js/vendor.hast-util-from-dom-fe9b1242.00e8732d.chunk.js
+build/static/js/vendor.mdast-util-gfm-autolink-literal.76e3efbf.chunk.js
+build/static/js/vendor.mdast-util-to-markdown.3976c1c3.chunk.js
+build/static/js/vendor.micromark-extension-gfm-strikethrough.25f687a8.chunk.js
+build/static/js/vendor.micromark-extension-gfm-table.a20c0921.chunk.js
+build/static/js/vendor.primer.026173f9.chunk.js
+build/static/js/vendor.property-information.ec1b7e6f.chunk.js
+build/static/js/vendor.refractor-0ff0ca8f.415afd4c.chunk.js
+build/static/js/vendor.refractor-1b8f8385.69826f1c.chunk.js
+build/static/js/vendor.refractor-2069139d.3d75c9e6.chunk.js
+build/static/js/vendor.refractor-2891055d.728f7902.chunk.js
+build/static/js/vendor.refractor-37070081.5d3a0acd.chunk.js
+build/static/js/vendor.refractor-3dcca97d.061d3ff3.chunk.js
+build/static/js/vendor.refractor-509a7a9e.c61e1fec.chunk.js
+build/static/js/vendor.refractor-6072c7a0.0dca7583.chunk.js
+build/static/js/vendor.refractor-70d729d6.050eaacd.chunk.js
+build/static/js/vendor.refractor-750e2801.9fe478cb.chunk.js
+build/static/js/vendor.refractor-914a1695.06f894a3.chunk.js
+build/static/js/vendor.refractor-928495cb.bf644440.chunk.js
+build/static/js/vendor.refractor-96ca771b.397e633e.chunk.js
+build/static/js/vendor.refractor-a3fa2601.7c3f60aa.chunk.js
+build/static/js/vendor.refractor-a81a7d65.5f43c1d2.chunk.js
+build/static/js/vendor.refractor-afec7163.b75a5be0.chunk.js
+build/static/js/vendor.refractor-b29c7da6.9a4e7ffa.chunk.js
+build/static/js/vendor.refractor-b664c5f5.9babb387.chunk.js
+build/static/js/vendor.refractor-b6f3a405.ee1a0c60.chunk.js
+build/static/js/vendor.refractor-ba90f2ad.9c9aa34c.chunk.js
+build/static/js/vendor.refractor-bedfbe6f.8a89bab3.chunk.js
+build/static/js/vendor.refractor-c8fd5751.7d55f8ea.chunk.js
+build/static/js/vendor.refractor-c934ee85.f3df8972.chunk.js
+build/static/js/vendor.refractor-d5dfd146.39ff84fb.chunk.js
+build/static/js/vendor.refractor-e13012a4.6893ec14.chunk.js
+build/static/js/vendor.refractor-f166f706.913c4a3a.chunk.js
+build/static/js/vendor.remark-rehype-0036a4ec.a5e4137b.chunk.js
+build/static/js/vendor.remark-rehype-baf9a434.7c617fbc.chunk.js
+build/static/js/vendor.remark-rehype-bb555bc8.02bf763b.chunk.js
+build/static/js/vendor.tslib.7f0a6455.chunk.js
+build/static/js/web-vitals.74871588.chunk.js

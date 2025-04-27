@@ -7,7 +7,7 @@
 }
 
 /* Media queries for mobile view */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .toggleContainer {
     /* Keep at top-left corner */
     top: 1rem;

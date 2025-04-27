@@ -35,7 +35,7 @@ self.onmessage = ({ data: chunk }) => {
               completionTokens: parsed.usage.completionTokens,
               totalTokens: parsed.usage.totalTokens
             };
-            console.log("[WORKER] Found usage data:", tokenInfo);
+            // console.log("[WORKER] Found usage data:", tokenInfo);
           } else if (parsed.raw?.usageMetadata) {
             tokenInfo = {
               promptTokens: parsed.raw.usageMetadata.promptTokenCount,

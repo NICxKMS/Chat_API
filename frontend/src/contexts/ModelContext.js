@@ -1,10 +1,11 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useApi } from './ApiContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useAuth } from './AuthContext';
+import { useCacheToggle } from '../hooks/useCacheToggle';
 
-// Cache expiry time in milliseconds (5 minutes)
-const CACHE_EXPIRY_TIME = 5*60 * 60 * 1000;
+// Cache expiry time in milliseconds (5 days)
+const CACHE_EXPIRY_TIME = 5 * 24 * 60 * 60 * 1000;
 
 // Create separate contexts for models and filtering
 const ModelContext = createContext();
@@ -30,6 +31,7 @@ export const useModelFilter = () => {
 
 // Model provider component
 export const ModelProvider = ({ children }) => {
+  const { cacheEnabled } = useCacheToggle();
   const { apiUrl } = useApi();
   const { idToken } = useAuth();
   
@@ -40,7 +42,6 @@ export const ModelProvider = ({ children }) => {
   const [selectedModel, setSelectedModel] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Filter state - moved to separate context
   const [showExperimental, setShowExperimental] = useLocalStorage('showExperimental', false);
@@ -119,33 +120,24 @@ export const ModelProvider = ({ children }) => {
     }
   }, [selectedModel, setSelectedModel]);
   
-  // Fetch models from API
-  const fetchModels = useCallback(async () => {
+  // Fetch models from API, optionally using auth token or override token
+  const fetchModels = useCallback(async (authRequired = false, overrideToken = null) => {
     setIsLoading(true);
     setError(null);
     
-    console.log("Fetching models from API...");
+    console.log(`Fetching models from API (auth: ${authRequired})...`);
     try {
-      // For initial load, fetch without auth to avoid Firebase initialization
-      // On subsequent loads, use auth token if available
-      const headers = {
-        'Accept': 'application/json'
-      };
-
-      // Only add authorization header if not initial load and token exists
-      if (!isInitialLoad && idToken) {
-        headers['Authorization'] = `Bearer ${idToken}`;
+      const headers = { 'Accept': 'application/json' };
+      if (authRequired) {
+        // Prefer overrideToken (cached) over current idToken
+        const tokenToUse = overrideToken || idToken;
+        if (tokenToUse) {
+          headers['Authorization'] = `Bearer ${tokenToUse}`;
+        }
       }
-
-      // Construct URL safely
       const modelsUrl = new URL('/api/models/classified', apiUrl).toString();
       const response = await fetch(modelsUrl, { headers });
       console.log('Models response:', response);
-      
-      // After first successful fetch, mark initial load complete
-      if (isInitialLoad) {
-        setIsInitialLoad(false);
-      }
       
       if (!response.ok) {
         let errorMsg = `Error fetching models: ${response.status}`;
@@ -168,15 +160,25 @@ export const ModelProvider = ({ children }) => {
             processedModels: fetchedProcessedModels,
             experimentalModels: fetchedExperimentalModels
           } = msg;
-          setAllModels(fetchedAllModels);
-          setProcessedModels(fetchedProcessedModels);
-          setExperimentalModels(fetchedExperimentalModels);
-          // Cache the processed results
-          cacheModels({
-            allModels: fetchedAllModels,
-            processedModels: fetchedProcessedModels,
-            experimentalModels: fetchedExperimentalModels
-          });
+          if (cacheEnabled) {
+            const rawPrev = localStorage.getItem('modelDropdownCache');
+            let prevCache;
+            try { prevCache = JSON.parse(rawPrev); } catch { prevCache = null; }
+            const changed = !prevCache ||
+              JSON.stringify(prevCache.allModels) !== JSON.stringify(fetchedAllModels) ||
+              JSON.stringify(prevCache.processedModels) !== JSON.stringify(fetchedProcessedModels) ||
+              JSON.stringify(prevCache.experimentalModels) !== JSON.stringify(fetchedExperimentalModels);
+            if (changed) {
+              setAllModels(fetchedAllModels);
+              setProcessedModels(fetchedProcessedModels);
+              setExperimentalModels(fetchedExperimentalModels);
+              cacheModels({ allModels: fetchedAllModels, processedModels: fetchedProcessedModels, experimentalModels: fetchedExperimentalModels });
+            }
+          } else {
+            setAllModels(fetchedAllModels);
+            setProcessedModels(fetchedProcessedModels);
+            setExperimentalModels(fetchedExperimentalModels);
+          }
           // Initial model selection moved to a separate useEffect
         }
         setIsLoading(false);
@@ -193,19 +195,43 @@ export const ModelProvider = ({ children }) => {
       setError(err.message || 'Failed to load model data');
       // Attempt to load from potentially expired cache as a last resort?
     }
-  }, [
-    apiUrl,
-    cacheModels,
-    idToken,
-    isInitialLoad
-  ]);
+  }, [apiUrl, cacheModels, idToken, cacheEnabled]);
   
-  // Fetch models on initial mount
+  // Initial and auth-triggered model fetching (non-blocking)
+  const initialFetchDoneRef = useRef(false);
+
   useEffect(() => {
-    fetchModels();
-    // Run only once on mount, or when fetchModels function reference changes
-    // (which it shouldn't unless dependencies like apiUrl change)
-  }, [fetchModels]);
+    if (!initialFetchDoneRef.current) {
+      // Load from cache if enabled
+      if (cacheEnabled) {
+        const rawCache = localStorage.getItem('modelDropdownCache');
+        let parsedCache;
+        try { parsedCache = JSON.parse(rawCache); } catch { parsedCache = null; }
+        if (parsedCache && window.isCacheValid(parsedCache)) {
+          setAllModels(parsedCache.allModels);
+          setProcessedModels(parsedCache.processedModels);
+          setExperimentalModels(parsedCache.experimentalModels);
+          setIsLoading(false);
+        }
+      }
+      // First-time load: check cached token in localStorage
+      let cachedToken = null;
+      try { cachedToken = localStorage.getItem('idToken'); }
+      catch (e) { console.warn('Failed to read cached idToken', e); }
+
+      if (cachedToken) {
+        // Immediate fetch with auth using cached token override
+        fetchModels(true, cachedToken);
+      } else {
+        // Initial fetch without auth
+        fetchModels(false);
+      }
+      initialFetchDoneRef.current = true;
+    } else if (idToken) {
+      // After actual sign-in: fetch fresh models with real auth token
+      fetchModels(true);
+    }
+  }, [idToken, fetchModels, cacheEnabled]);
   
   // Set initial model after models are loaded
   useEffect(() => {

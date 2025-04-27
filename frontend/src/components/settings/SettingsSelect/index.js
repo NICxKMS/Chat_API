@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import styles from './SettingsSelect.module.css';
 
@@ -22,18 +22,18 @@ const SettingsSelect = ({
   // Generate a unique ID for the label to use with aria-labelledby
   const labelId = `${id}-label`;
   
-  const toggleDropdown = () => {
+  const toggleDropdown = useCallback(() => {
     if (!disabled) {
-      setIsOpen(!isOpen);
+      setIsOpen(open => !open);
     }
-  };
+  }, [disabled]);
 
-  const handleOptionSelect = (optionValue) => {
+  const handleOptionSelect = useCallback((optionValue) => {
     onChange(optionValue);
     setIsOpen(false);
-  };
+  }, [onChange]);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (disabled) return;
     
     switch (e.key) {
@@ -64,7 +64,7 @@ const SettingsSelect = ({
       default:
         break;
     }
-  };
+  }, [disabled, isOpen, options, value, toggleDropdown, onChange]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -85,6 +85,19 @@ const SettingsSelect = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
+
+  // Memoize the rendered options list
+  const renderedOptions = useMemo(() => options.map(option => (
+    <div 
+      key={option.value}
+      className={`${styles.option} ${option.value === value ? styles.selected : ''}`}
+      onClick={() => handleOptionSelect(option.value)}
+      role="option"
+      aria-selected={option.value === value}
+    >
+      {option.label}
+    </div>
+  )), [options, value, handleOptionSelect]);
 
   return (
     <div className={`${styles.selectContainer} ${disabled ? styles.disabled : ''}`}>
@@ -125,17 +138,7 @@ const SettingsSelect = ({
           id={`${id}-listbox`}
           aria-labelledby={id}
         >
-          {options.map((option) => (
-            <div 
-              key={option.value}
-              className={`${styles.option} ${option.value === value ? styles.selected : ''}`}
-              onClick={() => handleOptionSelect(option.value)}
-              role="option"
-              aria-selected={option.value === value}
-            >
-              {option.label}
-            </div>
-          ))}
+          {renderedOptions}
         </div>
       )}
     </div>

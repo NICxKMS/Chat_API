@@ -327,7 +327,7 @@ export const convertTeXToMathDollars = (text) => {
   // Group 1: Code block (```...```)
   const codeBlock = '(```[\\s\\S]*?```)';
 
-  // Group 2: Indent for \[...], Group 3: Content for \[...], Group 4: Trailing text for \[...]
+  // Group 2: Indent for \[...], Group 3: Content for \[...], Group 4: Trailing text for \[...\]
   const blockTex = '^(\\s*)\\\\\\\[([\\s\\S]*?)\\\\\\](.*)'; // Matches \[ content \]
 
   // Group 5: Indent for [/...], Group 6: Content for [/...], Group 7: Trailing text for [/...]

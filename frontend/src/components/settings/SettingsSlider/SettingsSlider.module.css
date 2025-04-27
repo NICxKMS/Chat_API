@@ -30,7 +30,7 @@
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-primary, #fff);
-  background-color: rgba(87, 157, 152, 0.2);
+  background-color: rgb(87 157 152 / 20%);
   padding: 0.25rem 0.6rem;
   border-radius: 6px;
   min-width: 45px;
@@ -41,21 +41,21 @@
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-primary, #fff);
-  background-color: rgba(87, 157, 152, 0.15);
+  background-color: rgb(87 157 152 / 15%);
   padding: 0.25rem 0.6rem;
   border-radius: 6px;
   min-width: 80px; /* Wider to accommodate more digits */
   max-width: 120px;
   text-align: center;
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border: 1px solid var(--border, rgb(255 255 255 / 10%));
   outline: none;
   transition: all 0.2s ease;
 }
 
 .numberInput:focus {
-  background-color: rgba(87, 157, 152, 0.25);
-  border-color: var(--button-bg-color, rgba(87, 157, 152, 0.75));
-  box-shadow: 0 0 0 2px rgba(87, 157, 152, 0.2);
+  background-color: rgb(87 157 152 / 25%);
+  border-color: var(--button-bg-color, rgb(87 157 152 / 75%));
+  box-shadow: 0 0 0 2px rgb(87 157 152 / 20%);
 }
 
 .numberInput::-webkit-inner-spin-button,
@@ -68,7 +68,7 @@
   position: relative;
   width: 100%;
   height: 6px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgb(255 255 255 / 10%);
   border-radius: 3px;
 }
 
@@ -77,9 +77,10 @@
   top: 0;
   left: 0;
   height: 100%;
-  background-color: var(--button-bg-color, rgba(87, 157, 152, 0.75));
+  background-color: var(--button-bg-color, rgb(87 157 152 / 75%));
   border-radius: 3px;
   pointer-events: none;
+  width: var(--fill-width, 0%);
 }
 
 .slider {
@@ -88,7 +89,6 @@
   left: 0;
   width: 100%;
   height: 100%;
-  -webkit-appearance: none;
   appearance: none;
   background: transparent;
   margin: 0;
@@ -97,11 +97,11 @@
 
 /* Thumb styling */
 .slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
+  appearance: none;
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--button-bg-color, rgba(87, 157, 152, 0.75));
+  background: var(--button-bg-color, rgb(87 157 152 / 75%));
   border: 2px solid var(--settings-bg, #1f1f1f);
   transition: transform 0.2s;
 }
@@ -110,7 +110,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--button-bg-color, rgba(87, 157, 152, 0.75));
+  background: var(--button-bg-color, rgb(87 157 152 / 75%));
   border: 2px solid var(--settings-bg, #1f1f1f);
   transition: transform 0.2s;
 }
@@ -119,13 +119,31 @@
 .slider:active::-webkit-slider-thumb { transform: scale(1.2); }
 
 /* Size variants */
-.small .sliderTrack { height: 4px; }
-.small .slider::-webkit-slider-thumb, 
-.small .slider::-moz-range-thumb { width: 14px; height: 14px; }
+.small .slider {
+  height: 6px;
 
-.large .sliderTrack { height: 8px; }
-.large .slider::-webkit-slider-thumb, 
-.large .slider::-moz-range-thumb { width: 22px; height: 22px; }
+  /* thumb size adjusted */
+}
+
+.small .slider::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+}
+
+.large .sliderTrack {
+  height: 10px;
+}
+
+.large .slider {
+  height: 10px;
+
+  /* thumb size adjusted */
+}
+
+.large .slider::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+}
 
 /* Tooltip */
 .tooltipWrapper {
@@ -146,7 +164,7 @@
   visibility: hidden;
   opacity: 0;
   width: 250px;
-  background-color: rgba(40, 40, 40, 0.95);
+  background-color: rgb(40 40 40 / 95%);
   color: #fff;
   text-align: center;
   padding: 8px 12px;

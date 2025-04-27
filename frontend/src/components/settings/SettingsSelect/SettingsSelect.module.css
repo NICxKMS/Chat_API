@@ -9,7 +9,6 @@
   font-weight: 500;
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
-  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -35,12 +34,12 @@
 .select:focus {
   outline: none;
   border-color: var(--button-bg);
-  box-shadow: 0 0 0 2px rgba(var(--button-bg-rgb), 0.3);
+  box-shadow: 0 0 0 2px rgb(var(--button-bg-rgb), 0.3);
 }
 
 .select.open {
   border-color: var(--button-bg);
-  box-shadow: 0 0 0 2px rgba(var(--button-bg-rgb), 0.3);
+  box-shadow: 0 0 0 2px rgb(var(--button-bg-rgb), 0.3);
 }
 
 .selectedValue {
@@ -92,7 +91,7 @@
 }
 
 .option.selected {
-  background-color: rgba(var(--button-bg-rgb), 0.1);
+  background-color: rgb(var(--button-bg-rgb), 0.1);
   font-weight: 500;
 }
 
@@ -119,6 +118,7 @@
     opacity: 0;
     transform: translateY(-5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

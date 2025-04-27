@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useCacheToggle } from '../../hooks/useCacheToggle';
 import { useAuth } from '../../contexts/AuthContext';
@@ -129,7 +129,7 @@ const SettingsPanel = ({ isOpen, onClose }) => {
   ];
 
   // Render a setting control based on its type
-  const renderSettingControl = (settingId) => {
+  const renderSettingControl = useCallback((settingId) => {
     const config = settingConfig[settingId];
     if (!config) return null;
     
@@ -181,10 +181,7 @@ const SettingsPanel = ({ isOpen, onClose }) => {
               label={config.label}
               value={value}
               onChange={(val) => {
-                // Special handling for systemPrompt to preserve "Nikhil" in storage
                 if (config.id === 'systemPrompt') {
-                  // If user has changed something other than the name, we need to make sure
-                  // we save with "Nikhil" always used in the storage
                   const standardizedVal = val.replace(new RegExp(userName, 'g'), 'Nikhil');
                   updateSetting(config.id, standardizedVal);
                 } else {
@@ -200,11 +197,23 @@ const SettingsPanel = ({ isOpen, onClose }) => {
       default:
         return null;
     }
-  };
+  }, [settingConfig, settings, animateItems, userName, updateSetting]);
   
-  // Get settings for the active tab
-  const activeSettings = Object.keys(settingConfig).filter(
-    key => settingConfig[key].tab === activeTab
+  // Compute active settings for the current tab and memoize
+  const activeSettings = useMemo(
+    () => Object.keys(settingConfig).filter(
+      key => settingConfig[key].tab === activeTab
+    ),
+    [activeTab, settingConfig]
+  );
+  // Memoize the rendered settings components to avoid inline maps on each render
+  const renderedSettings = useMemo(
+    () => activeSettings.map((settingId, index) => (
+      <div key={settingId} style={{ animationDelay: `${index * 50}ms` }}>
+        {renderSettingControl(settingId)}
+      </div>
+    )),
+    [activeSettings, renderSettingControl]
   );
 
   return (
@@ -310,11 +319,7 @@ const SettingsPanel = ({ isOpen, onClose }) => {
           {/* Other tabs */}
           {activeTab !== 'general' && (
             <SettingsGroup title={`${tabs.find(t => t.id === activeTab)?.label} Settings`}>
-              {activeSettings.map((settingId, index) => (
-                <div key={settingId} style={{ animationDelay: `${index * 50}ms` }}>
-                  {renderSettingControl(settingId)}
-                </div>
-              ))}
+              {renderedSettings}
             </SettingsGroup>
           )}
         </div>

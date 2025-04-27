@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
 import { PlusIcon, PaperAirplaneIcon, XIcon, CheckIcon,  KebabHorizontalIcon, ImageIcon,  SearchIcon, LightBulbIcon } from '@primer/octicons-react';
 import styles from './ChatInput.module.css';
-import { useChat } from '../../../contexts/ChatContext';
+import { useChatState } from '../../../contexts/ChatStateContext';
+import { useChatControl } from '../../../contexts/ChatControlContext';
 
 /**
  * Reads a file and returns its base64 representation.
@@ -51,7 +52,8 @@ const ChatInput = memo(({
   const fileInputRef = useRef(null);
   const isEditing = !!editingMessage;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
-  const { isWaitingForResponse, stopGeneration } = useChat();
+  const { isWaitingForResponse } = useChatState();
+  const { stopGeneration } = useChatControl();
   
   // Set up window resize listener to detect mobile view
   useEffect(() => {
@@ -73,25 +75,23 @@ const ChatInput = memo(({
   // Set message content when entering edit mode
   useEffect(() => {
     if (editingMessage) {
-      // Extract text content based on message structure
+      // Extract text and images for edit mode
       let textContent = '';
+      const images = [];
       if (typeof editingMessage.content === 'string') {
         textContent = editingMessage.content;
       } else if (Array.isArray(editingMessage.content)) {
-        // Extract text from multimodal content
-        const textPart = editingMessage.content.find(part => part.type === 'text');
-        if (textPart) {
-          textContent = textPart.text || '';
-        }
+        editingMessage.content.forEach(part => {
+          if (part.type === 'text') textContent += part.text || '';
+          if (part.type === 'image_url' && part.image_url?.url) {
+            images.push({ name: '', url: part.image_url.url });
+          }
+        });
       }
-      
       setMessage(textContent);
-      // Focus on textarea with slight delay to ensure it's rendered
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-        }
-      }, 0);
+      setSelectedImages(images);
+      // Focus on textarea after render
+      setTimeout(() => textareaRef.current?.focus(), 0);
     }
   }, [editingMessage]);
   
@@ -246,10 +246,9 @@ const ChatInput = memo(({
 
   // Cancel edit mode
   const handleCancelEdit = () => {
-    if (onCancelEdit) {
-      onCancelEdit();
-    }
+    if (onCancelEdit) onCancelEdit();
     setMessage('');
+    setSelectedImages([]);
   };
 
   // Stop the response generation
@@ -261,8 +260,7 @@ const ChatInput = memo(({
   const handleSend = () => {
     // Ensure there's either text or images to send, and not disabled
     const hasText = message.trim().length > 0;
-    // In edit mode, we only support editing text, not adding images
-    const hasImages = !isEditing && selectedImages.length > 0;
+    const hasImages = selectedImages.length > 0;
     
     // If no model is selected but there's something to send, show model selector
     if ((!hasText && !hasImages) || disabled) return;
@@ -490,19 +488,17 @@ const ChatInput = memo(({
         <div className={styles.actionRow}>
           {/* Left side buttons */}
           <div className={styles.leftButtons}>
-            {/* Upload button (Only when not editing) - moved to left side */}
-            {!isEditing && (
-              <button
-                className={styles.uploadButton}
-                onClick={toggleModelSelector ? (selectedModel ? triggerFileInput : toggleModelSelector) : triggerFileInput}
-                disabled={disabled}
-                aria-label={selectedModel?.capabilities?.includes('vision') ? "Upload images" : "Select model for image upload"}
-                title={selectedModel?.capabilities?.includes('vision') ? "Upload images" : "Select model for image upload"}
-                type="button"
-              >
-                <ImageIcon size={16} />
-              </button>
-            )}
+            {/* Upload button - moved to left side */}
+            <button
+              className={styles.uploadButton}
+              onClick={toggleModelSelector ? (selectedModel ? triggerFileInput : toggleModelSelector) : triggerFileInput}
+              disabled={disabled}
+              aria-label={selectedModel?.capabilities?.includes('vision') ? "Upload images" : "Select model for image upload"}
+              title={selectedModel?.capabilities?.includes('vision') ? "Upload images" : "Select model for image upload"}
+              type="button"
+            >
+              <ImageIcon size={16} />
+            </button>
             
             <button
               className={`${styles.textButton} ${isMobile ? styles.iconOnlyButton : ''}`}

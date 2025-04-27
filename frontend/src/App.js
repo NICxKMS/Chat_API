@@ -4,44 +4,56 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ContextManager } from './contexts/ContextManager';
 import Spinner from './components/common/Spinner';
 import { performanceMonitor, PERFORMANCE_MARKS, PERFORMANCE_MEASURES } from './utils/performance';
-import { basicFormattingImports, advancedFormattingImports, modelSelectorImports } from './utils/preloadFormatting';
+// (Formatting preloads removed - we rely on on-demand loading)
 
-// === Phase 1: Critical (lazy) components ===
-const Layout = lazy(() => import(/* webpackPreload: true, webpackChunkName: "layout" */ './components/layout/Layout'));
+// === Phase 1: Critical (lazy) components & essential import definitions ===
+// Define all essential dynamic imports once for reuse
+const ESSENTIAL_IMPORTS = {
+  layout: () => import(/* webpackPreload: true, webpackChunkName: "layout" */ './components/layout/Layout'),
+  chatContainer: () => import(/* webpackPreload: true, webpackChunkName: "chat-container" */ './components/chat/ChatContainer'),
+  chatInput: () => import(/* webpackPreload: true, webpackChunkName: "chat-input" */ './components/chat/ChatInput'),
+  modelDropdown: () => import(/* webpackPreload: true, webpackChunkName: "models-dropdown" */ './components/models/ModelDropdown'),
+  sidebar: () => import(/* webpackPreload: true, webpackChunkName: "layout-sidebar" */ './components/layout/Sidebar'),
+  themeToggle: () => import(/* webpackPreload: true, webpackChunkName: "common-theme" */ './components/common/ThemeToggle'),
+  sidebarToggle: () => import(/* webpackPreload: true, webpackChunkName: "layout-sidebar-toggle" */ './components/layout/SidebarToggle'),
+  messageList: () => import(/* webpackPreload: true, webpackChunkName: "chat-messagelist" */ './components/chat/MessageList'),
+  authButton: () => import(/* webpackPreload: true, webpackChunkName: "auth-button" */ './components/auth/AuthButton'),
+  globalMetrics: () => import(/* webpackPreload: true, webpackChunkName: "chat-globalmetrics" */ './components/chat/GlobalMetricsBar'),
+  moreActions: () => import(/* webpackPreload: true, webpackChunkName: "common-more-actions" */ './components/common/MoreActions'),
+};
+// Lazy-load the layout using the shared import
+const Layout = lazy(ESSENTIAL_IMPORTS.layout);
+// Lazy-load the login modal separately
 const LoginModal = lazy(() => import(/* webpackChunkName: "login-modal" */ './components/auth/LoginModal'));
 
-// === Preload lists ===
-// Combined core and UI imports for faster initial load
-const ESSENTIAL_IMPORTS = [
-  // Core UI components
-  () => import(/* webpackPreload: true, webpackChunkName: "layout" */ './components/layout/Layout'),
-  () => import(/* webpackPreload: true, webpackChunkName: "chat-container" */ './components/chat/ChatContainer'),
-  () => import(/* webpackPreload: true, webpackChunkName: "chat-input" */ './components/chat/ChatInput'),
-  ...modelSelectorImports,
-  () => import(/* webpackChunkName: "models-dropdown" */ './components/models/ModelDropdown'),
-  
-  // Additional UI components
-  () => import(/* webpackChunkName: "layout-sidebar" */ './components/layout/Sidebar'),
-  () => import(/* webpackChunkName: "common-theme" */ './components/common/ThemeToggle'),
-  () => import(/* webpackChunkName: "layout-sidebar-toggle" */ './components/layout/SidebarToggle'),
-  () => import(/* webpackChunkName: "chat-messagelist" */ './components/chat/MessageList'),
-  () => import(/* webpackChunkName: "auth-button" */ './components/auth/AuthButton'),
-  () => import(/* webpackChunkName: "chat-globalmetrics" */ './components/chat/GlobalMetricsBar'),
-  () => import(/* webpackChunkName: "common-more-actions" */ './components/common/MoreActions'),
-];
+// Only essential preload for core components (plus idle-loaded heavy chunks)
+const PRELOAD_IMPORTS = {
+  essential: Object.values(ESSENTIAL_IMPORTS),
+  heavy: [
+    () => import(/* webpackChunkName: "markdown-renderer" */ './components/common/LazyMarkdownRenderer/MarkdownRenderer'),
+    () => import(/* webpackChunkName: "streaming-message" */ './components/chat/ChatMessage/StreamingMessage'),
+    () => import(/* webpackChunkName: "firebase-config" */ './firebaseConfig')
+              .then(() => {
+                window.dispatchEvent(new Event('firebaseInitialized'));
+              }),
+  ]
+};
 
-const BASIC_IMPORTS = [
-  ...basicFormattingImports, // Just react-markdown and remark-gfm
-  // Settings panel (load with basic components)
-  () => import(/* webpackChunkName: "settings-panel" */ './components/settings/SettingsPanel'),
-];
-
-const HEAVY_IMPORTS = [
-  ...advancedFormattingImports,          // StreamingMessage and all formatting tools (syntax-highlighter, KaTeX, etc.)
-  // Firebase auth imports
-  () => import(/* webpackChunkName: "firebase-config" */ './firebaseConfig').then(mod => mod.initializeFirebase()),
-  () => import(/* webpackChunkName: "login-modal" */ './components/auth/LoginModal'),
-];
+// Remove unused `preloadAsync` helper; keep `preloadSync` for essential sync loads
+const preloadSync = async (imports) => {
+  for (const fn of imports) {
+    await fn();
+  }
+};
+// Simplify idlePreload: on idle, batch load all heavy imports
+const idlePreload = (imports, onComplete) => {
+  requestIdleCallback(() => {
+    imports.forEach((fn, idx) => fn()
+      .then(() => onComplete(idx))
+      .catch(() => {})
+    );
+  });
+};
 
 /**
  * AppShell handles phased loading of chunks for optimal startup.
@@ -59,10 +71,7 @@ function AppShell() {
       performanceMonitor.mark(PERFORMANCE_MARKS.APP_START);
       console.log('[Phase1] Loading essential components...');
       try {
-        // Load all essential UI components
-        for (const importFn of ESSENTIAL_IMPORTS) {
-          await importFn();
-        }
+        await preloadSync(PRELOAD_IMPORTS.essential);
         performanceMonitor.mark(PERFORMANCE_MARKS.IMPORTANT_COMPONENTS_LOADED);
         performanceMonitor.measure(
           PERFORMANCE_MEASURES.IMPORTANT_LOAD_TIME,
@@ -81,7 +90,7 @@ function AppShell() {
       }
 
       // Show initial shell before heavy loads
-      requestAnimationFrame(() => {
+      requestAnimationFrame(async () => {
         if (canceled) return;
         setShellReady(true);
         performanceMonitor.mark(PERFORMANCE_MARKS.APP_INTERACTIVE);
@@ -90,96 +99,13 @@ function AppShell() {
           PERFORMANCE_MARKS.APP_START,
           PERFORMANCE_MARKS.APP_INTERACTIVE
         );
-        console.log('[Phase1] App is interactive');
-
-        // Phase 2: Load basic formatting
-        console.log('[Phase2] Loading basic formatting...');
-        Promise.all(BASIC_IMPORTS.map(importFn => importFn()))
-          .then(() => {
-            performanceMonitor.mark(PERFORMANCE_MARKS.APP_READY);
-            performanceMonitor.measure(
-              PERFORMANCE_MEASURES.TOTAL_LOAD,
-              PERFORMANCE_MARKS.APP_START,
-              PERFORMANCE_MARKS.APP_READY
-            );
-            console.log('[Phase2] Basic formatting loaded');
-
-            // Phase 3: Idle-load heavy dependencies (including Firebase)
-            console.log('[Phase3] Scheduling heavy dependencies on idle...');
-            let index = 0;
-            
-            function loadNext(deadline) {
-              let i = index;  // Create a local variable
-              while ((deadline.timeRemaining() > 0 || deadline.didTimeout) && i < HEAVY_IMPORTS.length) {
-                const currentIndex = i;
-                HEAVY_IMPORTS[currentIndex]()
-                  .then(() => {
-                    // Set firebaseReady when Firebase config import is complete
-                    if (currentIndex === HEAVY_IMPORTS.length - 2) { // Firebase config import
-                      console.log('[Phase3] Firebase initialized');
-                      setFirebaseReady(true);
-                      // Dispatch custom event to notify AuthContext
-                      window.dispatchEvent(new Event('firebaseInitialized'));
-                    }
-                  })
-                  .catch(err => console.error(`Idle load error for module ${currentIndex}:`, err));
-                i++;
-              }
-              
-              // Update the outer index variable
-              index = i;
-              
-              if (index < HEAVY_IMPORTS.length) {
-                requestIdleCallback(loadNext, { timeout: 1000 });
-              } else {
-                console.log(`[Phase3] Completed loading ${HEAVY_IMPORTS.length} heavy modules`);
-              }
-            }
-            
-            // Instead of idle callback, which might delay Firebase too much,
-            // preload Firebase immediately then use idle for the rest
-            console.log('[Phase3] Explicitly loading Firebase...');
-            // Load Firebase first (the last two imports in HEAVY_IMPORTS)
-            Promise.all([
-              HEAVY_IMPORTS[HEAVY_IMPORTS.length - 2](), // Firebase config
-              HEAVY_IMPORTS[HEAVY_IMPORTS.length - 1]()  // Login modal
-            ])
-            .then(() => {
-              console.log('[Phase3] Firebase initialized');
-              setFirebaseReady(true);
-              // Dispatch custom event to notify AuthContext
-              window.dispatchEvent(new Event('firebaseInitialized'));
-              
-              // Now load the remaining imports using idle callback
-              if (HEAVY_IMPORTS.length > 2) {
-                index = 0; // Reset index to load non-Firebase modules
-                const nonFirebaseImports = HEAVY_IMPORTS.slice(0, -2);
-                
-                function loadRemainingModules(deadline) {
-                  let j = index;  // Create a local variable
-                  while ((deadline.timeRemaining() > 0 || deadline.didTimeout) && j < nonFirebaseImports.length) {
-                    const currentModuleIndex = j;
-                    nonFirebaseImports[currentModuleIndex]()
-                      .catch(err => console.error(`Idle load error for module ${currentModuleIndex}:`, err));
-                    j++;
-                  }
-                  
-                  // Update the outer index variable
-                  index = j;
-                  
-                  if (index < nonFirebaseImports.length) {
-                    requestIdleCallback(loadRemainingModules, { timeout: 1000 });
-                  } else {
-                    console.log(`[Phase3] Completed loading ${nonFirebaseImports.length} remaining heavy modules`);
-                  }
-                }
-                
-                requestIdleCallback(loadRemainingModules, { timeout: 1000 });
-              }
-            })
-            .catch(err => console.error('[Phase3] Error loading Firebase:', err));
-          })
-          .catch((err) => console.error('[Phase2] Error loading basic formatting:', err));
+        console.log('[Phase1] App is interactive; idle-preloading heavy components');
+        idlePreload(PRELOAD_IMPORTS.heavy, (idx) => {
+          if (idx === PRELOAD_IMPORTS.heavy.length - 1) {
+            console.log('[Phase2] Heavy components idle-preloaded');
+            setFirebaseReady(true);
+          }
+        });
       });
     }
 

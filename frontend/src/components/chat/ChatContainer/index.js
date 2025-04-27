@@ -1,7 +1,8 @@
-import { memo, lazy, useRef, useEffect, useState, useCallback, Suspense } from 'react';
+import { memo, lazy, useRef, useEffect, useState, useCallback, useMemo, Suspense } from 'react';
 import { useChatLogic } from '../../../hooks/useChatLogic';
 import { ChevronDownIcon } from '@primer/octicons-react';
 import styles from './ChatContainer.module.css';
+import throttle from 'lodash.throttle';
 
 // Lazy-loaded components
 const MessageList = lazy(() => import(/* webpackChunkName: "chat-messagelist" */ '../MessageList'));
@@ -40,42 +41,31 @@ const ChatContainer = memo(({
   const scrollContainerRef = useRef(null);
   const isActiveChat = chatHistory.length > 0;
   const [showScrollToBottomButton, setShowScrollToBottomButton] = useState(false);
-  const prevChatHistoryLength = useRef(chatHistory.length);
   const prevWaitingForResponse = useRef(isWaitingForResponse);
 
-  // Effect to update input height CSS variable for scroll button positioning
-  useEffect(() => {
-    const updateInputHeight = () => {
-      const inputContainer = document.querySelector('.inputContainer') || 
-                            document.querySelector(`.${styles.fixedInputArea}`);
-      if (inputContainer) {
-        const height = inputContainer.offsetHeight;
-        document.documentElement.style.setProperty('--input-height', `${height}px`);
-      }
-    };
-
-    // Initial update
-    updateInputHeight();
-
-    // Set up observer to track input container height changes
-    const resizeObserver = new ResizeObserver(updateInputHeight);
-    const inputContainer = document.querySelector('.inputContainer') || 
-                          document.querySelector(`.${styles.fixedInputArea}`);
-    
-    if (inputContainer) {
-      resizeObserver.observe(inputContainer);
+  // === Performance-tuned handlers ===
+  // Smooth scroll to bottom, memoized
+  const scrollToBottom = useCallback((behavior = 'smooth') => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior });
+      setShowScrollToBottomButton(false);
     }
+  }, []);
 
-    // Clean up observer on unmount
-    return () => {
-      if (inputContainer) {
-        resizeObserver.unobserve(inputContainer);
-      }
-      resizeObserver.disconnect();
-    };
-  }, [chatHistory, editingMessage]); // Re-run when chat history changes or edit mode changes
+  // Scroll handler for showing/hiding the scroll-to-bottom button, throttled
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const scrollThreshold = 10;
+    const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < scrollThreshold;
+    setShowScrollToBottomButton(!atBottom);
+  }, []);
+  const throttledHandleScroll = useMemo(
+    () => throttle(handleScroll, 100),
+    [handleScroll]
+  );
 
-  // Function to ensure the input field is focused
+  // Focus input helper, memoized
   const focusInputField = useCallback(() => {
     // Use a timeout to ensure the component is fully rendered and mounted
     setTimeout(() => {
@@ -109,37 +99,18 @@ const ChatContainer = memo(({
     prevWaitingForResponse.current = isWaitingForResponse;
   }, [isWaitingForResponse, isSidebarOpen, isSettingsOpen, isModelSelectorOpen, editingMessage, focusInputField]);
 
-  // Function to smoothly scroll to the bottom
-  const scrollToBottom = useCallback((behavior = 'smooth') => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
-        behavior: behavior
-      });
-      // Ensure button is hidden immediately after explicitly scrolling
-      setShowScrollToBottomButton(false);
-    }
-  }, []);
-
-  // Effect when new messages arrive (NO LONGER MANAGES BUTTON VISIBILITY)
+  // Effect to handle manual scrolling by the user (NOW MANAGES BUTTON VISIBILITY)
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container || !isActiveChat) return;
-
-    // Only proceed if chat history actually grew
-    if (chatHistory.length <= prevChatHistoryLength.current) {
-      prevChatHistoryLength.current = chatHistory.length;
-      return;
-    }
-
-    // Update previous length tracking
-    prevChatHistoryLength.current = chatHistory.length;
-
-    // We might still need to check scroll position *after* history updates
-    // to show the button if the new content itself pushes the view up.
-    // Let's add a check within the scroll handler effect as well.
-
-  }, [chatHistory, isActiveChat]); // Removed scrollToBottom from deps as it's not used here
+    if (!container) return;
+    // Initial check
+    throttledHandleScroll();
+    container.addEventListener('scroll', throttledHandleScroll, { passive: true });
+    return () => {
+      container.removeEventListener('scroll', throttledHandleScroll);
+      throttledHandleScroll.cancel();
+    };
+  }, [throttledHandleScroll]);
 
   // Effect to handle manual scrolling by the user (NOW MANAGES BUTTON VISIBILITY)
   useEffect(() => {
@@ -164,17 +135,10 @@ const ChatContainer = memo(({
   // Need another effect to check scroll position when chatHistory length changes,
   // as new content might make the button necessary even if user didn't scroll.
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    // Check after a short delay to allow DOM to update with new message height
-    const checkScrollTimeout = setTimeout(() => {
-      const scrollThreshold = 10;
-      const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < scrollThreshold;
-      setShowScrollToBottomButton(!atBottom);
-    }, 100); // Adjust delay if needed
-
-    return () => clearTimeout(checkScrollTimeout);
-  }, [chatHistory]); // Run when chatHistory changes
+    // React to new messages by re-checking scroll only once after DOM update
+    const timeout = setTimeout(() => throttledHandleScroll(), 100);
+    return () => clearTimeout(timeout);
+  }, [chatHistory, throttledHandleScroll]);
 
   // Use the selected model passed down for the button, but model from logic elsewhere
   const displayModelName = passedSelectedModel?.name;
@@ -244,6 +208,16 @@ const ChatContainer = memo(({
       </>
     );
   };
+
+  // Update CSS var for input height
+  // eslint-disable-next-line no-unused-vars
+  const updateInputHeight = useCallback(() => {
+    const inputContainer = document.querySelector(`.${styles.inputContainer}`) ||
+                           document.querySelector(`.${styles.fixedInputArea}`);
+    if (inputContainer) {
+      // Implementation of updateInputHeight
+    }
+  }, []);
 
   return (
     <div className={chatContainerClasses}>

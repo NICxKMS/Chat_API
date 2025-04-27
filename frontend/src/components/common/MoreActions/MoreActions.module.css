@@ -1,5 +1,5 @@
 /* Import common button styles */
-@import '../../../styles/common/buttons.css';
+@import url('../../../styles/common/buttons.css');
 
 .moreActionsContainer {
   position: relative;
@@ -131,7 +131,7 @@
 }
 
 /* Mobile-specific styles */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .actionsMenu {
     position: absolute;
     top: calc(100% + 8px);

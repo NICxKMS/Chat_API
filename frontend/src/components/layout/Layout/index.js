@@ -1,7 +1,8 @@
 import { lazy, useState, useCallback, Suspense } from 'react';
 import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
-import { useChat } from '../../../contexts/ChatContext';
+import { useChatState } from '../../../contexts/ChatStateContext';
+import { useChatControl } from '../../../contexts/ChatControlContext';
 // Import useApi if needed for apiUrl, but not for status
 // import { useApi } from '../../../contexts/ApiContext'; 
 import { useAuth } from '../../../contexts/AuthContext'; // Import useAuth
@@ -45,7 +46,8 @@ const Layout = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // State for settings panel
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false); // State for model selector visibility
   const { selectedModel, isLoadingModels } = useModel(); // Get model data
-  const { chatHistory, resetChat, downloadChatHistory } = useChat();
+  const { chatHistory } = useChatState();
+  const { clearChat, downloadChatHistory } = useChatControl();
   const { currentUser, isAuthenticated, login, logout, loading: authLoading } = useAuth(); // Get auth context
   const { theme, toggleTheme } = useTheme(); // Get theme context
 
@@ -75,16 +77,16 @@ const Layout = () => {
     
     // Clear chat history if there are messages
     if (chatHistory.length > 0) {
-      resetChat();
+      clearChat();
     }
-  }, [isDesktop, chatHistory.length, resetChat]);
+  }, [isDesktop, chatHistory.length, clearChat]);
 
   // Implement reset chat functionality
   const handleResetChat = useCallback(() => {
     if (chatHistory.length === 0) return;
     
     if (window.confirm('Are you sure you want to clear the current chat?')) {
-      resetChat();
+      clearChat();
       
       // Show confirmation to the user
       const notification = document.createElement('div');
@@ -105,7 +107,7 @@ const Layout = () => {
         document.body.removeChild(notification);
       }, 3000);
     }
-  }, [chatHistory.length, resetChat]);
+  }, [chatHistory.length, clearChat]);
 
   // Implement download chat functionality
   const handleDownloadChat = useCallback(() => {

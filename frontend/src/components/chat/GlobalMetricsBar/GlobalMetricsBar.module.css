@@ -22,7 +22,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .metricsBar {
     gap: 1rem;
     padding: 0.4rem 0.75rem;

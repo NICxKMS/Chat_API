@@ -15,11 +15,11 @@
               border-color var(--theme-transition-duration) var(--theme-transition-timing), 
               box-shadow 0.2s ease, 
               transform 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 5%);
 }
 
 .status:hover {
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 6px rgb(0 0 0 / 10%);
   transform: translateY(-1px);
 }
 
@@ -34,10 +34,7 @@
 .indicator::after {
   content: '';
   position: absolute;
-  top: -3px;
-  left: -3px;
-  right: -3px;
-  bottom: -3px;
+  inset: -3px;
   border-radius: 50%;
   z-index: 0;
   opacity: 0.4;
@@ -64,12 +61,12 @@
 
 .checking {
   animation: pulse 1.5s infinite;
-  background-color: rgba(var(--warning-rgb), 1);
-  box-shadow: 0 0 5px rgba(var(--warning-rgb), 1);
+  background-color: rgb(var(--warning-rgb), 1);
+  box-shadow: 0 0 5px rgb(var(--warning-rgb), 1);
 }
 
 .checking::after {
-  background-color: rgba(var(--warning-rgb), 1);
+  background-color: rgb(var(--warning-rgb), 1);
 }
 
 .text {
@@ -90,14 +87,14 @@
   justify-content: center;
   color: var(--secondary-text);
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
 }
 
 .refreshButton:hover {
   color: var(--text);
   background-color: var(--card-bg);
   transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 10%);
 }
 
 .refreshButton:active {
@@ -118,9 +115,11 @@
   0% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.4;
   }
+
   100% {
     opacity: 1;
   }
@@ -131,6 +130,7 @@
     transform: scale(1);
     opacity: 0.4;
   }
+
   100% {
     transform: scale(2);
     opacity: 0;

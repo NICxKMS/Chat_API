@@ -1,3 +1,5 @@
+@import url('../../../styles/common/buttons.css');
+
 .layout {
   display: flex;
   height: 100vh;
@@ -36,7 +38,7 @@
   height: 100%;
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--border);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 20px rgb(0 0 0 / 5%);
 }
 
 .mainContentContainer {
@@ -57,7 +59,7 @@
 }
 
 /* Sidebar States (Desktop) */
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .layout.sidebarCompact .sidebarContainer {
     width: 0;
     transform: translateX(-100%);
@@ -68,7 +70,7 @@
 }
 
 /* Sidebar States (Mobile) */
-@media (max-width: 1023px) {
+@media (width <= 1023px) {
   .sidebarContainer {
     position: fixed;
     height: 100%;
@@ -92,11 +94,8 @@
 .overlay {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background-color: rgb(0 0 0 / 50%);
   z-index: 90;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -108,6 +107,7 @@
 }
 
 /* Container for the model selector button - REMOVED */
+
 /*
 .modelSelectorContainer {
   position: absolute;
@@ -121,18 +121,15 @@
 /* Modal Overlay */
 .modalOverlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  inset: 0;
+  background-color: rgb(0 0 0 / 60%);
   z-index: 100;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 2rem;
   opacity: 0;
-  animation: fadeIn 0.2s ease forwards;
+  animation: slideUp 0.3s ease forwards;
 }
 
 /* Modal Content Wrapper */
@@ -148,18 +145,29 @@
   animation: slideUp 0.3s ease forwards;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* @keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+} */ /* Removed duplicate - use common definition */
 
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Media Query for smaller screens */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   /* Hide the floating API Status container */
   .apiStatusFloatingContainer {
     display: none;
@@ -174,15 +182,22 @@
   z-index: 150; /* Same level as other floating icons */
   
   /* Always visible now - Removed hiding properties */
+
   /* opacity: 0; */
+
   /* transform: translateY(20px); */
+
   /* pointer-events: none; */
+
   /* transition: opacity 0.3s ease, transform 0.3s ease; */
 }
 
 /* Make FLOATING API STATUS visible when sidebar is hidden */
+
 /* Target the new container */
+
 /* REMOVED THIS RULE */
+
 /*
 .sidebarHidden .apiStatusFloatingContainer {
   opacity: 1;
@@ -223,9 +238,6 @@
   margin: 0;
 }
 
-/* Import common button styles */
-@import '../../../styles/common/buttons.css';
-
 /* Extend the common button style */
 .mobileActionButton {
   width: var(--button-size);
@@ -261,7 +273,7 @@
 }
 
 /* Media Query for mobile view (small screens) */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .mobileActionsContainer {
     display: block;
     top: 1rem;
@@ -293,7 +305,7 @@
 }
 
 /* Media Query for tablet/medium screens */
-@media (min-width: 769px) and (max-width: 1023px) {
+@media (width >= 769px) and (width <= 1023px) {
   .mobileActionsContainer {
     display: block;
   }
@@ -313,7 +325,7 @@
 }
 
 /* Media Query for desktop view */
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   /* On desktop, show all actions */
   .mobileActions > * {
     display: flex;

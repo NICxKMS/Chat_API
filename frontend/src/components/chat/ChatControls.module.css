@@ -11,6 +11,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 0.8rem;
+
   /* Add common button styles here (border, background, etc.) */
   background-color: var(--button-bg-color);
   border: 1px solid var(--border-color);
@@ -41,6 +42,7 @@
   border-color: var(--warning-border-color);
   color: var(--warning-text-color);
 }
+
 .clearButton:hover:not(:disabled) {
   background-color: var(--warning-hover-bg-color);
 }
@@ -53,12 +55,15 @@
   border-color: var(--error-border-color);
   color: var(--error-text-color);
 }
+
 .stopButton:hover:not(:disabled) {
   background-color: var(--error-hover-bg-color);
 }
 
 /* Remove reset button styles */
+
 /* .resetButton { ... } */
 
 /* Remove settings button styles */
+
 /* .settingsButton { ... } */ 

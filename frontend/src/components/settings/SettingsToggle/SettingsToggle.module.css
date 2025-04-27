@@ -23,7 +23,7 @@
 
 .settingsToggle:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(var(--button-bg-rgb), 0.3);
+  box-shadow: 0 0 0 2px rgb(var(--button-bg-rgb), 0.3);
 }
 
 .settingsToggle.open {
@@ -60,7 +60,11 @@
   padding: 0.75rem 0;
 }
 
-.toggleContainer.disabled, .switchContainer.disabled { opacity: 0.6; cursor: not-allowed; }
+.toggleContainer.disabled,
+.switchContainer.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .toggleLabel {
   display: flex;
@@ -68,6 +72,7 @@
   gap: 0.5rem;
   font-weight: 500;
   cursor: pointer;
+  transition: transform 0.3s;
 }
 
 .labelText {
@@ -80,7 +85,7 @@
   position: relative;
   width: 42px;
   height: 22px;
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgb(255 255 255 / 15%);
   border-radius: 34px;
   transition: background-color 0.3s;
   cursor: pointer;
@@ -98,15 +103,19 @@
   transition: transform 0.3s;
 }
 
-.toggleTrack.checked { background-color: var(--button-bg-color, rgba(87, 157, 152, 0.75)); }
-.toggleTrack.checked .toggleThumb { transform: translateX(20px); }
+.toggleTrack.checked {
+  background-color: var(--button-bg-color, rgb(87 157 152 / 75%));
+}
+.toggleTrack.checked .toggleThumb {
+  transform: translateX(20px);
+}
 
 /* Switch variant */
 .switchTrack {
   position: relative;
   width: 38px;
   height: 20px;
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgb(255 255 255 / 15%);
   border-radius: 34px;
   transition: background-color 0.3s;
   cursor: pointer;
@@ -124,25 +133,69 @@
   transition: transform 0.3s;
 }
 
-.switchTrack.checked { background-color: var(--button-bg-color, rgba(87, 157, 152, 0.75)); }
-.switchTrack.checked .switchThumb { transform: translateX(18px); }
+.switchTrack.checked {
+  background-color: var(--button-bg-color, rgb(87 157 152 / 75%));
+}
+.switchTrack.checked .switchThumb {
+  transform: translateX(18px);
+}
 
-/* Size variants */
-.small .toggleTrack { width: 34px; height: 18px; }
-.small .toggleThumb { height: 14px; width: 14px; }
-.small .toggleTrack.checked .toggleThumb { transform: translateX(16px); }
+/* Size Variants */
+.small .toggleTrack {
+  width: 36px;
+  height: 20px;
+}
 
-.small .switchTrack { width: 30px; height: 16px; }
-.small .switchThumb { height: 12px; width: 12px; }
-.small .switchTrack.checked .switchThumb { transform: translateX(14px); }
+.small .toggleThumb {
+  width: 16px;
+  height: 16px;
+}
 
-.large .toggleTrack { width: 50px; height: 26px; }
-.large .toggleThumb { height: 22px; width: 22px; }
-.large .toggleTrack.checked .toggleThumb { transform: translateX(24px); }
+.small .toggleTrack.checked .toggleThumb {
+  transform: translateX(16px);
+}
 
-.large .switchTrack { width: 46px; height: 24px; }
-.large .switchThumb { height: 20px; width: 20px; }
-.large .switchTrack.checked .switchThumb { transform: translateX(22px); }
+.small .switchTrack {
+  width: 44px;
+  height: 24px;
+}
+
+.small .switchThumb {
+  width: 20px;
+  height: 20px;
+}
+
+.small .switchTrack.checked .switchThumb {
+  transform: translateX(20px);
+}
+
+.large .toggleTrack {
+  width: 60px;
+  height: 34px;
+}
+
+.large .toggleThumb {
+  width: 26px;
+  height: 26px;
+}
+
+.large .toggleTrack.checked .toggleThumb {
+  transform: translateX(26px);
+}
+
+.large .switchTrack {
+  width: 70px;
+  height: 38px;
+}
+
+.large .switchThumb {
+  width: 30px;
+  height: 30px;
+}
+
+.large .switchTrack.checked .switchThumb {
+  transform: translateX(32px);
+}
 
 /* Utility classes */
 .srOnly {
@@ -176,7 +229,7 @@
   min-width: 200px;
   padding: 8px 12px;
   border-radius: 6px;
-  background-color: rgba(40, 40, 40, 0.95);
+  background-color: rgb(40 40 40 / 95%);
   color: #fff;
   font-size: 0.8rem;
   text-align: center;

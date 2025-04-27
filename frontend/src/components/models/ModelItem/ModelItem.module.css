@@ -11,7 +11,7 @@
 
 .modelItem:hover {
   background-color: var(--hover);
-  border-left: 3px solid rgba(var(--primary-rgb), 0.3);
+  border-left: 3px solid rgb(var(--primary-rgb), 0.3);
 }
 
 .selected {
@@ -27,7 +27,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--model-icon-bg), rgba(var(--accent-rgb), 0.8));
+  background: linear-gradient(135deg, var(--model-icon-bg), rgb(var(--accent-rgb), 0.8));
   color: var(--button-text);
   display: flex;
   align-items: center;
@@ -36,7 +36,7 @@
   font-size: 0.85rem;
   flex-shrink: 0;
   margin-right: 0.75rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
   transition: transform 0.2s ease,
               box-shadow 0.2s ease,
               background var(--theme-transition-duration) var(--theme-transition-timing),
@@ -45,7 +45,7 @@
 
 .modelItem:hover .modelIcon {
   transform: scale(1.05);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 6px rgb(0 0 0 / 15%);
 }
 
 .modelDetails {
@@ -106,7 +106,7 @@
   white-space: nowrap;
   transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
               color var(--theme-transition-duration) var(--theme-transition-timing);
-  border: 1px solid rgba(var(--primary-rgb), 0.05);
+  border: 1px solid rgb(var(--primary-rgb), 0.05);
 }
 
 .modelItem:hover .tag {
@@ -135,7 +135,7 @@
 }
 
 .highlight {
-  background-color: rgba(var(--primary-rgb), 0.15);
+  background-color: rgb(var(--primary-rgb), 0.15);
   color: color-mix(in srgb, var(--text) 90%, rgb(var(--primary-rgb)));
   font-weight: 600;
   border-radius: 2px;

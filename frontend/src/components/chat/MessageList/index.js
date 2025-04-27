@@ -1,9 +1,10 @@
 import { forwardRef, useState, useMemo, memo } from 'react';
 import styles from './MessageList.module.css';
-import { useChat } from '../../../contexts/ChatContext';
+import { useChatState } from '../../../contexts/ChatStateContext';
 import ChatMessage from '../ChatMessage';
 import ImageOverlay from '../../common/ImageOverlay';
 import PropTypes from 'prop-types';
+import { processMessageContent } from '../../../utils/messageHelpers';
 
 /**
  * Simple message list without virtualization
@@ -14,7 +15,7 @@ import PropTypes from 'prop-types';
  * @returns {JSX.Element} - Rendered component
  */
 const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
-  const { isWaitingForResponse } = useChat();
+  const { isWaitingForResponse } = useChatState();
   const [overlayImageSrc, setOverlayImageSrc] = useState(null);
 
   // Combine regular messages with error content (if any)
@@ -32,35 +33,6 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
     
     return result;
   }, [messages, error]);
-
-  // Process message content to extract images and text in a single pass
-  const processMessageContent = (content) => {
-    if (!content) return { images: [], text: content };
-
-    if (Array.isArray(content)) {
-      const images = [];
-      const texts = [];
-
-      content.forEach(part => {
-        if (part.type === 'image_url') {
-          images.push({
-            url: part.image_url.url,
-            alt: part.image_url.alt || part.alt || null // Support both image_url.alt and top-level alt
-          });
-        }
-        if (part.type === 'text') {
-          texts.push(part.text);
-        }
-      });
-
-      return { 
-        images, 
-        text: texts.join(' ') 
-      };
-    }
-
-    return { images: [], text: content };
-  };
 
   // Handlers for overlay
   const handleImageClick = (src) => {
@@ -105,9 +77,8 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
                       key={`${messageKey}-img-${imgIndex}`}
                       src={image.url}
                       alt={image.alt || `Uploaded image ${imgIndex + 1}`}
-                      className={styles.messageImage}
+                      className={`${styles.messageImage} ${styles.clickableImage}`}
                       onClick={() => handleImageClick(image.url)}
-                      style={{ cursor: 'pointer' }}
                     />
                   ))}
                 </div>

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { useChat } from '../contexts/ChatContext';
+import { useChatState } from '../contexts/ChatStateContext';
+import { useChatControl } from '../contexts/ChatControlContext';
 import { useModel } from '../contexts/ModelContext';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -14,15 +15,13 @@ const generateUniqueId = () => {
  * related to the chat interface.
  */
 export const useChatLogic = () => {
-  const { 
-    chatHistory, 
-    isWaitingForResponse, 
+  const {
+    chatHistory,
+    isWaitingForResponse,
     error,
-    metrics,
-    submitMessage,
-    resetChat, 
-    downloadChatHistory 
-  } = useChat();
+    currentMessageMetrics: metrics
+  } = useChatState();
+  const { sendMessage: submitMessage, clearChat: resetChat, downloadChatHistory } = useChatControl();
   
   const { selectedModel } = useModel();
   const { settings } = useSettings();
@@ -43,49 +42,26 @@ export const useChatLogic = () => {
       if (isEditing) {
         // Get or create unique identifier for the message
         const editMsgId = editedMessage.uniqueId || editedMessage.id || editedMessage.timestamp;
-        
-        // Find the index of the message being edited
-        let editIndex = -1;
-        
-        // First try to find by uniqueId (most reliable)
-        if (editMsgId) {
-          editIndex = chatHistory.findIndex(msg => 
-            msg.uniqueId === editMsgId || msg.id === editMsgId
-          );
-        }
-        
-        // If not found yet, try by timestamp as fallback
-        if (editIndex === -1 && editedMessage.timestamp) {
-          editIndex = chatHistory.findIndex(msg => 
-            msg.timestamp === editedMessage.timestamp && msg.role === 'user'
-          );
-        }
-        
-        // Last resort: try by content match
-        if (editIndex === -1 && typeof editedMessage.content === 'string') {
-          editIndex = chatHistory.findIndex(msg => 
-            typeof msg.content === 'string' && 
-            msg.content === editedMessage.content && 
-            msg.role === 'user'
-          );
-        }
-        
+        // Find the index of the message being edited with a single pass
+        const editIndex = chatHistory.findIndex(msg =>
+          [msg.uniqueId, msg.id, msg.timestamp].includes(editMsgId) ||
+          (typeof msg.content === 'string' && msg.content === editedMessage.content && msg.role === 'user')
+        );
         if (editIndex === -1) {
-          console.error("Could not find message to edit");
-          console.log("Edited message:", editedMessage);
-          console.log("Chat history:", chatHistory.map(m => ({ 
-            role: m.role, 
-            uniqueId: m.uniqueId, 
-            timestamp: m.timestamp,
-            contentPreview: typeof m.content === 'string' ? m.content.substring(0, 20) : 'non-string'
-          })));
+          if (process.env.NODE_ENV === 'development') {
+            console.error("Could not find message to edit");
+            console.log("Edited message:", editedMessage);
+            console.log("Chat history:", chatHistory.map(m => ({ 
+              role: m.role, 
+              uniqueId: m.uniqueId, 
+              timestamp: m.timestamp,
+              contentPreview: typeof m.content === 'string' ? m.content.substring(0, 20) : 'non-string'
+            })));
+          }
           return;
         }
-        
         // Ensure the message to be submitted has the correct uniqueId
-        const finalMessage = Array.isArray(message) 
-          ? message 
-          : { type: 'text', text: message };
+        const finalMessage = Array.isArray(message) ? message : { type: 'text', text: message };
         
         // Add uniqueId to message
         if (Array.isArray(finalMessage)) {

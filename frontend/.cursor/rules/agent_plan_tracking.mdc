@@ -1,0 +1,64 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Agent Plan Tracking Rule
+
+When generating a plan for completing a task, especially for complex tasks involving multiple steps or large context:
+
+1.  **Create a dedicated Markdown file**: Store the plan in a separate `.md` file within the project (e.g., in the root or a `plans/` directory). Use a descriptive name like `refactor-auth-plan.md`. Do not put the plan directly in the chat.
+2.  **Structure Clearly**: Organize the plan logically, usually in phases for larger tasks.
+3.  **Detail and Granularity**: Ensure the plan is detailed. Break down high-level steps into smaller, specific, actionable sub-tasks using checklists.
+4.  **Logical Flow**: Order the phases and steps sequentially.
+5.  **Use Checklists**: Employ Markdown checklists (`- [ ]`) for all actionable steps and sub-tasks.
+6.  **Update Immediately and Richly**: After completing each specific step/sub-task, immediately update its checklist item (`- [x]`). *Crucially*, also consider adding brief notes, relevant links (e.g., to commits, PRs, or specific code sections) next to the completed item for better context and traceability.
+7.  **Store Analysis Results**: Properly record and store all analysis findings (e.g., documents, logs, diagrams) within the plan file or in a linked document to track modifications and decisions effectively.
+8.  **Include Metadata**: At the top of the plan file, add a metadata section with title, author, creation date, and last updated timestamp.
+9.  **Table of Contents**: For lengthy plans, include a table of contents after the title to facilitate quick navigation between phases.
+10. **Add Timelines (Optional)**: Annotate each phase or major task with expected start/end dates or time estimates to better manage deadlines.
+
+Example `plan.md` (`refactor-auth-plan.md`):
+
+```markdown
+# Task Plan: Refactor Authentication Module
+
+## Phase 1: Analysis & Design
+
+- [ ] Analyze existing authentication flow thoroughly.
+    - [ ] Document current login sequence.
+    - [ ] Document current registration sequence.
+    - [ ] Identify data models involved.
+- [ ] Identify specific pain points and areas for improvement (e.g., security vulnerabilities, performance bottlenecks, code complexity).
+- [ ] Design the new authentication structure, detailing components and interactions (consider diagrams if helpful).
+- [ ] Document the proposed changes and get team feedback.
+
+## Phase 2: Implementation
+
+- [ ] Implement the updated login component based on the new design.
+    - [ ] Create new LoginService.
+    - [ ] Update LoginController.
+    - [ ] Refactor UI component.
+- [ ] Implement the updated registration component.
+- [ ] Implement password reset functionality.
+- [ ] Integrate with existing user database/service.
+
+## Phase 3: Testing & Documentation
+
+- [ ] Write comprehensive unit tests for all new/modified components.
+- [ ] Write integration tests covering the end-to-end authentication flow.
+- [ ] Perform manual testing for edge cases.
+- [x] Update developer documentation regarding the authentication module - See commit [abc1234](mdc:link-to-commit)
+- [ ] Update user guides if necessary.
+```
+
+Refer back to this plan file frequently and maintain its accuracy throughout the task.
+
+**Important:** After completing each step or phase in the plan, immediately update the corresponding checklist item in the Markdown file by changing `- [ ]` to `- [x]`.
+
+
+
+
+
+
+

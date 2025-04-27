@@ -65,6 +65,7 @@
     opacity: 0.4;
     transform: scale(0.7);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.1);

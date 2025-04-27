@@ -1,11 +1,10 @@
-// const path = require('path');
-// let BundleAnalyzerPlugin;
-// try {
-//   BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-// } catch (error) {
-//   console.warn('webpack-bundle-analyzer not found. Bundle analysis will be disabled.');
-//   BundleAnalyzerPlugin = null;
-// }
+let BundleAnalyzerPlugin;
+try {
+  BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+} catch (error) {
+  console.warn('webpack-bundle-analyzer not found. Bundle analysis will be disabled.');
+  BundleAnalyzerPlugin = null;
+}
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
@@ -118,16 +117,16 @@ module.exports = {
                 chunks: 'all',
                 priority: 50, // Highest priority to override all other rules
               },
-              // Small modules bundled together
-              smallChunks: {
-                // Merge all modules smaller than 10KB into this bundle
-                test: module => module.size() < 10000,
-                name: 'small-chunks',
-                chunks: 'all',
-                priority: -5, // Low priority to run after other groups
-                reuseExistingChunk: true,
-                enforce: true
-              }
+              // // Small modules bundled together
+              // smallChunks: {
+              //   // Merge all modules smaller than 10KB into this bundle
+              //   test: module => module.size() < 10000,
+              //   name: 'small-chunks',
+              //   chunks: 'all',
+              //   priority: -5, // Low priority to run after other groups
+              //   reuseExistingChunk: true,
+              //   enforce: true
+              // }
             }
           },
           usedExports: true,

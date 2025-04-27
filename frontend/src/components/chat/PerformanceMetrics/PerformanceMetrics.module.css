@@ -24,11 +24,11 @@
 }
 
 .detailedMetric {
-  color: var(--accent-color, #0066cc);
+  color: var(--accent-color, #06c);
 }
 
 /* Responsive adjustments */
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .metrics {
     padding: 0.5rem;
     font-size: 0.7rem;

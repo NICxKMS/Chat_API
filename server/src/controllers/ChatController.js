@@ -36,8 +36,10 @@ class ChatController {
   async chatCompletion(request, reply) {
     const startTime = Date.now();
     let providerName, modelName; // Declare here for potential use in error logging
+    // Create an AbortController and derive requestId (client-supplied wins)
     let abortController = new AbortController();
-    const requestId = request.id || `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const clientRequestId = request.body?.requestId;
+    const requestId = clientRequestId || request.id || `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
     try {
       metrics.incrementRequestCount();
@@ -75,10 +77,10 @@ class ChatController {
       
       logger.info(`Processing chat request for ${providerName}/${modelName} (requestId: ${requestId})`);
       
-      // Store the abort controller for potential stopping
+      // Store the abort controller keyed by our requestId
       activeGenerations.set(requestId, abortController);
       
-      // Add request ID to response headers for clients to use when stopping
+      // Echo the requestId back for consistency
       reply.header('X-Request-ID', requestId);
       
       // Cache check logic 
@@ -226,14 +228,14 @@ class ChatController {
     let lastActivityTime = Date.now();
     let heartbeatInterval = null;
     let timeoutCheckInterval = null;
+    // Create the abort controller and derive requestId (client-supplied wins)
     let abortController = new AbortController();
-    const HEARTBEAT_INTERVAL_MS = 20000;
-    const TIMEOUT_DURATION_MS = 60000;
+    const clientRequestId = request.body?.requestId;
+    const requestId = clientRequestId || request.id || `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     let streamStartTime = null;
     let ttfbRecorded = false;
     let chunkCounter = 0;
     let lastProviderChunk = null; // Variable to store the last chunk
-    const requestId = request.id || `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
     // Store the abort controller for potential stopping
     activeGenerations.set(requestId, abortController);
@@ -326,7 +328,8 @@ class ChatController {
       reply.header('Connection', 'keep-alive');
       reply.header('X-Accel-Buffering', 'no'); // Prevent nginx buffering
       reply.header('Transfer-Encoding', 'chunked'); // Enable chunked encoding
-      reply.header('X-Request-ID', requestId); // Add request ID to response headers
+      // Echo the client requestId for stop calls
+      reply.header('X-Request-ID', requestId);
       
       // Send the stream to the client
       reply.send(stream);

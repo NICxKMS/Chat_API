@@ -1,22 +1,22 @@
 // eslint-disable import/first
-import React, { memo, useMemo, useState, lazy, Suspense } from 'react';
+import React, { memo, useMemo, useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
-import LazyMarkdownRenderer from '../../common/LazyMarkdownRenderer';
 import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon, PencilIcon } from '@primer/octicons-react';
 import styles from './ChatMessage.module.css';
+import { formatTime } from '../../../utils/messageHelpers';
 import { convertTeXToMathDollars } from '../../../utils/formatters';
+// Lazy-load Markdown renderer for user/system/error messages
+import LazyMarkdownRenderer from '../../common/LazyMarkdownRenderer';
 // Dynamically load StreamingMessage to defer heavy modules
-const StreamingMessage = lazy(() => import(/* webpackChunkName: "streaming-message" */ './StreamingMessage'));
+const StreamingMessage = lazy(() => import(/* webpackChunkName: "streaming-message", webpackPrefetch: true */ './StreamingMessage'));
 
-/**
- * Format time in milliseconds to a human-readable format
- * @param {number} ms - Time in milliseconds
- * @returns {string} - Formatted time string
- */
-const formatTime = (ms) => {
-  if (!ms) return '0.0s';
-  if (ms < 1000) return `${ms}ms`;
-  return `${(ms / 1000).toFixed(1)}s`;
+// Add a module-level singleton for the TeX worker so we only load the worker script once
+let texWorker;
+const getTexWorker = () => {
+  if (typeof Worker !== 'undefined' && !texWorker) {
+    texWorker = new Worker(new URL('../../../workers/texProcessor.js', import.meta.url), { type: 'module' });
+  }
+  return texWorker;
 };
 
 /**
@@ -30,6 +30,30 @@ const formatTime = (ms) => {
  */
 const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
   const [messageCopied, setMessageCopied] = useState(false);
+  const defaultProcessedMessage = useMemo(() => (
+    message.role === 'assistant'
+      ? message.content
+      : convertTeXToMathDollars(message.content)
+  ), [message.content, message.role]);
+  const [processedMessage, setProcessedMessage] = useState(defaultProcessedMessage);
+
+  useEffect(() => {
+    if (message.role !== 'assistant' || typeof message.content !== 'string' || typeof Worker === 'undefined') {
+      return;
+    }
+    const id = message.timestamp;
+    const worker = getTexWorker();
+    const handleMessage = (e) => {
+      if (e.data.id !== id) return;
+      if (e.data.success) setProcessedMessage(e.data.data);
+      else setProcessedMessage(message.content);
+    };
+    worker.addEventListener('message', handleMessage);
+    worker.postMessage({ id, content: message.content });
+    return () => {
+      worker.removeEventListener('message', handleMessage);
+    };
+  }, [message.content, message.role, message.timestamp]);
   
   // Choose appropriate icon based on message role
   const icon = useMemo(() => {
@@ -71,8 +95,7 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
   }, [message.role, message.metrics]);
   
   // Copy message content to clipboard
-  const handleCopyMessage = () => {
-    // If content is an array (multimodal message), extract just the text
+  const handleCopyMessage = useCallback(() => {
     const content = typeof message.content === 'string' 
       ? message.content 
       : Array.isArray(message.content) 
@@ -81,17 +104,16 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
             .map(part => part.text)
             .join('\n')
         : '';
-        
     navigator.clipboard.writeText(content).then(() => {
       setMessageCopied(true);
       setTimeout(() => setMessageCopied(false), 2000);
     });
-  };
+  }, [message.content]);
   
   // === BUTTON JSX (Moved here for reuse) ===
-  const copyButtonJsx = (
+  const copyButtonJsx = useMemo(() => (
     <button
-      className={`${styles.copyMessageButton} ${ // Apply conditional class later
+      className={`${styles.copyMessageButton} ${
         (message.role === 'assistant' && shouldShowMetrics) ? styles.copyButtonInMetrics : styles.copyButtonBottomRight
       }`}
       onClick={handleCopyMessage}
@@ -100,22 +122,25 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
     >
       {messageCopied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
     </button>
-  );
+  ), [handleCopyMessage, message.role, shouldShowMetrics, messageCopied]);
 
   // Edit button only for user messages
-  const editButtonJsx = message.role === 'user' ? (
+  const handleEditClick = useCallback(() => {
+    if (onEditMessage) onEditMessage(message);
+  }, [onEditMessage, message]);
+  const editButtonJsx = useMemo(() => message.role === 'user' ? (
     <button
       className={styles.editMessageButton}
-      onClick={() => onEditMessage && onEditMessage(message)}
+      onClick={handleEditClick}
       aria-label="Edit message"
       title="Edit message"
     >
       <PencilIcon size={16} />
     </button>
-  ) : null;
+  ) : null, [message.role, handleEditClick]);
   // ==========================================
   
-  // Render performance metrics (Now includes the button)
+  // Render performance metrics (only for assistant messages)
   const renderMetrics = () => {
     if (!shouldShowMetrics || !message.metrics) return null;
     
@@ -216,47 +241,38 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
     );
   };
   
-  // Process markdown content safely
-  const renderMarkdown = (content) => {
-    // Convert TeX notation if content is a string
-    const processedContent = typeof content === 'string' ? convertTeXToMathDollars(content) : content;
-    
-    // Use dynamic LazyMarkdownRenderer for non-blocking markdown rendering
-    return (
-      <Suspense fallback={null}>
-        <LazyMarkdownRenderer>
-          {processedContent}
-        </LazyMarkdownRenderer>
-      </Suspense>
-    );
-  };
-  
   // Main return
   return (
     <div className={styles.message + ' ' + messageClass}>
-      {/* Avatar section */}
-      <div className={styles.avatar}>
-        {icon}
-      </div>
-      
+      {/* Avatar */}
+      <div className={styles.avatar}>{icon}</div>
+
       {/* Message content section */}
       <div className={styles.messageContentWrapper}>
-        <div className={styles.messageContent}>
-          {message.role === 'assistant' ? (
-            <StreamingMessage content={message.content} isStreaming={isStreaming} />
-          ) : (
-            renderMarkdown(message.content || '')
-          )}
-        </div>
+        <Suspense fallback={null}>
+          <div className={styles.messageContent}>
+            {message.role === 'assistant' ? (
+              <StreamingMessage
+                content={processedMessage}
+                isStreaming={isStreaming}
+              />
+            ) : (
+              // Render markdown lazily for user/system/error messages
+              <LazyMarkdownRenderer>
+                {processedMessage}
+              </LazyMarkdownRenderer>
+            )}
+          </div>
+        </Suspense>
 
-        {/* Render metrics (which now includes the button if applicable) */}
+        {/* Render performance metrics for assistant messages */}
         {message.role === 'assistant' && renderMetrics()}
 
-        {/* Render copy button at bottom-right for non-user assistant without metrics */}
+        {/* Copy button for non-user messages, hide when assistant metrics exist */}
         {message.role !== 'user' && (message.role !== 'assistant' || !shouldShowMetrics) && copyButtonJsx}
       </div>
 
-      {/* User message buttons container */}
+      {/* User-specific buttons */}
       {message.role === 'user' && (
         <div className={styles.userButtonContainer}>
           {editButtonJsx}

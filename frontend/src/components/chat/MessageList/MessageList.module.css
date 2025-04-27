@@ -29,6 +29,7 @@
   padding: 0.75rem 1.25rem;
   padding-bottom: 12px;
   box-sizing: border-box;
+
   /* Improve performance during scrolling/resizing */
   will-change: transform;
   contain: layout; /* Optimize layout containment */
@@ -36,11 +37,11 @@
 }
 
 .messageRow:hover {
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: rgb(0 0 0 / 2%);
 }
 
 body.dark-mode .messageRow:hover {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: rgb(255 255 255 / 2%);
 }
 
 .typingIndicatorContainer {
@@ -75,7 +76,6 @@ body.dark-mode .messageRow:hover {
   font-weight: 600;
   margin-bottom: 0.75rem;
   background: var(--gradient-primary);
-  -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
@@ -87,7 +87,7 @@ body.dark-mode .messageRow:hover {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .messageRow {
     padding: 0.75rem 1rem;
     padding-bottom: 10px;
@@ -109,12 +109,14 @@ body.dark-mode .messageRow:hover {
 
 .messageItemWrapper:hover {
   /* ... other styles ... */
+
   /* Use theme variables */
   transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .errorMessage {
   /* ... other styles ... */
+
   /* Use theme variables */
   transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
               border-color var(--theme-transition-duration) var(--theme-transition-timing),
@@ -122,6 +124,7 @@ body.dark-mode .messageRow:hover {
 }
 
 /* Remove transition:all from .messageItemInner */
+
 /* .messageItemInner { 
   transition: all 0.3s ease;
 } */
@@ -146,8 +149,13 @@ body.dark-mode .messageRow:hover {
   object-fit: contain;
   border-radius: 8px;
   background-color: var(--hover);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
   display: block;
+}
+
+/* Clickable image pointer */
+.clickableImage {
+  cursor: pointer;
 }
 
 /* Override messageRow alignment specifically for rows containing user messages 

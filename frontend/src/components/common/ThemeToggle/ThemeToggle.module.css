@@ -1,5 +1,5 @@
 /* Import common button styles */
-@import '../../../styles/common/buttons.css';
+@import url('../../../styles/common/buttons.css');
 
 /* Extend the common button style with some modifications */
 .themeToggle {
@@ -39,10 +39,7 @@
 .themeToggle::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: var(--gradient-primary);
   opacity: 0;
   transition: opacity 0.3s ease;

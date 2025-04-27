@@ -7,8 +7,8 @@
   --btn-inner-bg: #f8f9fa;   /* Very Light Grey */
   --btn-text: #343a40;       /* Dark Grey */
   --btn-hover-text: #212529; /* Near Black */
-  --btn-glow-color: rgba(64, 224, 208, 0.3); /* Turquoise glow */
-  --btn-focus-ring: rgba(64, 224, 208, 0.6);
+  --btn-glow-color: rgb(64 224 208 / 30%); /* Turquoise glow */
+  --btn-focus-ring: rgb(64 224 208 / 60%);
   --btn-disabled-bg: #e9ecef;
   --btn-disabled-text: #adb5bd;
   --btn-active-inner-bg: #e9ecef;
@@ -26,14 +26,14 @@
     --btn-grad-start: #5B42F3; /* Purple */
     --btn-grad-mid: #AF40FF;   /* Violet */
     --btn-grad-end: #00DDEB;   /* Cyan */
-    --btn-inner-bg: rgb(25, 28, 58); /* Dark Blue/Charcoal */
+    --btn-inner-bg: rgb(25 28 58); /* Dark Blue/Charcoal */
     --btn-text: #e9ecef;       /* Light Grey */
-    --btn-hover-text: #ffffff; /* White */
-    --btn-glow-color: rgba(175, 64, 255, 0.3); /* Violet glow */
-    --btn-focus-ring: rgba(175, 64, 255, 0.6);
+    --btn-hover-text: #fff; /* White */
+    --btn-glow-color: rgb(175 64 255 / 30%); /* Violet glow */
+    --btn-focus-ring: rgb(175 64 255 / 60%);
     --btn-disabled-bg: #495057;
     --btn-disabled-text: #6c757d;
-    --btn-active-inner-bg: rgba(25, 28, 58, 0.9);
+    --btn-active-inner-bg: rgb(25 28 58 / 90%);
   }
 }
 
@@ -55,7 +55,6 @@
   padding: 3px;
   text-decoration: none;
   user-select: none;
-  -webkit-user-select: none;
   touch-action: manipulation;
   white-space: nowrap;
   cursor: pointer;
@@ -124,10 +123,10 @@
   animation: fadeIn 0.5s ease-in-out;
 }
 
-@keyframes fadeIn {
+/* @keyframes fadeIn {
   0% { opacity: 0; }
   100% { opacity: 1; }
-}
+} */ /* Removed duplicate - use common definition */
 
 /* Scrolling text animation for overflow */
 .scrollText {
@@ -140,18 +139,23 @@
   0% {
     transform: translateX(0%);
   }
+
   10% {
     transform: translateX(0%);
   }
+
   45% {
     transform: translateX(calc(-100% + 150px));
   }
+
   55% {
     transform: translateX(calc(-100% + 150px));
   }
+
   90% { 
     transform: translateX(0%);
   }
+
   100% {
     transform: translateX(0%);
   }
@@ -161,7 +165,7 @@
   opacity: 0.8;
   transition: opacity 0.2s ease,
               color var(--theme-transition-duration) var(--theme-transition-timing);
-  color: currentColor;
+  color: currentcolor;
   flex-shrink: 0;
 }
 
@@ -174,7 +178,7 @@
 }
 
 /* Optional: Responsive adjustments */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .modelSelectorButton {
     font-size: 0.8rem;
     min-width: 130px;

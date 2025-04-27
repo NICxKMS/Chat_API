@@ -1,9 +1,14 @@
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo, useEffect } from 'react';
 import { ThemeProvider } from './ThemeContext';
 import { ApiProvider } from './ApiContext';
 import { ModelProvider } from './ModelContext';
 import { SettingsProvider } from './SettingsContext';
-import { ChatProvider } from './ChatContext';
+import { ChatStatusProvider } from './ChatStatusContext';
+import { ChatHistoryProvider } from './ChatHistoryContext';
+import { PerformanceMetricsProvider } from './PerformanceMetricsContext';
+import { StreamingEventsProvider } from './StreamingEventsContext';
+import { ChatStateProvider } from './ChatStateContext';
+import { ChatControlProvider } from './ChatControlContext';
 
 // Create a context for managing initialization state
 const InitializationContext = createContext(null);
@@ -28,6 +33,10 @@ export const ContextManager = ({ children }) => {
       initializationState.isInitialized = value;
     }
   }), []);
+  // Mark as initialized once on mount
+  useEffect(() => {
+    initializationState.setInitialized(true);
+  }, [initializationState]);
 
   return (
     <InitializationContext.Provider value={initializationState}>
@@ -35,9 +44,19 @@ export const ContextManager = ({ children }) => {
         <ApiProvider>
           <ModelProvider>
             <SettingsProvider>
-              <ChatProvider>
-                {children}
-              </ChatProvider>
+              <ChatStatusProvider>
+                <ChatHistoryProvider>
+                  <PerformanceMetricsProvider>
+                    <StreamingEventsProvider>
+                      <ChatStateProvider>
+                        <ChatControlProvider>
+                          {children}
+                        </ChatControlProvider>
+                      </ChatStateProvider>
+                    </StreamingEventsProvider>
+                  </PerformanceMetricsProvider>
+                </ChatHistoryProvider>
+              </ChatStatusProvider>
             </SettingsProvider>
           </ModelProvider>
         </ApiProvider>

@@ -41,20 +41,20 @@
   flex-shrink: 0;
 }
 
+/* Define state order: disabled, then hover/active */
+.circleActionButton:disabled {
+  opacity: var(--button-disabled-opacity);
+  cursor: not-allowed;
+  transform: none;
+}
+
 .circleActionButton:hover:not(:disabled) {
-  background-color: transparent !important;
   transform: scale(var(--button-hover-scale));
   border-color: var(--text);
 }
 
 .circleActionButton:active:not(:disabled) {
   transform: scale(var(--button-active-scale));
-}
-
-.circleActionButton:disabled {
-  opacity: var(--button-disabled-opacity);
-  cursor: not-allowed;
-  transform: none;
 }
 
 /* Icon styles for buttons */
@@ -75,6 +75,8 @@
 }
 
 /* Loading animation */
+
+/*
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -83,6 +85,7 @@
     transform: rotate(360deg);
   }
 }
+*/
 
 .loadingIcon {
   animation: spin 1s linear infinite;

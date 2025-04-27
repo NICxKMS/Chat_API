@@ -4,19 +4,18 @@
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--border);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 5%);
   transition: box-shadow 0.2s, 
               background-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .group:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 8%);
 }
 
 .header {
   padding: 1.2rem 1.5rem;
   cursor: pointer;
-  -webkit-user-select: none;
   user-select: none;
   border-bottom: 1px solid transparent;
   transition: background-color 0.2s, border-color 0.2s;
@@ -48,7 +47,7 @@
 .description {
   font-size: 0.9rem;
   color: var(--secondary-text);
-  margin: 0.25rem 0 0 0;
+  margin: 0.25rem 0 0;
   line-height: 1.4;
 }
 
@@ -73,7 +72,7 @@
 }
 
 .expandIcon {
-  fill: currentColor;
+  fill: currentcolor;
   transition: transform 0.2s;
 }
 
@@ -93,6 +92,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

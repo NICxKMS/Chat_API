@@ -12,7 +12,6 @@
 }
 
 @keyframes cursor-blink {
-
   0%,
   100% {
     opacity: 0.8;
@@ -78,10 +77,10 @@
 }
 
 .errorMessage {
-  background-color: rgba(var(--error-rgb), 0.1);
+  background-color: rgb(var(--error-rgb), 0.1);
   color: rgb(var(--error-rgb));
   align-self: center;
-  border: 1px solid rgba(var(--error-rgb), 0.3);
+  border: 1px solid rgb(var(--error-rgb), 0.3);
   max-width: 85%;
 }
 
@@ -103,10 +102,7 @@
 .avatar::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   opacity: 0.8;
 }
 
@@ -153,8 +149,11 @@
 /* Copy message button - BASE STYLES */
 .copyMessageButton {
   /* Position is now handled by specific classes below */
+
   /* position: absolute; */
+
   /* top: 0.5rem; */
+
   /* right: 0.5rem; */
 
   opacity: 0;
@@ -212,7 +211,6 @@
   gap: 0.5rem;
   width: 100%;
   overflow-wrap: break-word;
-  word-break: break-word;
   line-height: 1.6;
   transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
@@ -254,7 +252,6 @@
   position: relative;
   overflow-wrap: break-word;
   word-wrap: break-word;
-  word-break: break-word;
   transform: translateZ(0);
   backface-visibility: hidden;
   will-change: contents;
@@ -303,7 +300,7 @@
 /* --- MODIFIED STYLES for paragraph/list spacing --- */
 .streamingContent p {
   margin-top: 0.8rem; 
-  margin-bottom: 0rem; /* Consistent bottom margin */
+  margin-bottom: 0; /* Consistent bottom margin */
 }
 
 /* Ensure first paragraph doesn't have extra top margin */
@@ -312,6 +309,7 @@
 }
 
 /* Ensure last paragraph doesn't have extra bottom margin (but will be overridden by *:last-child) */
+
 /* .streamingContent p:last-child {
   margin-bottom: 0;
 } */
@@ -339,6 +337,7 @@
 .streamingContent > *:last-child {
     margin-bottom: 0 !important; /* Ensure this overrides everything else */
 }
+
 /* --- END MODIFIED STYLES --- */
 
 /* --- ADJUSTED SPACING FOR OTHER ELEMENTS --- */
@@ -448,6 +447,7 @@
   margin-top: 1rem; /* Space before table */
   margin-bottom: 1rem; /* Consistent bottom margin */
   display: block;
+
   /* Needed for overflow */
   overflow-x: auto;
   border: 1px solid var(--table-border, #dfe2e5);
@@ -468,6 +468,7 @@
   border-top: none;
   border-left: none;
   color: var(--text-primary) !important;
+
   /* Force text color */
 }
 
@@ -481,25 +482,29 @@
 
 .streamingContent tr {
   border-top: 1px solid var(--table-border, #dfe2e5);
+
   /* Horizontal lines between rows */
 }
 
 .streamingContent tbody tr:first-child {
   border-top: none;
+
   /* Remove border between thead and first row */
 }
 
 .streamingContent tbody {
-  background-color: var(--table-body-bg, #ffffff);
+  background-color: var(--table-body-bg, #fff);
 }
 
 .streamingContent tbody tr {
-  background-color: var(--table-body-bg, #ffffff);
+  background-color: var(--table-body-bg, #fff);
+
   /* Light theme default row */
 }
 
 .streamingContent tbody tr:nth-child(even) {
   background-color: var(--table-row-alt-bg, #f8f9fa);
+
   /* Light theme even row */
 }
 
@@ -511,6 +516,7 @@
   border-top: none;
   border-left: none;
   color: var(--text-primary) !important;
+
   /* Force text color */
 }
 
@@ -570,11 +576,13 @@
 
 :global(body.dark-mode) .streamingContent tbody tr {
   background-color: var(--table-body-bg) !important;
+
   /* Dark theme default row */
 }
 
 :global(body.dark-mode) .streamingContent tbody tr:nth-child(even) {
   background-color: var(--table-row-alt-bg) !important;
+
   /* Dark theme even row */
 }
 
@@ -653,11 +661,11 @@
   overflow: hidden;
   background-color: var(--code-bg);
   border: 1px solid var(--border-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
 }
 
 .codeBlockContainer:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
 
 .codeHeader {
@@ -705,10 +713,13 @@
 /* SyntaxHighlighter styles applied to its container */
 .pre {
   margin: 0 !important;
+
   /* Override default */
   padding: 1rem !important;
+
   /* Override default */
   border-radius: 0 0 6px 6px !important;
+
   /* Ensure consistent radius */
   font-family: var(--code-font);
   font-size: 0.9rem !important;
@@ -716,6 +727,7 @@
   overflow-x: auto !important;
   tab-size: 2;
   background: var(--code-bg) !important;
+
   /* Ensure background matches */
 }
 
@@ -728,16 +740,19 @@
   border-radius: 4px;
   font-size: 0.9em;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Override for code blocks (SyntaxHighlighter/pre+code) */
 .codeBlockContainer code {
   font-family: inherit;
+
   /* Inherit from .pre */
   background-color: transparent;
+
   /* No background inside code blocks */
   color: inherit;
+
   /* Inherit from syntax highlighting */
   padding: 0;
   border-radius: 0;
@@ -754,10 +769,13 @@
 /* Styling for rendered markdown within a markdown code block */
 .markdownCodeBlock {
   padding: 1rem;
+
   /* Match regular code block padding */
   background: var(--code-bg);
+
   /* Match regular code block background */
   border-radius: 0 0 6px 6px;
+
   /* Match regular code block radius */
 }
 
@@ -839,9 +857,9 @@
 .generatingIndicator {
   display: flex;
   align-items: center;
-  background-color: rgba(var(--primary-rgb), 0.1);
+  background-color: rgb(var(--primary-rgb), 0.1);
   color: rgb(var(--primary-rgb));
-  border-color: rgba(var(--primary-rgb), 0.3);
+  border-color: rgb(var(--primary-rgb), 0.3);
   gap: 0.25rem;
 }
 
@@ -872,15 +890,17 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .message {
     gap: 0.75rem;
     padding: 0.75rem;
     max-width: 98%;
   }
+
   .userMessage {
     max-width: 70%;
   }
+
   .avatar {
     width: 32px;
     height: 32px;
@@ -901,6 +921,7 @@
 
   .pre {
     padding: 0.75rem !important;
+
     /* Maintain important */
   }
 
@@ -915,11 +936,14 @@
 }
 
 /* Ensure proper spacing between images and text */
+
+/*
 .messageContent {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
+*/
 
 /* Edit message button styles - similar to copy button but different position */
 .editMessageButton {
@@ -977,6 +1001,7 @@
   position: static;
   opacity: 1;
   margin: 0;
+
   /* Keep other styles consistent */
   background-color: var(--hover);
   border: 1px solid var(--border-color);

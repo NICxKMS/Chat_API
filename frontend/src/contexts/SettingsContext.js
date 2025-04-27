@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, useCallback, useMemo } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 // Default settings values
 const DEFAULT_SETTINGS = {
@@ -25,8 +26,8 @@ export const useSettings = () => {
 
 // Settings provider component
 export const SettingsProvider = ({ children }) => {
-  // Initialize settings state with defaults
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  // Initialize settings state with defaults, persisted to localStorage
+  const [settings, setSettings] = useLocalStorage('appSettings', DEFAULT_SETTINGS);
   
   // Handle individual setting updates
   const updateSetting = useCallback((key, value) => {
@@ -38,13 +39,13 @@ export const SettingsProvider = ({ children }) => {
         [key]: value
       }));
     }
-  }, []);
+  }, [setSettings]);
   
   // Reset settings to defaults
   const resetSettings = useCallback(() => {
     // console.log("[SettingsContext] Resetting settings to default");
     setSettings(DEFAULT_SETTINGS);
-  }, []);
+  }, [setSettings]);
   
   // Check if temperature should be restricted based on model name/series
   const shouldRestrictTemperature = useCallback((model) => {
