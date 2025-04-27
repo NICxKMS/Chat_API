@@ -1,19 +1,25 @@
 # Set default content types for common static files
 /static/js/*
+  Content-Encoding: br
   Content-Type: application/javascript
 /static/css/*
+  Content-Encoding: br
   Content-Type: text/css
 /*.js
+  Content-Encoding: br
   Content-Type: application/javascript
 /*.css
+  Content-Encoding: br
   Content-Type: text/css
 /favicon.ico
   Content-Type: image/x-icon
 
 # Cache hashed assets for a long time (1 year) in the browser
 /static/css/*.*.*.css
+  Content-Encoding: br
   Cache-Control: public, max-age=31536000, immutable
 /static/js/*.*.*.js
+  Content-Encoding: br
   Cache-Control: public, max-age=31536000, immutable
 
 # Fallback for other static assets (revalidate) - might inherit Cloudflare default
