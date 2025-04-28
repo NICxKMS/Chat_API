@@ -34,6 +34,7 @@ export const StreamingEventsProvider = ({ children }) => {
   const currentRequestIdRef = useRef(null);
   const abortControllerRef = useRef(null);
   const isStreamingRef = useRef(false);
+  const firstTokenReceivedRef = useRef(false);
 
   // Debounced content updater
   const debouncedUpdateChat = useMemo(
@@ -112,6 +113,7 @@ export const StreamingEventsProvider = ({ children }) => {
     }
     resetPerformanceMetrics();
     startPerformanceTimer();
+    firstTokenReceivedRef.current = false;
     setIsWaitingForResponse(true);
     setError(null);
     streamingTextRef.current = '';
@@ -150,7 +152,6 @@ export const StreamingEventsProvider = ({ children }) => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let accumulatedContent = '';
-      let accumulatedTokens = 0;
       while (true) {
         const { done, value } = await reader.read();
         clearTimeout(timeoutId);
@@ -164,23 +165,31 @@ export const StreamingEventsProvider = ({ children }) => {
           break;
         }
         const chunk = decoder.decode(value, { stream: true });
+
+        console.log('Received stream chunk:', chunk);
+
         try {
           const msgs = await parseStreamChunk(chunk);
           for (const msg of msgs) {
-            if (msg.isDone) updatePerformanceMetrics(accumulatedTokens, true);
-            else if (msg.content) {
+            // Append any content from the chunk
+            if (msg.content) {
+              // Record time to first token once
+              if (!firstTokenReceivedRef.current) {
+                updatePerformanceMetrics(1);
+                firstTokenReceivedRef.current = true;
+              }
               accumulatedContent += msg.content;
-              accumulatedTokens += msg.tokenCount || 0;
               streamingTextRef.current = accumulatedContent;
               debouncedUpdateChat(accumulatedContent);
-              updatePerformanceMetrics(accumulatedTokens, false, msg.tokenInfo, msg.finishReason);
             }
+            // Always use server-reported completion tokens for metrics
+            const completionTokens = msg.usage?.completionTokens ?? 0;
+            updatePerformanceMetrics(completionTokens, msg.isDone, msg.usage, msg.finishReason);
           }
         } catch {}
       }
       debouncedUpdateChat.flush();
       updateChatWithContent(streamingTextRef.current);
-      updatePerformanceMetrics(accumulatedTokens, true);
       return streamingTextRef.current;
     } catch (error) {
       _updatePlaceholderOnError();

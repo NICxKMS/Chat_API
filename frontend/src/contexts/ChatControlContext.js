@@ -29,7 +29,7 @@ export const ChatControlProvider = ({ children }) => {
   const { selectedModel } = useModel();
   const { settings, getModelAdjustedSettings } = useSettings();
   const { idToken } = useAuth();
-  const { chatHistory, chatHistoryRef, setChatHistory, addMessageToHistory } = useChatHistory();
+  const { chatHistoryRef, setChatHistory, addMessageToHistory } = useChatHistory();
   const { setIsWaitingForResponse, setError } = useChatStatus();
   const { resetPerformanceMetrics, startPerformanceTimer, setTokenMetricsForLastMessage } = usePerformanceMetrics();
   const { streamMessageWithFetch, stopStreaming } = useStreamingEvents();
@@ -38,69 +38,6 @@ export const ChatControlProvider = ({ children }) => {
   const formatModelIdentifier = useCallback((model) => {
     if (!model || !model.provider || !model.id) return null;
     return `${model.provider}/${model.id}`;
-  }, []);
-
-  const extractTokenCount = useCallback((data, content) => {
-    if (data?.usage?.completion_tokens) return data.usage.completion_tokens;
-    if (data?.usage?.completionTokens) return data.usage.completionTokens;
-    if (data?.tokenUsage?.output) return data.tokenUsage.output;
-    if (data?.tokenUsage?.total) return data.tokenUsage.total;
-    if (data?.usage?.total_tokens) return data.usage.total_tokens;
-    if (data?.usage?.totalTokens) return data.usage.totalTokens;
-    if (data?.raw?.usageMetadata?.candidatesTokenCount) return data.raw.usageMetadata.candidatesTokenCount;
-    return Math.ceil((content.split(/\s+/).length) * 1.3);
-  }, []);
-
-  const processChunkResponse = useCallback((data) => {
-    if (!data || typeof data !== 'object') return null;
-    if (data.id && data.model && data.usage && typeof data.usage === 'object') {
-      return {
-        tokenInfo: {
-          promptTokens: data.usage.promptTokens,
-          completionTokens: data.usage.completionTokens,
-          totalTokens: data.usage.totalTokens
-        },
-        finishReason: data.finishReason,
-        model: data.model,
-        provider: data.provider
-      };
-    }
-    return null;
-  }, []);
-
-  const extractTokenInfo = useCallback((data) => {
-    if (!data) return null;
-    if (data.usage && typeof data.usage === 'object') {
-      if ('promptTokens' in data.usage && 'completionTokens' in data.usage && 'totalTokens' in data.usage) {
-        return {
-          promptTokens: data.usage.promptTokens,
-          completionTokens: data.usage.completionTokens,
-          totalTokens: data.usage.totalTokens
-        };
-      }
-      if ('prompt_tokens' in data.usage && 'completion_tokens' in data.usage && 'total_tokens' in data.usage) {
-        return {
-          promptTokens: data.usage.prompt_tokens,
-          completionTokens: data.usage.completion_tokens,
-          totalTokens: data.usage.total_tokens
-        };
-      }
-    }
-    if (data.tokenUsage) {
-      return {
-        promptTokens: data.tokenUsage.input || data.tokenUsage.prompt,
-        completionTokens: data.tokenUsage.output || data.tokenUsage.completion,
-        totalTokens: data.tokenUsage.total
-      };
-    }
-    if (data.raw?.usageMetadata) {
-      return {
-        promptTokens: data.raw.usageMetadata.promptTokenCount,
-        completionTokens: data.raw.usageMetadata.candidatesTokenCount,
-        totalTokens: data.raw.usageMetadata.totalTokenCount
-      };
-    }
-    return null;
   }, []);
 
   // Action: sendMessage
@@ -165,32 +102,35 @@ export const ChatControlProvider = ({ children }) => {
         throw new Error(errMsg);
       }
       const data = await response.json();
+      console.log('Received non-streaming chat data:', data);
+
       const content = data.content || 'No Response returned';
-      const processed = processChunkResponse(data);
-      const tokenInfo = processed?.tokenInfo || extractTokenInfo(data);
-      const finishReason = processed?.finishReason || data.finishReason;
-      const tokenCount = tokenInfo?.completionTokens || extractTokenCount(data, content);
-      if (!tokenInfo || (!tokenInfo.promptTokens && !tokenInfo.completionTokens)) {
-        const testMetrics = { promptTokens: 0, completionTokens: tokenCount, totalTokens: tokenCount, finishReason };
-        addMessageToHistory('assistant', content, testMetrics);
-      } else {
-        const requestEndTime = Date.now();
-        const elapsed = requestEndTime - requestStartTime;
-        const finalMetrics = {
-          startTime: requestStartTime,
-          endTime: requestEndTime,
-          elapsedTime: elapsed,
-          tokenCount,
-          tokensPerSecond: Math.round((tokenCount/(elapsed/1000))*10)/10,
-          isComplete: true,
-          timeToFirstToken: null,
-          promptTokens: tokenInfo.promptTokens,
-          completionTokens: tokenInfo.completionTokens,
-          totalTokens: tokenInfo.totalTokens,
-          finishReason
-        };
-        addMessageToHistory('assistant', content, finalMetrics);
-      }
+      // Use server-provided usage tokens directly
+      const rawUsage = data.usage || {};
+      const promptTokens = rawUsage.promptTokens ?? rawUsage.prompt_tokens ?? 0;
+      const completionTokens = rawUsage.completionTokens ?? rawUsage.completion_tokens ?? 0;
+      const totalTokens = rawUsage.totalTokens ?? rawUsage.total_tokens ?? completionTokens;
+      // Compute timing and rates
+      const requestEndTime = Date.now();
+      const elapsed = requestEndTime - requestStartTime;
+      const tokensForMetrics = completionTokens > 0 ? completionTokens : 0;
+      const tokensPerSecond = elapsed
+        ? Math.round((tokensForMetrics / (elapsed / 1000)) * 10) / 10
+        : null;
+      const finalMetrics = {
+        startTime: requestStartTime,
+        endTime: requestEndTime,
+        elapsedTime: elapsed,
+        tokenCount: tokensForMetrics,
+        tokensPerSecond,
+        isComplete: true,
+        timeToFirstToken: null,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+        finishReason: data.finishReason
+      };
+      addMessageToHistory('assistant', content, finalMetrics);
       return content;
     } catch (err) {
       console.error('Error sending message:', err);
@@ -213,9 +153,6 @@ export const ChatControlProvider = ({ children }) => {
     addMessageToHistory,
     streamMessageWithFetch,
     formatModelIdentifier,
-    extractTokenInfo,
-    extractTokenCount,
-    processChunkResponse,
     resetPerformanceMetrics,
     startPerformanceTimer,
     setError,
@@ -236,19 +173,29 @@ export const ChatControlProvider = ({ children }) => {
 
   // Action: downloadChatHistory
   const downloadChatHistoryAction = useCallback(() => {
-    if (chatHistory.length === 0) return;
-    const formatted = chatHistory.map(msg => {
-      const role = msg.role === 'user' ? 'You' : msg.role === 'assistant' ? selectedModel?.name||'Assistant' : msg.role;
+    const history = chatHistoryRef.current;
+    if (!history.length) return;
+    const formatted = history.map(msg => {
+      const role = msg.role === 'user'
+        ? 'You'
+        : msg.role === 'assistant'
+          ? selectedModel?.name || 'Assistant'
+          : msg.role;
       const content = typeof msg.content === 'string' ? msg.content : '';
       return `${role}: ${content}\n`;
-    }).join('\n');
-    const blob = new Blob([formatted], { type:'text/plain' });
+    }).join('');
+    const blob = new Blob([formatted], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download=`chat_${new Date().toISOString()}.txt`;
-    document.body.appendChild(a); a.click();
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); },100);
-  }, [chatHistory, selectedModel]);
+    a.href = url;
+    a.download = `chat_${new Date().toISOString()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }, [selectedModel]);
 
   // Action: getOrCreateConversation (stub)
   const getOrCreateConversation = useCallback((conversationId) => {

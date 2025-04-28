@@ -10,7 +10,6 @@ import styles from './PerformanceMetrics.module.css';
 const PerformanceMetrics = memo(({ metrics }) => {
   const { 
     elapsedTime, 
-    tokenCount, 
     tokensPerSecond, 
     isComplete, 
     promptTokens, 
@@ -40,15 +39,12 @@ const PerformanceMetrics = memo(({ metrics }) => {
   
   // Format token count with detailed info when available
   const formattedTokens = useMemo(() => {
-    // If we have detailed token breakdown
+    // Only show completion token count
     if (completionTokens) {
       return `${completionTokens} tokens${isComplete ? '' : '...'}`;
     }
-    
-    // Fallback to basic token count
-    if (!tokenCount) return '';
-    return `${tokenCount} tokens${isComplete ? '' : '...'}`;
-  }, [tokenCount, completionTokens, isComplete]);
+    return '';
+  }, [completionTokens, isComplete]);
   
   // Create tooltip with detailed token info
   const tokenTooltip = useMemo(() => {
@@ -73,11 +69,11 @@ const PerformanceMetrics = memo(({ metrics }) => {
   
   // Only show TPS if we have token count, elapsed time > 0.5s, and calculated TPS
   const showTps = useMemo(() => {
-    return (tokenCount || completionTokens) && elapsedTime > 500 && tokensPerSecond;
-  }, [tokenCount, completionTokens, elapsedTime, tokensPerSecond]);
+    return completionTokens && elapsedTime > 500 && tokensPerSecond;
+  }, [completionTokens, elapsedTime, tokensPerSecond]);
   
   // Skip rendering if no metrics available
-  if (!elapsedTime || (!tokenCount && !completionTokens)) {
+  if (!elapsedTime || !completionTokens) {
     return null;
   }
   

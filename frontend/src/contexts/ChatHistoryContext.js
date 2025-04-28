@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useRef,  useCallback, useMemo } from 'react';
 
 // Create chat history context
 const ChatHistoryContext = createContext();
@@ -14,13 +14,18 @@ export const useChatHistory = () => {
 
 // Provider component for chat history
 export const ChatHistoryProvider = ({ children }) => {
-  const [chatHistory, setChatHistory] = useState([]);
+  // State and ref for chat history, with custom setter to sync ref immediately
+  const [chatHistory, internalSetChatHistory] = useState([]);
   const chatHistoryRef = useRef([]);
 
-  // Keep ref in sync with state
-  useEffect(() => {
-    chatHistoryRef.current = chatHistory;
-  }, [chatHistory]);
+  // Wrap setter to sync ref and state in one step
+  const setChatHistory = useCallback((update) => {
+    internalSetChatHistory(prev => {
+      const newHistory = typeof update === 'function' ? update(prev) : update;
+      chatHistoryRef.current = newHistory;
+      return newHistory;
+    });
+  }, []);
 
   // Add message, stable callback
   const addMessageToHistory = useCallback((role, content, metrics) => {
@@ -53,7 +58,7 @@ export const ChatHistoryProvider = ({ children }) => {
     setChatHistory,
     addMessageToHistory,
     updateChatWithContent
-  }), [chatHistory, chatHistoryRef, setChatHistory, addMessageToHistory, updateChatWithContent]);
+  }), [chatHistory, setChatHistory, addMessageToHistory, updateChatWithContent]);
 
   return (
     <ChatHistoryContext.Provider value={value}>

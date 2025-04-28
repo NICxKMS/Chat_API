@@ -28,7 +28,16 @@ self.onmessage = ({ data: chunk }) => {
           // Extract token details if available
           let tokenInfo = null;
           
-          if (parsed.usage) {
+          // Priority: OpenAI raw.usage for usage metadata (snake_case)
+          if (parsed.raw?.usage) {
+            const u = parsed.raw.usage;
+            tokenInfo = {
+              promptTokens: u.prompt_tokens ?? u.promptTokens,
+              completionTokens: u.completion_tokens ?? u.completionTokens,
+              totalTokens: u.total_tokens ?? u.totalTokens
+            };
+            console.log("[WORKER] Found raw.usage:", tokenInfo);
+          } else if (parsed.usage) {
             // Direct match to the provided example
             tokenInfo = {
               promptTokens: parsed.usage.promptTokens,
@@ -45,13 +54,10 @@ self.onmessage = ({ data: chunk }) => {
             console.log("[WORKER] Found raw.usageMetadata:", tokenInfo);
           }
           
-          // Fallback token count calculation if no detailed info
-          const tokenCount = content.split(/\s+/).filter(Boolean).length;
-          
-          messages.push({ 
-            content, 
-            tokenCount,
-            tokenInfo,
+          messages.push({
+            content,
+            // Forward server usage metadata only; no client-side tokenCount
+            usage: tokenInfo,
             finishReason: parsed.finishReason,
             model: parsed.model,
             provider: parsed.provider,

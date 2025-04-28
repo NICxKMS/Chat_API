@@ -197,12 +197,11 @@ export const ModelProvider = ({ children }) => {
     }
   }, [apiUrl, cacheModels, idToken, cacheEnabled]);
   
-  // Initial and auth-triggered model fetching (non-blocking)
+  // Initial fetch once on mount
   const initialFetchDoneRef = useRef(false);
 
   useEffect(() => {
     if (!initialFetchDoneRef.current) {
-      // Load from cache if enabled
       if (cacheEnabled) {
         const rawCache = localStorage.getItem('modelDropdownCache');
         let parsedCache;
@@ -214,24 +213,24 @@ export const ModelProvider = ({ children }) => {
           setIsLoading(false);
         }
       }
-      // First-time load: check cached token in localStorage
       let cachedToken = null;
-      try { cachedToken = localStorage.getItem('idToken'); }
-      catch (e) { console.warn('Failed to read cached idToken', e); }
-
+      try { cachedToken = localStorage.getItem('idToken'); } catch {}
       if (cachedToken) {
-        // Immediate fetch with auth using cached token override
         fetchModels(true, cachedToken);
       } else {
-        // Initial fetch without auth
         fetchModels(false);
       }
       initialFetchDoneRef.current = true;
-    } else if (idToken) {
-      // After actual sign-in: fetch fresh models with real auth token
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // After login, fetch authenticated models
+  useEffect(() => {
+    if (initialFetchDoneRef.current && idToken) {
       fetchModels(true);
     }
-  }, [idToken, fetchModels, cacheEnabled]);
+  }, [idToken, fetchModels]);
   
   // Set initial model after models are loaded
   useEffect(() => {

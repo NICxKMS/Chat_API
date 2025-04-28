@@ -28,17 +28,20 @@ const getTexWorker = () => {
  * @param {boolean} props.isStreaming - Whether this message is currently streaming
  * @returns {JSX.Element} - Rendered component
  */
-const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
+const ChatMessage = ({ message, isStreaming, onEditMessage, overrideContent }) => {
+  // Use overrideContent if provided, else fall back to message.content
+  const content = overrideContent != null ? overrideContent : message.content;
+
   const [messageCopied, setMessageCopied] = useState(false);
   const defaultProcessedMessage = useMemo(() => (
     message.role === 'assistant'
-      ? message.content
-      : convertTeXToMathDollars(message.content)
-  ), [message.content, message.role]);
+      ? content
+      : convertTeXToMathDollars(content)
+  ), [content, message.role]);
   const [processedMessage, setProcessedMessage] = useState(defaultProcessedMessage);
 
   useEffect(() => {
-    if (message.role !== 'assistant' || typeof message.content !== 'string' || typeof Worker === 'undefined') {
+    if (message.role !== 'assistant' || typeof content !== 'string' || typeof Worker === 'undefined') {
       return;
     }
     const id = message.timestamp;
@@ -46,14 +49,14 @@ const ChatMessage = ({ message, isStreaming, onEditMessage }) => {
     const handleMessage = (e) => {
       if (e.data.id !== id) return;
       if (e.data.success) setProcessedMessage(e.data.data);
-      else setProcessedMessage(message.content);
+      else setProcessedMessage(content);
     };
     worker.addEventListener('message', handleMessage);
-    worker.postMessage({ id, content: message.content });
+    worker.postMessage({ id, content });
     return () => {
       worker.removeEventListener('message', handleMessage);
     };
-  }, [message.content, message.role, message.timestamp]);
+  }, [content, message.role, message.timestamp]);
   
   // Choose appropriate icon based on message role
   const icon = useMemo(() => {

@@ -86,7 +86,8 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
               {/* Render ChatMessage if there's text content or it's not a user message */}
               {(text || message.role !== 'user') && (
                 <ChatMessage
-                  message={{ ...message, content: text || message.content }}
+                  message={message}
+                  overrideContent={text || undefined}
                   isStreaming={isStreaming}
                   onEditMessage={message.role === 'user' ? onEditMessage : undefined}
                 />

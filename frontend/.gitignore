@@ -20,6 +20,8 @@ pids/
 *.seed
 *.pid.lock
 
+
+/plans
 # Coverage and test output
 coverage/
 *.lcov
