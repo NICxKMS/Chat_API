@@ -189,17 +189,8 @@ export const StreamingEventsProvider = ({ children }) => {
       clearTimeout(timeoutId);
       isStreamingRef.current = false;
       setIsWaitingForResponse(false);
-      if (currentRequestIdRef.current) {
-        try {
-          const headers = { 'Content-Type': 'application/json' };
-          if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
-          await fetchWithRetry(new URL('/api/chat/stop', apiUrl).toString(), {
-            method: 'POST', headers, body: JSON.stringify({ requestId: currentRequestIdRef.current })
-          });
-        } catch {}
-        currentRequestIdRef.current = null;
-        abortControllerRef.current = null;
-      }
+      // Do not auto-call stop endpoint here; only explicit stop should trigger it
+      currentRequestIdRef.current = null;
     }
   }, [
     apiUrl, selectedModel, getModelAdjustedSettings, idToken,

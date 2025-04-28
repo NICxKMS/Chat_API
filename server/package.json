@@ -13,6 +13,7 @@
     "build:ts": "tsc --project ts/tsconfig.json",
     "postbuild": "cp -r ./src/protos ./dist/protos",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint --ext .js,.ts src/ --fix",
     "load-test": "node scripts/load-test.js",
     "stream-test": "node scripts/stream-test.js",
     "benchmark": "node scripts/benchmark.js",
