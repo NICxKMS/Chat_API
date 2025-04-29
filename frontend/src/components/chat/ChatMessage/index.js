@@ -78,13 +78,13 @@ const ChatMessage = ({ message, isStreaming, onEditMessage, overrideContent }) =
   const messageClass = useMemo(() => {
     switch (message.role) {
       case 'user':
-        return styles.userMessage;
+        return styles['ChatMessage--user'];
       case 'assistant':
-        return styles.assistantMessage;
+        return styles['ChatMessage--assistant'];
       case 'system':
-        return styles.systemMessage;
+        return styles['ChatMessage--system'];
       case 'error':
-        return styles.errorMessage;
+        return styles['ChatMessage--error'];
       default:
         return '';
     }
@@ -116,8 +116,8 @@ const ChatMessage = ({ message, isStreaming, onEditMessage, overrideContent }) =
   // === BUTTON JSX (Moved here for reuse) ===
   const copyButtonJsx = useMemo(() => (
     <button
-      className={`${styles.copyMessageButton} ${
-        (message.role === 'assistant' && shouldShowMetrics) ? styles.copyButtonInMetrics : styles.copyButtonBottomRight
+      className={`${styles.ChatMessage__copyMessageButton} ${
+        (message.role === 'assistant' && shouldShowMetrics) ? styles.ChatMessage__copyMessageButtonInMetrics : styles.ChatMessage__copyMessageButtonBottomRight
       }`}
       onClick={handleCopyMessage}
       aria-label="Copy message"
@@ -133,7 +133,7 @@ const ChatMessage = ({ message, isStreaming, onEditMessage, overrideContent }) =
   }, [onEditMessage, message]);
   const editButtonJsx = useMemo(() => message.role === 'user' ? (
     <button
-      className={styles.editMessageButton}
+      className={styles.ChatMessage__editMessageButton}
       onClick={handleEditClick}
       aria-label="Edit message"
       title="Edit message"
@@ -175,65 +175,65 @@ const ChatMessage = ({ message, isStreaming, onEditMessage, overrideContent }) =
     if (!hasValidMetrics) return null;
     
     return (
-      <div className={styles.metricsContainer}>
+      <div className={styles.ChatMessage__metricsContainer}>
         {/* Time metrics */}
         {timeToFirstToken != null && timeToFirstToken !== 0 && (
-          <span className={styles.metric}>
-            <ClockIcon size={14} className={styles.metricIcon} />
+          <span className={styles.ChatMessage__metric}>
+            <ClockIcon size={14} className={styles.ChatMessage__metricIcon} />
             First Token: {formatTime(timeToFirstToken)}
           </span>
         )}
         {elapsedTime != null && elapsedTime !== 0 && (
-          <span className={styles.metric}>
-            <ClockIcon size={14} className={styles.metricIcon} />
+          <span className={styles.ChatMessage__metric}>
+            <ClockIcon size={14} className={styles.ChatMessage__metricIcon} />
             Total Time: {formatTime(elapsedTime)}
           </span>
         )}
         
         {/* Token metrics */}
         {tokenCount != null && tokenCount !== 0 && (
-          <span className={styles.metric}>
-            <CopilotIcon size={14} className={styles.metricIcon} />
+          <span className={styles.ChatMessage__metric}>
+            <CopilotIcon size={14} className={styles.ChatMessage__metricIcon} />
             Tokens: {tokenCount}
           </span>
         )}
         {promptTokens != null && promptTokens !== 0 && (
-          <span className={styles.metric}>
-            <CopilotIcon size={14} className={styles.metricIcon} />
+          <span className={styles.ChatMessage__metric}>
+            <CopilotIcon size={14} className={styles.ChatMessage__metricIcon} />
             Prompt: {promptTokens}
           </span>
         )}
         {completionTokens != null && completionTokens !== 0 && (
-          <span className={styles.metric}>
-            <CopilotIcon size={14} className={styles.metricIcon} />
+          <span className={styles.ChatMessage__metric}>
+            <CopilotIcon size={14} className={styles.ChatMessage__metricIcon} />
             Completion: {completionTokens}
           </span>
         )}
         {totalTokens != null && totalTokens !== 0 && (
-          <span className={styles.metric}>
-            <CopilotIcon size={14} className={styles.metricIcon} />
+          <span className={styles.ChatMessage__metric}>
+            <CopilotIcon size={14} className={styles.ChatMessage__metricIcon} />
             Total: {totalTokens}
           </span>
         )}
         
         {/* Speed metrics */}
         {tokensPerSecond != null && tokensPerSecond !== 0 && (
-          <span className={styles.metric}>
-            <PulseIcon size={14} className={styles.metricIcon} />
+          <span className={styles.ChatMessage__metric}>
+            <PulseIcon size={14} className={styles.ChatMessage__metricIcon} />
             Speed: {tokensPerSecond} t/s
           </span>
         )}
         
         {/* Status */}
         {finishReason != null && finishReason !== '' && (
-          <span className={styles.metric}>
-            <AlertIcon size={14} className={styles.metricIcon} />
+          <span className={styles.ChatMessage__metric}>
+            <AlertIcon size={14} className={styles.ChatMessage__metricIcon} />
             {finishReason}
           </span>
         )}
         {isGenerating && (
-          <span className={`${styles.metric} ${styles.generatingIndicator}`}>
-            <span className={styles.generatingDot}></span>
+          <span className={`${styles.ChatMessage__metric} ${styles.ChatMessage__generatingIndicator}`}>
+            <span className={styles.ChatMessage__generatingDot}></span>
             Generating...
           </span>
         )}
@@ -246,14 +246,14 @@ const ChatMessage = ({ message, isStreaming, onEditMessage, overrideContent }) =
   
   // Main return
   return (
-    <div className={styles.message + ' ' + messageClass}>
+    <div className={styles.ChatMessage + ' ' + messageClass}>
       {/* Avatar */}
-      <div className={styles.avatar}>{icon}</div>
+      <div className={styles.ChatMessage__avatar}>{icon}</div>
 
       {/* Message content section */}
-      <div className={styles.messageContentWrapper}>
+      <div className={styles.ChatMessage__contentWrapper}>
         <Suspense fallback={null}>
-          <div className={styles.messageContent}>
+          <div className={styles.ChatMessage__content}>
             {message.role === 'assistant' ? (
               <StreamingMessage
                 content={processedMessage}
@@ -277,7 +277,7 @@ const ChatMessage = ({ message, isStreaming, onEditMessage, overrideContent }) =
 
       {/* User-specific buttons */}
       {message.role === 'user' && (
-        <div className={styles.userButtonContainer}>
+        <div className={styles.ChatMessage__userButtonContainer}>
           {editButtonJsx}
           {copyButtonJsx}
         </div>

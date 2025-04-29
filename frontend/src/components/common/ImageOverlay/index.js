@@ -17,11 +17,11 @@ const ImageOverlay = ({ src, onClose }) => {
 
   // The overlay content
   const overlayContent = (
-    <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true" title="Click to close image">
+    <div className={styles.ImageOverlay} onClick={onClose} role="dialog" aria-modal="true" title="Click to close image">
       <img 
         src={src} 
         alt="Full screen view" 
-        className={styles.overlayImage}
+        className={styles.ImageOverlay__image}
         onClick={handleImageClick} // Handle clicks on the image specifically
       />
     </div>

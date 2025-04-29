@@ -140,16 +140,16 @@ const LoginModal = ({ onClose }) => {
   };
 
   return (
-    <div className={styles.overlay} onClick={closeModal}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.closeButton} onClick={closeModal} aria-label="Close login">
+    <div className={styles.LoginModal} onClick={closeModal}>
+      <div className={styles.LoginModal__modal} onClick={(e) => e.stopPropagation()}>
+        <button className={styles.LoginModal__closeButton} onClick={closeModal} aria-label="Close login">
           <IoMdClose />
         </button>
-        <h2 className={styles.title}>Login / Sign Up</h2>
-        <p className={styles.subtitle}>Choose a provider to continue</p>
+        <h2 className={styles.LoginModal__title}>Login / Sign Up</h2>
+        <p className={styles.LoginModal__subtitle}>Choose a provider to continue</p>
 
         {isLoading && (
-          <div className={`${styles.spinnerContainer} ${styles.fullHeightSpinner}`}> {/* Make spinner take full height when loading */}
+          <div className={styles.LoginModal__spinnerContainer}> {/* Make spinner take full height when loading */}
             <Spinner size="large" />
             <p>Connecting...</p>
           </div>
@@ -157,14 +157,14 @@ const LoginModal = ({ onClose }) => {
 
         {!isLoading && (
           // Email/Password form is now the default content when not loading
-          <form className={styles.emailForm} onSubmit={handleEmailSignIn}> {/* Added onSubmit */} 
+          <form className={styles.LoginModal__emailForm} onSubmit={handleEmailSignIn}> {/* Added onSubmit */} 
             <input
               type="email"
               placeholder="Email Address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className={styles.inputField}
+              className={styles.LoginModal__inputField}
             />
             <input
               type="password"
@@ -172,13 +172,13 @@ const LoginModal = ({ onClose }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className={styles.inputField}
+              className={styles.LoginModal__inputField}
             />
-            <div className={styles.emailButtonContainer}>
-              <button type="submit" className={styles.emailButton} disabled={isLoading}>
+            <div className={styles.LoginModal__emailButtonContainer}>
+              <button type="submit" className={styles.LoginModal__emailButton} disabled={isLoading}>
                 Sign In
               </button>
-              <button type="button" onClick={handleEmailSignUp} className={`${styles.emailButton} ${styles.signUpButton}`} disabled={isLoading}>
+              <button type="button" onClick={handleEmailSignUp} className={`${styles.LoginModal__emailButton} ${styles.LoginModal__signUpButton}`} disabled={isLoading}>
                 Sign Up
               </button>
             </div>
@@ -187,11 +187,11 @@ const LoginModal = ({ onClose }) => {
 
         {/* Alternative Sign-in Providers (Icons) - Shown below email form when not loading */}
         {!isLoading && (
-          <div className={styles.alternativeLoginContainer}>
-            <p className={styles.alternativeLoginText}>Or sign in with</p>
-            <div className={styles.providerIconContainer}>
+          <div className={styles.LoginModal__alternativeLoginContainer}>
+            <p className={styles.LoginModal__alternativeLoginText}>Or sign in with</p>
+            <div className={styles.LoginModal__providerIconContainer}>
               <button
-                className={styles.providerIconButton}
+                className={styles.LoginModal__providerIconButton}
                 onClick={handleGoogleSignIn}
                 disabled={isLoading}
                 title="Sign in with Google"
@@ -200,7 +200,7 @@ const LoginModal = ({ onClose }) => {
                 <FcGoogle />
               </button>
               <button
-                className={styles.providerIconButton}
+                className={styles.LoginModal__providerIconButton}
                 onClick={handleGithubSignIn}
                 disabled={isLoading}
                 title="Sign in with GitHub"
@@ -213,9 +213,9 @@ const LoginModal = ({ onClose }) => {
           </div>
         )}
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <p className={styles.LoginModal__error}>{error}</p>}
 
-        <p className={styles.footerText}>
+        <p className={styles.LoginModal__footerText}>
           By signing in, you agree to our imaginary Terms of Service.
         </p>
       </div>

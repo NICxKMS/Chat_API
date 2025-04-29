@@ -16,9 +16,9 @@ const SettingsGroup = ({
   };
 
   return (
-    <div className={`${styles.group} ${isExpanded ? styles.expanded : ''}`} id={id}>
+    <div className={`${styles.SettingsGroup} ${isExpanded ? styles['SettingsGroup--expanded'] : ''}`} id={id}>
       <div 
-        className={styles.header}
+        className={styles.SettingsGroup__header}
         onClick={toggleExpanded}
         role="button"
         aria-expanded={isExpanded}
@@ -30,10 +30,10 @@ const SettingsGroup = ({
           }
         }}
       >
-        <div className={styles.titleContainer}>
+        <div className={styles.SettingsGroup__titleContainer}>
           <h3 className={styles.title}>{title}</h3>
           <button 
-            className={`${styles.expandButton} ${isExpanded ? styles.expanded : ''}`}
+            className={styles.SettingsGroup__expandButton}
             aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
             onClick={(e) => {
               e.stopPropagation();
@@ -45,7 +45,7 @@ const SettingsGroup = ({
               height="16" 
               viewBox="0 0 16 16" 
               xmlns="http://www.w3.org/2000/svg"
-              className={styles.expandIcon}
+              className={styles.SettingsGroup__expandIcon}
             >
               <path 
                 fillRule="evenodd" 
@@ -55,11 +55,11 @@ const SettingsGroup = ({
             </svg>
           </button>
         </div>
-        {description && <p className={styles.description}>{description}</p>}
+        {description && <p className={styles.SettingsGroup__description}>{description}</p>}
       </div>
       
       {isExpanded && (
-        <div className={styles.content}>
+        <div className={`${styles.SettingsGroup__content} animation-slide-up`}>
           {children}
         </div>
       )}

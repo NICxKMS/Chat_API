@@ -1,4 +1,4 @@
-.typingIndicator {
+.TypingIndicator {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -12,7 +12,7 @@
   margin: 0.5rem 0;
 }
 
-.typingIndicator::before {
+.TypingIndicator::before {
   content: '';
   position: absolute;
   bottom: -6px;
@@ -25,7 +25,7 @@
   transform: rotate(45deg);
 }
 
-.dot {
+.TypingIndicator__dot {
   width: 8px;
   height: 8px;
   background: linear-gradient(
@@ -38,11 +38,11 @@
   animation: pulse 1.5s infinite ease-in-out;
 }
 
-.dot:nth-child(1) {
+.TypingIndicator__dot:nth-child(1) {
   animation-delay: 0s;
 }
 
-.dot:nth-child(2) {
+.TypingIndicator__dot:nth-child(2) {
   animation-delay: 0.3s;
   background: linear-gradient(
     135deg, 
@@ -51,7 +51,7 @@
   );
 }
 
-.dot:nth-child(3) {
+.TypingIndicator__dot:nth-child(3) {
   animation-delay: 0.6s;
   background: linear-gradient(
     135deg, 

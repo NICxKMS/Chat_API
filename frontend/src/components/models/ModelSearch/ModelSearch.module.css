@@ -1,10 +1,10 @@
-.searchContainer {
+.ModelSearch {
   padding: 1rem;
   border-bottom: 1px solid var(--border-color);
   background: var(--sidebar-bg);
 }
 
-.inputWrapper {
+.ModelSearch__inputWrapper {
   position: relative;
   display: flex;
   align-items: center;
@@ -18,18 +18,18 @@
     box-shadow 0.2s ease;
 }
 
-.inputWrapper:focus-within {
+.ModelSearch__inputWrapper:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
-.searchIcon {
+.ModelSearch__icon {
   color: var(--secondary-text);
   margin-right: 0.5rem;
   flex-shrink: 0;
 }
 
-.searchInput {
+.ModelSearch__input {
   flex: 1;
   border: none;
   background: transparent;
@@ -39,11 +39,11 @@
   outline: none;
 }
 
-.searchInput::placeholder {
+.ModelSearch__input::placeholder {
   color: var(--secondary-text);
 }
 
-.clearButton {
+.ModelSearch__clearButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,16 +59,16 @@
     color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
-.clearButton:hover {
+.ModelSearch__clearButton:hover {
   background: var(--hover);
   color: var(--text);
 }
 
-.clearIcon {
+.ModelSearch__clearIcon {
   flex-shrink: 0;
 }
 
-.results {
+.ModelSearch__results {
   margin-top: 0.5rem;
   font-size: 0.8rem;
   color: var(--secondary-text);

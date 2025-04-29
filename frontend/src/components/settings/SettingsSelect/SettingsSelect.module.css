@@ -1,9 +1,10 @@
-.selectContainer {
+/* SettingsSelect module CSS using BEM conventions */
+.SettingsSelect {
   margin-bottom: 1.5rem;
   position: relative;
 }
 
-.label {
+.SettingsSelect__label {
   display: block;
   color: var(--text);
   font-weight: 500;
@@ -12,7 +13,7 @@
   user-select: none;
 }
 
-.select {
+.SettingsSelect__select {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,22 +28,12 @@
   position: relative;
 }
 
-.select:hover {
-  border-color: var(--secondary-text);
-}
-
-.select:focus {
-  outline: none;
+.SettingsSelect--open .SettingsSelect__select {
   border-color: var(--button-bg);
   box-shadow: 0 0 0 2px rgb(var(--button-bg-rgb), 0.3);
 }
 
-.select.open {
-  border-color: var(--button-bg);
-  box-shadow: 0 0 0 2px rgb(var(--button-bg-rgb), 0.3);
-}
-
-.selectedValue {
+.SettingsSelect__selectedValue {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -50,7 +41,7 @@
   font-size: 0.95rem;
 }
 
-.arrow {
+.SettingsSelect__arrow {
   width: 0;
   height: 0;
   border-left: 5px solid transparent;
@@ -60,11 +51,11 @@
   transition: transform 0.2s;
 }
 
-.select.open .arrow {
+.SettingsSelect--open .SettingsSelect__arrow {
   transform: rotate(180deg);
 }
 
-.dropdown {
+.SettingsSelect__dropdown {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -79,28 +70,28 @@
   animation: fadeIn 0.2s;
 }
 
-.option {
+.SettingsSelect__option {
   padding: 10px 12px;
   cursor: pointer;
   transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
   font-size: 0.95rem;
 }
 
-.option:hover {
+.SettingsSelect__option:hover {
   background-color: var(--hover);
 }
 
-.option.selected {
+.SettingsSelect__option--selected {
   background-color: rgb(var(--button-bg-rgb), 0.1);
   font-weight: 500;
 }
 
 /* Disabled state */
-.disabled .label {
+.SettingsSelect--disabled .SettingsSelect__label {
   color: var(--text-muted);
 }
 
-.disabled .select {
+.SettingsSelect--disabled .SettingsSelect__select {
   background-color: var(--bg-disabled);
   border-color: var(--border-light);
   color: var(--text-muted);
@@ -108,7 +99,7 @@
   opacity: 0.7;
 }
 
-.disabled .arrow {
+.SettingsSelect--disabled .SettingsSelect__arrow {
   border-top-color: var(--text-muted);
 }
 
@@ -126,20 +117,20 @@
 }
 
 /* Scrollbar styling */
-.dropdown::-webkit-scrollbar {
+.SettingsSelect__dropdown::-webkit-scrollbar {
   width: 6px;
 }
 
-.dropdown::-webkit-scrollbar-track {
+.SettingsSelect__dropdown::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.dropdown::-webkit-scrollbar-thumb {
+.SettingsSelect__dropdown::-webkit-scrollbar-thumb {
   background-color: var(--secondary-text);
   border-radius: 3px;
 }
 
-.dropdown::-webkit-scrollbar-thumb:hover {
+.SettingsSelect__dropdown::-webkit-scrollbar-thumb:hover {
   background-color: var(--text-muted);
 }
 

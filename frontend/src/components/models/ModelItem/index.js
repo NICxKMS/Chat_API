@@ -28,7 +28,7 @@ const ModelItem = memo(({
       <>
         {parts.map((part, i) => (
           regex.test(part) ? (
-            <span key={i} className={styles.highlight}>{part}</span>
+            <span key={i} className={styles.ModelItem__highlight}>{part}</span>
           ) : (
             <span key={i}>{part}</span>
           )
@@ -39,32 +39,32 @@ const ModelItem = memo(({
   
   return (
     <div 
-      className={`${styles.modelItem} ${selected ? styles.selected : ''}`}
+      className={`${styles.ModelItem} ${selected ? styles['ModelItem--selected'] : ''}`}
       onClick={() => onClick(model)}
       role="option"
       aria-selected={selected}
     >
-      <div className={styles.modelIcon}>
+      <div className={styles.ModelItem__icon}>
         {model.series?.charAt(0) || model.name.charAt(0)}
       </div>
       
-      <div className={styles.modelDetails}>
+      <div className={styles.ModelItem__details}>
         <div className={styles.modelName}>
           {highlightMatch(model.name)}
         </div>
         
         {model.description && (
-          <div className={styles.modelDescription}>
+          <div className={styles.ModelItem__description}>
             {highlightMatch(model.description)}
           </div>
         )}
         
         {model.tags && model.tags.length > 0 && (
-          <div className={styles.tags}>
+          <div className={styles.ModelItem__tags}>
             {model.tags.map(tag => (
               <span 
                 key={tag} 
-                className={styles.tag}
+                className={styles.ModelItem__tag}
                 style={{
                   backgroundColor: 
                     searchTerm && 
@@ -81,8 +81,8 @@ const ModelItem = memo(({
       </div>
       
       {selected && (
-        <div className={styles.selectedIndicator} data-testid="check-icon">
-          <CheckIcon className={styles.checkIcon} />
+        <div className={styles.ModelItem__selectedIndicator} data-testid="check-icon">
+          <CheckIcon className={styles.ModelItem__checkIcon} />
         </div>
       )}
     </div>

@@ -37,7 +37,7 @@
   }
 }
 
-.modelSelectorButton {
+.ModelSelectorButton {
   display: inline-flex;
   align-items: center;
   background-image: linear-gradient(144deg, 
@@ -64,12 +64,12 @@
   max-width: 350px;
 }
 
-.modelSelectorButton:active,
-.modelSelectorButton:hover {
+.ModelSelectorButton:active,
+.ModelSelectorButton:hover {
   outline: 0;
 }
 
-.innerContent {
+.ModelSelectorButton__innerContent {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -83,17 +83,17 @@
               color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
-.modelSelectorButton:hover:not(:disabled) .innerContent {
+.ModelSelectorButton:hover:not(:disabled) .ModelSelectorButton__innerContent {
   background: none;
   color: var(--btn-hover-text);
 }
 
-.modelSelectorButton:active:not(:disabled) .innerContent {
+.ModelSelectorButton:active:not(:disabled) .ModelSelectorButton__innerContent {
   background-color: var(--btn-active-inner-bg);
   transition-duration: 50ms;
 }
 
-.modelSelectorButton:disabled {
+.ModelSelectorButton:disabled {
   background-image: none;
   background-color: var(--btn-disabled-bg);
   box-shadow: none;
@@ -101,12 +101,12 @@
   opacity: 0.6;
 }
 
-.modelSelectorButton:disabled .innerContent {
+.ModelSelectorButton:disabled .ModelSelectorButton__innerContent {
   background-color: transparent;
   color: var(--btn-disabled-text);
 }
 
-.buttonText {
+.ModelSelectorButton__text {
   margin-right: 0.6rem;
   white-space: nowrap;
   overflow: hidden;
@@ -119,7 +119,7 @@
 }
 
 /* Animation for provider display */
-.showProvider {
+.ModelSelectorButton__text--showProvider {
   animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -129,7 +129,7 @@
 } */ /* Removed duplicate - use common definition */
 
 /* Scrolling text animation for overflow */
-.scrollText {
+.ModelSelectorButton__text--scrollText {
   animation: scrollText 6s linear infinite;
   display: inline-block;
   padding-right: 1rem;
@@ -161,7 +161,7 @@
   }
 }
 
-.buttonIcon {
+.ModelSelectorButton__icon {
   opacity: 0.8;
   transition: opacity 0.2s ease,
               color var(--theme-transition-duration) var(--theme-transition-timing);
@@ -169,27 +169,27 @@
   flex-shrink: 0;
 }
 
-.modelSelectorButton:hover:not(:disabled) .buttonIcon {
+.ModelSelectorButton:hover:not(:disabled) .ModelSelectorButton__icon {
   opacity: 1;
 }
 
-.modelSelectorButton:focus-visible {
+.ModelSelectorButton:focus-visible {
   box-shadow: var(--btn-glow-color) 0 10px 20px -5px, 0 0 0 3px var(--btn-focus-ring);
 }
 
 /* Optional: Responsive adjustments */
 @media (width <= 768px) {
-  .modelSelectorButton {
+  .ModelSelectorButton {
     font-size: 0.8rem;
     min-width: 130px;
     max-width: 250px;
   }
   
-  .innerContent {
+  .ModelSelectorButton__innerContent {
     padding: 0.6rem 0.8rem; /* Reduce padding */
   }
   
-  .buttonText {
+  .ModelSelectorButton__text {
     max-width: 180px;
   }
 }

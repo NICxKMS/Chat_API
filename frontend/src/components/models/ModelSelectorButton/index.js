@@ -93,20 +93,20 @@ const ModelSelectorButton = ({
   return (
     <button 
       ref={buttonRef}
-      className={styles.modelSelectorButton}
+      className={styles.ModelSelectorButton}
       onClick={onClick}
       disabled={disabled}
       aria-haspopup="true"
       aria-label={`Select Model (Current: ${selectedModelName || 'None'})`}
     >
-      <span className={styles.innerContent}>
+      <span className={styles.ModelSelectorButton__innerContent}>
         <span 
           ref={textRef}
-          className={`${styles.buttonText} ${showProvider ? styles.showProvider : ''} ${hasOverflow && showProvider ? styles.scrollText : ''}`}
+          className={`${styles['ModelSelectorButton__text']} ${showProvider ? styles['ModelSelectorButton__text--showProvider'] : ''} ${hasOverflow && showProvider ? styles['ModelSelectorButton__text--scrollText'] : ''}`}
         >
           {displayText()}
         </span>
-        <ChevronDownIcon size={16} className={styles.buttonIcon} />
+        <ChevronDownIcon size={16} className={styles.ModelSelectorButton__icon} />
       </span>
     </button>
   );

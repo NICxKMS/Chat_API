@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { useTheme } from '../../../contexts/ThemeContext';
+import '../../../styles/common/buttons.css';
 import styles from './ThemeToggle.module.css';
 
 /**
@@ -11,15 +12,15 @@ const ThemeToggle = memo(() => {
   
   return (
     <button 
-      className={styles.themeToggle} 
+      className={`circleActionButton ${styles.ThemeToggle}`} 
       onClick={toggleTheme}
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
       {theme === 'dark' ? (
-        <SunIcon className={styles.icon} />
+        <SunIcon className="buttonIcon" />
       ) : (
-        <MoonIcon className={styles.icon} />
+        <MoonIcon className="buttonIcon" />
       )}
     </button>
   );

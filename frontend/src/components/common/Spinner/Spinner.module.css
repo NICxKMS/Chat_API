@@ -1,23 +1,23 @@
-.spinnerContainer {
+.Spinner {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 8px;
 }
 
-.spinner {
+.Spinner__loader {
   position: relative;
   border-radius: 50%;
 }
 
-.spinner::before,
-.spinner::after {
+.Spinner__loader::before,
+.Spinner__loader::after {
   content: '';
   position: absolute;
   border-radius: 50%;
 }
 
-.spinner::before {
+.Spinner__loader::before {
   width: 100%;
   height: 100%;
   background: conic-gradient(
@@ -28,7 +28,7 @@
   animation: rotate 1.5s linear infinite;
 }
 
-.spinner::after {
+.Spinner__loader::after {
   width: 85%;
   height: 85%;
   top: 7.5%;
@@ -38,38 +38,38 @@
 }
 
 /* Spinner sizes */
-.small {
+.Spinner--small {
   width: 24px;
   height: 24px;
 }
 
-.small .spinner {
+.Spinner--small .Spinner__loader {
   width: 24px;
   height: 24px;
 }
 
-.medium {
+.Spinner--medium {
   width: 48px;
   height: 48px;
 }
 
-.medium .spinner {
+.Spinner--medium .Spinner__loader {
   width: 48px;
   height: 48px;
 }
 
-.large {
+.Spinner--large {
   width: 72px;
   height: 72px;
 }
 
-.large .spinner {
+.Spinner--large .Spinner__loader {
   width: 72px;
   height: 72px;
 }
 
 /* Gradient spinner variant */
-.gradient::before {
+.Spinner--gradient::before {
   background: conic-gradient(
     transparent 0%,
     var(--gradient-primary) 50%,
@@ -79,7 +79,7 @@
 }
 
 /* Dark mode adjustments */
-body.dark-mode .spinner::before {
+body.dark-mode .Spinner__loader::before {
   opacity: 0.8;
 }
 

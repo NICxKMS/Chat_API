@@ -35,19 +35,19 @@ const MainContent = ({
   isModelSelectorOpen
 }) => {
   return (
-    <main className={styles.mainContent}>
+    <main className={styles.MainContent}>
       {/* Model Loading Indicator - shows only during initial model loading */}
       {isLoadingModels && (
-        <div className={styles.modelLoadingOverlay}>
+        <div className={styles.MainContent__modelLoadingOverlay}>
           <div className={styles.modelLoadingContent}>
             <Spinner size="medium" />
-            <div className={styles.modelLoadingText}>Loading models...</div>
+            <div className={styles.MainContent__modelLoadingText}>Loading models...</div>
           </div>
         </div>
       )}
       
       {/* Chat area - Pass all action handlers down */}
-      <Suspense fallback={<div className={styles.chatPlaceholder} />}>
+      <Suspense fallback={<div className={styles.MainContent__chatPlaceholder} />}>
         <ChatContainer 
           selectedModel={selectedModel}
           isLoadingModels={isLoadingModels}

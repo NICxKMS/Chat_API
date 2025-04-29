@@ -10,14 +10,14 @@ import styles from './SidebarToggle.module.css';
  */
 const SidebarToggle = memo(({ isOpen, onToggle }) => {
   return (
-    <div className={styles.toggleContainer}>
+    <div className={styles.SidebarToggle__container}>
       <button 
-        className={`${styles.toggleButton} ${isOpen ? styles.active : ''}`}
+        className={`${styles.SidebarToggle__button} ${isOpen ? styles['SidebarToggle__button--active'] : ''}`}
         onClick={onToggle}
         aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
         title={isOpen ? 'Close sidebar' : 'Open sidebar'}
       >
-        <div className={styles.hamburger}>
+        <div className={styles.SidebarToggle__hamburger}>
           <span className={styles.bar}></span>
           <span className={styles.bar}></span>
           <span className={styles.bar}></span>

@@ -1,4 +1,4 @@
-.messageListContainer {
+.MessageList {
   position: relative;
   width: 100%;
   max-width: 768px;
@@ -10,7 +10,7 @@
   flex-direction: column;
 }
 
-.messageListContainer::before {
+.MessageList::before {
   content: '';
   position: sticky;
   top: 0;
@@ -21,7 +21,7 @@
   z-index: 2;
 }
 
-.messageRow {
+.MessageList__messageRow {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -36,15 +36,15 @@
   width: 100%;
 }
 
-.messageRow:hover {
+.MessageList__messageRow:hover {
   background-color: rgb(0 0 0 / 2%);
 }
 
-body.dark-mode .messageRow:hover {
+body.dark-mode .MessageList__messageRow:hover {
   background-color: rgb(255 255 255 / 2%);
 }
 
-.typingIndicatorContainer {
+.MessageList__typingIndicatorContainer {
   position: absolute;
   bottom: 1rem;
   left: 50%;
@@ -53,7 +53,7 @@ body.dark-mode .messageRow:hover {
 }
 
 /* Empty state styles */
-.emptyState {
+.MessageList__emptyState {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -64,14 +64,14 @@ body.dark-mode .messageRow:hover {
   text-align: center;
 }
 
-.emptyStateIcon {
+.MessageList__emptyStateIcon {
   width: 80px;
   height: 80px;
   margin-bottom: 1.5rem;
   opacity: 0.7;
 }
 
-.emptyStateTitle {
+.MessageList__emptyStateTitle {
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
@@ -80,7 +80,7 @@ body.dark-mode .messageRow:hover {
   color: transparent;
 }
 
-.emptyStateText {
+.MessageList__emptyStateText {
   font-size: 1rem;
   max-width: 500px;
   line-height: 1.5;
@@ -88,21 +88,21 @@ body.dark-mode .messageRow:hover {
 
 /* Responsive adjustments */
 @media (width <= 768px) {
-  .messageRow {
+  .MessageList__messageRow {
     padding: 0.75rem 1rem;
     padding-bottom: 10px;
   }
   
-  .emptyStateIcon {
+  .MessageList__emptyStateIcon {
     width: 60px;
     height: 60px;
   }
   
-  .emptyStateTitle {
+  .MessageList__emptyStateTitle {
     font-size: 1.25rem;
   }
   
-  .emptyStateText {
+  .MessageList__emptyStateText {
     font-size: 0.9rem;
   }
 } 
@@ -130,7 +130,7 @@ body.dark-mode .messageRow:hover {
 } */
 
 /* Styles for the image container (rendered only for user messages) */
-.imageContainer {
+.MessageList__imageContainer {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -143,7 +143,7 @@ body.dark-mode .messageRow:hover {
 }
 
 /* Styles for individual images */
-.messageImage {
+.MessageList__messageImage {
   max-width: 100%;
   max-height: 300px;
   object-fit: contain;
@@ -154,17 +154,17 @@ body.dark-mode .messageRow:hover {
 }
 
 /* Clickable image pointer */
-.clickableImage {
+.MessageList__clickableImage {
   cursor: pointer;
 }
 
 /* Override messageRow alignment specifically for rows containing user messages 
    to ensure the ChatMessage itself also aligns right */
-.messageRow:has(> .imageContainer) {
+.MessageList__messageRow:has(> .MessageList__imageContainer) {
   align-items: flex-end; 
 }
 
 /* Ensure user messages themselves align correctly even without images */
-.messageRow:has(> div[class*="userMessage"]) {
+.MessageList__messageRow:has(> div[class*="ChatMessage--user"]) {
   align-items: flex-end;
 } 

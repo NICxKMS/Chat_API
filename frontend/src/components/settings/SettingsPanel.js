@@ -220,14 +220,14 @@ const SettingsPanel = ({ isOpen, onClose }) => {
     <>
       {/* Backdrop overlay */}
       <div 
-        className={`${styles.overlay} ${isOpen ? styles.overlayOpen : ''}`}
+        className={`${styles['SettingsPanel__overlay']} ${isOpen ? styles['SettingsPanel__overlay--open'] : ''}`}
         onClick={onClose}
         aria-hidden="true"
       />
       
       {/* Settings panel */}
       <div 
-        className={`${styles.settingsPanel} ${isOpen ? styles.open : ''}`}
+        className={`${styles.SettingsPanel} ${isOpen ? styles['SettingsPanel--open'] : ''}`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

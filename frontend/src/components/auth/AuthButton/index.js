@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import { SignInIcon} from '@primer/octicons-react';
 // Import icons using the correct paths
+import '../../../styles/common/buttons.css';
+// import component-specific styles for avatar/initial only
 import styles from './AuthButton.module.css';
 
 /**
@@ -23,30 +25,30 @@ const AuthButton = memo(({
   currentUser
 }) => {
   return (
-    <button 
-      className={styles.authButton}
+    <button
+      className="circleActionButton"
       onClick={isAuthenticated ? onLogout : onLogin}
       disabled={isLoading}
       title={isLoading ? "Checking authentication..." : isAuthenticated ? `Logged in as ${userName}. Click to logout.` : "Login / Sign Up"}
       aria-label={isLoading ? "Loading Authentication" : isAuthenticated ? "Logout" : "Login or Sign Up"}
     >
       {isLoading ? (
-        <div className={styles.spinner}></div>
+        <div className="loadingIcon"></div>
       ) : isAuthenticated ? (
         currentUser?.photoURL ? (
           <img 
             src={currentUser.photoURL} 
             alt={`${userName}'s profile`}
-            className={styles.userAvatar}
+            className={styles.AuthButton__avatar}
             loading="lazy"
           />
         ) : (
-          <div className={styles.userInitial}>
+          <div className={styles.AuthButton__initial}>
             {userName.charAt(0).toUpperCase()}
           </div>
         )
       ) : (
-        <SignInIcon size={20} className={styles.icon} />
+        <SignInIcon size={20} className="buttonIcon" />
       )}
     </button>
   );

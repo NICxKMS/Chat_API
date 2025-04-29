@@ -18,9 +18,6 @@ const ChatContainer = memo(({
   isLoadingModels, 
   toggleModelSelector,
   onNewChat,
-  onResetChat,
-  onDownloadChat,
-  onToggleSettings,
   isSidebarOpen,
   isSettingsOpen,
   isModelSelectorOpen
@@ -171,7 +168,7 @@ const ChatContainer = memo(({
   }, [isWaitingForResponse, editingMessage]);
 
   // Classes for the main container
-  const chatContainerClasses = `${styles.chatContainer} ${isActiveChat ? styles.activeChat : styles.emptyChat} ${editingMessage ? styles.editingMode : ''}`;
+  const chatContainerClasses = `${styles.ChatContainer} ${isActiveChat ? styles['ChatContainer--activeChat'] : styles['ChatContainer--emptyChat']} ${editingMessage ? styles['ChatContainer--editingMode'] : ''}`;
 
   // Helper function to render the input area contents
   const renderInputAreaContents = (isFixedLayout) => {
@@ -189,8 +186,8 @@ const ChatContainer = memo(({
           </Suspense>
         )}
 
-        <div className={styles.inputControlsWrapper}> 
-          <Suspense fallback={<div className={styles.inputPlaceholder} />}>
+        <div className={styles.ChatContainer__inputControlsWrapper}> 
+          <Suspense fallback={<div className={styles.ChatContainer__inputPlaceholder} />}>
             <ChatInput
               onSendMessage={handleSendMessage}
               disabled={isWaitingForResponse} 
@@ -210,19 +207,11 @@ const ChatContainer = memo(({
   };
 
   // Update CSS var for input height
-  // eslint-disable-next-line no-unused-vars
-  const updateInputHeight = useCallback(() => {
-    const inputContainer = document.querySelector(`.${styles.inputContainer}`) ||
-                           document.querySelector(`.${styles.fixedInputArea}`);
-    if (inputContainer) {
-      // Implementation of updateInputHeight
-    }
-  }, []);
 
   return (
     <div className={chatContainerClasses}>
       {/* Container for the Model Selector Button */}
-      <div className={styles.modelButtonContainer}>
+      <div className={styles.ChatContainer__modelButtonContainer}>
         <Suspense fallback={null}> 
           <ModelSelectorButton 
             selectedModelName={displayModelName}
@@ -233,12 +222,12 @@ const ChatContainer = memo(({
         </Suspense>
       </div>
 
-      <div className={styles.chatAreaWrapper}>
-        <div className={styles.chatArea}>
+      <div className={styles.ChatContainer__chatAreaWrapper}>
+        <div className={styles.ChatContainer__chatArea}>
           {isActiveChat ? (
             // Active Chat: Render MessageList inside scroll container
-            <div className={styles.scrollContainer} ref={scrollContainerRef}>
-              <div className={styles.scrollInner}>
+            <div className={styles.ChatContainer__scrollContainer} ref={scrollContainerRef}>
+              <div className={styles.ChatContainer__scrollInner}>
                 <Suspense fallback={<div className={styles.messagePlaceholder} />}>
                   <MessageList
                     ref={messageListRef}
@@ -251,13 +240,13 @@ const ChatContainer = memo(({
             </div>
           ) : (
             // Empty Chat: Render Greeting and Input Area (Static Layout)
-            <div className={styles.emptyChatContent}>
-              <div className={styles.greetingMessage}>
+            <div className={styles.ChatContainer__emptyChatContent}>
+              <div className={styles.ChatContainer__greetingMessage}>
                 <h2>Welcome to AI Chat!</h2>
                 <p>Select a model above and start your conversation.</p>
               </div>
               {/* Render input area directly below greeting */}
-              <div className={`${styles.inputArea} ${styles.staticInputArea}`}> 
+              <div className={`${styles.ChatContainer__inputArea} ${styles.ChatContainer__staticInputArea}`}> 
                 {renderInputAreaContents(false)} 
               </div>
             </div>
@@ -267,7 +256,7 @@ const ChatContainer = memo(({
         {/* Scroll to Bottom Button */}
         {showScrollToBottomButton && isActiveChat && (
           <button
-            className={styles.scrollToBottomButton}
+            className={styles.ChatContainer__scrollToBottomButton}
             onClick={() => scrollToBottom('smooth')}
             aria-label="Scroll to bottom"
             title="Scroll to bottom"
@@ -279,7 +268,7 @@ const ChatContainer = memo(({
 
       {/* Fixed Input Area Wrapper (Only rendered when chat is active) */}
       {isActiveChat && (
-        <div className={`${styles.inputArea} ${styles.fixedInputArea}`}> 
+        <div className={`${styles.ChatContainer__inputArea} ${styles.ChatContainer__fixedInputArea}`}> 
           {renderInputAreaContents(true)} 
         </div>
       )}

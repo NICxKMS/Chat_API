@@ -1,4 +1,4 @@
-.inputContainer {
+.ChatInput {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -12,7 +12,7 @@
   overflow: hidden; /* Ensure no content spills outside */
 }
 
-.inputWrapper {
+.ChatInput__inputWrapper {
   position: relative;
   width: 100%;
   display: flex;
@@ -21,7 +21,7 @@
   padding-right: 0;
 }
 
-.chatInput {
+.ChatInput__chatInput {
   width: 100%;
   height: 48px;
   border: none;
@@ -46,66 +46,54 @@
 }
 
 /* Scrollbar styling for the chat input */
-.chatInput::-webkit-scrollbar {
+.ChatInput__chatInput::-webkit-scrollbar {
   width: 3px; /* Even slimmer scrollbar */
   position: absolute;
   right: 0;
   display: block;
 }
 
-.chatInput::-webkit-scrollbar-track {
+.ChatInput__chatInput::-webkit-scrollbar-track {
   background: var(--scrollbar-track-color, rgb(0 0 0 / 10%));
   border-radius: 1.5px;
   margin-right: 0;
   margin-left: auto;
 }
 
-.chatInput::-webkit-scrollbar-thumb {
+.ChatInput__chatInput::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb-color, rgb(255 255 255 / 20%));
   border-radius: 1.5px;
   width: 3px;
 }
 
-.chatInput::-webkit-scrollbar-thumb:hover {
+.ChatInput__chatInput::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover-color, rgb(255 255 255 / 30%));
 }
 
-.chatInput:focus {
+.ChatInput__chatInput:focus {
   outline: none;
   border-color: transparent;
   background-color: transparent;
 }
 
 /* Add a subtle visual indicator when waiting for response */
-.inputContainer.waitingForResponse .chatInput {
+.ChatInput--waitingForResponse .ChatInput__chatInput {
   border-left: 3px solid var(--waiting-border-color, #f44336);
 }
 
-.chatInput:disabled {
+.ChatInput__chatInput:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
 /* Style placeholder text */
-.chatInput::placeholder {
+.ChatInput__chatInput::placeholder {
   color: var(--placeholder-color, #999);
   opacity: 1;
 }
 
-/* Input wrapper to position the send button inside the text input */
-/*
-.inputWrapper {
-  position: relative;
-  width: 100%;
-  display: flex;
-  overflow: visible; 
-  margin-right: 0;
-  padding-right: 0;
-}
-*/
-
 /* Send button positioned inside input - ENABLED STATE (normal) */
-.sendButtonInline {
+.ChatInput__sendButtonInline {
   position: absolute;
   right: 2px;
   top: 50%;
@@ -125,7 +113,7 @@
 }
 
 /* HOVER on enabled state */
-.sendButtonInline:hover:not(:disabled) {
+.ChatInput__sendButtonInline:hover:not(:disabled) {
   color: var(--text-primary, #fff);
   background-color: var(--button-hover-bg-color, rgb(107 168 163 / 90%));
   border-color: var(--button-hover-border-color, rgb(255 255 255 / 30%));
@@ -133,12 +121,12 @@
 }
 
 /* DISABLED STATE - completely hide the button */
-.sendButtonInline:disabled {
+.ChatInput__sendButtonInline:disabled {
   display: none;
 }
 
 /* Left side buttons */
-.leftButtons {
+.ChatInput__leftButtons {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -146,7 +134,7 @@
 }
 
 /* Right side buttons */
-.rightButtons {
+.ChatInput__rightButtons {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -155,7 +143,7 @@
 }
 
 /* Buttons in a row */
-.actionRow {
+.ChatInput__actionRow {
   display: flex;
   justify-content: space-between;
   width: 100%;
@@ -164,7 +152,7 @@
 }
 
 /* General Action Button Style */
-.actionButton {
+.ChatInput__actionButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -180,22 +168,22 @@
   flex-shrink: 0;
 }
 
-.actionButton:hover:not(:disabled) {
+.ChatInput__actionButton:hover:not(:disabled) {
   background-color: var(--button-hover-bg-color, rgb(255 255 255 / 10%));
   color: var(--text-primary, #fff);
 }
 
-.actionButton:active:not(:disabled) {
+.ChatInput__actionButton:active:not(:disabled) {
   transform: scale(0.95);
 }
 
-.actionButton:disabled {
+.ChatInput__actionButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Button with text (like "Reason") */
-.textButton {
+.ChatInput__textButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,18 +198,18 @@
   gap: 6px;
 }
 
-.textButton .buttonText {
+.ChatInput__textButton .buttonText {
   margin-left: 4px;
   white-space: nowrap;
 }
 
-.textButton:hover:not(:disabled) {
+.ChatInput__textButton:hover:not(:disabled) {
   background-color: var(--button-hover-bg-color, rgb(255 255 255 / 10%));
   color: var(--text-primary, #fff);
 }
 
 /* Icon-only button style for mobile */
-.iconOnlyButton {
+.ChatInput__iconOnlyButton {
   padding: 8px;
   border-radius: 50%;
   width: 36px;
@@ -229,17 +217,17 @@
   font-size: 0;
 }
 
-.iconOnlyButton .buttonText {
+.ChatInput__iconOnlyButton .buttonText {
   display: none;
 }
 
 /* New Chat Button (Plus) */
-.newChatButton {
+.ChatInput__newChatButton {
   color: #999;
 }
 
 /* Upload button styling */
-.uploadButton {
+.ChatInput__uploadButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -254,18 +242,18 @@
   flex-shrink: 0;
 }
 
-.uploadButton:hover:not(:disabled) {
+.ChatInput__uploadButton:hover:not(:disabled) {
   background-color: var(--button-hover-bg-color, rgb(255 255 255 / 10%));
   color: var(--text-primary, #fff);
 }
 
-.uploadButton:disabled {
+.ChatInput__uploadButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* AI model button (dotted pattern) */
-.modelButton {
+.ChatInput__modelButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -280,44 +268,44 @@
 }
 
 /* Edit mode styles */
-.inputContainer.editing {
+.ChatInput--editing {
   border: 1px solid var(--edit-border-color, #4a4a4a);
   background-color: var(--edit-bg-color, #2f2f2f);
 }
 
-.cancelButton {
+.ChatInput__cancelButton {
   color: var(--cancel-color, #ff6b6b);
 }
 
-.cancelButton:hover {
+.ChatInput__cancelButton:hover {
   background-color: var(--cancel-hover-bg, rgb(255 107 107 / 10%));
 }
 
 /* Make placeholder text more visible in edit mode */
-.inputContainer.editing .chatInput::placeholder {
+.ChatInput--editing .ChatInput__chatInput::placeholder {
   color: var(--edit-placeholder-color, #aaa);
   opacity: 0.8;
   font-style: italic;
 }
 
 /* Mobile view specific class - applied directly by component */
-.mobileView {
+.ChatInput__mobileView {
   border-top: 1px solid var(--border-color, #3f3f3f);
 }
 
-.mobileView .chatInput {
+.ChatInput__mobileView .ChatInput__chatInput {
   background-color: var(--input-wrapper-bg, #303030);
   border-radius: 20px;
 }
 
-.mobileView .actionRow {
+.ChatInput__mobileView .ChatInput__actionRow {
   margin-top: 4px;
 }
 
 /* Responsive adjustments */
 @media (width <= 600px) {
   /* Simplify input container in mobile view */
-  .inputContainer {
+  .ChatInput {
     padding: 8px 4px;
     border-left: none;
     border-right: none;
@@ -327,12 +315,12 @@
   }
 
   /* Simplify input wrapper */
-  .inputWrapper {
+  .ChatInput__inputWrapper {
     margin-bottom: 4px;
   }
 
   /* Adjust action row to be more compact */
-  .actionRow {
+  .ChatInput__actionRow {
     gap: 4px;
     justify-content: flex-start;
     flex-wrap: nowrap;
@@ -343,23 +331,23 @@
   }
   
   /* Hide scrollbar for Chrome/Safari */
-  .actionRow::-webkit-scrollbar {
+  .ChatInput__actionRow::-webkit-scrollbar {
     display: none;
   }
   
-  .leftButtons, .rightButtons {
+  .ChatInput__leftButtons, .ChatInput__rightButtons {
     justify-content: flex-start;
     margin-top: 0;
     width: auto;
     flex-wrap: nowrap;
   }
   
-  .rightButtons {
+  .ChatInput__rightButtons {
     margin-left: auto;
   }
   
   /* Convert text buttons to icon buttons on mobile */
-  .textButton {
+  .ChatInput__textButton {
     padding: 8px;
     border-radius: 50%;
     width: 36px;
@@ -367,12 +355,12 @@
     border-width: 1px;
   }
   
-  .textButton .buttonText {
+  .ChatInput__textButton .buttonText {
     display: none;
   }
   
   /* Ensure all buttons have consistent styling */
-  .actionButton, .uploadButton, .textButton, .modelButton {
+  .ChatInput__actionButton, .ChatInput__uploadButton, .ChatInput__textButton, .ChatInput__modelButton {
     margin: 0 2px;
     border-width: 1px;
     min-width: 32px;
@@ -382,7 +370,7 @@
   }
 
   /* Style text input to match mobile mockup */
-  .chatInput {
+  .ChatInput__chatInput {
     height: 40px;
     min-height: 20px;
     max-height: 120px;
@@ -394,7 +382,7 @@
   }
 
   /* Make send button appear correctly inside the text input */
-  .sendButtonInline {
+  .ChatInput__sendButtonInline {
     width: 32px;
     height: 32px;
     right: 6px;
@@ -405,7 +393,7 @@
   }
   
   /* Invisible touch target extension */
-  .sendButtonInline::before {
+  .ChatInput__sendButtonInline::before {
     content: '';
     position: absolute;
     inset: -8px;
@@ -413,12 +401,12 @@
   }
 
   /* Style for the input area when no model is selected */
-  .inputWrapper.noModelSelected::after {
+  .ChatInput__inputWrapper.noModelSelected::after {
     display: none; /* Hide the "Select model" text on mobile to save space */
   }
   
   /* Make the button more obvious when no model is selected on mobile */
-  .mobileView .sendButtonInline.noModelSelected {
+  .ChatInput__mobileView .ChatInput__sendButtonInline.noModelSelected {
     background-color: var(--model-button-bg, #fff);
     color: var(--model-button-color, #1a1a1a);
     border: none;
@@ -426,16 +414,16 @@
 }
 
 /* Add this CSS for the stop button */
-.stopButton {
+.ChatInput__stopButton {
   background-color: #f44336 !important;
   color: white !important;
 }
 
-.stopButton:hover {
+.ChatInput__stopButton:hover {
   background-color: #d32f2f !important;
 }
 
-.mobileView .sendButtonInline {
+.ChatInput__mobileView .ChatInput__sendButtonInline {
   width: 32px;
   height: 32px;
   right: 4px;
@@ -444,13 +432,13 @@
 }
 
 /* Style for send button when no model is selected */
-.sendButtonInline.noModelSelected {
+.ChatInput__sendButtonInline.noModelSelected {
   background-color: var(--model-button-bg, #fff);
   color: var(--model-button-color, #1a1a1a);
 }
 
 /* Style for the input area when no model is selected */
-.inputWrapper.noModelSelected::after {
+.ChatInput__inputWrapper.noModelSelected::after {
   content: 'Select model';
   position: absolute;
   right: 50px;
@@ -463,7 +451,7 @@
 }
 
 /* Add styles for Image Previews */
-.imagePreviewContainer {
+.ChatInput__imagePreviewContainer {
   display: flex; /* Arrange previews horizontally */
   overflow-x: auto; /* Allow horizontal scrolling if needed */
   padding: 5px 0; /* Add some vertical padding */
@@ -471,7 +459,7 @@
   box-sizing: border-box;
 }
 
-.imagePreviewWrapper {
+.ChatInput__imagePreviewWrapper {
   position: relative; /* For positioning the remove button */
   margin-right: 8px; /* Space between images */
   flex-shrink: 0; /* Prevent images from shrinking */
@@ -479,7 +467,7 @@
   padding-bottom:0;
 }
 
-.imagePreview {
+.ChatInput__imagePreview {
   display: block; /* Remove extra space below image */
   max-height: 120px; /* Set a fixed height for previews */
   width: auto; /* Maintain aspect ratio */
@@ -489,7 +477,7 @@
   background: none; /* Ensure no background */
 }
 
-.removeImageButton {
+.ChatInput__removeImageButton {
   position: absolute;
   top: -3px;
   right: 0;
@@ -509,16 +497,16 @@
   transition: opacity 0.2s ease;
 }
 
-.removeImageButton:hover {
+.ChatInput__removeImageButton:hover {
   opacity: 1;
 }
 
-.removeImageButton svg {
+.ChatInput__removeImageButton svg {
   width: 10px; /* Adjust icon size */
   height: 10px;
 }
 
 /* Hidden file input helper */
-.hiddenInput {
+.ChatInput__hiddenInput {
   display: none;
 } 

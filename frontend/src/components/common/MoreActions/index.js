@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { KebabHorizontalIcon } from '@primer/octicons-react';
+import '../../../styles/common/buttons.css';
 import styles from './MoreActions.module.css';
 
 /**
@@ -32,13 +33,13 @@ const MoreActions = ({ actions = [] }) => {
   
   return (
     <div className={styles.moreActionsContainer} ref={menuRef}>
-      <button 
-        className={`${styles.moreButton} ${isOpen ? styles.active : ''}`}
+      <button
+        className={`circleActionButton ${isOpen ? styles.open : ''}`}
         onClick={toggleMenu}
         aria-label={isOpen ? 'Close actions menu' : 'Open actions menu'}
         aria-expanded={isOpen}
       >
-        <KebabHorizontalIcon size={20} className={styles.icon} />
+        <KebabHorizontalIcon size={20} className="buttonIcon" />
       </button>
       
       <div className={`${styles.actionsMenu} ${isOpen ? styles.open : ''}`}>

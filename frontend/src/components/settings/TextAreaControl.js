@@ -44,16 +44,16 @@ const TextAreaControl = ({
   };
   
   return (
-    <div className={styles.textAreaControl}>
-      <div className={styles.header}>
-        <label htmlFor={id} className={styles.label} title={tooltip}>
+    <div className={styles.TextAreaControl}>
+      <div className={styles.TextAreaControl__header}>
+        <label htmlFor={id} className={styles.TextAreaControl__label} title={tooltip}>
           {label}
         </label>
       </div>
       
       <textarea
         id={id}
-        className={styles.textarea}
+        className={styles.TextAreaControl__textarea}
         value={localValue}
         onChange={handleChange}
         onBlur={handleBlur}
@@ -64,7 +64,7 @@ const TextAreaControl = ({
       />
       
       {tooltip && (
-        <div className={styles.description}>
+        <div className={styles.TextAreaControl__description}>
           {tooltip}
         </div>
       )}

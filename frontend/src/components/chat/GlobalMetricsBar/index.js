@@ -15,19 +15,19 @@ const GlobalMetricsBar = ({ metrics = null, modelName = null }) => {
   const totalTokens = metrics.totalTokens || 0;
 
   return (
-    <div className={styles.metricsBar}>
+    <div className={styles.GlobalMetricsBar}>
       {modelName && (
-        <span className={styles.metricItem} title="Current Model"> 
+        <span className={styles.GlobalMetricsBar__item} title="Current Model"> 
           🧠 {modelName}
         </span>
       )}
-      <span className={styles.metricItem} title="Total Messages in Session"> 
+      <span className={styles.GlobalMetricsBar__item} title="Total Messages in Session"> 
         💬 {totalMessages} 
       </span>
-      <span className={styles.metricItem} title="Average Response Time (seconds)">
+      <span className={styles.GlobalMetricsBar__item} title="Average Response Time (seconds)">
         ⏱️ {avgResponseTime}s 
       </span>
-       <span className={styles.metricItem} title="Total Tokens Used in Session"> 
+       <span className={styles.GlobalMetricsBar__item} title="Total Tokens Used in Session"> 
         #️⃣ {totalTokens} 
       </span>
        {/* Add more metrics as needed */}

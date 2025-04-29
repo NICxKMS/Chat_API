@@ -1,23 +1,21 @@
-.sliderContainer {
+/* SettingsSlider module CSS using BEM conventions */
+.SettingsSlider {
   display: flex;
   flex-direction: column;
   width: 100%;
   padding: 0.75rem 0;
 }
-
-.sliderContainer.disabled {
+.SettingsSlider--disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
-.labelContainer {
+.SettingsSlider__labelContainer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
 }
-
-.label {
+.SettingsSlider__label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -25,8 +23,7 @@
   color: var(--text-primary, #fff);
   font-size: 0.95rem;
 }
-
-.value {
+.SettingsSlider__value {
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-primary, #fff);
@@ -36,43 +33,34 @@
   min-width: 45px;
   text-align: center;
 }
-
-.numberInput {
+.SettingsSlider__numberInput {
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-primary, #fff);
   background-color: rgb(87 157 152 / 15%);
   padding: 0.25rem 0.6rem;
   border-radius: 6px;
-  min-width: 80px; /* Wider to accommodate more digits */
+  min-width: 80px;
   max-width: 120px;
   text-align: center;
   border: 1px solid var(--border, rgb(255 255 255 / 10%));
   outline: none;
   transition: all 0.2s ease;
 }
-
-.numberInput:focus {
+.SettingsSlider__numberInput:focus {
   background-color: rgb(87 157 152 / 25%);
   border-color: var(--button-bg-color, rgb(87 157 152 / 75%));
   box-shadow: 0 0 0 2px rgb(87 157 152 / 20%);
 }
-
-.numberInput::-webkit-inner-spin-button,
-.numberInput::-webkit-outer-spin-button {
-  opacity: 0.5;
-  height: 20px;
-}
-
-.sliderTrack {
+.SettingsSlider__track {
   position: relative;
   width: 100%;
   height: 6px;
   background-color: rgb(255 255 255 / 10%);
   border-radius: 3px;
+  transition: background-color 0.3s;
 }
-
-.sliderFill {
+.SettingsSlider__fill {
   position: absolute;
   top: 0;
   left: 0;
@@ -82,8 +70,7 @@
   pointer-events: none;
   width: var(--fill-width, 0%);
 }
-
-.slider {
+.SettingsSlider__slider {
   position: absolute;
   top: 0;
   left: 0;
@@ -94,9 +81,8 @@
   margin: 0;
   cursor: pointer;
 }
-
-/* Thumb styling */
-.slider::-webkit-slider-thumb {
+.SettingsSlider__slider::-webkit-slider-thumb,
+.SettingsSlider__slider::-moz-range-thumb {
   appearance: none;
   width: 18px;
   height: 18px;
@@ -105,61 +91,45 @@
   border: 2px solid var(--settings-bg, #1f1f1f);
   transition: transform 0.2s;
 }
-
-.slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--button-bg-color, rgb(87 157 152 / 75%));
-  border: 2px solid var(--settings-bg, #1f1f1f);
-  transition: transform 0.2s;
+.SettingsSlider__slider:focus {
+  outline: none;
 }
-
-.slider:focus { outline: none; }
-.slider:active::-webkit-slider-thumb { transform: scale(1.2); }
+.SettingsSlider__slider:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
 
 /* Size variants */
-.small .slider {
+.SettingsSlider--small .SettingsSlider__slider {
   height: 6px;
-
-  /* thumb size adjusted */
 }
-
-.small .slider::-webkit-slider-thumb {
+.SettingsSlider--small .SettingsSlider__slider::-webkit-slider-thumb {
   width: 14px;
   height: 14px;
 }
-
-.large .sliderTrack {
+.SettingsSlider--large .SettingsSlider__track {
   height: 10px;
 }
-
-.large .slider {
+.SettingsSlider--large .SettingsSlider__slider {
   height: 10px;
-
-  /* thumb size adjusted */
 }
-
-.large .slider::-webkit-slider-thumb {
+.SettingsSlider--large .SettingsSlider__slider::-webkit-slider-thumb {
   width: 20px;
   height: 20px;
 }
 
-/* Tooltip */
-.tooltipWrapper {
+/* Tooltip classes */
+.SettingsSlider__tooltipWrapper {
   position: relative;
   display: inline-flex;
   margin-left: 0.5rem;
 }
-
-.infoIcon {
+.SettingsSlider__infoIcon {
   width: 16px;
   height: 16px;
   color: var(--text-secondary, #a0a0a0);
   cursor: help;
 }
-
-.tooltip {
+.SettingsSlider__tooltip {
   position: absolute;
   visibility: hidden;
   opacity: 0;
@@ -177,8 +147,7 @@
   pointer-events: none;
   z-index: 100;
 }
-
-.tooltipWrapper:hover .tooltip {
+.SettingsSlider__tooltipWrapper:hover .SettingsSlider__tooltip {
   visibility: visible;
   opacity: 1;
 } 

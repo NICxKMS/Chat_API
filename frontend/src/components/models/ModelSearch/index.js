@@ -36,14 +36,14 @@ const ModelSearch = ({ searchTerm, onSearchChange, resultCount }) => {
   }, [onSearchChange]);
   
   return (
-    <div className={styles.searchContainer}>
+    <div className={styles.ModelSearch}>
       <div className={styles.inputWrapper}>
-        <SearchIcon className={styles.searchIcon} size={16} />
+        <SearchIcon className={styles.ModelSearch__icon} size={16} />
         
         <input
           ref={inputRef}
           type="text"
-          className={styles.searchInput}
+          className={styles.ModelSearch__input}
           placeholder="Search models..."
           value={searchTerm}
           onChange={handleInputChange}
@@ -52,17 +52,17 @@ const ModelSearch = ({ searchTerm, onSearchChange, resultCount }) => {
         
         {searchTerm && (
           <button 
-            className={styles.clearButton} 
+            className={styles.ModelSearch__clearButton} 
             onClick={handleClearSearch}
             aria-label="Clear search"
           >
-            <XIcon className={styles.clearIcon} size={16} />
+            <XIcon className={styles.ModelSearch__clearIcon} size={16} />
           </button>
         )}
       </div>
       
       {searchTerm && (
-        <div className={styles.results}>
+        <div className={styles.ModelSearch__results}>
           {resultCount} {resultCount === 1 ? 'result' : 'results'}
         </div>
       )}

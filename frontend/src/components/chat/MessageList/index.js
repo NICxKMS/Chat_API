@@ -46,7 +46,7 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
   return (
     <>
       <div 
-        className={styles.messageListContainer} 
+        className={styles.MessageList} 
         ref={ref}
         aria-live="polite"
         aria-relevant="additions text"
@@ -68,16 +68,16 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
             : `${message.role}-${index}`;
           
           return (
-            <div key={messageKey} className={styles.messageRow}>
+            <div key={messageKey} className={styles.MessageList__messageRow}>
               {/* Render images first if it's a user message with images */}
               {message.role === 'user' && images.length > 0 && (
-                <div className={styles.imageContainer}>
+                <div className={styles.MessageList__imageContainer}>
                   {images.map((image, imgIndex) => (
                     <img 
                       key={`${messageKey}-img-${imgIndex}`}
                       src={image.url}
                       alt={image.alt || `Uploaded image ${imgIndex + 1}`}
-                      className={`${styles.messageImage} ${styles.clickableImage}`}
+                      className={`${styles.MessageList__messageImage} ${styles.MessageList__clickableImage}`}
                       onClick={() => handleImageClick(image.url)}
                     />
                   ))}

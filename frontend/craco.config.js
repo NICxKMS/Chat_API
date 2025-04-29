@@ -1,10 +1,10 @@
-let BundleAnalyzerPlugin;
-try {
-  BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-} catch (error) {
-  console.warn('webpack-bundle-analyzer not found. Bundle analysis will be disabled.');
-  BundleAnalyzerPlugin = null;
-}
+// let BundleAnalyzerPlugin;
+// try {
+//   BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+// } catch (error) {
+//   console.warn('webpack-bundle-analyzer not found. Bundle analysis will be disabled.');
+//   BundleAnalyzerPlugin = null;
+// }
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 

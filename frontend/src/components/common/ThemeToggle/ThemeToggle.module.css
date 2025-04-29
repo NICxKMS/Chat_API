@@ -1,42 +1,13 @@
 /* Import common button styles */
 @import url('../../../styles/common/buttons.css');
 
-/* Extend the common button style with some modifications */
-.themeToggle {
-  width: var(--button-size);
-  height: var(--button-size);
-  border-radius: 50%;
-  background-color: var(--button-bg);
-  border: var(--button-border);
-  box-shadow: var(--button-shadow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: var(--button-transition);
-  color: var(--text);
-  padding: 0;
-  flex-shrink: 0;
+/* Container for ThemeToggle overlay */
+.ThemeToggle {
   position: relative;
   overflow: hidden;
 }
 
-.themeToggle:hover:not(:disabled) {
-  background-color: var(--button-hover-bg);
-  transform: scale(var(--button-hover-scale));
-}
-
-.themeToggle:active:not(:disabled) {
-  transform: scale(var(--button-active-scale));
-}
-
-.themeToggle:disabled {
-  opacity: var(--button-disabled-opacity);
-  cursor: not-allowed;
-  transform: none;
-}
-
-.themeToggle::before {
+.ThemeToggle::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -46,27 +17,27 @@
   border-radius: 50%;
 }
 
-.icon {
-  color: var(--text);
-  transition: var(--button-transition);
-  opacity: var(--button-icon-opacity);
-  width: var(--button-icon-size);
-  height: var(--button-icon-size);
+/* Icon rotation on hover */
+.ThemeToggle__icon {
   position: relative;
   z-index: 1;
 }
 
-.themeToggle:hover .icon {
+.ThemeToggle:hover::before {
+  opacity: 1;
+}
+
+.ThemeToggle:hover .ThemeToggle__icon {
   transform: rotate(30deg);
   opacity: 1;
 }
 
-.themeToggle button {
+.ThemeToggle button {
   transition: color var(--theme-transition-duration) var(--theme-transition-timing),
               transform 0.3s ease;
 }
 
-.themeToggle span {
+.ThemeToggle span {
   transition: opacity 0.3s ease,
               background-color var(--theme-transition-duration) var(--theme-transition-timing);
 } 

@@ -1,19 +1,19 @@
-.group {
+/* SettingsGroup CSS using BEM conventions */
+.SettingsGroup {
   margin-bottom: 1.5rem;
   background-color: var(--bg-secondary);
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--border);
   box-shadow: 0 2px 6px rgb(0 0 0 / 5%);
-  transition: box-shadow 0.2s, 
-              background-color var(--theme-transition-duration) var(--theme-transition-timing);
+  transition: box-shadow 0.2s, background-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
-.group:hover {
+.SettingsGroup:hover {
   box-shadow: 0 4px 8px rgb(0 0 0 / 8%);
 }
 
-.header {
+.SettingsGroup__header {
   padding: 1.2rem 1.5rem;
   cursor: pointer;
   user-select: none;
@@ -21,22 +21,19 @@
   transition: background-color 0.2s, border-color 0.2s;
 }
 
-.header:hover {
+.SettingsGroup__header:hover,
+.SettingsGroup__header:focus {
   background-color: var(--hover);
-}
-
-.header:focus {
   outline: none;
-  background-color: var(--hover);
 }
 
-.titleContainer {
+.SettingsGroup__titleContainer {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.title {
+.SettingsGroup__title {
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text);
@@ -44,14 +41,14 @@
   letter-spacing: 0.01em;
 }
 
-.description {
+.SettingsGroup__description {
   font-size: 0.9rem;
   color: var(--secondary-text);
   margin: 0.25rem 0 0;
   line-height: 1.4;
 }
 
-.expandButton {
+.SettingsGroup__expandButton {
   background: transparent;
   border: none;
   width: 28px;
@@ -66,46 +63,29 @@
   margin-left: 12px;
 }
 
-.expandButton:hover {
+.SettingsGroup__expandButton:hover {
   background-color: var(--hover-intense);
   color: var(--text);
 }
 
-.expandIcon {
+.SettingsGroup__expandIcon {
   fill: currentcolor;
   transition: transform 0.2s;
 }
 
-.expandButton.expanded .expandIcon {
+.SettingsGroup--expanded .SettingsGroup__expandIcon {
   transform: rotate(180deg);
 }
 
-.content {
+.SettingsGroup__content {
   padding: 0.5rem 1.5rem 1.5rem;
-  animation: slideDown 0.2s ease-out;
   background-color: color-mix(in srgb, var(--bg-secondary) 97%, var(--accent) 3%);
   border-top: 1px solid var(--border);
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.expanded .header {
+.SettingsGroup--expanded .SettingsGroup__header {
   border-bottom-color: var(--border);
   background-color: color-mix(in srgb, var(--bg-secondary) 97%, var(--accent) 3%);
-}
-
-.groupHeader {
-  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .resetButton {

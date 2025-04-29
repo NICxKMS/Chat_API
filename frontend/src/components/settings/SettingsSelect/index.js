@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import styles from './SettingsSelect.module.css';
+import '../../../styles/common/utilities.css';
 
 const SettingsSelect = ({
   id,
@@ -100,10 +101,10 @@ const SettingsSelect = ({
   )), [options, value, handleOptionSelect]);
 
   return (
-    <div className={`${styles.selectContainer} ${disabled ? styles.disabled : ''}`}>
+    <div className={`${styles.SettingsSelect} ${disabled ? styles['SettingsSelect--disabled'] : ''}`}>
       <label 
         htmlFor={id} 
-        className={styles.label} 
+        className={styles.SettingsSelect__label}
         title={tooltip || ''}
         id={labelId}
       >
@@ -112,7 +113,7 @@ const SettingsSelect = ({
       
       <div 
         ref={selectRef}
-        className={`${styles.select} ${isOpen ? styles.open : ''}`}
+        className={`${styles.SettingsSelect__select} ${isOpen ? styles['SettingsSelect--open'] : ''} ${styles.selectElement}`}
         onClick={toggleDropdown}
         onKeyDown={handleKeyDown}
         tabIndex={disabled ? -1 : 0}
@@ -124,21 +125,31 @@ const SettingsSelect = ({
         aria-labelledby={labelId}
         id={id}
       >
-        <div className={styles.selectedValue}>
+        <div className={styles.SettingsSelect__selectedValue}>
           {displayText}
         </div>
-        <div className={styles.arrow} />
+        <div className={`${styles.SettingsSelect__arrow} ${styles.selectIcon}`} />
       </div>
       
       {isOpen && !disabled && (
         <div 
           ref={dropdownRef}
-          className={styles.dropdown}
+          className={`${styles.SettingsSelect__dropdown} animation-fade-in`}
           role="listbox"
           id={`${id}-listbox`}
           aria-labelledby={id}
         >
-          {renderedOptions}
+          {renderedOptions.map(option => (
+            <div
+              key={option.key}
+              className={`${styles.SettingsSelect__option} ${option.key === value ? styles['SettingsSelect__option--selected'] : ''}`}
+              onClick={() => handleOptionSelect(option.key)}
+              role="option"
+              aria-selected={option.key === value}
+            >
+              {option.props.children}
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-.overlay {
+.LoginModal {
   position: fixed;
   inset: 0;
   background-color: rgb(0 0 0 / 60%);
@@ -10,7 +10,7 @@
   animation: fadeIn 0.3s ease-out;
 }
 
-.modal {
+.LoginModal__modal {
   background-color: var(--card-bg);
   padding: 30px 40px;
   border-radius: 12px;
@@ -23,7 +23,7 @@
   animation: slideIn 0.3s ease-out;
 }
 
-.closeButton {
+.LoginModal__closeButton {
   position: absolute;
   top: 15px;
   right: 15px;
@@ -37,11 +37,11 @@
   transition: color 0.2s ease;
 }
 
-.closeButton:hover {
+.LoginModal__closeButton:hover {
   color: var(--text-primary);
 }
 
-.title {
+.LoginModal__title {
   margin-top: 0;
   margin-bottom: 10px;
   color: var(--text-primary);
@@ -49,20 +49,20 @@
   font-weight: 600;
 }
 
-.subtitle {
+.LoginModal__subtitle {
   margin-bottom: 30px;
   color: var(--text-secondary);
   font-size: 1rem;
 }
 
-.providerList {
+.LoginModal__providerList {
   display: flex;
   flex-direction: column;
   gap: 15px;
   margin-bottom: 25px;
 }
 
-.providerButton {
+.LoginModal__providerButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -79,34 +79,26 @@
   width: 100%;
 }
 
-.providerButton:hover:not(:disabled) {
+.LoginModal__providerButton:hover:not(:disabled) {
   background-color: var(--button-secondary-hover-bg);
   border-color: var(--border-hover-color);
 }
 
-.providerButton:active:not(:disabled) {
+.LoginModal__providerButton:active:not(:disabled) {
     transform: scale(0.98);
 }
 
-.providerButton:disabled {
+.LoginModal__providerButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.providerIcon {
+.LoginModal__providerIcon {
   font-size: 1.4rem;
 }
 
-/* Specific provider styles (optional) */
-.google {
-  /* Add specific styles if needed */
-}
 
-.github {
-  /* Add specific styles if needed */
-}
-
-.spinnerContainer {
+.LoginModal__spinnerContainer {
   padding: 40px 0;
   display: flex;
   flex-direction: column;
@@ -115,7 +107,7 @@
   color: var(--text-secondary);
 }
 
-.error {
+.LoginModal__error {
   color: var(--error-color);
   background-color: var(--error-bg);
   padding: 10px 15px;
@@ -125,7 +117,7 @@
   text-align: center;
 }
 
-.footerText {
+.LoginModal__footerText {
   margin-top: 30px;
   font-size: 0.8rem;
   color: var(--text-tertiary);
@@ -151,18 +143,15 @@
   }
 }
 
-.emailToggle {
-  /* Optional: Add specific styles for this button */
-}
 
-.emailForm {
+.LoginModal__emailForm {
   display: flex;
   flex-direction: column;
   gap: 15px;
   margin-bottom: 20px;
 }
 
-.inputField {
+.LoginModal__inputField {
   padding: 14px 16px;
   border-radius: 8px;
   border: 2px solid var(--border-pronounced);
@@ -175,19 +164,19 @@
   box-shadow: 0 2px 4px rgb(0 0 0 / 5%);
 }
 
-.inputField:focus {
+.LoginModal__inputField:focus {
   outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 0 3px var(--accent-color-faded);
 }
 
-.emailButtonContainer {
+.LoginModal__emailButtonContainer {
   display: flex;
   gap: 10px;
   margin-top: 5px;
 }
 
-.emailButton {
+.LoginModal__emailButton {
   flex-grow: 1;
   padding: 14px 16px;
   border-radius: 8px;
@@ -201,42 +190,42 @@
   box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 }
 
-.emailButton:hover:not(:disabled) {
+.LoginModal__emailButton:hover:not(:disabled) {
   background-color: var(--accent-color-dark);
   border-color: var(--accent-color-dark);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgb(0 0 0 / 15%);
 }
 
-.emailButton:active:not(:disabled) {
+.LoginModal__emailButton:active:not(:disabled) {
   transform: scale(0.98);
 }
 
-.emailButton:disabled {
+.LoginModal__emailButton:disabled {
   background-color: var(--accent-color-disabled);
   cursor: not-allowed;
 }
 
-.signUpButton {
+.LoginModal__signUpButton {
   background-color: var(--button-secondary-bg);
   color: var(--text-primary);
   border: 2px solid var(--border-pronounced);
   box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 }
 
-.signUpButton:hover:not(:disabled) {
+.LoginModal__signUpButton:hover:not(:disabled) {
   background-color: var(--button-secondary-hover-bg);
   border-color: var(--border-hover-color);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgb(0 0 0 / 15%);
 }
 
-.signUpButton:disabled {
+.LoginModal__signUpButton:disabled {
   background-color: var(--button-secondary-bg);
   opacity: 0.6;
 }
 
-.backButton {
+.LoginModal__backButton {
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -249,36 +238,30 @@
   transition: color 0.2s ease;
 }
 
-.backButton:hover:not(:disabled) {
+.LoginModal__backButton:hover:not(:disabled) {
   color: var(--text-primary);
 }
 
-.fullHeightSpinner {
-  /* Optional: Ensure spinner takes full modal height if needed */
-
-  /* min-height: 200px; Adjust as needed */
-}
-
-.alternativeLoginContainer {
+.LoginModal__alternativeLoginContainer {
   margin-top: 30px;
   padding-top: 20px;
   border-top: 2px solid var(--border-pronounced);
   text-align: center;
 }
 
-.alternativeLoginText {
+.LoginModal__alternativeLoginText {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-bottom: 15px;
 }
 
-.providerIconContainer {
+.LoginModal__providerIconContainer {
   display: flex;
   justify-content: center;
   gap: 25px;
 }
 
-.providerIconButton {
+.LoginModal__providerIconButton {
   background: var(--button-secondary-bg);
   border: 2px solid var(--border-pronounced);
   padding: 12px;
@@ -295,7 +278,7 @@
   box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 }
 
-.providerIconButton:hover:not(:disabled) {
+.LoginModal__providerIconButton:hover:not(:disabled) {
   color: var(--text-primary);
   transform: scale(1.1);
   border-color: var(--border-hover-color);
@@ -303,7 +286,7 @@
   box-shadow: 0 4px 8px rgb(0 0 0 / 15%);
 }
 
-.providerIconButton:disabled {
+.LoginModal__providerIconButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 } 

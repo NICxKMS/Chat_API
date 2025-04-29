@@ -78,27 +78,27 @@ const PerformanceMetrics = memo(({ metrics }) => {
   }
   
   return (
-    <div className={styles.metrics}>
+    <div className={styles.PerformanceMetrics}>
       <span className={styles.timeMetric} title="Response time">
-        <ClockIcon className={styles.icon} />
+        <ClockIcon className={styles.PerformanceMetrics__icon} />
         {formattedTime}
       </span>
       
       <span className={styles.tokenMetric} title={tokenTooltip}>
-        <TokenIcon className={styles.icon} />
+        <TokenIcon className={styles.PerformanceMetrics__icon} />
         {formattedTokens}
       </span>
       
       {showTps && (
-        <span className={styles.tpsMetric} title="Tokens per second">
-          <SpeedIcon className={styles.icon} />
+        <span className={`${styles.PerformanceMetrics__metric} ${styles['PerformanceMetrics__metric--tps']}`} title="Tokens per second">
+          <SpeedIcon className={styles.PerformanceMetrics__icon} />
           {tokensPerSecond} TPS
         </span>
       )}
       
       {showDetailedMetrics && (
-        <span className={styles.detailedMetric} title={tokenTooltip}>
-          <InfoIcon className={styles.icon} />
+        <span className={`${styles.PerformanceMetrics__metric} ${styles['PerformanceMetrics__metric--detailed']}`} title={tokenTooltip}>
+          <InfoIcon className={styles.PerformanceMetrics__icon} />
           P:{promptTokens}/T:{totalTokens}
         </span>
       )}

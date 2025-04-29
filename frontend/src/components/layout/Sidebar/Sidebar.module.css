@@ -1,5 +1,7 @@
-.sidebar {
-  width: 300px;
+.Sidebar {
+  margin: 0;
+  padding: 0;
+  width: 250px;
   height: 100%;
   background: var(--sidebar-bg, var(--sidebar-surface));
   border-right: 1px solid var(--border);
@@ -17,7 +19,7 @@
   position: relative;
 }
 
-.header {
+.Sidebar__header {
   padding: 1rem;
   display: flex;
   justify-content: space-between;
@@ -30,14 +32,14 @@
   background: var(--sidebar-surface-secondary, var(--sidebar-bg));
 }
 
-.headerControls {
+.Sidebar__headerControls {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   align-items: center;
   padding: 0.25rem;
 }
 
-.title {
+.Sidebar__title {
   margin: 0;
   font-size: 1.2rem;
   font-weight: 700;
@@ -73,7 +75,7 @@
   border-radius: 8px;
 }
 
-.footer {
+.Sidebar__footer {
   padding: 0.75rem 1rem;
   border-top: 1px solid var(--border-color);
   display: flex;
@@ -87,7 +89,7 @@
 }
 
 /* User Profile Styles */
-.userProfile {
+.Sidebar__userProfile {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -98,7 +100,7 @@
   flex-grow: 1;
 }
 
-.userAvatar {
+.Sidebar__userAvatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -106,7 +108,7 @@
   border: 1px solid var(--accent-color, rgb(87 157 152 / 75%));
 }
 
-.userInitial {
+.Sidebar__userInitial {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -120,13 +122,14 @@
   flex-shrink: 0;
 }
 
-.userName {
+.Sidebar__userName {
   font-size: 0.9rem;
   color: var(--sidebar-text, var(--text-primary));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex-grow: 1;
+  margin-left: 0.5rem;
 }
 
 /* Style for the placeholder text span if needed */
@@ -194,7 +197,7 @@
 
 /* Mobile styles */
 @media (width <= 800px) {
-  .sidebar {
+  .Sidebar {
     width: 100%;
     height: 100%;
     background: var(--sidebar-bg);
@@ -205,7 +208,7 @@
 }
 
 /* Styles for icon buttons */
-.iconButton {
+.Sidebar__iconButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -226,7 +229,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-.iconButton:hover {
+.Sidebar__iconButton:hover {
   background: var(--hover);
   border-color: var(--accent);
   color: var(--accent);
@@ -234,13 +237,13 @@
   box-shadow: var(--shadow);
 }
 
-.iconButton:active {
+.Sidebar__iconButton:active {
   transform: translateY(0);
   box-shadow: var(--shadow-sm);
 }
 
 /* Specific styles for New Chat Button */
-.newChatButton {
+.Sidebar__iconButton--newChat {
   background: var(--sidebar-surface-tertiary, var(--input-bg));
   color: var(--sidebar-icon, var(--text));
   border-color: var(--border-color);
@@ -252,14 +255,14 @@
     box-shadow 0.2s ease;
 }
 
-.newChatButton:hover {
+.Sidebar__iconButton--newChat:hover {
   background: var(--hover);
   color: var(--accent);
   border-color: var(--accent);
 }
 
 /* Specific styles for Settings Button */
-.settingsButton {
+.Sidebar__iconButton--settings {
   background: var(--sidebar-surface-tertiary, var(--input-bg));
   color: var(--sidebar-icon, var(--text));
   transition: 
@@ -270,7 +273,7 @@
     box-shadow 0.2s ease;
 }
 
-.settingsButton:hover {
+.Sidebar__iconButton--settings:hover {
   background: var(--hover);
   color: var(--accent);
 }
@@ -283,7 +286,7 @@
   display: none;
 }
 
-.chatListContainer {
+.Sidebar__chatListContainer {
   flex-grow: 1;
   overflow-y: auto;
   padding: 0.5rem 0;
@@ -294,22 +297,23 @@
   margin: 0.5rem 0;
 }
 
-.sessionList {
+.Sidebar__sessionList {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.sessionItem {
+.Sidebar__sessionItem {
   padding: 0 0.5rem;
   border-bottom: 1px solid var(--border);
+  margin-bottom: 0.5rem;
 }
 
-.sessionItem:last-child {
+.Sidebar__sessionItem:last-child {
   border-bottom: none;
 }
 
-.sessionButton {
+.Sidebar__sessionButton {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -327,13 +331,13 @@
   margin: 0.25rem 0;
 }
 
-.sessionButton:hover {
+.Sidebar__sessionButton:hover {
   background-color: var(--hover);
   color: var(--text);
   border-color: var(--accent);
 }
 
-.sessionTitle {
+.Sidebar__sessionTitle {
   font-size: 0.9rem;
   font-weight: 500;
   white-space: nowrap;
@@ -343,7 +347,7 @@
   margin-right: 0.5rem;
 }
 
-.sessionTimestamp {
+.Sidebar__sessionTimestamp {
   font-size: 0.75rem;
   color: var(--secondary-text);
   opacity: 0.7;

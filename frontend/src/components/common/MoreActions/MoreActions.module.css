@@ -6,53 +6,6 @@
   display: inline-block;
 }
 
-/* Extend the common button style */
-.moreButton {
-  width: var(--button-size);
-  height: var(--button-size);
-  border-radius: 50%;
-  background-color: var(--button-bg);
-  border: var(--button-border);
-  box-shadow: var(--button-shadow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: var(--button-transition);
-  color: var(--text);
-  padding: 0;
-  flex-shrink: 0;
-}
-
-.moreButton:hover:not(:disabled) {
-  background-color: var(--button-hover-bg);
-  transform: scale(var(--button-hover-scale));
-}
-
-.moreButton:active:not(:disabled) {
-  transform: scale(var(--button-active-scale));
-}
-
-.moreButton:disabled {
-  opacity: var(--button-disabled-opacity);
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Extend the common icon style */
-.icon {
-  color: var(--text);
-  transition: var(--button-transition);
-  opacity: var(--button-icon-opacity);
-  width: var(--button-icon-size);
-  height: var(--button-icon-size);
-}
-
-.active .icon {
-  transform: scale(1.1);
-  opacity: 1;
-}
-
 .actionsMenu {
   position: absolute;
   top: calc(100% + 8px);
