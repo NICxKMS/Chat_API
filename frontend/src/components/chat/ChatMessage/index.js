@@ -62,13 +62,13 @@ const ChatMessage = ({ message, isStreaming, onEditMessage, overrideContent }) =
   const icon = useMemo(() => {
     switch (message.role) {
       case 'user':
-        return <PersonIcon size={16} className={styles.icon} />;
+        return <PersonIcon size={16} className={styles.ChatMessage__icon} />;
       case 'assistant':
-        return <CopilotIcon size={16} className={styles.icon} />;
+        return <CopilotIcon size={16} className={styles.ChatMessage__icon} />;
       case 'system':
-        return <GearIcon size={16} className={styles.icon} />;
+        return <GearIcon size={16} className={styles.ChatMessage__icon} />;
       case 'error':
-        return <AlertIcon size={16} className={styles.icon} />;
+        return <AlertIcon size={16} className={styles.ChatMessage__icon} />;
       default:
         return null;
     }

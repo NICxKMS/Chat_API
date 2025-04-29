@@ -9,14 +9,20 @@ import styles from './Spinner.module.css';
  * @returns {JSX.Element} - Rendered spinner
  */
 const Spinner = ({ size = 'medium', color }) => {
-  const sizeClass = styles[size] || styles.medium;
+  // Map prop size to the correct BEM class name
+  const sizeClassMap = {
+    small: styles['Spinner--small'],
+    medium: styles['Spinner--medium'],
+    large: styles['Spinner--large']
+  };
+  const sizeClass = sizeClassMap[size] || styles['Spinner--medium']; // Default to medium
   
   const spinnerStyle = color ? { borderTopColor: color } : {};
   
   return (
-    <div className={`${styles.spinnerContainer} ${sizeClass}`}>
+    <div className={`${styles.Spinner} ${sizeClass}`}>
       <div 
-        className={styles.spinner} 
+        className={styles.Spinner__loader} 
         style={spinnerStyle}
         aria-label="Loading"
         role="status"

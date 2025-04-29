@@ -3,26 +3,20 @@ import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
 import { useChatState } from '../../../contexts/ChatStateContext';
 import { useChatControl } from '../../../contexts/ChatControlContext';
-// Import useApi if needed for apiUrl, but not for status
-// import { useApi } from '../../../contexts/ApiContext'; 
 import { useAuth } from '../../../contexts/AuthContext'; // Import useAuth
 import { useTheme } from '../../../contexts/ThemeContext'; // Import ThemeContext
 import { GearIcon, PlusIcon, TrashIcon, DownloadIcon } from '@primer/octicons-react';
 import styles from './Layout.module.css';
 // Import icons using the correct paths
 // Import only the specific icons needed
-// const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Removed
-// Assuming lazyLoad utility path
+
 
 // Lazily loaded components - Prefetch hints removed for manual loading
 const Sidebar = lazy(() => import(/* webpackChunkName: "layout-sidebar" */ '../Sidebar'));
 const MainContent = lazy(() => import(/* webpackPreload: true, webpackChunkName: "layout-main" */ '../MainContent'));
-// import ModelSelectorButton from '../../models/ModelSelectorButton'; // Remove this import
 const ModelDropdown = lazy(() => import(/* webpackChunkName: "models-dropdown" */ '../../models/ModelDropdown'));
 const Spinner = lazy(() => import(/* webpackChunkName: "common-spinner" */ '../../common/Spinner'));
 const ThemeToggle = lazy(() => import(/* webpackChunkName: "common-theme" */ '../../common/ThemeToggle'));
-// Remove ApiStatus import
-// const ApiStatus = lazy(() => import('../../common/ApiStatus')); // Removed
 const SettingsPanel = lazy(() => import(/* webpackChunkName: "settings-panel" */ '../../settings/SettingsPanel'));
 const SidebarToggle = lazy(() => import(/* webpackChunkName: "layout-sidebar-toggle" */ '../SidebarToggle'));
 const MoreActions = lazy(() => import(/* webpackChunkName: "common-more-actions" */ '../../common/MoreActions'));
@@ -142,10 +136,9 @@ const Layout = () => {
   // Determine layout classes based on state and viewport
   const isSidebarEffectivelyHidden = isDesktop && !isSidebarOpen;
   const layoutClasses = [
-    styles.layout,
+    styles.Layout,
     isSidebarEffectivelyHidden ? styles.sidebarCompact : '', // Handles transform
     !isDesktop && isSidebarOpen ? styles.sidebarOpenMobile : '', // Mobile slide-in
-    isSidebarEffectivelyHidden ? styles.sidebarHidden : '' // Controls floating icon visibility
   ].filter(Boolean).join(' ');
 
   return (
@@ -182,6 +175,7 @@ const Layout = () => {
           
           {/* More Actions Menu */}
           <MoreActions 
+            triggerButtonClassName={styles.mobileActionButton}
             actions={[
               // Always included actions
               {
@@ -235,22 +229,18 @@ const Layout = () => {
 
       {/* Conditionally render the ModelDropdown as a modal/overlay */}
       {isModelSelectorOpen && (
-        <Suspense fallback={
-          <div className={styles.modalOverlay}>
-            <Spinner size="large" />
+        <div className={styles.Layout__modalOverlay} onClick={toggleModelSelector}>
+          <div className={styles.Layout__modalContent} onClick={(e) => e.stopPropagation()}>
+            <Suspense fallback={<LoadingFallback />}>
+              <ModelDropdown onClose={toggleModelSelector} /> 
+            </Suspense>
           </div>
-        }>
-           <div className={styles.modalOverlay} onClick={toggleModelSelector}>
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-              <ModelDropdown /> 
-            </div>
-          </div>
-        </Suspense>
+        </div>
       )}
 
       {/* Sidebar container */}
-      <div className={styles.sidebarContainer}>
-        <Suspense fallback={<div className={styles.sidebarPlaceholder} />}>
+      <div className={styles.Layout__sidebarContainer}>
+        <Suspense fallback={<div className={styles.Layout__sidebarPlaceholder} />}>
           <Sidebar 
             onNewChat={handleNewChat}
             onToggleSettings={toggleSettings}
@@ -259,8 +249,8 @@ const Layout = () => {
       </div>
       
       {/* Main content container */}
-      <div className={styles.mainContentContainer}>
-        <Suspense fallback={<div className={styles.contentPlaceholder} />}>
+      <div className={styles.Layout__mainContentContainer}>
+        <Suspense fallback={<div className={styles.Layout__contentPlaceholder} />}>
           <MainContent 
             isSidebarOpen={isSidebarOpen} 
             toggleSidebar={toggleSidebar} 
@@ -281,7 +271,7 @@ const Layout = () => {
       {/* Mobile overlay */}
       {!isDesktop && isSidebarOpen && (
         <div 
-          className={`${styles.overlay} ${styles.overlayVisible}`}
+          className={`${styles.Layout__overlay} ${styles['Layout__overlay--visible']}`}
           onClick={toggleSidebar}
           aria-hidden="true"
         />

@@ -31,7 +31,7 @@ const SettingsGroup = ({
         }}
       >
         <div className={styles.SettingsGroup__titleContainer}>
-          <h3 className={styles.title}>{title}</h3>
+          <h3 className={styles.SettingsGroup__title}>{title}</h3>
           <button 
             className={styles.SettingsGroup__expandButton}
             aria-label={isExpanded ? 'Collapse section' : 'Expand section'}

@@ -7,9 +7,10 @@ import styles from './MoreActions.module.css';
  * More Actions component that shows/hides additional action buttons
  * @param {Object} props - Component props
  * @param {Array} props.actions - Array of action objects with { icon, label, onClick }
+ * @param {string} [props.triggerButtonClassName='circleActionButton'] - Optional class for the trigger button
  * @returns {JSX.Element} - Rendered component
  */
-const MoreActions = ({ actions = [] }) => {
+const MoreActions = ({ actions = [], triggerButtonClassName = 'circleActionButton' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   
@@ -34,12 +35,12 @@ const MoreActions = ({ actions = [] }) => {
   return (
     <div className={styles.moreActionsContainer} ref={menuRef}>
       <button
-        className={`circleActionButton ${isOpen ? styles.open : ''}`}
+        className={`${triggerButtonClassName} ${isOpen ? styles.open : ''}`}
         onClick={toggleMenu}
         aria-label={isOpen ? 'Close actions menu' : 'Open actions menu'}
         aria-expanded={isOpen}
       >
-        <KebabHorizontalIcon size={20} className="buttonIcon" />
+        <KebabHorizontalIcon size={20} />
       </button>
       
       <div className={`${styles.actionsMenu} ${isOpen ? styles.open : ''}`}>
@@ -47,18 +48,10 @@ const MoreActions = ({ actions = [] }) => {
           <button
             key={index}
             className={styles.actionButton}
-            onClick={() => {
-              action.onClick();
-              setIsOpen(false);
-            }}
-            aria-label={action.label}
-            style={{
-              // Add staggered animation delay for each button
-              transitionDelay: isOpen ? `${index * 50}ms` : '0ms'
-            }}
+            onClick={action.onClick}
           >
-            <span className={styles.actionIcon}>{action.icon}</span>
-            <span className={styles.actionLabel}>{action.label}</span>
+            {action.icon}
+            <span>{action.label}</span>
           </button>
         ))}
       </div>
@@ -66,4 +59,4 @@ const MoreActions = ({ actions = [] }) => {
   );
 };
 
-export default MoreActions; 
+export default MoreActions;

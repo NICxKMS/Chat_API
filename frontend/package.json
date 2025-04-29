@@ -66,9 +66,7 @@
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "terser-webpack-plugin": "^5.3.14",
-    "webpack-bundle-analyzer": "^4.10.2",
-    "glob": "^8.1.0",
-    "postcss-safe-parser": "^6.0.0"
+    "webpack-bundle-analyzer": "^4.10.2"
   },
   "scripts": {
     "start": "cross-env REACT_APP_ENV=development craco start",
@@ -89,8 +87,7 @@
     "eject": "react-scripts eject",
     "clean": "rimraf build node_modules",
     "reinstall": "npm run clean && npm install",
-    "prebuild": "rimraf build",
-    "scan:styles": "node scripts/scan-style-patterns.js"
+    "prebuild": "rimraf build"
   },
   "eslintConfig": {
     "extends": [

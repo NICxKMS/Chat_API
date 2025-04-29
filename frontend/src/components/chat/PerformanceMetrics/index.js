@@ -79,12 +79,12 @@ const PerformanceMetrics = memo(({ metrics }) => {
   
   return (
     <div className={styles.PerformanceMetrics}>
-      <span className={styles.timeMetric} title="Response time">
+      <span className={`${styles.PerformanceMetrics__metric} ${styles['PerformanceMetrics__metric--time']}`} title="Response time">
         <ClockIcon className={styles.PerformanceMetrics__icon} />
         {formattedTime}
       </span>
       
-      <span className={styles.tokenMetric} title={tokenTooltip}>
+      <span className={`${styles.PerformanceMetrics__metric} ${styles['PerformanceMetrics__metric--tokens']}`} title={tokenTooltip}>
         <TokenIcon className={styles.PerformanceMetrics__icon} />
         {formattedTokens}
       </span>

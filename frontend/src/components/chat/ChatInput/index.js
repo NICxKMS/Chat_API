@@ -425,7 +425,7 @@ const ChatInput = memo(({
         </div>
       )}
 
-      <div className={`${styles.inputContainer} ${isEditing ? styles.editing : ''} ${isWaitingForResponse ? styles.waitingForResponse : ''} ${isMobile ? styles.mobileView : ''}`}>
+      <div className={`${styles.ChatInput} ${isEditing ? styles['ChatInput--editing'] : ''} ${isWaitingForResponse ? styles['ChatInput--waitingForResponse'] : ''} ${isMobile ? styles['ChatInput__mobileView'] : ''}`}>
         {/* Hidden file input */}
         <input
           type="file"
@@ -437,10 +437,10 @@ const ChatInput = memo(({
         />
 
         {/* Text input area with send button inside */}
-        <div className={`${styles.inputWrapper} ${!selectedModel ? styles.noModelSelected : ''}`}>
+        <div className={`${styles['ChatInput__inputWrapper']} ${!selectedModel ? styles.noModelSelected : ''}`}>
           <textarea
             ref={textareaRef}
-            className={styles.chatInput}
+            className={styles['ChatInput__chatInput']}
             placeholder={placeholderText}
             value={message}
             onChange={handleChange}
@@ -453,7 +453,7 @@ const ChatInput = memo(({
           
           {/* Send/Stop button positioned inside the textarea */}
           <button
-            className={`${styles.sendButtonInline} ${isWaitingForResponse ? styles.stopButton : ''} ${!selectedModel ? styles.noModelSelected : ''}`}
+            className={`${styles['ChatInput__sendButtonInline']} ${isWaitingForResponse ? styles['ChatInput__stopButton'] : ''} ${!selectedModel ? styles.noModelSelected : ''}`}
             onClick={handleButtonClick}
             disabled={(!isWaitingForResponse && ((!message.trim() && selectedImages.length === 0) || disabled))}
             aria-label={isWaitingForResponse ? "Stop generation" : !selectedModel ? "Select model" : isEditing ? "Save edit" : "Send message"}
@@ -485,12 +485,12 @@ const ChatInput = memo(({
         </div>
         
         {/* Buttons in a single row */}
-        <div className={styles.actionRow}>
+        <div className={styles['ChatInput__actionRow']}>
           {/* Left side buttons */}
-          <div className={styles.leftButtons}>
+          <div className={styles['ChatInput__leftButtons']}>
             {/* Upload button - moved to left side */}
             <button
-              className={styles.uploadButton}
+              className={styles['ChatInput__uploadButton']}
               onClick={toggleModelSelector ? (selectedModel ? triggerFileInput : toggleModelSelector) : triggerFileInput}
               disabled={disabled}
               aria-label={selectedModel?.capabilities?.includes('vision') ? "Upload images" : "Select model for image upload"}
@@ -501,7 +501,7 @@ const ChatInput = memo(({
             </button>
             
             <button
-              className={`${styles.textButton} ${isMobile ? styles.iconOnlyButton : ''}`}
+              className={`${styles['ChatInput__textButton']} ${isMobile ? styles['ChatInput__iconOnlyButton'] : ''}`}
               aria-label="Search"
               title="Search"
               type="button"
@@ -511,7 +511,7 @@ const ChatInput = memo(({
             </button>
             
             <button
-              className={`${styles.textButton} ${isMobile ? styles.iconOnlyButton : ''}`}
+              className={`${styles['ChatInput__textButton']} ${isMobile ? styles['ChatInput__iconOnlyButton'] : ''}`}
               aria-label="Reason mode"
               title="Reason mode"
               type="button"
@@ -521,7 +521,7 @@ const ChatInput = memo(({
             </button>
             
             <button
-              className={styles.actionButton}
+              className={styles['ChatInput__actionButton']}
               aria-label="More options"
               title="More options"
               type="button"
@@ -531,10 +531,10 @@ const ChatInput = memo(({
           </div>
           
           {/* Right side buttons */}
-          <div className={styles.rightButtons}>
+          <div className={styles['ChatInput__rightButtons']}>
             {/* New chat button - moved to right side */}
             <button 
-              className={styles.actionButton}
+              className={styles['ChatInput__actionButton']}
               onClick={onNewChat}
               aria-label="New chat"
               title="New chat"
@@ -546,7 +546,7 @@ const ChatInput = memo(({
             {/* Cancel edit button (Only when editing) */}
             {isEditing && (
               <button
-                className={styles.uploadButton}
+                className={styles['ChatInput__uploadButton']}
                 onClick={handleCancelEdit}
                 aria-label="Cancel edit"
                 title="Cancel edit (Esc)"
@@ -558,7 +558,7 @@ const ChatInput = memo(({
             
             {/* AI model button */}
             <button
-              className={styles.modelButton}
+              className={styles['ChatInput__modelButton']}
               onClick={toggleModelSelector}
               aria-label="Select AI model"
               title="Select AI model"

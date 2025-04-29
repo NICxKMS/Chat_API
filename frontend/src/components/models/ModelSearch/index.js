@@ -37,7 +37,7 @@ const ModelSearch = ({ searchTerm, onSearchChange, resultCount }) => {
   
   return (
     <div className={styles.ModelSearch}>
-      <div className={styles.inputWrapper}>
+      <div className={styles.ModelSearch__inputWrapper}>
         <SearchIcon className={styles.ModelSearch__icon} size={16} />
         
         <input

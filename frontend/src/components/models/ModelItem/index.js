@@ -49,7 +49,7 @@ const ModelItem = memo(({
       </div>
       
       <div className={styles.ModelItem__details}>
-        <div className={styles.modelName}>
+        <div className={styles.ModelItem__name}>
           {highlightMatch(model.name)}
         </div>
         

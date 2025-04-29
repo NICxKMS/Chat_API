@@ -92,12 +92,12 @@ const SettingsSlider = memo(({
   
   return (
     <div className={sliderClasses.join(' ')}>
-      <div className={styles.labelContainer}>
+      <div className={styles.SettingsSlider__labelContainer}>
         <label htmlFor={id} className={styles.SettingsSlider__label}>
           {label}
           {tooltip && (
             <span className={styles.SettingsSlider__tooltipWrapper}>
-              <InfoIcon className={styles.infoIcon} />
+              <InfoIcon className={styles.SettingsSlider__infoIcon} />
               <span className={styles.SettingsSlider__tooltip}>{tooltip}</span>
             </span>
           )}

@@ -18,9 +18,9 @@ const SidebarToggle = memo(({ isOpen, onToggle }) => {
         title={isOpen ? 'Close sidebar' : 'Open sidebar'}
       >
         <div className={styles.SidebarToggle__hamburger}>
-          <span className={styles.bar}></span>
-          <span className={styles.bar}></span>
-          <span className={styles.bar}></span>
+          <span className={styles.SidebarToggle__bar}></span>
+          <span className={styles.SidebarToggle__bar}></span>
+          <span className={styles.SidebarToggle__bar}></span>
         </div>
       </button>
     </div>

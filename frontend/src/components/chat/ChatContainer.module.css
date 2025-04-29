@@ -15,8 +15,8 @@
 }
 
 .modelName {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-xl);
   color: var(--text-color);
   margin: 0;
 }

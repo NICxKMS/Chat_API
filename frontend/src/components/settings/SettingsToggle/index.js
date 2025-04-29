@@ -22,24 +22,27 @@ const BooleanControl = ({
     }
   };
 
-  const containerClass = variant === 'switch' ? styles.switchContainer : styles.toggleContainer;
-  const trackClass = variant === 'switch' ? styles.switchTrack : styles.toggleTrack;
-  const thumbClass = variant === 'switch' ? styles.switchThumb : styles.toggleThumb;
-  const sizeClass = size === 'small' ? styles.small : size === 'large' ? styles.large : '';
+  const containerClass = variant === 'switch' ? styles.SettingsToggle__switchContainer : styles.SettingsToggle__toggleContainer;
+  const trackClass = variant === 'switch' ? styles.SettingsToggle__switchTrack : styles.SettingsToggle__track;
+  const thumbClass = variant === 'switch' ? styles.SettingsToggle__switchThumb : styles.SettingsToggle__toggleThumb;
+  const sizeClass = size === 'small' ? styles['SettingsToggle--small'] : size === 'large' ? styles['SettingsToggle--large'] : '';
+  const checkedClass = variant === 'switch' 
+    ? styles['SettingsToggle__switchTrack--checked'] 
+    : styles['SettingsToggle__track--checked'];
 
   return (
-    <div className={`${containerClass} ${disabled ? styles.disabled : ''} ${sizeClass}`}>
-      <label className={styles.toggleLabel} htmlFor={id}>
-        <span className={styles.labelText}>{label}</span>
+    <div className={`${containerClass} ${disabled ? styles['SettingsToggle--disabled'] : ''} ${sizeClass}`}>
+      <label className={styles.SettingsToggle__label} htmlFor={id}>
+        <span className={styles.SettingsToggle__labelText}>{label}</span>
         {tooltip && (
-          <span className={styles.tooltip} data-tooltip={tooltip}>
-            <InfoIcon className={styles.infoIcon} />
+          <span className={styles.SettingsToggle__tooltip} data-tooltip={tooltip}>
+            <InfoIcon className={styles.SettingsToggle__infoIcon} />
           </span>
         )}
       </label>
       
       <div 
-        className={`${trackClass} ${isChecked ? styles.checked : ''}`}
+        className={`${trackClass} ${isChecked ? checkedClass : ''}`}
         onClick={() => !disabled && onChange(!isChecked)}
         onKeyDown={handleKeyDown}
         tabIndex={disabled ? -1 : 0}
@@ -47,16 +50,16 @@ const BooleanControl = ({
         aria-checked={isChecked}
         aria-disabled={disabled}
       >
-        <span className={thumbClass} />
+        <span className={styles.SettingsToggle__thumb} />
         <input
           id={id}
           type="checkbox"
           checked={isChecked}
           onChange={() => !disabled && onChange(!isChecked)}
           disabled={disabled}
-          className={styles.hiddenInput}
+          className={styles.SettingsToggle__hiddenInput}
         />
-        <span className={styles.srOnly}>
+        <span className={styles.SettingsToggle__srOnly}>
           {label} is {isChecked ? 'enabled' : 'disabled'}
         </span>
       </div>

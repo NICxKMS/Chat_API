@@ -63,13 +63,13 @@
   transition: var(--button-transition);
   opacity: var(--button-icon-opacity);
   border: 2px solid var(--text);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 2px;
   background: transparent;
 }
 
 .circleActionButton:hover:not(:disabled) .buttonIcon {
-  opacity: 1;
+  opacity: var(--opacity-xxl);
   border-color: var(--text);
   transform: scale(1.1);
 }

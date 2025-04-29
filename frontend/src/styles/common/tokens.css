@@ -1,114 +1,20 @@
-/* Semantic Token Definitions */
+/* Spacing scale */
 :root {
-  /* Spacing Scale */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 24px;
-  --spacing-xxl: 32px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
 
-  /* Border Radius Scale */
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-xxl: 16px;
+  /* Typography scale */
+  --font-size-small: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-large: 1.125rem;
+  --font-size-xlarge: 1.25rem;
 
-  /* Font Size Scale */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-md: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-xxl: 1.5rem;
-
-  /* Line Height Scale */
-  --line-height-xs: 1rem;
-  --line-height-sm: 1.25rem;
-  --line-height-md: 1.5rem;
-  --line-height-lg: 1.75rem;
-  --line-height-xl: 2rem;
-  --line-height-xxl: 2.25rem;
-
-  /* Breakpoint Scale */
-  --breakpoint-xs: 480px;
-  --breakpoint-sm: 768px;
-  --breakpoint-md: 1024px;
-  --breakpoint-lg: 1280px;
-  --breakpoint-xl: 1536px;
-  --breakpoint-xxl: 1920px;
-
-  /* Elevation / Z-index Scale */
-  --elevation-xs: 100;
-  --elevation-sm: 200;
-  --elevation-md: 400;
-  --elevation-lg: 600;
-  --elevation-xl: 800;
-  --elevation-xxl: 1000;
-
-  /* Opacity Scale */
-  --opacity-xs: 0.1;
-  --opacity-sm: 0.25;
-  --opacity-md: 0.5;
-  --opacity-lg: 0.75;
-  --opacity-xl: 0.9;
-  --opacity-xxl: 1;
-
-  /* Border Width Scale */
-  --border-width-xs: 1px;
-  --border-width-sm: 2px;
-  --border-width-md: 3px;
-  --border-width-lg: 4px;
-  --border-width-xl: 6px;
-  --border-width-xxl: 8px;
-
-  /* Transition Duration Scale */
-  --duration-xs: 150ms;
-  --duration-sm: 200ms;
-  --duration-md: 300ms;
-  --duration-lg: 500ms;
-  --duration-xl: 700ms;
-  --duration-xxl: 1000ms;
-
-  /* Shadow Level Scale */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
-  --shadow-xxl: 0 25px 50px rgba(0, 0, 0, 0.25);
-
-  /* Font Weight Scale */
-  --font-weight-xs: 200;
-  --font-weight-sm: 300;
-  --font-weight-md: 400;
-  --font-weight-lg: 500;
-  --font-weight-xl: 600;
-  --font-weight-xxl: 700;
-
-  /* Letter Spacing Scale */
-  --letter-spacing-xs: 0em;
-  --letter-spacing-sm: 0.025em;
-  --letter-spacing-md: 0.05em;
-  --letter-spacing-lg: 0.1em;
-  --letter-spacing-xl: 0.15em;
-  --letter-spacing-xxl: 0.2em;
-
-  /* Animation Delay Scale */
-  --delay-xs: 50ms;
-  --delay-sm: 100ms;
-  --delay-md: 150ms;
-  --delay-lg: 250ms;
-  --delay-xl: 500ms;
-  --delay-xxl: 1000ms;
-
-  /* Easing Function Scale */
-  --ease-xs: ease-in;
-  --ease-sm: ease-out;
-  --ease-md: ease-in-out;
-  --ease-lg: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-xl: cubic-bezier(0.2, 1, 0.22, 1);
-  --ease-xxl: cubic-bezier(0.4, 0, 0.6, 1);
+  /* Responsive breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
 } 

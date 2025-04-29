@@ -88,17 +88,20 @@ const SettingsSelect = ({
   }, [isOpen]);
 
   // Memoize the rendered options list
-  const renderedOptions = useMemo(() => options.map(option => (
-    <div 
-      key={option.value}
-      className={`${styles.option} ${option.value === value ? styles.selected : ''}`}
-      onClick={() => handleOptionSelect(option.value)}
-      role="option"
-      aria-selected={option.value === value}
-    >
-      {option.label}
-    </div>
-  )), [options, value, handleOptionSelect]);
+  const renderedOptions = useMemo(() => options.map(option => {
+    const isSelected = option.value === value;
+    return (
+      <div 
+        key={option.value}
+        className={`${styles.SettingsSelect__option} ${isSelected ? styles['SettingsSelect__option--selected'] : ''}`}
+        onClick={() => handleOptionSelect(option.value)}
+        role="option"
+        aria-selected={isSelected}
+      >
+        {option.label}
+      </div>
+    );
+  }), [options, value, handleOptionSelect]);
 
   return (
     <div className={`${styles.SettingsSelect} ${disabled ? styles['SettingsSelect--disabled'] : ''}`}>
@@ -139,17 +142,7 @@ const SettingsSelect = ({
           id={`${id}-listbox`}
           aria-labelledby={id}
         >
-          {renderedOptions.map(option => (
-            <div
-              key={option.key}
-              className={`${styles.SettingsSelect__option} ${option.key === value ? styles['SettingsSelect__option--selected'] : ''}`}
-              onClick={() => handleOptionSelect(option.key)}
-              role="option"
-              aria-selected={option.key === value}
-            >
-              {option.props.children}
-            </div>
-          ))}
+          {renderedOptions}
         </div>
       )}
     </div>

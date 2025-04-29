@@ -86,8 +86,8 @@ const StreamingMessage = ({ content, isStreaming }) => {
         </SyntaxHighlighter>
       </div>
     ) : (
-      // Render inline code using the passed language class only
-      <code className={className} {...props}>
+      // Render inline code with specific styling
+      <code className={`${styles.inlineCode} ${className || ''}`} {...props}>
         {children}
       </code>
     );
@@ -98,16 +98,12 @@ const StreamingMessage = ({ content, isStreaming }) => {
     code: CodeBlock,
   }), [CodeBlock]); // CodeBlock is the dependency
 
+  // Apply streaming class based on the passed-in prop
+  const markdownClassName = `${styles.markdown} ${styles.ChatMessage__streamingContent} ${isStreaming ? styles['ChatMessage__streamingContent--streaming'] : ''}`;
+
   // Use a zero-width space for this purpose.
   const actualContent = typeof content === 'string' ? content : String(content || '');
   const contentToRender = !actualContent ? '\u200B' : convertTeXToMathDollars(actualContent);
-
-  // Apply streaming class based on the passed-in prop, using BEM element and modifier
-  const markdownClassName = [
-    styles.markdown,
-    styles.ChatMessage__streamingContent,
-    isStreaming && styles['ChatMessage__streamingContent--streaming'],
-  ].filter(Boolean).join(' ');
 
   return (
     <div className={markdownClassName}>

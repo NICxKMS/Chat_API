@@ -17,21 +17,6 @@
   border-radius: 50%;
 }
 
-/* Icon rotation on hover */
-.ThemeToggle__icon {
-  position: relative;
-  z-index: 1;
-}
-
-.ThemeToggle:hover::before {
-  opacity: 1;
-}
-
-.ThemeToggle:hover .ThemeToggle__icon {
-  transform: rotate(30deg);
-  opacity: 1;
-}
-
 .ThemeToggle button {
   transition: color var(--theme-transition-duration) var(--theme-transition-timing),
               transform 0.3s ease;

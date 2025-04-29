@@ -39,7 +39,7 @@ const MainContent = ({
       {/* Model Loading Indicator - shows only during initial model loading */}
       {isLoadingModels && (
         <div className={styles.MainContent__modelLoadingOverlay}>
-          <div className={styles.modelLoadingContent}>
+          <div className={styles.MainContent__modelLoadingContent}>
             <Spinner size="medium" />
             <div className={styles.MainContent__modelLoadingText}>Loading models...</div>
           </div>

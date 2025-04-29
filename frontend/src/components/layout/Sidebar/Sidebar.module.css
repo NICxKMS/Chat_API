@@ -1,7 +1,6 @@
 .Sidebar {
   margin: 0;
   padding: 0;
-  width: 250px;
   height: 100%;
   background: var(--sidebar-bg, var(--sidebar-surface));
   border-right: 1px solid var(--border);
@@ -276,10 +275,6 @@
 .Sidebar__iconButton--settings:hover {
   background: var(--hover);
   color: var(--accent);
-}
-
-.newChatButton span {
-  /* Hide text on smaller sidebar widths if needed */
 }
 
 .compactSidebar .newChatButton span {

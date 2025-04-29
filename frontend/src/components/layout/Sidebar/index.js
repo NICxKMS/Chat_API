@@ -50,13 +50,13 @@ const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
   };
 
   return (
-    <div className={`${styles.sidebar} ${className}`}>
+    <div className={`${styles.Sidebar} ${className}`}>
       {/* Header with Title and Controls */}
-      <div className={styles.header}>
-        <h1 className={styles.title}>AI Chat</h1>
-        <div className={styles.headerControls}>
+      <div className={styles.Sidebar__header}>
+        <h1 className={styles.Sidebar__title}>AI Chat</h1>
+        <div className={styles.Sidebar__headerControls}>
           <button 
-            className={`${styles.iconButton} ${styles.newChatButton}`}
+            className={`${styles.Sidebar__iconButton} ${styles['Sidebar__iconButton--newChat']}`}
             onClick={handleNewChat}
             aria-label="New chat"
             title="New chat"
@@ -64,7 +64,7 @@ const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
             <PlusIcon size={20} />
           </button>
           <button 
-            className={`${styles.iconButton} ${styles.settingsButton}`}
+            className={`${styles.Sidebar__iconButton} ${styles['Sidebar__iconButton--settings']}`}
             onClick={handleSettings}
             aria-label="Settings"
             title="Settings"
@@ -75,13 +75,13 @@ const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
       </div>
       
       {/* Chat Session List */}
-      <div className={styles.chatListContainer}>
-        <ul className={styles.sessionList}>
+      <div className={styles.Sidebar__chatListContainer}>
+        <ul className={styles.Sidebar__sessionList}>
           {sampleSessions.map(session => (
-            <li key={session.id} className={styles.sessionItem}>
-              <button className={styles.sessionButton} onClick={() => console.log('Load session:', session.id)}>
-                <span className={styles.sessionTitle}>{session.title}</span>
-                <span className={styles.sessionTimestamp}>{session.timestamp}</span>
+            <li key={session.id} className={styles.Sidebar__sessionItem}>
+              <button className={styles.Sidebar__sessionButton} onClick={() => console.log('Load session:', session.id)}>
+                <span className={styles.Sidebar__sessionTitle}>{session.title}</span>
+                <span className={styles.Sidebar__sessionTimestamp}>{session.timestamp}</span>
               </button>
             </li>
           ))}
@@ -89,21 +89,21 @@ const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
       </div>
 
       {/* Footer */}
-      <div className={styles.footer}>
+      <div className={styles.Sidebar__footer}>
         {isAuthenticated ? (
-          <div className={styles.userProfile}>
+          <div className={styles.Sidebar__userProfile}>
             {currentUser?.photoURL ? (
               <img 
                 src={currentUser.photoURL} 
                 alt={`${userName}'s profile`}
-                className={styles.userAvatar}
+                className={styles.Sidebar__userAvatar}
               />
             ) : (
-              <div className={styles.userInitial}>
+              <div className={styles.Sidebar__userInitial}>
                 {userName.charAt(0).toUpperCase()}
               </div>
             )}
-            <span className={styles.userName}>{userName}</span>
+            <span className={styles.Sidebar__userName}>{userName}</span>
           </div>
         ) : (
           <span className={styles.footerPlaceholderText}></span>

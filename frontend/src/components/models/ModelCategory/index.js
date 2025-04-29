@@ -14,9 +14,9 @@ const TypeGroup = ({ typeGroupName, models, onSelectModel, selectedModelId, sear
   const typeGroupId = typeGroupName.replace(/\s+/g, '-').toLowerCase();
 
   return (
-    <div className={styles.typeGroup}>
+    <div className={styles.ModelCategory__typeGroup}>
       <div
-        className={styles.typeGroupHeader} // Use distinct style if needed
+        className={styles.ModelCategory__typeGroupHeader} // Use distinct style if needed
         onClick={toggleExpanded}
         role="button"
         tabIndex={0}
@@ -24,24 +24,24 @@ const TypeGroup = ({ typeGroupName, models, onSelectModel, selectedModelId, sear
         aria-controls={`type-content-${typeGroupId}`}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleExpanded(); }}
       >
-        <h6 className={styles.typeGroupName}>
+        <h6 className={styles.ModelCategory__typeGroupName}>
           {typeGroupName}
-          <span className={styles.modelCount}>{modelCount}</span>
+          <span className={styles.ModelCategory__count}>{modelCount}</span>
         </h6>
         <button 
-          className={`${styles.expandButton} ${isExpanded ? styles.expanded : ''}`}
+          className={`${styles.ModelCategory__expandButton} ${isExpanded ? styles['ModelCategory__expandButton--expanded'] : ''}`}
           aria-label={isExpanded ? `Collapse ${typeGroupName}` : `Expand ${typeGroupName}`}
           aria-hidden="true"
           tabIndex={-1}
         >
           {/* Re-using the same SVG arrow */}
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.expandIcon} aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.ModelCategory__expandIcon} aria-hidden="true">
             <path d="M6 9L2 5h8L6 9z" fill="currentColor" />
           </svg>
         </button>
       </div>
       {isExpanded && (
-        <div id={`type-content-${typeGroupId}`} className={styles.modelsList}>
+        <div id={`type-content-${typeGroupId}`} className={styles.ModelCategory__modelsList}>
           {models.map(model => (
             <ModelItem
               key={model.id}
@@ -82,9 +82,9 @@ const ProviderGroup = ({ providerName, typeGroups, onSelectModel, selectedModelI
   const providerGroupId = providerName.replace(/\s+/g, '-').toLowerCase();
 
   return (
-    <div className={styles.providerGroup}>
+    <div className={styles.ModelCategory__providerGroup}>
        <div
-          className={styles.providerHeader}
+          className={styles.ModelCategory__providerHeader}
           onClick={toggleExpanded}
           role="button"
           tabIndex={0}
@@ -92,24 +92,24 @@ const ProviderGroup = ({ providerName, typeGroups, onSelectModel, selectedModelI
           aria-controls={`provider-content-${providerGroupId}`}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleExpanded(); }}
        >
-         <h5 className={styles.providerName}>
+         <h5 className={styles.ModelCategory__providerName}>
            {providerName}
-           <span className={styles.modelCount}>{totalModelsInProvider}</span>
+           <span className={styles.ModelCategory__count}>{totalModelsInProvider}</span>
          </h5>
           <button 
-             className={`${styles.expandButton} ${isExpanded ? styles.expanded : ''}`}
+             className={`${styles.ModelCategory__expandButton} ${isExpanded ? styles['ModelCategory__expandButton--expanded'] : ''}`}
              aria-label={isExpanded ? `Collapse ${providerName}` : `Expand ${providerName}`}
              aria-hidden="true"
              tabIndex={-1}
           >
              {/* Re-using the same SVG arrow */}
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.expandIcon} aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.ModelCategory__expandIcon} aria-hidden="true">
                <path d="M6 9L2 5h8L6 9z" fill="currentColor" />
             </svg>
           </button>
        </div>
       {isExpanded && (
-        <div id={`provider-content-${providerGroupId}`} className={styles.providerContent}>
+        <div id={`provider-content-${providerGroupId}`} className={styles.ModelCategory__providerContent}>
           {sortedTypeGroups.map(({ typeGroupName, models }) => (
             <TypeGroup
               key={typeGroupName}
@@ -172,10 +172,10 @@ const ModelCategory = ({
   const categoryId = categoryName.replace(/\s+/g, '-').toLowerCase();
   
   return (
-    <div className={styles.category}>
+    <div className={styles.ModelCategory}>
       {/* Category Header - Remains collapsible */}
       <div 
-        className={styles.categoryHeader}
+        className={styles.ModelCategory__header}
         onClick={toggleExpanded}
         role="button" 
         tabIndex={0} 
@@ -183,18 +183,18 @@ const ModelCategory = ({
         aria-controls={`category-content-${categoryId}`}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleExpanded(); }} 
       >
-        <h4 className={styles.categoryName}>
+        <h4 className={styles.ModelCategory__name}>
           {categoryName}
-          <span className={styles.modelCount}>{totalModelsInCategory}</span>
+          <span className={styles.ModelCategory__count}>{totalModelsInCategory}</span>
         </h4>
         <button 
-          className={`${styles.expandButton} ${isExpanded ? styles.expanded : ''}`}
+          className={`${styles.ModelCategory__expandButton} ${isExpanded ? styles['ModelCategory__expandButton--expanded'] : ''}`}
           aria-label={isExpanded ? `Collapse ${categoryName}` : `Expand ${categoryName}`}
           aria-hidden="true" 
           tabIndex={-1} 
         >
           {/* SVG Icon */} 
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.expandIcon} aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.ModelCategory__expandIcon} aria-hidden="true">
             <path d="M6 9L2 5h8L6 9z" fill="currentColor" />
           </svg>
         </button>
@@ -204,7 +204,7 @@ const ModelCategory = ({
       {isExpanded && (
         <div 
            id={`category-content-${categoryId}`} 
-           className={styles.categoryContent}
+           className={styles.ModelCategory__content}
         >
           {providers.map(({ providerName, typeGroups }) => (
             // Use the new ProviderGroup component here
