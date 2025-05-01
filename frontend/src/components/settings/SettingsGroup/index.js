@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import styles from './SettingsGroup.module.css';
+import commonStyles from '../common/ControlStyles.module.css';
 
 const SettingsGroup = ({
   title,
@@ -15,10 +16,12 @@ const SettingsGroup = ({
     setIsExpanded(!isExpanded);
   };
 
+  const groupClasses = [commonStyles.controlContainer, styles.SettingsGroup];
+  if (isExpanded) groupClasses.push(styles['SettingsGroup--expanded']);
   return (
-    <div className={`${styles.SettingsGroup} ${isExpanded ? styles['SettingsGroup--expanded'] : ''}`} id={id}>
+    <div className={groupClasses.join(' ')} id={id}>
       <div 
-        className={styles.SettingsGroup__header}
+        className={[commonStyles.controlHeader, styles.SettingsGroup__header].join(' ')}
         onClick={toggleExpanded}
         role="button"
         aria-expanded={isExpanded}
@@ -31,7 +34,7 @@ const SettingsGroup = ({
         }}
       >
         <div className={styles.SettingsGroup__titleContainer}>
-          <h3 className={styles.SettingsGroup__title}>{title}</h3>
+          <h3 className={commonStyles.controlLabel}>{title}</h3>
           <button 
             className={styles.SettingsGroup__expandButton}
             aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
@@ -55,7 +58,7 @@ const SettingsGroup = ({
             </svg>
           </button>
         </div>
-        {description && <p className={styles.SettingsGroup__description}>{description}</p>}
+        {description && <p className={commonStyles.controlDescription}>{description}</p>}
       </div>
       
       {isExpanded && (

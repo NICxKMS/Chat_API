@@ -1,9 +1,11 @@
 import { memo } from 'react';
+import PropTypes from 'prop-types';
 import { SignInIcon} from '@primer/octicons-react';
 // Import icons using the correct paths
 import '../../../styles/common/buttons.css';
 // import component-specific styles for avatar/initial only
 import styles from './AuthButton.module.css';
+import Spinner from '../../common/Spinner';
 
 /**
  * Auth button component for login/logout
@@ -20,9 +22,9 @@ const AuthButton = memo(({
   isAuthenticated, 
   onLogin, 
   onLogout, 
-  userName,
-  isLoading,
-  currentUser
+  userName = 'User',
+  isLoading = false,
+  currentUser = null
 }) => {
   return (
     <button
@@ -33,7 +35,7 @@ const AuthButton = memo(({
       aria-label={isLoading ? "Loading Authentication" : isAuthenticated ? "Logout" : "Login or Sign Up"}
     >
       {isLoading ? (
-        <div className="loadingIcon"></div>
+        <Spinner size="small" tag="auth" />
       ) : isAuthenticated ? (
         currentUser?.photoURL ? (
           <img 
@@ -48,7 +50,7 @@ const AuthButton = memo(({
           </div>
         )
       ) : (
-        <SignInIcon size={20} className="buttonIcon" />
+        <SignInIcon size={20} />
       )}
     </button>
   );
@@ -58,3 +60,17 @@ const AuthButton = memo(({
 AuthButton.displayName = 'AuthButton';
 
 export default AuthButton;
+
+// Define PropTypes
+AuthButton.propTypes = {
+  isAuthenticated: PropTypes.bool.isRequired,
+  onLogin: PropTypes.func.isRequired,
+  onLogout: PropTypes.func.isRequired,
+  userName: PropTypes.string,
+  isLoading: PropTypes.bool,
+  currentUser: PropTypes.shape({
+    displayName: PropTypes.string,
+    email: PropTypes.string,
+    photoURL: PropTypes.string
+  })
+};

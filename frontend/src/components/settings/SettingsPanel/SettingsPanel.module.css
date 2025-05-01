@@ -1,0 +1,328 @@
+/* Layout: Header, Tabs, Content, Footer */
+
+/* Header Section */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--card-bg);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* User Profile Styles */
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background-color: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover,
+button.closeButton:hover {
+  background-color: rgb(255 255 255 / 10%) !important;
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+/* Tab navigation */
+
+/* Content Section */
+.content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 20%) transparent;
+}
+
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background-color: rgb(255 255 255 / 20%);
+  border-radius: 6px;
+}
+
+/* Individual Setting Item */
+.settingItem {
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: translateY(10px);
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.settingItem:last-child {
+  margin-bottom: 0;
+}
+
+/* Removed hover effect
+.settingItem:hover {
+  border-color: var(--border-accent);
+  box-shadow: 0 4px 15px rgb(0 0 0 / 10%);
+}
+*/
+
+.animate {
+  animation: fadeIn 0.5s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.headingWithIcon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+}
+
+.settingLabel {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.settingValue {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+  background-color: rgb(87 157 152 / 20%);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  min-width: 45px;
+  text-align: center;
+}
+
+.settingDescription {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #a0a0a0);
+  line-height: 1.5;
+}
+
+/* Footer Section */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background-color: var(--card-bg);
+  border-top: 1px solid var(--border);
+}
+
+.resetButton {
+  padding: 0.6rem 1rem;
+  background-color: transparent;
+  border: 1px solid var(--border-accent);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover,
+button.resetButton:hover {
+  background-color: rgb(255 255 255 / 5%) !important;
+  border-color: var(--text-primary);
+}
+
+/* Tabs Navigation */
+.navTabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--panel-bg);
+}
+
+/* Base navTab colors */
+.navTab {
+  min-height: 0;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navTab .tabIcon,
+.navTab .tabLabel {
+  color: inherit;
+}
+
+/* Active tab indicator and highlight */
+.navTabActive {
+  color: var(--text-primary);
+  border-bottom: none; /* remove bottom border if any */
+  border-left: 3px solid var(--accent-color);
+}
+
+.navTabActive .tabIcon,
+.navTabActive .tabLabel {
+  color: var(--text-primary);
+}
+
+/* Controls Container */
+.controlsContainer {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+/* Utility: make a child flex to fill remaining height */
+.fullHeight {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.fullHeight textarea {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Ensure body flex doesn't overflow */
+.SettingsPanel__content, .controlsContainer {
+  flex: 1;
+}
+
+/* Body Wrapper Layout */
+.bodyWrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* NavTab Content */
+.navTabContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navTabContent:hover,
+.navTab:hover .navTabContent {
+  background-color: var(--accent-bg-soft);
+  color: var(--text-primary);
+}
+
+/* Active state inside the content wrapper */
+.navTabActive .navTabContent {
+  background-color: var(--accent-bg-soft);
+  color: var(--text-primary);
+}
+
+.navTabActive .navTabContent .tabIcon,
+.navTabActive .navTabContent .tabLabel {
+  color: var(--text-primary);
+}
+
+/* ===============================
+   MEDIA QUERIES
+   =============================== */
+
+/* Mobile (≤ 550px) */
+@media (width <= 550px) {
+  .header,
+  .footer,
+  .content {
+    padding: 1rem;
+  }
+  
+  /* Removed smaller padding for mobile
+  .settingItem {
+    padding: 0.75rem;
+  }
+  */
+  
+  .tabLabel {
+    font-size: 0.7rem;
+  }
+  
+  .settingHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .resetButton,
+  .applyButton {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  .navTab {
+    flex: 1;
+  }
+}
+
+/* Desktop (> 550px) */
+@media (min-width: 551px) {
+  .navTab {
+    justify-content: flex-start;
+    padding-left: 1.5rem;
+  }
+  
+  .bodyWrapper {
+    flex-direction: row;
+  }
+  
+  .navTabs {
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+    height: 100%;
+    align-items: stretch;
+  }
+  
+  .controlsContainer {
+    flex: 1;
+    overflow-y: auto;
+  }
+} 

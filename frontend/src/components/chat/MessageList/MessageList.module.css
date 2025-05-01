@@ -25,9 +25,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin-bottom: 1rem;
-  padding: 0.75rem 1.25rem;
-  padding-bottom: 12px;
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) 0;
   box-sizing: border-box;
 
   /* Improve performance during scrolling/resizing */
@@ -36,17 +35,9 @@
   width: 100%;
 }
 
-.MessageList__messageRow:hover {
-  background-color: rgb(0 0 0 / 2%);
-}
-
-body.dark-mode .MessageList__messageRow:hover {
-  background-color: rgb(255 255 255 / 2%);
-}
-
 .MessageList__typingIndicatorContainer {
   position: absolute;
-  bottom: 1rem;
+  bottom: var(--space-md);
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
@@ -59,7 +50,7 @@ body.dark-mode .MessageList__messageRow:hover {
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 2rem;
+  padding: var(--space-xxl);
   color: var(--secondary-text);
   text-align: center;
 }
@@ -67,21 +58,21 @@ body.dark-mode .MessageList__messageRow:hover {
 .MessageList__emptyStateIcon {
   width: 80px;
   height: 80px;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-xl);
   opacity: 0.7;
 }
 
 .MessageList__emptyStateTitle {
-  font-size: 1.5rem;
+  font-size: var(--font-size-xxl);
   font-weight: 600;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-sm);
   background: var(--gradient-primary);
   background-clip: text;
   color: transparent;
 }
 
 .MessageList__emptyStateText {
-  font-size: 1rem;
+  font-size: var(--font-size-md);
   max-width: 500px;
   line-height: 1.5;
 }
@@ -89,8 +80,7 @@ body.dark-mode .MessageList__messageRow:hover {
 /* Responsive adjustments */
 @media (width <= 768px) {
   .MessageList__messageRow {
-    padding: 0.75rem 1rem;
-    padding-bottom: 10px;
+    padding: var(--space-sm) 0;
   }
   
   .MessageList__emptyStateIcon {
@@ -99,11 +89,11 @@ body.dark-mode .MessageList__messageRow:hover {
   }
   
   .MessageList__emptyStateTitle {
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
   }
   
   .MessageList__emptyStateText {
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
   }
 } 
 
@@ -133,13 +123,12 @@ body.dark-mode .MessageList__messageRow:hover {
 .MessageList__imageContainer {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
   width: fit-content;
   max-width: 70%;
   align-self: flex-end;
   margin-left: auto;
-  padding-right: 1rem;
 }
 
 /* Styles for individual images */
@@ -147,9 +136,9 @@ body.dark-mode .MessageList__messageRow:hover {
   max-width: 100%;
   max-height: 300px;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background-color: var(--hover);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  box-shadow: var(--shadow-md);
   display: block;
 }
 
@@ -167,4 +156,25 @@ body.dark-mode .MessageList__messageRow:hover {
 /* Ensure user messages themselves align correctly even without images */
 .MessageList__messageRow:has(> div[class*="ChatMessage--user"]) {
   align-items: flex-end;
+} 
+
+.copyButton {
+  /* ... existing styles ... */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm); /* Updated */
+  transition: all 0.15s ease;
+  /* ... */
+}
+
+.copyButton:hover {
+  /* ... existing styles ... */
+  border-color: var(--accent-text-color);
+  box-shadow: var(--shadow-md); /* Updated */
+  /* ... */
+} 
+
+.scrollToBottomButton:hover {
+  /* ... existing styles ... */
+  border-color: var(--accent-text-color);
 } 

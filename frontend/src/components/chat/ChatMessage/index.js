@@ -28,7 +28,7 @@ const getTexWorker = () => {
  * @param {boolean} props.isStreaming - Whether this message is currently streaming
  * @returns {JSX.Element} - Rendered component
  */
-const ChatMessage = ({ message, isStreaming, onEditMessage, overrideContent }) => {
+const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overrideContent = null }) => {
   // Use overrideContent if provided, else fall back to message.content
   const content = overrideContent != null ? overrideContent : message.content;
 
@@ -286,16 +286,39 @@ const ChatMessage = ({ message, isStreaming, onEditMessage, overrideContent }) =
   );
 };
 
+// Display name
+ChatMessage.displayName = 'ChatMessage';
+
+// PropTypes
 ChatMessage.propTypes = {
   message: PropTypes.shape({
-    role: PropTypes.string.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    role: PropTypes.oneOf(['user', 'assistant', 'system', 'error']).isRequired,
     content: PropTypes.oneOfType([
       PropTypes.string,
-      PropTypes.array
-    ]).isRequired
+      PropTypes.arrayOf(PropTypes.shape({ // Support complex content
+        type: PropTypes.string.isRequired,
+        text: PropTypes.string,
+        image_url: PropTypes.shape({
+          url: PropTypes.string.isRequired
+        })
+      }))
+    ]).isRequired,
+    timestamp: PropTypes.number.isRequired,
+    metrics: PropTypes.shape({
+      elapsedTime: PropTypes.number,
+      tokenCount: PropTypes.number,
+      tokensPerSecond: PropTypes.number,
+      timeToFirstToken: PropTypes.number,
+      promptTokens: PropTypes.number,
+      completionTokens: PropTypes.number,
+      totalTokens: PropTypes.number,
+      finishReason: PropTypes.string
+    })
   }).isRequired,
   isStreaming: PropTypes.bool,
-  onEditMessage: PropTypes.func
+  onEditMessage: PropTypes.func,
+  overrideContent: PropTypes.string // Optional override for rendering previews
 };
 
 export default memo(ChatMessage); 

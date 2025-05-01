@@ -5,6 +5,7 @@ import React, {
   useMemo, 
   useState
 } from 'react';
+import PropTypes from 'prop-types';
 import { useModel, useModelFilter } from '../../../contexts/ModelContext';
 import ModelItem from '../ModelItem';
 import ModelSearch from '../ModelSearch';
@@ -28,6 +29,10 @@ const SelectedModelDisplay = React.memo(({ selectedModel }) => (
     </div>
   </div>
 ));
+
+SelectedModelDisplay.propTypes = {
+  selectedModel: PropTypes.object
+};
 
 /**
  * CapabilityTabs component for selecting model categories
@@ -71,6 +76,12 @@ const CapabilityTabs = React.memo(({ capabilities, activeCapability, onSelectCap
     </div>
   );
 });
+
+CapabilityTabs.propTypes = {
+  capabilities: PropTypes.object.isRequired,
+  activeCapability: PropTypes.string.isRequired,
+  onSelectCapability: PropTypes.func.isRequired
+};
 
 /**
  * ModelList component showing the filtered and grouped models
@@ -120,6 +131,17 @@ const ModelList = React.memo(({ isLoading, groupedModels, selectedModel, onSelec
   </div>
 ));
 
+ModelList.propTypes = {
+  isLoading: PropTypes.bool.isRequired,
+  groupedModels: PropTypes.array,
+  selectedModel: PropTypes.object,
+  onSelectModel: PropTypes.func.isRequired,
+  searchTerm: PropTypes.string,
+  totalCount: PropTypes.number,
+  activeCapability: PropTypes.string.isRequired,
+  onClearSearch: PropTypes.func.isRequired
+};
+
 /**
  * SearchContainer component for model searching
  */
@@ -132,6 +154,12 @@ const SearchContainer = React.memo(({ searchTerm, onSearchChange, totalCount }) 
     />
   </div>
 ));
+
+SearchContainer.propTypes = {
+  searchTerm: PropTypes.string,
+  onSearchChange: PropTypes.func.isRequired,
+  totalCount: PropTypes.number
+};
 
 /**
  * ModelSelectionPanel component for selecting models from a filterable list
@@ -173,6 +201,21 @@ const ModelSelectionPanel = React.forwardRef(({
     </div>
   </div>
 ));
+
+ModelSelectionPanel.propTypes = {
+  isExperimentalModelsEnabled: PropTypes.bool,
+  toggleExperimentalModels: PropTypes.func,
+  capabilitiesWithCounts: PropTypes.object.isRequired,
+  activeCapability: PropTypes.string.isRequired,
+  setActiveCapability: PropTypes.func.isRequired,
+  isLoading: PropTypes.bool.isRequired,
+  groupedModels: PropTypes.array,
+  selectedModel: PropTypes.object,
+  handleSelectModel: PropTypes.func.isRequired,
+  searchTerm: PropTypes.string,
+  totalCount: PropTypes.number,
+  handleClearSearch: PropTypes.func.isRequired
+};
 
 // Helper function to format provider name
 const formatProviderName = (provider) => {

@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 export const BREAKPOINTS = {
   mobile: '640px',
   tablet: '1023px',
-  desktop: '1024px'
+  desktop: '1024px',
+  settings: '550px'
 };
 
 // Cached media query listeners
@@ -110,8 +111,21 @@ export const useIsDesktop = () => {
 };
 
 /**
+ * Special hook for settings components
+ */
+export const useIsSettingsMobile = () => {
+  const query = useMemo(() => `(max-width: ${BREAKPOINTS.settings})`, []);
+  return useMediaQuery(query);
+};
+
+export const useIsSettingsDesktop = () => {
+  const query = useMemo(() => `(min-width: calc(${BREAKPOINTS.settings} + 1px))`, []);
+  return useMediaQuery(query);
+};
+
+/**
  * Get a consistent breakpoint value across the app
- * @returns {{mobile: string, tablet: string, desktop: string}}
+ * @returns {{mobile: string, tablet: string, desktop: string, settings: string}}
  */
 export const useBreakpoints = () => {
   return BREAKPOINTS;

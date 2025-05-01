@@ -8,6 +8,8 @@ import { useChatStatus } from './ChatStatusContext';
 import { usePerformanceMetrics } from './PerformanceMetricsContext';
 import { useStreamingEvents } from './StreamingEventsContext';
 import { fetchWithRetry } from '../utils/network';
+import { useIsDesktop } from '../hooks/useMediaQuery';
+import { useToast } from './ToastContext';
 
 // Context for chat actions (controls)
 const ChatControlContext = createContext();
@@ -33,6 +35,8 @@ export const ChatControlProvider = ({ children }) => {
   const { setIsWaitingForResponse, setError } = useChatStatus();
   const { resetPerformanceMetrics, startPerformanceTimer, setTokenMetricsForLastMessage } = usePerformanceMetrics();
   const { streamMessageWithFetch, stopStreaming } = useStreamingEvents();
+  const isDesktop = useIsDesktop();
+  const { showToast } = useToast();
 
   // Helpers
   const formatModelIdentifier = useCallback((model) => {
@@ -166,36 +170,65 @@ export const ChatControlProvider = ({ children }) => {
   }, [stopStreaming]);
 
   // Action: clearChat
-  const clearChatAction = useCallback(() => {
+  const clearChat = useCallback(() => {
     setChatHistory([]);
     resetPerformanceMetrics();
   }, [setChatHistory, resetPerformanceMetrics]);
 
-  // Action: downloadChatHistory
-  const downloadChatHistoryAction = useCallback(() => {
+  // Action: newChat
+  const newChat = useCallback(() => {
+    if (chatHistoryRef.current.length > 0) {
+      clearChat();
+    }
+  }, [chatHistoryRef, clearChat]);
+
+  // Action: resetChat
+  const resetChat = useCallback(() => {
+    if (chatHistoryRef.current.length === 0) return;
+    
+    if (window.confirm('Are you sure you want to clear the current chat?')) {
+      clearChat();
+      showToast({ type: 'info', message: 'Chat has been cleared' });
+    }
+  }, [chatHistoryRef, clearChat, showToast]);
+
+  // Action: downloadChat
+  const downloadChat = useCallback(() => {
     const history = chatHistoryRef.current;
     if (!history.length) return;
-    const formatted = history.map(msg => {
-      const role = msg.role === 'user'
-        ? 'You'
-        : msg.role === 'assistant'
-          ? selectedModel?.name || 'Assistant'
-          : msg.role;
-      const content = typeof msg.content === 'string' ? msg.content : '';
-      return `${role}: ${content}\n`;
-    }).join('');
-    const blob = new Blob([formatted], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `chat_${new Date().toISOString()}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
+    try {
+      const formatted = history.map(msg => {
+        const role = msg.role === 'user'
+          ? 'You'
+          : msg.role === 'assistant'
+            ? selectedModel?.name || 'Assistant'
+            : msg.role;
+        let contentText = '';
+        if (typeof msg.content === 'string') {
+          contentText = msg.content;
+        } else if (Array.isArray(msg.content)) {
+          contentText = msg.content
+            .map(part => part.type === 'text' ? part.text : '[Image]')
+            .join('\n');
+        }
+        return `${role}: ${contentText}\n`;
+      }).join('');
+      const blob = new Blob([formatted], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `chat_${new Date().toISOString().replace(/:/g, '-')}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      showToast({ type: 'success', message: 'Chat downloaded successfully' });
+      // Clean up anchor and URL
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    }, 100);
-  }, [selectedModel]);
+    } catch (error) {
+      console.error("Error downloading chat:", error);
+      showToast({ type: 'error', message: 'Failed to download chat. Please try again.' });
+    }
+  }, [chatHistoryRef, selectedModel, showToast]);
 
   // Action: getOrCreateConversation (stub)
   const getOrCreateConversation = useCallback((conversationId) => {
@@ -207,16 +240,20 @@ export const ChatControlProvider = ({ children }) => {
     sendMessage,
     stopGeneration: stopGenerationAction,
     addMessageToHistory,
-    clearChat: clearChatAction,
-    downloadChatHistory: downloadChatHistoryAction,
+    clearChat,
+    newChat,
+    resetChat,
+    downloadChat,
     getOrCreateConversation,
     setTokenMetricsForLastMessage
   }), [
     sendMessage,
     stopGenerationAction,
     addMessageToHistory,
-    clearChatAction,
-    downloadChatHistoryAction,
+    clearChat,
+    newChat,
+    resetChat,
+    downloadChat,
     getOrCreateConversation,
     setTokenMetricsForLastMessage
   ]);

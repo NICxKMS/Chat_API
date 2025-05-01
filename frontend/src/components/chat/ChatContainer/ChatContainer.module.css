@@ -5,7 +5,7 @@
   width: 100%;
   background-color: var(--chat-bg);
   position: relative;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow);
   overflow: hidden;
   scrollbar-width: thin;
@@ -16,10 +16,10 @@
 /* Container for the Model Selector Button */
 .ChatContainer__modelButtonContainer {
   position: absolute;
-  top: 1rem;
+  top: var(--space-md);
   left: 50%;
   transform: translateX(-50%);
-  z-index: 20;
+  z-index: var(--z-index-sticky);
   width: auto;
 }
 
@@ -28,7 +28,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  padding: 1rem 0;
+  padding: var(--space-md) 0;
   width: 100%;
   margin: 0 auto;
   min-height: 0;
@@ -63,7 +63,7 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 2rem 0;
+  padding: var(--space-xxl) 0;
 }
 
 .ChatContainer__emptyChatContent {
@@ -76,47 +76,47 @@
 
 .ChatContainer__greetingMessage {
   color: var(--secondary-text);
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-xl);
   animation: fadeIn 0.5s ease-out;
 }
 
 .ChatContainer__greetingMessage h2 {
-  font-size: 1.8rem;
+  font-size: var(--font-size-xxxl);
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-xs);
   transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 .ChatContainer__greetingMessage p {
-  font-size: 1rem;
+  font-size: var(--font-size-md);
   line-height: 1.5;
   transition: color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 /* Base Input Area styles (Common to static and fixed) */
 .ChatContainer__inputArea {
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   width: 100%;
 }
 
 /* Styles for the static input area in empty chat */
 .ChatContainer__staticInputArea {
   position: relative;
-  margin-top: 1rem;
+  margin-top: var(--space-md);
   max-width: 800px;
 }
 
 /* Styles for the fixed input area in active chat */
 .ChatContainer__fixedInputArea {
   position: absolute;
-  bottom: 1rem;
+  bottom: var(--space-md);
   left: 50%;
   transform: translateX(-50%);
   width: 96%;
-  max-width: 760px;
+  max-width: 780px;
   box-shadow: var(--shadow-lg);
-  z-index: 10;
+  z-index: var(--z-index-sticky);
   border-color: var(--border-pronounced);
 }
 
@@ -124,7 +124,7 @@
 .ChatContainer__inputControlsWrapper {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-xs);
   position: relative;
   flex-direction: column;
 }
@@ -162,15 +162,15 @@
 
 .ChatContainer__metricsPlaceholder {
   height: 30px;
-  border-radius: 8px;
-  margin: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  margin: var(--space-sm) var(--space-md);
   overflow: hidden;
 }
 
 .ChatContainer__inputPlaceholder {
   height: 60px;
-  border-radius: 12px;
-  margin: 0 1rem 0.75rem;
+  border-radius: var(--radius-lg);
+  margin: 0 var(--space-md) var(--space-sm);
   overflow: hidden;
 }
 
@@ -186,14 +186,14 @@
 /* Scroll to Bottom Button */
 .ChatContainer__scrollToBottomButton {
   position: fixed;
-  bottom: calc(var(--input-height, 80px) + 1.5rem); /* Use CSS variable to handle dynamic input height */
+  bottom: calc(var(--input-height, 80px) + var(--space-xl));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 15; /* Above chat content, below input area maybe */
+  z-index: var(--z-index-sticky);
   background-color: var(--chat-bg);
   color: var(--text);
-  border: 1px solid var(--border-pronounced);
-  border-radius: 50%;
+  border: var(--border-width-sm) solid var(--border-pronounced);
+  border-radius: var(--radius-full);
   width: 40px;
   height: 40px;
   display: flex;
@@ -202,7 +202,7 @@
   cursor: pointer;
   box-shadow: var(--shadow-lg);
   opacity: 0.9;
-  transition: opacity 0.2s ease, transform 0.1s ease, bottom 0.2s ease;
+  transition: opacity var(--transition-duration-short) ease, transform 0.1s ease, bottom var(--transition-duration-short) ease;
 }
 
 .ChatContainer__scrollToBottomButton:hover {
@@ -221,43 +221,37 @@
   }
   
   .ChatContainer__metricsPlaceholder {
-    margin: 0.5rem 0.75rem;
+    margin: var(--space-xs) var(--space-sm);
   }
   
   .ChatContainer__inputPlaceholder {
-    margin: 0 0.75rem 0.5rem;
+    margin: 0 var(--space-sm) var(--space-xs);
   }
   
   .ChatContainer__staticInputArea {
-    max-width: calc(100% - 2rem);
+    max-width: calc(100% - var(--space-xxl));
   }
 
   .ChatContainer__fixedInputArea {
-    max-width: calc(100% - 2rem);
-    bottom: 0.5rem;
+    max-width: 100%;
+    bottom: 0;
     position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 96%;
-    z-index: 100;
+    left: 0;
+    transform: none;
+    width: 100%;
+    z-index: var(--z-index-modal);
+    border-radius: 0;
   }
 
   .ChatContainer__fixedInputArea:focus-within {
     position: fixed;
-    bottom: 0.5rem;
+    bottom: 0;
   }
   
   .ChatContainer__scrollToBottomButton {
-    bottom: calc(var(--input-height, 60px) + 1rem); /* Adjust for mobile view */
-    width: 36px; /* Slightly smaller on mobile */
+    bottom: calc(var(--input-height, 80px) + var(--space-md));
+    width: 36px;
     height: 36px;
-  }
-
-  .ChatContainer__modelButtonContainer {
-    width: auto;
-    max-width: calc(100% - 6rem);
-    left: 50%;
-    transform: translateX(-50%);
   }
 }
 
@@ -270,4 +264,4 @@
 .ChatContainer--editingMode .ChatContainer__fixedInputArea {
   border-top: 2px solid var(--accent-color);
   background-color: var(--hover);
-} 
+}

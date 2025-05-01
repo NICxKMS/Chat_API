@@ -1,40 +1,40 @@
 .LoginModal {
   position: fixed;
   inset: 0;
-  background-color: rgb(0 0 0 / 60%);
+  background-color: var(--overlay-bg-strong);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000; /* Ensure it's above other content */
+  z-index: var(--z-index-modal-backdrop);
   backdrop-filter: blur(4px); /* Optional nice effect */
   animation: fadeIn 0.3s ease-out;
 }
 
 .LoginModal__modal {
   background-color: var(--card-bg);
-  padding: 30px 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgb(0 0 0 / 20%);
+  padding: var(--space-xxxl) var(--space-xxxl); /* Approx 30px 40px -> 40px 40px */
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow); /* Use theme-agnostic variable */
   width: 90%;
   max-width: 450px;
   position: relative;
   text-align: center;
-  border: 2px solid var(--border-pronounced);
+  border: var(--border-width-md) solid var(--border-pronounced);
   animation: slideIn 0.3s ease-out;
 }
 
 .LoginModal__closeButton {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: var(--space-md); /* 15px -> 16px */
+  right: var(--space-md); /* 15px -> 16px */
   background: none;
   border: none;
-  font-size: 1.8rem;
+  font-size: var(--font-size-xxxl); /* 1.8rem -> 1.75rem */
   cursor: pointer;
   color: var(--text-secondary);
-  padding: 5px;
+  padding: var(--space-xxs); /* 5px -> 4px */
   line-height: 1;
-  transition: color 0.2s ease;
+  transition: color var(--transition-duration-short) var(--transition-timing-default);
 }
 
 .LoginModal__closeButton:hover {
@@ -43,39 +43,39 @@
 
 .LoginModal__title {
   margin-top: 0;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-sm); /* 10px -> 12px */
   color: var(--text-primary);
-  font-size: 1.8rem;
+  font-size: var(--font-size-xxxl); /* 1.8rem -> 1.75rem */
   font-weight: 600;
 }
 
 .LoginModal__subtitle {
-  margin-bottom: 30px;
+  margin-bottom: var(--space-xl); /* 30px -> 24px */
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: var(--font-size-md); /* 1rem */
 }
 
 .LoginModal__providerList {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 25px;
+  gap: var(--space-md); /* 15px -> 16px */
+  margin-bottom: var(--space-xl); /* 25px -> 24px */
 }
 
 .LoginModal__providerButton {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 12px 20px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
+  gap: var(--space-sm); /* 12px */
+  padding: var(--space-sm) var(--space-lg); /* 12px 20px */
+  border-radius: var(--radius-md); /* 8px */
+  border: var(--border-width-sm) solid var(--border-color);
   background-color: var(--button-secondary-bg);
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: var(--font-size-md); /* 1rem */
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  transition: background-color var(--transition-duration-short) ease, border-color var(--transition-duration-short) ease, transform 0.1s ease;
   width: 100%;
 }
 
@@ -94,32 +94,32 @@
 }
 
 .LoginModal__providerIcon {
-  font-size: 1.4rem;
+  font-size: var(--font-size-xxl); /* 1.4rem -> 1.5rem */
 }
 
 
 .LoginModal__spinnerContainer {
-  padding: 40px 0;
+  padding: var(--space-xxxl) 0; /* 40px -> 40px */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: var(--space-md); /* 15px -> 16px */
   color: var(--text-secondary);
 }
 
 .LoginModal__error {
   color: var(--error-color);
   background-color: var(--error-bg);
-  padding: 10px 15px;
-  border-radius: 6px;
-  margin-top: 20px;
-  font-size: 0.9rem;
+  padding: var(--space-sm) var(--space-md); /* 10px 15px -> 12px 16px */
+  border-radius: var(--radius-sm); /* 6px */
+  margin-top: var(--space-lg); /* 20px */
+  font-size: var(--font-size-sm); /* 0.9rem -> 0.875rem */
   text-align: center;
 }
 
 .LoginModal__footerText {
-  margin-top: 30px;
-  font-size: 0.8rem;
+  margin-top: var(--space-xl); /* 30px -> 24px */
+  font-size: var(--font-size-xs); /* 0.8rem -> 0.75rem */
   color: var(--text-tertiary);
 }
 
@@ -147,18 +147,18 @@
 .LoginModal__emailForm {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 20px;
+  gap: var(--space-md); /* 15px -> 16px */
+  margin-bottom: var(--space-lg); /* 20px */
 }
 
 .LoginModal__inputField {
-  padding: 14px 16px;
-  border-radius: 8px;
-  border: 2px solid var(--border-pronounced);
+  padding: var(--space-sm) var(--space-md); /* 14px 16px -> 12px 16px */
+  border-radius: var(--radius-md); /* 8px */
+  border: var(--border-width-md) solid var(--border-pronounced);
   background-color: var(--input-bg);
   color: var(--text-primary);
-  font-size: 1rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-size: var(--font-size-md); /* 1rem */
+  transition: border-color var(--transition-duration-short) ease, box-shadow var(--transition-duration-short) ease;
   width: 100%;
   box-sizing: border-box;
   box-shadow: 0 2px 4px rgb(0 0 0 / 5%);
@@ -167,32 +167,32 @@
 .LoginModal__inputField:focus {
   outline: none;
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px var(--accent-color-faded);
+  box-shadow: var(--shadow-focus-ring); /* TODO: Confirm --accent-color-faded is replaced */
 }
 
 .LoginModal__emailButtonContainer {
   display: flex;
-  gap: 10px;
-  margin-top: 5px;
+  gap: var(--space-sm); /* 10px -> 12px */
+  margin-top: var(--space-xs); /* 5px -> 8px */
 }
 
 .LoginModal__emailButton {
   flex-grow: 1;
-  padding: 14px 16px;
-  border-radius: 8px;
-  border: 2px solid var(--border-pronounced);
+  padding: var(--space-sm) var(--space-md); /* 14px 16px -> 12px 16px */
+  border-radius: var(--radius-md); /* 8px */
+  border: var(--border-width-md) solid var(--border-pronounced);
   background-color: var(--accent-color);
   color: var(--accent-text-color);
-  font-size: 1rem;
+  font-size: var(--font-size-md); /* 1rem */
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-duration-short) ease;
   box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 }
 
 .LoginModal__emailButton:hover:not(:disabled) {
-  background-color: var(--accent-color-dark);
-  border-color: var(--accent-color-dark);
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgb(0 0 0 / 15%);
 }
@@ -202,14 +202,14 @@
 }
 
 .LoginModal__emailButton:disabled {
-  background-color: var(--accent-color-disabled);
+  background-color: var(--disabled-bg); /* Use defined disabled var */
   cursor: not-allowed;
 }
 
 .LoginModal__signUpButton {
   background-color: var(--button-secondary-bg);
   color: var(--text-primary);
-  border: 2px solid var(--border-pronounced);
+  border: var(--border-width-md) solid var(--border-pronounced);
   box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 }
 
@@ -230,12 +230,12 @@
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 0.9rem;
-  margin-top: 15px;
+  font-size: var(--font-size-sm); /* 0.9rem -> 0.875rem */
+  margin-top: var(--space-md); /* 15px -> 16px */
   text-align: center;
   width: 100%;
-  padding: 5px;
-  transition: color 0.2s ease;
+  padding: var(--space-xxs); /* 5px -> 4px */
+  transition: color var(--transition-duration-short) ease;
 }
 
 .LoginModal__backButton:hover:not(:disabled) {
@@ -243,50 +243,55 @@
 }
 
 .LoginModal__alternativeLoginContainer {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 2px solid var(--border-pronounced);
+  margin-top: var(--space-xl); /* 30px -> 24px */
+  padding-top: var(--space-lg); /* 20px */
+  border-top: var(--border-width-md) solid var(--border-pronounced);
   text-align: center;
 }
 
 .LoginModal__alternativeLoginText {
-  font-size: 0.9rem;
+  margin-bottom: var(--space-lg); /* 20px */
   color: var(--text-secondary);
-  margin-bottom: 15px;
+  font-size: var(--font-size-sm); /* 0.9rem -> 0.875rem */
 }
 
 .LoginModal__providerIconContainer {
   display: flex;
   justify-content: center;
-  gap: 25px;
+  gap: var(--space-lg); /* 20px */
 }
 
 .LoginModal__providerIconButton {
-  background: var(--button-secondary-bg);
-  border: 2px solid var(--border-pronounced);
-  padding: 12px;
-  font-size: 1.8rem;
-  color: var(--text-secondary);
+  background: none;
+  border: var(--border-width-md) solid var(--border-pronounced);
+  border-radius: var(--radius-full);
+  padding: var(--space-sm); /* 10px -> 12px */
   cursor: pointer;
-  transition: all 0.2s ease;
-  border-radius: 50%;
+  color: var(--text-secondary);
+  font-size: var(--font-size-xxxl); /* 1.8rem -> 1.75rem */
+  line-height: 1;
+  transition: all var(--transition-duration-short) ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  width: 50px; /* Keep fixed size? */
+  height: 50px; /* Keep fixed size? */
+  box-shadow: 0 2px 4px rgb(0 0 0 / 5%); /* TODO: Replace with shadow variable? */
 }
 
 .LoginModal__providerIconButton:hover:not(:disabled) {
-  color: var(--text-primary);
-  transform: scale(1.1);
-  border-color: var(--border-hover-color);
-  background-color: var(--button-secondary-hover-bg);
-  box-shadow: 0 4px 8px rgb(0 0 0 / 15%);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  background-color: var(--disabled-bg); /* Use defined disabled var */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 10%); /* TODO: Replace with shadow variable? */
 }
 
 .LoginModal__providerIconButton:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+}
+
+.togglePasswordVisibility:hover {
+  color: var(--accent-color);
 } 

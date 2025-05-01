@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { InfoIcon } from '../icons';
 import styles from './SettingsToggle.module.css';
+import commonStyles from '../common/ControlStyles.module.css';
 
 /**
  * Universal boolean control component (toggle/switch)
@@ -30,38 +31,45 @@ const BooleanControl = ({
     ? styles['SettingsToggle__switchTrack--checked'] 
     : styles['SettingsToggle__track--checked'];
 
+  // Combine container classes including common control styles
+  const toggleClasses = [commonStyles.controlContainer, containerClass];
+  if (disabled) toggleClasses.push(styles['SettingsToggle--disabled']);
+  if (size === 'small') toggleClasses.push(styles['SettingsToggle--small']);
+  else if (size === 'large') toggleClasses.push(styles['SettingsToggle--large']);
+  
   return (
-    <div className={`${containerClass} ${disabled ? styles['SettingsToggle--disabled'] : ''} ${sizeClass}`}>
-      <label className={styles.SettingsToggle__label} htmlFor={id}>
-        <span className={styles.SettingsToggle__labelText}>{label}</span>
-        {tooltip && (
-          <span className={styles.SettingsToggle__tooltip} data-tooltip={tooltip}>
-            <InfoIcon className={styles.SettingsToggle__infoIcon} />
+    <div className={toggleClasses.join(' ')}>
+      <div className={commonStyles.controlHeader}>
+        <label htmlFor={id} className={commonStyles.controlLabel}>
+          <span className={styles.SettingsToggle__labelText}>{label}</span>
+          {tooltip && (
+            <span className={styles.SettingsToggle__tooltip} data-tooltip={tooltip}>
+              <InfoIcon className={styles.SettingsToggle__infoIcon} />
+            </span>
+          )}
+        </label>
+        <div
+          className={`${trackClass} ${isChecked ? checkedClass : ''}`}
+          onClick={() => !disabled && onChange(!isChecked)}
+          onKeyDown={handleKeyDown}
+          tabIndex={disabled ? -1 : 0}
+          role="switch"
+          aria-checked={isChecked}
+          aria-disabled={disabled}
+        >
+          <span className={styles.SettingsToggle__thumb} />
+          <input
+            id={id}
+            type="checkbox"
+            checked={isChecked}
+            onChange={() => !disabled && onChange(!isChecked)}
+            disabled={disabled}
+            className={styles.SettingsToggle__hiddenInput}
+          />
+          <span className={styles.SettingsToggle__srOnly}>
+            {label} is {isChecked ? 'enabled' : 'disabled'}
           </span>
-        )}
-      </label>
-      
-      <div 
-        className={`${trackClass} ${isChecked ? checkedClass : ''}`}
-        onClick={() => !disabled && onChange(!isChecked)}
-        onKeyDown={handleKeyDown}
-        tabIndex={disabled ? -1 : 0}
-        role="switch"
-        aria-checked={isChecked}
-        aria-disabled={disabled}
-      >
-        <span className={styles.SettingsToggle__thumb} />
-        <input
-          id={id}
-          type="checkbox"
-          checked={isChecked}
-          onChange={() => !disabled && onChange(!isChecked)}
-          disabled={disabled}
-          className={styles.SettingsToggle__hiddenInput}
-        />
-        <span className={styles.SettingsToggle__srOnly}>
-          {label} is {isChecked ? 'enabled' : 'disabled'}
-        </span>
+        </div>
       </div>
     </div>
   );

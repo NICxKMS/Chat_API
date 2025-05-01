@@ -4,18 +4,429 @@
 /* Add spacing, typography, and breakpoints tokens here as needed */
 
 :root {
-  /* Existing theme variables */
+  /* Define standard theme transition */
+  --theme-transition-duration: 0.2s;
+  --theme-transition-timing: ease;
+
+  /* Button Hover Effects */
+  --button-global-hover-bg-light: #cccccc; /* Slightly darker hover in light mode */
+  --button-global-hover-bg-dark: #444444;  /* Slightly lighter hover in dark mode */
+
+  /* Custom Button Background Colors */
+  --button-teal-bg: rgba(87, 157, 152, 0.75); /* User specified teal color for dark mode */
+  --button-teal-bg-light: rgba(57, 127, 122, 0.85); /* Darker teal with more opacity for light mode */
+
+  /* Settings Toggle Colors */
+  --toggle-disabled-track-light: rgba(120, 120, 120, 0.9); /* Much darker for light mode */
+  --toggle-disabled-thumb-light: #888888; /* Even darker thumb for light mode */
+  --toggle-disabled-track-dark: rgba(100, 100, 100, 0.7); /* Increased contrast for dark mode */
+  --toggle-disabled-thumb-dark: #888888; /* Lighter thumb for dark mode */
+
+  /* Settings Slider Colors */
+  --slider-disabled-track-light: rgba(120, 120, 120, 0.9); /* Much darker for light mode */
+  --slider-disabled-thumb-light: #888888; /* Darker thumb for light mode */
+  --slider-disabled-track-dark: rgba(100, 100, 100, 0.6); /* Dark mode disabled track */
+  --slider-disabled-thumb-dark: #888888; /* Dark mode disabled thumb */
+
+  /* Toggle and Slider Colors */
+  /* Light mode: gray track, black-white thumb */
+  --toggle-track-light: rgba(150, 150, 150, 0.7);
+  --toggle-track-active-light: rgba(87, 157, 152, 0.9); /* Green teal active color (same as dark mode) */
+  --toggle-thumb-light: #ffffff;
   
-  /* Color palette */
+  --slider-track-light: rgba(150, 150, 150, 0.7);
+  --slider-fill-light: rgba(87, 157, 152, 0.9); /* Green teal fill (same as dark mode) */
+  --slider-thumb-light: #000000; /* Black slider thumb for light mode */
   
-  /* Font families */
+  /* Dark mode: white track, green-white thumb */
+  --toggle-track-dark: rgba(70, 70, 70, 0.8);
+  --toggle-track-active-dark: rgba(87, 157, 152, 0.9);
+  --toggle-thumb-dark: #ffffff;
   
-  /* Markdown-specific variables - Light theme */
-  
-  /* Rich markdown features */
-  
-  /* Diagram and special features */
+  --slider-track-dark: rgba(70, 70, 70, 0.8);
+  --slider-fill-dark: rgba(87, 157, 152, 0.9);
+  --slider-thumb-dark: rgba(87, 157, 152, 1);
+
+  /* Base colors - Updated for Light Theme */
+  --primary-rgb: 86, 18, 244;
+  --secondary-rgb: 107, 55, 218;
+  --accent-rgb: 98, 40, 231;
+  /* Dark counterparts for RGB values - Updated based on colors.css dark theme */
+  --dark-primary-rgb: 174, 174, 174; /* Gray: #aeaeae */
+  --dark-secondary-rgb: 174, 174, 174; /* Gray: #aeaeae */
+  --dark-accent-rgb: 174, 174, 174; /* Gray: #aeaeae */
+  /* Keep functional colors */
+  --error-rgb: 239, 68, 68;
+  --success-rgb: 34, 197, 94;
+  --warning-rgb: 245, 158, 11;
+  --info-rgb: 6, 182, 212;
+
+  /* Font settings */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --code-font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+
+  /* Light theme variables - APPLYING NEW PALETTE */
+  --light-bg: #ffffff; /* Base background */
+  --light-chat-bg: #fafafa; /* New subtle off-white for chat area */
+  --light-text: #000000;
+  --light-secondary-text: #7c59b4;
+  --light-border: #e1e1e1;
+  --border-pronounced-light: #d3d3d3;
+  --light-button-bg: transparent;
+  --light-button-hover: #6228e7;
+  --light-button-text: #000000;
+  --light-hover: rgba(var(--primary-rgb), 0.05);
+  --light-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --light-toggle-button: #ffffff;
+  --light-gradient-primary: linear-gradient(135deg, rgb(var(--primary-rgb)), rgb(var(--secondary-rgb)));
+  --light-gradient-accent: linear-gradient(135deg, rgb(var(--secondary-rgb)), rgb(var(--accent-rgb)));
+  --light-dropdown-bg: linear-gradient(180deg, rgba(var(--primary-rgb), 0.02), rgba(var(--primary-rgb), 0.01));
+  --light-selected-item-bg: rgba(var(--primary-rgb), 0.08);
+  --light-tag-bg: rgba(var(--primary-rgb), 0.05);
+  --light-model-icon-bg: #6228e7;
+  --light-slider-track-bg: #d3d3d3;
+  --light-slider-thumb-bg: var(--light-button-bg);
+  --light-overlay-bg-medium: rgba(0, 0, 0, 0.5);
+  --light-overlay-bg-strong: rgba(0, 0, 0, 0.7);
+  --light-shadow-focus-ring: 0 0 0 2px rgba(var(--primary-rgb), 0.3);
+  --light-model-button-bg: #ffffff;
+  --light-model-button-color: #333333;
+  --light-error-color: rgb(var(--error-rgb));
+  --light-error-bg: rgba(var(--error-rgb), 0.1);
+  --light-error-border: rgba(var(--error-rgb), 0.3);
+  --light-error-emphasis: #d32f2f;
+  --light-cancel-color: #dc3545;
+  --light-cancel-hover-bg: rgba(220, 53, 69, 0.1);
+  --light-success-color: rgb(var(--success-rgb));
+  --light-warning-color: rgb(var(--warning-rgb));
+  --light-info-color: rgb(var(--info-rgb));
+  --light-button-secondary-bg: rgba(var(--primary-rgb), 0.1);
+  --light-accent-text-color: rgb(var(--accent-rgb));
+  /* Surface colors - ADJUSTED FOR LAYERING */
+  --light-surface-secondary: #f5f5f5; /* Was #ececec. For Sidebars, Panels, Elevated */
+  --light-surface-tertiary: #f0f0f0; /* Was #f5f5f5. For Cards, Code, Assistant Msgs, Scroll Tracks */
+  --light-message-user-bg: rgba(var(--primary-rgb), 0.08);
+  /* Settings panel */
+  --light-panel-shadow: rgba(0, 0, 0, 0.1);
+  --light-card-bg-hover: rgba(245, 245, 245, 1);
+  --light-accent-bg-soft: rgba(86, 18, 244, 0.1);
+  --light-placeholder-color: #b0b0b0; /* New placeholder color */
+  --light-hover-intense: rgba(var(--primary-rgb), 0.1); /* Slightly more intense hover */
+  --light-disabled-bg: #f5f5f5;
+  --light-disabled-text: #b0b0b0;
+
+  /* Dark theme variables - APPLYING NEW PALETTE */
+  --dark-bg: #212121;
+  --dark-text: #ffffff;
+  --dark-secondary-text: #8b8b8b;
+  --dark-border: #3f3f3f;
+  --border-pronounced-dark: #575757;
+  --dark-input-container-bg: #262626;
+  --dark-scrollbar-thumb-color: rgba(255, 255, 255, 0.2);
+  --dark-scrollbar-track-color: rgba(0, 0, 0, 0.1);
+  --dark-scrollbar-thumb-hover-color: rgba(255, 255, 255, 0.3);
+  --dark-placeholder-color: #999; /* Defined placeholder color */
+  --dark-button-bg: transparent;
+  --dark-button-hover: #c0c0c0; /* Lighter gray for hover */
+  --dark-button-text: #ffffff;
+  --dark-message-user-bg: rgba(var(--dark-primary-rgb), 0.1); /* Gray tint */
+  --dark-code-bg: #121212;
+  --dark-settings-bg: #2f2f2f;
+  --dark-hover: rgba(var(--dark-primary-rgb), 0.08); /* Gray tint */
+  --dark-scroll-track: #282828;
+  --dark-scroll-thumb: #575757;
+  --dark-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --dark-toggle-button: #ffffff;
+  --dark-gradient-primary: linear-gradient(135deg, rgb(var(--dark-primary-rgb)), rgb(var(--dark-secondary-rgb))); /* Gray gradient */
+  --dark-gradient-accent: linear-gradient(135deg, rgb(var(--dark-secondary-rgb)), rgb(var(--dark-accent-rgb))); /* Gray gradient */
+  --dark-dropdown-bg: linear-gradient(180deg, rgba(var(--dark-primary-rgb), 0.05), rgba(var(--dark-primary-rgb), 0.02)); /* Gray tint */
+  --dark-selected-item-bg: rgba(var(--dark-primary-rgb), 0.15); /* Gray tint */
+  --dark-tag-bg: rgba(var(--dark-primary-rgb), 0.1); /* Gray tint */
+  --dark-model-icon-bg: #6ba8a3;
+  --dark-slider-track-bg: #575757;
+  --dark-slider-thumb-bg: var(--dark-button-bg);
+  --dark-overlay-bg-medium: rgba(0, 0, 0, 0.6);
+  --dark-overlay-bg-strong: rgba(0, 0, 0, 0.8);
+  --dark-shadow-focus-ring: 0 0 0 2px rgba(var(--dark-accent-rgb), 0.4); /* Gray focus ring */
+  --dark-model-button-bg: #f0f0f0;
+  --dark-model-button-color: #1a1a1a;
+  --dark-error-color: rgb(var(--error-rgb));
+  --dark-error-bg: rgba(var(--error-rgb), 0.15);
+  --dark-error-border: rgba(var(--error-rgb), 0.4);
+  --dark-error-emphasis: #e57373;
+  --dark-cancel-color: #ff6b6b;
+  --dark-cancel-hover-bg: rgba(255, 107, 107, 0.1);
+  --dark-active-bg: rgba(var(--dark-primary-rgb), 0.12); /* Gray tint */
+  --dark-success-color: #68d391;
+  --dark-warning-color: #f6e05e;
+  --dark-info-color: #63b3ed;
+  --dark-button-secondary-bg: rgba(var(--dark-primary-rgb), 0.15);
+  --dark-accent-text-color: rgb(var(--dark-accent-rgb)); /* Gray text */
+  --dark-surface-quaternary: #303030;
+  /* Merged from theme.css: Simplified sidebar styling */
+  --dark-sidebar-text: #ededed;
+  --dark-sidebar-icon: #a4a4a4;
+  --light-sidebar-text: #333333;
+  --light-sidebar-icon: #555555;
+  /* Merged from theme.css: Status indicator variables */
+  --light-status-online: rgb(var(--success-rgb));
+  --dark-status-online: var(--dark-success-color);
+  --dark-status-offline: var(--dark-placeholder-color);
+  /* Merged from theme.css: Sidebar surface dark variants */
+  --dark-sidebar-surface: var(--dark-sidebar-bg);
+  --dark-sidebar-surface-secondary: #1f1f1f;
+  --dark-sidebar-surface-tertiary: #2a2a2a;
+  /* Settings panel dark theme variables (merged from index.css & theme.css) */
+  --dark-card-bg: rgba(40, 40, 40, 0.6);
+  --dark-card-bg-hover: rgba(50, 50, 50, 0.8);
+  --dark-accent-bg-soft: rgba(var(--dark-primary-rgb), 0.15); /* Gray tint */
+  --dark-accent-bg-softer: rgba(var(--dark-primary-rgb), 0.05); /* Gray tint */
+  --dark-panel-shadow: rgba(0, 0, 0, 0.25);
+  --dark-hover-intense: rgba(var(--dark-primary-rgb), 0.12); /* Slightly more intense hover */
+  --dark-disabled-bg: #3f3f3f;
+  --dark-disabled-text: #707070;
+  /* Color palette for theming (from index.css) */
+  --gray-750: #313131;
+  --gray-800: #292929;
+  --gray-900: #1e1e1e;
+  /* Define missing dark sidebar background */
+  --dark-sidebar-bg: #171717; /* Align with dark-sidebar-surface-secondary */
 }
+
+/* Apply theme based on body class and system preferences */
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+body.light-mode {
+  /* Mappings from index.css - UPDATED FOR LAYERING */
+  --bg: var(--light-bg);
+  --chat-bg: var(--light-chat-bg); /* Use new chat bg */
+  --elevated-bg: var(--light-surface-secondary); /* Use adjusted secondary */
+  --sidebar-bg: var(--light-surface-secondary); /* Use adjusted secondary */
+  --sidebar-text: var(--light-sidebar-text);
+  --sidebar-icon: var(--light-sidebar-icon);
+  --sidebar-surface: var(--light-surface-secondary); /* Sidebar main surface */
+  --sidebar-surface-secondary: var(--light-surface-secondary); /* Sidebar header/footer */
+  --sidebar-surface-tertiary: var(--light-surface-tertiary); /* Items ON sidebar? Use tertiary */
+  --sidebar-title-primary: var(--light-text);
+
+  /* Text color mappings */
+  --text: var(--light-text);
+  --text-primary: var(--light-text);
+  --secondary-text: var(--light-secondary-text);
+
+  /* Chat input specific styling */
+  --input-bg-color: var(--light-bg); /* Keep inputs white */
+  --input-container-bg: var(--light-surface-secondary); /* Use adjusted secondary */
+  --input-text-color: var(--text);
+
+  /* General UI element mappings - UPDATED FOR LAYERING */
+  --input-bg: var(--light-bg); /* Keep inputs white */
+  --button-bg: var(--light-button-bg);
+  --button-hover: var(--light-button-hover);
+  --button-text: var(--light-button-text);
+  --button-teal-bg: var(--button-teal-bg-light); /* Map teal button bg for light mode */
+  --message-user-bg: var(--light-message-user-bg);
+  --message-assistant-bg: var(--light-surface-tertiary); /* Use adjusted tertiary */
+  --code-bg: var(--light-surface-tertiary); /* Use adjusted tertiary */
+  --settings-bg: var(--light-surface-secondary); /* Use adjusted secondary */
+  --hover: var(--light-hover);
+  --scroll-track: var(--light-surface-tertiary); /* Use adjusted tertiary */
+  --scroll-thumb: var(--border-pronounced-light);
+  --shadow: var(--light-shadow);
+  --toggle-bg: var(--border-pronounced-light);
+  --toggle-button: var(--light-toggle-button);
+  --status-online: var(--light-status-online);
+  --status-offline: var(--light-secondary-text);
+  --gradient-primary: var(--light-gradient-primary);
+  --gradient-accent: var(--light-gradient-accent);
+  --dropdown-bg: var(--light-dropdown-bg);
+  --selected-item-bg: var(--light-selected-item-bg);
+  --tag-bg: var(--light-hover);
+  --model-icon-bg: var(--light-button-hover);
+  --button-bg-rgb: var(--primary-rgb);
+  --slider-track-bg: var(--border-pronounced-light);
+  --slider-thumb-bg: var(--light-slider-thumb-bg);
+  color-scheme: light;
+
+  /* Map General UI Variables */
+  --overlay-bg-medium: var(--light-overlay-bg-medium);
+  --overlay-bg-strong: var(--light-overlay-bg-strong);
+  --shadow-focus-ring: var(--light-shadow-focus-ring);
+  --model-button-bg: var(--light-bg);
+  --model-button-color: var(--light-model-button-color);
+
+  /* Map Functional Colors */
+  --error-color: var(--light-error-color);
+  --error-bg: var(--light-error-bg);
+  --error-border: var(--light-error-border);
+  --error-emphasis: var(--light-error-emphasis);
+  --cancel-color: var(--light-cancel-color);
+  --cancel-hover-bg: var(--light-cancel-hover-bg);
+  --active: var(--light-accent-bg-soft);
+  --success-color: var(--light-success-color);
+  --warning-color: var(--light-warning-color);
+  --info-color: var(--light-info-color);
+  --button-secondary-bg: var(--light-selected-item-bg);
+  --accent-text-color: var(--light-accent-text-color);
+
+  /* Settings panel variables - UPDATED FOR LAYERING */
+  --panel-bg: var(--light-surface-secondary); /* Use adjusted secondary */
+  --panel-border: var(--light-border);
+  --panel-shadow: var(--light-panel-shadow);
+  --card-bg: var(--light-surface-tertiary); /* Use adjusted tertiary */
+  --card-bg-hover: var(--light-card-bg-hover);
+  --border-accent: var(--border-pronounced-light);
+  --accent-bg-soft: var(--light-accent-bg-soft);
+  --accent-bg-softer: var(--light-hover);
+  --placeholder-color: var(--light-placeholder-color);
+  --hover-intense: var(--light-hover-intense);
+  --accent-color: var(--light-accent-text-color);
+  --disabled-bg: var(--light-disabled-bg);
+  --disabled-text: var(--light-disabled-text);
+  --stats-bg: var(--light-surface-secondary); /* Use adjusted secondary */
+
+  /* Toggle specific variables */
+  --toggle-disabled-track: var(--toggle-track-light);
+  --toggle-disabled-thumb: var(--toggle-thumb-light);
+  
+  /* Slider specific variables */
+  --slider-disabled-track: var(--slider-track-light);
+  --slider-disabled-thumb: var(--slider-thumb-light);
+
+  --button-global-hover: var(--button-global-hover-bg-light);
+
+  /* Toggle and Slider colors */
+  --toggle-track: var(--toggle-track-light);
+  --toggle-track-active: var(--toggle-track-active-light);
+  --toggle-thumb: var(--toggle-thumb-light);
+  
+  --slider-track: var(--slider-track-light);
+  --slider-fill: var(--slider-fill-light);
+  --slider-thumb: var(--slider-thumb-light);
+}
+
+body.dark-mode {
+  /* Mappings from index.css */
+  --bg: var(--dark-bg);
+  --chat-bg: var(--dark-bg);
+  --elevated-bg: var(--dark-surface-quaternary);
+  --border: var(--dark-border);
+  --sidebar-bg: var(--dark-sidebar-bg);
+  --sidebar-text: var(--dark-sidebar-text);
+  --sidebar-icon: var(--dark-sidebar-icon);
+  --sidebar-surface: var(--dark-sidebar-surface);
+  --sidebar-surface-secondary: var(--dark-sidebar-surface-secondary);
+  --sidebar-surface-tertiary: var(--dark-sidebar-surface-tertiary);
+  --sidebar-title-primary: var(--dark-text);
+
+  /* Text color mappings */
+  --text: var(--dark-text);
+  --text-primary: var(--dark-text);
+  --secondary-text: var(--dark-secondary-text);
+
+  /* Input specific styling */
+  --input-bg-color: var(--dark-surface-quaternary);
+  --input-container-bg: var(--dark-sidebar-surface-tertiary);
+  --input-text-color: var(--dark-text);
+
+  /* General UI element mappings */
+  --input-bg: var(--dark-bg);
+  --button-bg: var(--dark-button-bg);
+  --button-hover: var(--dark-button-hover);
+  --button-text: var(--dark-button-text);
+  --button-teal-bg: var(--button-teal-bg); /* Map teal button bg for dark mode */
+  --message-user-bg: var(--dark-message-user-bg);
+  --message-assistant-bg: var(--dark-surface-quaternary);
+  --code-bg: var(--dark-bg);
+  --settings-bg: var(--dark-surface-quaternary);
+  --hover: var(--dark-hover);
+  --scroll-track: var(--dark-sidebar-surface-tertiary);
+  --scroll-thumb: var(--border-pronounced-dark);
+  --shadow: var(--dark-shadow);
+  --toggle-bg: var(--dark-border);
+  --toggle-button: var(--dark-toggle-button);
+  --status-online: var(--dark-status-online);
+  --status-offline: var(--dark-status-offline);
+  --gradient-primary: var(--dark-gradient-primary);
+  --gradient-accent: var(--dark-gradient-accent);
+  --dropdown-bg: var(--dark-dropdown-bg);
+  --selected-item-bg: var(--dark-selected-item-bg);
+  --tag-bg: var(--dark-tag-bg);
+  --model-icon-bg: var(--dark-button-hover);
+  --button-bg-rgb: var(--dark-primary-rgb);
+  --slider-track-bg: var(--border-pronounced-dark);
+  --slider-thumb-bg: var(--dark-slider-thumb-bg);
+  color-scheme: dark;
+
+  /* Map General UI Variables */
+  --overlay-bg-medium: var(--dark-overlay-bg-medium);
+  --overlay-bg-strong: var(--dark-overlay-bg-strong);
+  --shadow-focus-ring: var(--dark-shadow-focus-ring);
+  --model-button-bg: var(--dark-model-button-bg);
+  --model-button-color: var(--dark-model-button-color);
+
+  /* Map Functional Colors */
+  --error-color: var(--dark-error-color);
+  --error-bg: var(--dark-error-bg);
+  --error-border: var(--dark-error-border);
+  --error-emphasis: var(--dark-error-emphasis);
+  --cancel-color: var(--dark-cancel-color);
+  --cancel-hover-bg: var(--dark-cancel-hover-bg);
+  --active: var(--dark-active-bg);
+  --success-color: var(--dark-success-color);
+  --warning-color: var(--dark-warning-color);
+  --info-color: var(--dark-info-color);
+  --button-secondary-bg: var(--dark-selected-item-bg);
+  --accent-text-color: var(--dark-accent-text-color);
+
+  /* Settings panel variables */
+  --panel-bg: var(--dark-surface-quaternary);
+  --panel-border: var(--dark-border);
+  --panel-shadow: var(--dark-panel-shadow);
+  --card-bg: var(--dark-sidebar-surface-tertiary);
+  --card-bg-hover: var(--dark-surface-quaternary);
+  --border-accent: var(--border-pronounced-dark);
+  --accent-bg-soft: var(--dark-accent-bg-soft);
+  --accent-bg-softer: var(--dark-accent-bg-softer);
+  --placeholder-color: var(--dark-placeholder-color); /* Add mapping */
+  --hover-intense: var(--dark-hover-intense);
+  --accent-color: var(--dark-accent-text-color); /* Map accent-color */
+  --disabled-bg: var(--dark-disabled-bg);
+  --disabled-text: var(--dark-disabled-text);
+  --stats-bg: var(--dark-sidebar-surface-secondary); /* Map stats-bg */
+
+  /* Toggle specific variables */
+  --toggle-disabled-track: var(--toggle-track-dark);
+  --toggle-disabled-thumb: var(--toggle-thumb-dark);
+  
+  /* Slider specific variables */
+  --slider-disabled-track: var(--slider-track-dark);
+  --slider-disabled-thumb: var(--slider-thumb-dark);
+
+  --button-global-hover: var(--button-global-hover-bg-dark);
+
+  /* Toggle and Slider colors */
+  --toggle-track: var(--toggle-track-dark);
+  --toggle-track-active: var(--toggle-track-active-dark);
+  --toggle-thumb: var(--toggle-thumb-dark);
+  
+  --slider-track: var(--slider-track-dark);
+  --slider-fill: var(--slider-fill-dark);
+  --slider-thumb: var(--slider-thumb-dark);
+}
+
+/* Removed [data-theme="dark"] block as body.dark-mode handles overrides */
 
 [data-theme="dark"] {
   /* Dark theme overrides */

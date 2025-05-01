@@ -1,0 +1,81 @@
+/* Styles for ImagePreviewList extracted from ChatInput.module.css */
+.imagePreviewContainer {
+  display: flex; /* Arrange previews horizontally */
+  overflow-x: auto; /* Allow horizontal scrolling if needed */
+  padding: var(--space-xs) 0; /* 5px -> 8px */
+  width: 100%; /* Take full width */
+  box-sizing: border-box;
+}
+
+.imagePreviewWrapper {
+  position: relative; /* For positioning the remove button */
+  margin-right: var(--space-xs); /* 8px */
+  flex-shrink: 0; /* Prevent images from shrinking */
+  background: none; /* Ensure no background */
+  padding-bottom: 0;
+}
+
+.imagePreview {
+  display: block; /* Remove extra space below image */
+  max-height: 120px; /* Keep fixed max height */
+  width: auto; /* Maintain aspect ratio */
+  max-width: 170px; /* Keep fixed max width */
+  border-radius: var(--radius-xs); /* 4px */
+  object-fit: cover; /* Cover the area nicely */
+  background: none; /* Ensure no background */
+}
+
+.removeImageButton {
+  position: absolute;
+  top: -3px; /* Keep slightly offset? Or var(--space-xxxs) */
+  right: 0;
+  /* background-color: var(--overlay-bg-strong); */
+  color: var(--bg); /* Use theme-agnostic */
+  border: none;
+  border-radius: var(--radius-full);
+  width: 20px; /* Keep fixed small size? Or var(--space-lg) */
+  height: 20px; /* Keep fixed small size? Or var(--space-lg) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 0; /* Ensure icon is centered */
+  opacity: 0.8;
+  transition: opacity var(--transition-duration-short) ease;
+}
+
+.removeImageButton:hover {
+  opacity: 1;
+}
+
+.removeImageButton svg {
+  width: var(--space-sm); /* 10px -> 12px */
+  height: var(--space-sm); /* 10px -> 12px */
+}
+
+.closeButton {
+  position: absolute;
+  top: 0;
+  right: 0;
+  /* background-color: var(--overlay-bg-strong); */
+  color: var(--bg); /* Use theme-agnostic */
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  padding: 0;
+  margin: var(--space-xxs); /* 4px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-md); /* 16px */
+  height: var(--space-md); /* 16px */
+  transition: background-color var(--transition-duration-short) ease;
+}
+
+
+
+.closeButton svg {
+  width: var(--space-sm); /* 10px -> 12px */
+  height: var(--space-sm); /* 10px -> 12px */
+} 

@@ -1,0 +1,130 @@
+/* Common utility classes, loaders, and other shared styles */
+
+/* Loading screen */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+  /* Add theme transition */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.loading-screen p {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  /* TODO: Replace with token if available */
+  /* font-weight: var(--font-weight-lg); */
+  font-weight: 600; /* Example fallback */
+}
+
+/* Common utility classes */
+.card {
+  background-color: var(--card-bg);
+  /* TODO: Replace with token if available */
+  /* border-radius: var(--radius-md); */
+  border-radius: 0.5rem; /* Example fallback */
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  /* Combine existing transitions with theme transitions */
+  transition: transform 0.2s ease, 
+              box-shadow var(--theme-transition-duration) var(--theme-transition-timing),
+              background-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  /* Update shadow transition to match (optional, could be faster/slower) */
+  /* TODO: Consider using theme shadow variables for hover state? */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); 
+}
+
+.button-primary {
+  background: var(--button-bg); /* Use mapped button bg */
+  color: var(--button-text); /* Use mapped button text */
+  border: 1px solid var(--border); /* Use mapped border */
+  /* TODO: Replace with token */
+  /* border-radius: var(--radius-sm); */
+  border-radius: 0.375rem; /* Example fallback */
+  padding: 0.5rem 1rem;
+  /* TODO: Replace with token */
+  /* font-weight: var(--font-weight-lg); */
+  font-weight: 600; /* Example fallback */
+  cursor: pointer;
+  /* Update transition */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              border-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.button-primary:hover {
+  background: var(--button-hover); /* Use mapped hover bg */
+  border-color: var(--border-accent); /* Use mapped accent border for hover */
+}
+
+.gradient-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+  /* No transition needed unless the gradient itself changes with theme */
+}
+
+/* Lightweight pulse loader for ultra fast initial rendering */
+.pulse-loader {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  /* Use the primary-color-rgb defined in theme.css */
+  background-color: rgba(var(--primary-rgb), 0.2);
+  animation: pulse 1.2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  /* Add transition for background color change */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    /* Use the primary-color-rgb defined in theme.css */
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.5);
+  }
+  
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(var(--primary-rgb), 0);
+  }
+  
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0);
+  }
+}
+
+/* Add CSS for handling virtual keyboard on mobile */
+@media (max-width: 768px) {
+  body.keyboard-open {
+    /* Prevent content from being pushed up or obscured by keyboard */
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  body.keyboard-open #root {
+    /* Allow scrolling within the app when keyboard is open */
+    overflow-y: auto;
+    height: 100%;
+  }
+
+  /* When keyboard is open, ensure fixed elements remain visible */
+  /* TODO: Make this selector more robust if possible, e.g., data-attribute */
+  body.keyboard-open .fixedInputArea,
+  body.keyboard-open [class*="fixedInputArea"] {
+    position: fixed !important;
+    bottom: 0 !important;
+    z-index: 1000 !important; /* Ensure this is higher than other elements */
+  }
+} 

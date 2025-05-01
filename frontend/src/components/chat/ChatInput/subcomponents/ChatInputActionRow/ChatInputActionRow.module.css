@@ -1,0 +1,101 @@
+/* ChatInputActionRow Styles extracted from ChatInput.module.css */
+.ChatInput__actionRow {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+  height: 36px;
+}
+
+.ChatInput__leftButtons {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  margin-top: var(--space-xs);
+}
+
+.ChatInput__rightButtons {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  margin-top: var(--space-xs);
+  margin-left: auto;
+}
+
+/* Combine base styles for action, iconOnly, upload, and model buttons */
+.ChatInput__actionButton,
+.ChatInput__iconOnlyButton,
+.ChatInput__uploadButton,
+.ChatInput__modelButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xs);
+  background-color: transparent;
+  color: var(--button-text);
+  border: var(--border-width-md) solid var(--border-accent);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-duration-short) ease;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+/* Combine hover states changing only text color */
+.ChatInput__actionButton:hover:not(:disabled),
+.ChatInput__textButton:hover:not(:disabled) {
+  /* background-color: var(--button-hover-bg-color); */ /* Removed as per original */
+  color: var(--text-primary);
+}
+
+/* Combine active states */
+.ChatInput__actionButton:active:not(:disabled),
+.ChatInput__modelButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* Combine disabled states */
+.ChatInput__actionButton:disabled,
+.ChatInput__uploadButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ChatInput__textButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xxs) var(--space-sm);
+  background-color: transparent;
+  color: var(--button-text-color);
+  border: var(--border-width-md) solid var(--border-accent);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-duration-short) ease;
+  font-size: var(--font-size-sm);
+  gap: var(--space-xxs);
+  height: 2rem;
+}
+
+/* Separate rule for iconOnly button text */
+.ChatInput__iconOnlyButton .buttonText {
+  display: none;
+}
+
+/* Combine plugin and mic button modifiers */
+.ChatInput__actionButton--plugin,
+.ChatInput__actionButton--mic {
+  color: var(--button-text);
+  border: var(--border-width-md) solid var(--border);
+}
+
+.ChatInput__actionButton--micActive {
+  border: var(--border-width-md) solid var(--border);
+}
+
+/* Keep unique hover for model button */
+.ChatInput__modelButton:hover:not(:disabled) {
+  background-color: var(--button-hover-bg-color);
+  color: var(--text-primary);
+}

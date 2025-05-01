@@ -2,7 +2,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 8px;
+  padding: var(--space-xs);
 }
 
 .Spinner__loader {
@@ -39,33 +39,33 @@
 
 /* Spinner sizes */
 .Spinner--small {
-  width: 24px;
-  height: 24px;
+  width: var(--space-xl);
+  height: var(--space-xl);
 }
 
 .Spinner--small .Spinner__loader {
-  width: 24px;
-  height: 24px;
+  width: var(--space-xl);
+  height: var(--space-xl);
 }
 
 .Spinner--medium {
-  width: 48px;
-  height: 48px;
+  width: var(--space-xxxxl);
+  height: var(--space-xxxxl);
 }
 
 .Spinner--medium .Spinner__loader {
-  width: 48px;
-  height: 48px;
+  width: var(--space-xxxxl);
+  height: var(--space-xxxxl);
 }
 
 .Spinner--large {
-  width: 72px;
-  height: 72px;
+  width: calc(var(--space-xxxxl) * 1.5);
+  height: calc(var(--space-xxxxl) * 1.5);
 }
 
 .Spinner--large .Spinner__loader {
-  width: 72px;
-  height: 72px;
+  width: calc(var(--space-xxxxl) * 1.5);
+  height: calc(var(--space-xxxxl) * 1.5);
 }
 
 /* Gradient spinner variant */

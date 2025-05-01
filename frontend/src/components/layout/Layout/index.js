@@ -1,11 +1,9 @@
 import { lazy, useState, useCallback, Suspense } from 'react';
 import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
-import { useChatState } from '../../../contexts/ChatStateContext';
-import { useChatControl } from '../../../contexts/ChatControlContext';
 import { useAuth } from '../../../contexts/AuthContext'; // Import useAuth
 import { useTheme } from '../../../contexts/ThemeContext'; // Import ThemeContext
-import { GearIcon, PlusIcon, TrashIcon, DownloadIcon } from '@primer/octicons-react';
+import { GearIcon} from '@primer/octicons-react';
 import styles from './Layout.module.css';
 // Import icons using the correct paths
 // Import only the specific icons needed
@@ -40,8 +38,6 @@ const Layout = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // State for settings panel
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false); // State for model selector visibility
   const { selectedModel, isLoadingModels } = useModel(); // Get model data
-  const { chatHistory } = useChatState();
-  const { clearChat, downloadChatHistory } = useChatControl();
   const { currentUser, isAuthenticated, login, logout, loading: authLoading } = useAuth(); // Get auth context
   const { theme, toggleTheme } = useTheme(); // Get theme context
 
@@ -62,90 +58,19 @@ const Layout = () => {
     setIsModelSelectorOpen(prev => !prev);
   }, []);
 
-  // Implement new chat functionality
-  const handleNewChat = useCallback(() => {
-    // Close sidebar on mobile after starting new chat
-    if (!isDesktop) {
-      setIsSidebarOpen(false);
-    }
-    
-    // Clear chat history if there are messages
-    if (chatHistory.length > 0) {
-      clearChat();
-    }
-  }, [isDesktop, chatHistory.length, clearChat]);
-
-  // Implement reset chat functionality
-  const handleResetChat = useCallback(() => {
-    if (chatHistory.length === 0) return;
-    
-    if (window.confirm('Are you sure you want to clear the current chat?')) {
-      clearChat();
-      
-      // Show confirmation to the user
-      const notification = document.createElement('div');
-      notification.style.position = 'fixed';
-      notification.style.bottom = '20px';
-      notification.style.left = '50%';
-      notification.style.transform = 'translateX(-50%)';
-      notification.style.backgroundColor = 'var(--hover)';
-      notification.style.color = 'var(--text)';
-      notification.style.padding = '10px 20px';
-      notification.style.borderRadius = '8px';
-      notification.style.zIndex = '9999';
-      notification.textContent = 'Chat has been cleared';
-      document.body.appendChild(notification);
-      
-      // Remove notification after 3 seconds
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 3000);
-    }
-  }, [chatHistory.length, clearChat]);
-
-  // Implement download chat functionality
-  const handleDownloadChat = useCallback(() => {
-    if (chatHistory.length === 0) return;
-    try {
-      downloadChatHistory();
-      
-      // Show confirmation to the user (especially useful for mobile)
-      const notification = document.createElement('div');
-      notification.style.position = 'fixed';
-      notification.style.bottom = '20px';
-      notification.style.left = '50%';
-      notification.style.transform = 'translateX(-50%)';
-      notification.style.backgroundColor = 'var(--hover)';
-      notification.style.color = 'var(--text)';
-      notification.style.padding = '10px 20px';
-      notification.style.borderRadius = '8px';
-      notification.style.zIndex = '9999';
-      notification.textContent = 'Chat downloaded successfully';
-      document.body.appendChild(notification);
-      
-      // Remove notification after 3 seconds
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 3000);
-    } catch (error) {
-      console.error("Error downloading chat:", error);
-      alert("Failed to download chat. Please try again.");
-    }
-  }, [chatHistory.length, downloadChatHistory]);
-  
   // Determine layout classes based on state and viewport
   const isSidebarEffectivelyHidden = isDesktop && !isSidebarOpen;
   const layoutClasses = [
     styles.Layout,
-    isSidebarEffectivelyHidden ? styles.sidebarCompact : '', // Handles transform
-    !isDesktop && isSidebarOpen ? styles.sidebarOpenMobile : '', // Mobile slide-in
+    isSidebarEffectivelyHidden ? styles['Layout--sidebarCompact'] : '', // Handles transform
+    !isDesktop && isSidebarOpen ? styles['Layout--sidebarOpenMobile'] : '', // Mobile slide-in
   ].filter(Boolean).join(' ');
 
   return (
     <div className={layoutClasses}>
       {/* Mobile Actions Container (Top Right) */}
-      <div className={styles.mobileActionsContainer}>
-        <div className={styles.mobileActions}>
+      <div className={styles.Layout__mobileActionsContainer}>
+        <div className={styles.Layout__mobileActions}>
           {/* Theme Toggle */}
           <Suspense fallback={null}>
             <ThemeToggle />
@@ -165,7 +90,7 @@ const Layout = () => {
           
           {/* Settings Button */}
           <button 
-            className={styles.mobileActionButton} 
+            className={styles.Layout__mobileActionButton} 
             onClick={toggleSettings}
             aria-label="Settings"
             title="Settings"
@@ -173,28 +98,11 @@ const Layout = () => {
             <GearIcon size={20} />
           </button>
           
-          {/* More Actions Menu */}
+          {/* More Actions Menu - Now pass only additional actions */}
           <MoreActions 
-            triggerButtonClassName={styles.mobileActionButton}
-            actions={[
-              // Always included actions
-              {
-                icon: <PlusIcon size={16} />,
-                label: 'New Chat',
-                onClick: handleNewChat
-              },
-              {
-                icon: <TrashIcon size={16} />,
-                label: 'Reset Chat',
-                onClick: handleResetChat
-              },
-              {
-                icon: <DownloadIcon size={16} />,
-                label: 'Download Chat',
-                onClick: handleDownloadChat
-              },
-              // Mobile-specific actions (will only be visible on mobile)
-              ...(isDesktop ? [] : [
+            triggerButtonClassName={styles.Layout__mobileActionButton}
+            actions={ // Pass only the mobile-specific actions now
+              isDesktop ? [] : [
                 // Theme toggle action
                 {
                   icon: theme === 'dark' ? <span style={{ fontSize: '16px' }}>☀️</span> : <span style={{ fontSize: '16px' }}>🌙</span>,
@@ -213,19 +121,21 @@ const Layout = () => {
                   label: isAuthenticated ? `Logout (${currentUser?.displayName || currentUser?.email || 'User'})` : 'Login',
                   onClick: isAuthenticated ? logout : login
                 }
-              ])
-            ]}
+              ]
+            }
           />
         </div>
       </div>
 
-      {/* Sidebar Toggle */}
-      <Suspense fallback={<LoadingFallback />}>
-        <SidebarToggle
-          isOpen={isSidebarOpen}
-          onToggle={toggleSidebar}
-        />
-      </Suspense>
+      {/* Sidebar Toggle (floating) - only when sidebar is closed */}
+      {!isSidebarOpen && (
+        <Suspense fallback={<LoadingFallback />}>
+          <SidebarToggle
+            isOpen={isSidebarOpen}
+            onToggle={toggleSidebar}
+          />
+        </Suspense>
+      )}
 
       {/* Conditionally render the ModelDropdown as a modal/overlay */}
       {isModelSelectorOpen && (
@@ -239,14 +149,16 @@ const Layout = () => {
       )}
 
       {/* Sidebar container */}
-      <div className={styles.Layout__sidebarContainer}>
-        <Suspense fallback={<div className={styles.Layout__sidebarPlaceholder} />}>
-          <Sidebar 
-            onNewChat={handleNewChat}
-            onToggleSettings={toggleSettings}
-          />
-        </Suspense>
-      </div>
+      {isSidebarOpen && (
+        <div className={styles.Layout__sidebarContainer}>
+          <Suspense fallback={<div className={styles.Layout__sidebarPlaceholder} />}>
+            <Sidebar 
+              onToggleSettings={toggleSettings}
+              onToggleSidebar={toggleSidebar}
+            />
+          </Suspense>
+        </div>
+      )}
       
       {/* Main content container */}
       <div className={styles.Layout__mainContentContainer}>
@@ -260,10 +172,7 @@ const Layout = () => {
             isLoadingModels={isLoadingModels}
             toggleModelSelector={toggleModelSelector}
             isModelSelectorOpen={isModelSelectorOpen}
-            onNewChat={handleNewChat}
             onToggleSettings={toggleSettings}
-            onResetChat={handleResetChat}
-            onDownloadChat={handleDownloadChat}
           />
         </Suspense>
       </div>

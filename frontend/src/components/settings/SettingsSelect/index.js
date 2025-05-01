@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import styles from './SettingsSelect.module.css';
-import '../../../styles/common/utilities.css';
+import commonStyles from '../common/ControlStyles.module.css';
 
 const SettingsSelect = ({
   id,
@@ -12,6 +12,9 @@ const SettingsSelect = ({
   disabled = false,
   tooltip
 }) => {
+  // Build class list for SettingsSelect
+  const selectClasses = [commonStyles.controlContainer, styles.SettingsSelect];
+  if (disabled) selectClasses.push(styles['SettingsSelect--disabled']);
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -104,34 +107,36 @@ const SettingsSelect = ({
   }), [options, value, handleOptionSelect]);
 
   return (
-    <div className={`${styles.SettingsSelect} ${disabled ? styles['SettingsSelect--disabled'] : ''}`}>
-      <label 
-        htmlFor={id} 
-        className={styles.SettingsSelect__label}
-        title={tooltip || ''}
-        id={labelId}
-      >
-        {label}
-      </label>
-      
-      <div 
-        ref={selectRef}
-        className={`${styles.SettingsSelect__select} ${isOpen ? styles['SettingsSelect--open'] : ''} ${styles.selectElement}`}
-        onClick={toggleDropdown}
-        onKeyDown={handleKeyDown}
-        tabIndex={disabled ? -1 : 0}
-        role="combobox"
-        aria-expanded={isOpen}
-        aria-controls={`${id}-listbox`}
-        aria-haspopup="listbox"
-        aria-disabled={disabled}
-        aria-labelledby={labelId}
-        id={id}
-      >
-        <div className={styles.SettingsSelect__selectedValue}>
-          {displayText}
+    <div className={selectClasses.join(' ')}> 
+      <div className={commonStyles.controlHeader}>
+        <label 
+          htmlFor={id} 
+          className={commonStyles.controlLabel}
+          title={tooltip || ''}
+          id={labelId}
+        >
+          {label}
+        </label>
+
+        <div 
+          ref={selectRef}
+          className={`${styles.SettingsSelect__select} ${isOpen ? styles['SettingsSelect--open'] : ''} ${styles.selectElement}`}
+          onClick={toggleDropdown}
+          onKeyDown={handleKeyDown}
+          tabIndex={disabled ? -1 : 0}
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-controls={`${id}-listbox`}
+          aria-haspopup="listbox"
+          aria-disabled={disabled}
+          aria-labelledby={labelId}
+          id={id}
+        >
+          <div className={styles.SettingsSelect__selectedValue}>
+            {displayText}
+          </div>
+          <div className={`${styles.SettingsSelect__arrow} ${styles.selectIcon}`} />
         </div>
-        <div className={`${styles.SettingsSelect__arrow} ${styles.selectIcon}`} />
       </div>
       
       {isOpen && !disabled && (

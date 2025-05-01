@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
+import PropTypes from 'prop-types';
 import styles from './MainContent.module.css';
-import Spinner from '../../common/Spinner';
 
 // Lazily loaded components
 const ChatContainer = lazy(() => import(/* webpackChunkName: "chat-container" */ '../../chat/ChatContainer'));
@@ -13,9 +13,6 @@ const ChatContainer = lazy(() => import(/* webpackChunkName: "chat-container" */
  * @param {Object} props.selectedModel - The currently selected model object
  * @param {boolean} props.isLoadingModels - Whether models are currently loading
  * @param {Function} props.toggleModelSelector - Function to toggle the model dropdown/modal
- * @param {Function} props.onNewChat - Function to handle new chat
- * @param {Function} props.onResetChat - Function to handle reset chat
- * @param {Function} props.onDownloadChat - Function to handle download chat
  * @param {Function} props.onToggleSettings - Function to handle settings toggle
  * @param {boolean} props.isSettingsOpen - Whether the settings panel is open
  * @param {boolean} props.isModelSelectorOpen - Whether the model selector is open
@@ -23,38 +20,21 @@ const ChatContainer = lazy(() => import(/* webpackChunkName: "chat-container" */
  */
 const MainContent = ({ 
   isSidebarOpen, 
-  toggleSidebar, 
-  selectedModel,
-  isLoadingModels,
+  selectedModel = null,
   toggleModelSelector,
-  onNewChat,
-  onResetChat,
-  onDownloadChat,
   onToggleSettings,
   isSettingsOpen,
   isModelSelectorOpen
 }) => {
   return (
     <main className={styles.MainContent}>
-      {/* Model Loading Indicator - shows only during initial model loading */}
-      {isLoadingModels && (
-        <div className={styles.MainContent__modelLoadingOverlay}>
-          <div className={styles.MainContent__modelLoadingContent}>
-            <Spinner size="medium" />
-            <div className={styles.MainContent__modelLoadingText}>Loading models...</div>
-          </div>
-        </div>
-      )}
+      {/* Removed full-screen model loading overlay; spinner moved to ModelSelectorButton */}
       
-      {/* Chat area - Pass all action handlers down */}
+      {/* Chat area - Pass down remaining relevant props */}
       <Suspense fallback={<div className={styles.MainContent__chatPlaceholder} />}>
         <ChatContainer 
           selectedModel={selectedModel}
-          isLoadingModels={isLoadingModels}
           toggleModelSelector={toggleModelSelector}
-          onNewChat={onNewChat}
-          onResetChat={onResetChat}
-          onDownloadChat={onDownloadChat}
           onToggleSettings={onToggleSettings}
           isSidebarOpen={isSidebarOpen}
           isSettingsOpen={isSettingsOpen}
@@ -63,6 +43,16 @@ const MainContent = ({
       </Suspense>
     </main>
   );
+};
+
+MainContent.propTypes = {
+  isSidebarOpen: PropTypes.bool.isRequired,
+  toggleSidebar: PropTypes.func.isRequired,
+  selectedModel: PropTypes.object, // Could refine shape if known
+  toggleModelSelector: PropTypes.func.isRequired,
+  onToggleSettings: PropTypes.func.isRequired,
+  isSettingsOpen: PropTypes.bool.isRequired,
+  isModelSelectorOpen: PropTypes.bool.isRequired
 };
 
 export default MainContent; 

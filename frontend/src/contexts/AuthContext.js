@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { useToast } from './ToastContext';
+import { useLoading } from './LoadingContext';
 // Firebase is dynamically imported to avoid blocking
 
 const AuthContext = createContext();
@@ -15,9 +17,16 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [idToken, setIdToken] = useState(null);
   const [loading, setLoading] = useState(false); // Changed to false initially - we're proceeding anonymously
+  // Sync with global loading context for auth
+  const [, startAuthLoading, stopAuthLoading] = useLoading('auth');
   const [error, setError] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false); // State to trigger login UI
   const [isFirebaseInitialized, setIsFirebaseInitialized] = useState(false);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    if (loading) startAuthLoading(); else stopAuthLoading();
+  }, [loading, startAuthLoading, stopAuthLoading]);
 
   const login = useCallback(async () => {
     console.log("Login button clicked, setting isLoggingIn to true.");
@@ -33,7 +42,9 @@ export const AuthProvider = ({ children }) => {
     const { signOut: firebaseSignOut } = await import(/* webpackChunkName: "firebase-auth" */ 'firebase/auth');
     const auth = getFirebaseAuth();
     if (!auth) {
-      setError("Firebase not initialized.");
+      const msg = "Firebase not initialized.";
+      setError(msg);
+      showToast({ type: 'error', message: msg });
       return;
     }
     try {
@@ -41,7 +52,9 @@ export const AuthProvider = ({ children }) => {
       console.log("Sign out successful.");
     } catch (err) {
       console.error("Logout failed:", err);
-      setError(err.message || 'Failed to logout.');
+      const msg = err.message || 'Failed to logout.';
+      setError(msg);
+      showToast({ type: 'error', message: msg });
     }
   }, [isFirebaseInitialized, setError]);
 
@@ -84,7 +97,9 @@ export const AuthProvider = ({ children }) => {
             console.log("User signed in, token obtained.");
           } catch (err) {
             console.error("Failed to get ID token:", err);
-            setError("Failed to get authentication token.");
+            const msg = "Failed to get authentication token.";
+            setError(msg);
+            showToast({ type: 'error', message: msg });
             setIdToken(null);
             // Optionally sign out the user if token fetch fails critically
             const { signOut: firebaseSignOut } = await import(/* webpackChunkName: "firebase-auth" */ 'firebase/auth');

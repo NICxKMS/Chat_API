@@ -10,6 +10,7 @@
   transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
               color var(--theme-transition-duration) var(--theme-transition-timing);
   position: relative;
+  box-shadow: var(--shadow-lg);
 }
 
 /* Define sidebar widths */
@@ -23,13 +24,12 @@
   position: relative;
   z-index: 50;
   transition: 
-    width 0.3s ease, 
-    transform 0.3s ease, 
-    padding 0.3s ease, 
+    width var(--transition-duration-medium) ease,
+    transform var(--transition-duration-medium) ease, 
     border-color var(--theme-transition-duration) var(--theme-transition-timing);
   width: var(--sidebar-width-full);
   padding: 0;
-  border-right: 1px solid var(--border);
+  border-right: var(--border-width-sm) solid var(--border);
   overflow: hidden;
 }
 
@@ -37,8 +37,8 @@
   width: 100%;
   height: 100%;
   background-color: var(--sidebar-bg);
-  border-right: 1px solid var(--border);
-  box-shadow: 0 0 20px rgb(0 0 0 / 5%);
+  border-right: var(--border-width-sm) solid var(--border);
+  box-shadow: var(--shadow-lg);
 }
 
 .Layout__mainContentContainer {
@@ -59,30 +59,31 @@
 }
 
 /* Sidebar States (Desktop) */
-@media (width >= 1024px) {
-  .Layout.sidebarCompact .Layout__sidebarContainer {
+@media (min-width: 1024px) {
+  .Layout.Layout--sidebarCompact .Layout__sidebarContainer {
+    /* Collapse sidebar fully to allow main content to expand */
     width: 0;
+    min-width: 0;
     transform: translateX(-100%);
     pointer-events: none;
-    border-right: none;
-    padding: 0;
+    /* border-right remains or can be hidden via opacity if desired */
   }
 }
 
 /* Sidebar States (Mobile) */
-@media (width <= 1023px) {
+@media (max-width: 1023px) {
   .Layout__sidebarContainer {
     position: fixed;
     height: 100%;
     transform: translateX(-100%);
     width: var(--sidebar-width-full);
-    border-right: 1px solid var(--border);
+    border-right: var(--border-width-sm) solid var(--border);
     box-shadow: var(--shadow-lg);
     z-index: 100;
-    transition: transform 0.3s ease;
+    transition: transform var(--transition-duration-medium) ease;
   }
 
-  .Layout.sidebarOpenMobile .Layout__sidebarContainer {
+  .Layout.Layout--sidebarOpenMobile .Layout__sidebarContainer {
     transform: translateX(0);
   }
   
@@ -95,10 +96,10 @@
   display: none;
   position: fixed;
   inset: 0;
-  background-color: rgb(0 0 0 / 50%);
+  background-color: var(--overlay-bg-medium);
   z-index: 90;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--transition-duration-medium) ease;
 }
 
 .Layout__overlay--visible {
@@ -106,53 +107,34 @@
   opacity: 1;
 }
 
-/* Container for the model selector button - REMOVED */
-
-/*
-.modelSelectorContainer {
-  position: absolute;
-  top: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-}
-*/
 
 /* Modal Overlay */
 .Layout__modalOverlay {
   position: fixed;
   inset: 0;
-  background-color: rgb(0 0 0 / 60%);
+  background-color: var(--overlay-bg-strong);
   z-index: 100;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
+  padding: var(--space-xxl);
   opacity: 0;
-  animation: slideUp 0.3s ease forwards;
+  animation: slideUp var(--transition-duration-medium) ease forwards;
 }
 
 /* Modal Content Wrapper */
 .Layout__modalContent {
   background-color: var(--bg);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
   overflow: auto;
   position: relative;
-  animation: slideUp 0.3s ease forwards;
+  animation: slideUp var(--transition-duration-medium) ease forwards;
 }
 
-/* @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-} */ /* Removed duplicate - use common definition */
 
 @keyframes slideUp {
   from {
@@ -166,72 +148,30 @@
   }
 }
 
-/* Media Query for smaller screens */
-@media (width <= 768px) {
-  /* Hide the floating API Status container */
-  .Layout__apiStatusFloatingContainer {
-    display: none;
-  }
-}
-
-/* Floating API Status (Bottom Left) */
-.Layout__apiStatusFloatingContainer {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 1.5rem;
-  z-index: 150; /* Same level as other floating icons */
-  
-  /* Always visible now - Removed hiding properties */
-
-  /* opacity: 0; */
-
-  /* transform: translateY(20px); */
-
-  /* pointer-events: none; */
-
-  /* transition: opacity 0.3s ease, transform 0.3s ease; */
-}
-
-/* Make FLOATING API STATUS visible when sidebar is hidden */
-
-/* Target the new container */
-
-/* REMOVED THIS RULE */
-
-/*
-.sidebarHidden .apiStatusFloatingContainer {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-*/
 
 /* Mobile Actions Container */
-.mobileActionsContainer {
+.Layout__mobileActionsContainer {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  top: var(--space-md);
+  right: var(--space-md);
   z-index: 100;
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-sm);
 }
 
-.mobileActions {
+.Layout__mobileActions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background-color: var(--elevated-bg);
-  padding: 0.5rem;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  gap: var(--space-sm);
+  padding: var(--space-xs);
+  border-radius: var(--radius-lg);
   transition: 
     background-color var(--theme-transition-duration) var(--theme-transition-timing),
     border-color var(--theme-transition-duration) var(--theme-transition-timing);
 }
 
 /* Ensure AuthButton fits within the container */
-.mobileActions :global(.authButton) {
+.Layout__mobileActions :global(.authButton) {
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -239,12 +179,12 @@
 }
 
 /* Extend the common button style */
-.mobileActionButton {
+.Layout__mobileActionButton {
   width: var(--button-size);
   height: var(--button-size);
-  border-radius: 50%;
-  background-color: transparent !important;
-  border: var(--button-border);
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  border: var(--border-accent);
   box-shadow: none;
   display: flex;
   align-items: center;
@@ -256,78 +196,81 @@
   flex-shrink: 0;
 }
 
-.mobileActionButton:hover:not(:disabled) {
-  background-color: transparent !important;
+.Layout__mobileActionButton:hover:not(:disabled) {
   transform: scale(var(--button-hover-scale));
   border-color: var(--text);
 }
 
-.mobileActionButton:active:not(:disabled) {
+.Layout__mobileActionButton:active:not(:disabled) {
   transform: scale(var(--button-active-scale));
 }
 
-.mobileActionButton:disabled {
+.Layout__mobileActionButton:disabled {
   opacity: var(--button-disabled-opacity);
   cursor: not-allowed;
   transform: none;
 }
 
 /* Media Query for mobile view (small screens) */
-@media (width <= 768px) {
-  .mobileActionsContainer {
+@media (max-width: 768px) {
+  .Layout__mobileActionsContainer {
     display: block;
-    top: 1rem;
-    right: 1rem;
-    z-index: 100; /* Keep z-index high enough to stay above other elements */
+    top: var(--space-md);
+    right: var(--space-md);
+    z-index: 100;
   }
   
   /* Make the mobile actions container more compact */
-  .mobileActions {
-    padding: 0.25rem;
+  .Layout__mobileActions {
+    padding: var(--space-xxs);
     gap: 0;
   }
   
   /* Hide individual action buttons in mobile view */
-  .mobileActions > *:not(:last-child) {
+  .Layout__mobileActions > *:not(:last-child) {
     display: none;
   }
   
   /* Ensure the MoreActions component is visible */
-  .mobileActions > *:last-child {
+  .Layout__mobileActions > *:last-child {
     display: block;
   }
   
   /* Adjust button size for better tap targets */
-  .mobileActionButton {
+  .Layout__mobileActionButton {
     width: 38px;
     height: 38px;
+  }
+  
+  .Layout__mobileActionButton {
+    transition: none !important;
   }
 }
 
 /* Media Query for tablet/medium screens */
-@media (width >= 769px) and (width <= 1023px) {
-  .mobileActionsContainer {
+@media (min-width: 769px) and (max-width: 1023px) {
+  .Layout__mobileActionsContainer {
     display: block;
   }
   
   /* For medium screens, either show all actions or only the dropdown */
-  .mobileActions > *:not(:last-child) {
+  .Layout__mobileActions > *:not(:last-child) {
     display: none;
   }
   
-  .mobileActions > *:last-child {
+  .Layout__mobileActions > *:last-child {
     display: block;
   }
   
-  .mobileActions {
+  .Layout__mobileActions {
     padding: 0.25rem;
   }
 }
 
 /* Media Query for desktop view */
-@media (width >= 1024px) {
+@media (min-width: 1024px) {
   /* On desktop, show all actions */
-  .mobileActions > * {
+  .Layout__mobileActions > * {
     display: flex;
   }
 }

@@ -1,31 +1,22 @@
 /* SettingsSelect module CSS using BEM conventions */
 .SettingsSelect {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   position: relative;
-}
-
-.SettingsSelect__label {
-  display: block;
-  color: var(--text);
-  font-weight: 500;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  user-select: none;
+  width: 100%;
 }
 
 .SettingsSelect__select {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 36px;
-  padding: 0 12px;
-  background-color: var(--bg-secondary);
-  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
   border: 1px solid var(--border);
   color: var(--text);
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
   position: relative;
+  min-height: 2.5rem;
 }
 
 .SettingsSelect--open .SettingsSelect__select {
@@ -60,7 +51,6 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background-color: var(--bg-secondary);
   border-radius: 6px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
@@ -78,21 +68,14 @@
 }
 
 .SettingsSelect__option:hover {
-  background-color: var(--hover);
 }
 
 .SettingsSelect__option--selected {
-  background-color: rgb(var(--button-bg-rgb), 0.1);
   font-weight: 500;
 }
 
 /* Disabled state */
-.SettingsSelect--disabled .SettingsSelect__label {
-  color: var(--text-muted);
-}
-
 .SettingsSelect--disabled .SettingsSelect__select {
-  background-color: var(--bg-disabled);
   border-color: var(--border-light);
   color: var(--text-muted);
   cursor: not-allowed;
@@ -143,4 +126,40 @@
 .selectIcon {
   transition: transform 0.2s,
               color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+.selectControl {
+}
+
+.dropdown {
+}
+
+/* ===============================
+   MEDIA QUERIES
+   =============================== */
+
+/* Mobile (≤ 550px) */
+@media (width <= 550px) {
+  .SettingsSelect__select {
+    padding: 0.6rem 0.8rem;
+    min-height: 2.3rem;
+  }
+  
+  .SettingsSelect__selectedValue {
+    font-size: 0.85rem;
+  }
+  
+  .SettingsSelect__option {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+  
+  .SettingsSelect__dropdown {
+    max-height: 180px;
+  }
+}
+
+/* Desktop (> 550px) */
+@media (min-width: 551px) {
+  /* Default styles already work for desktop */
 } 

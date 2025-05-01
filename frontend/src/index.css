@@ -1,299 +1,5 @@
-/* CSS Variables for theming */
-:root {
-  /* Define standard theme transition */
-  --theme-transition-duration: 0.2s; /* Adjust time as desired */
-  --theme-transition-timing: ease; /* Adjust timing function as desired */
-
-  /* Base colors - Updated for Light Theme */
-  --primary-rgb: 86, 18, 244; /* Based on light --clr-primary-a0 */
-  --secondary-rgb: 107, 55, 218; /* Based on light --clr-primary-a20 */
-  --accent-rgb: 98, 40, 231; /* Based on light --clr-primary-a10 */
-  /* Keep functional colors */
-  --error-rgb: 239, 68, 68; 
-  --success-rgb: 34, 197, 94; 
-  --warning-rgb: 245, 158, 11; 
-  --info-rgb: 6, 182, 212; 
-  
-  /* Font settings */
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  --code-font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
-  
-  /* Light theme variables - APPLYING NEW PALETTE */
-  --light-bg: #ffffff; /* --clr-surface-a0 */
-  --light-chat-bg: #ffffff; /* --clr-surface-a0 */
-  --light-sidebar-bg: #ececec; /* --clr-surface-tonal-a0 */
-  --light-text: #000000; /* --clr-dark-a0 */
-  --light-text-primary: #000000; /* Primary text color */
-  --light-secondary-text: #7c59b4; /* --clr-primary-a50 */
-  --light-border: #e1e1e1; /* --clr-surface-a20 */
-  --border-pronounced-light: #d3d3d3; /* --clr-surface-a30 - New */
-  --light-input-bg: #ffffff; /* --clr-surface-a0 */
-  --light-button-bg: transparent; /* --clr-primary-a0 */
-  --light-button-hover: #6228e7; /* --clr-primary-a10 */
-  --light-button-text: #ffffff; /* --clr-light-a0 */
-  --light-message-user-bg: rgba(var(--primary-rgb), 0.08); /* Keep primary alpha blend */
-  --light-message-assistant-bg: #f0f0f0; /* --clr-surface-a10 */
-  --light-code-bg: #ececec; /* --clr-surface-tonal-a10 */
-  --light-settings-bg: #ececec; /* --clr-surface-tonal-a0 */
-  --light-hover: rgba(var(--primary-rgb), 0.05); /* Keep primary alpha blend */
-  --light-scroll-track: #f0f0f0; /* --clr-surface-a10 */
-  --light-scroll-thumb: #d3d3d3; /* --clr-surface-a30 */
-  --light-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04); /* Adjusted alpha */
-  --light-toggle-bg: #d3d3d3; /* --clr-surface-a30 */
-  --light-toggle-button: #ffffff; /* --clr-light-a0 */
-  --light-card-bg: #ffffff; /* --clr-surface-a0 */
-  --light-gradient-primary: linear-gradient(135deg, rgb(var(--primary-rgb)), rgb(var(--secondary-rgb)));
-  --light-gradient-accent: linear-gradient(135deg, rgb(var(--secondary-rgb)), rgb(var(--accent-rgb)));
-  --light-dropdown-bg: linear-gradient(180deg, rgba(var(--primary-rgb), 0.02), rgba(var(--primary-rgb), 0.01));
-  --light-selected-item-bg: rgba(var(--primary-rgb), 0.08); /* Keep primary alpha blend */
-  --light-tag-bg: rgba(var(--primary-rgb), 0.05); /* Keep primary alpha blend */
-  --light-model-icon-bg: #6228e7; /* --clr-primary-a10 */
-  --light-slider-track-bg: #d3d3d3; /* --clr-surface-a30 */
-  --light-slider-thumb-bg: var(--light-button-bg); /* Use button color */
-  --light-elevated-bg: #f5f5f5; /* Slightly off-white for elevated components - NEW */
-  
-  /* Dark theme variables - APPLYING NEW PALETTE */
-  --dark-bg: #121212; /* --clr-surface-a0 */
-  --dark-chat-bg: #212121; /* Updated for new design */
-  --dark-sidebar-bg: #171717; /* Updated for new design */
-  --dark-text: #ffffff; /* --clr-light-a0 */
-  --dark-text-primary: #fff; /* Primary text color */
-  --dark-secondary-text: #8b8b8b; /* --clr-surface-a50 */
-  --dark-border: #3f3f3f; /* --clr-surface-a20 */
-  --border-pronounced-dark: #575757; /* --clr-surface-a30 - New */
-  --dark-input-bg: #303030; /* Updated for new design */
-  --dark-input-bg-color: #303030; /* Match input-bg for consistency */
-  --dark-input-container-bg: #262626;
-  --dark-input-text-color: #e0e0e0;
-  --dark-button-text-color: #e0e0e0;
-  --dark-button-border-color: #4a4a4a;
-  --dark-scrollbar-thumb-color: rgba(255, 255, 255, 0.2);
-  --dark-scrollbar-track-color: rgba(0, 0, 0, 0.1);
-  --dark-scrollbar-thumb-hover-color: rgba(255, 255, 255, 0.3);
-  --dark-placeholder-color: #999;
-  --dark-button-bg-color: rgba(87, 157, 152, 0.75);
-  --dark-button-hover-bg-color: rgba(107, 168, 163, 0.9);
-  --dark-button-hover-border-color: rgba(255, 255, 255, 0.3);
-  --dark-shadow-color: rgba(0, 0, 0, 0.1);
-  --dark-button-bg: transparent; /* --clr-primary-a0 */
-  --dark-button-hover: #6ba8a3; /* --clr-primary-a10 */
-  --dark-button-text: #000000; /* --clr-dark-a0 */
-  --dark-message-user-bg: rgba(87, 157, 152, 0.1); /* Use Dark Primary RGB */
-  --dark-message-assistant-bg: #2f3333; /* --clr-surface-tonal-a10 */
-  --dark-code-bg: #121212; /* --clr-surface-a0 */
-  --dark-settings-bg: #2f2f2f; /* Updated for new design */
-  --dark-hover: rgba(87, 157, 152, 0.05); /* Use Dark Primary RGB */
-  --dark-scroll-track: #282828; /* --clr-surface-a10 */
-  --dark-scroll-thumb: #575757; /* --clr-surface-a30 */
-  /* Updated shadow to use darker base */
-  --dark-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-  --dark-toggle-bg: #3f3f3f; /* --clr-surface-a20 */
-  --dark-toggle-button: #ffffff; /* --clr-light-a0 */
-  --dark-card-bg: #282828; /* --clr-surface-a10 */
-  /* Update gradients to use new primary/secondary/accent */
-  --dark-gradient-primary: linear-gradient(135deg, rgb(87, 157, 152), rgb(126, 178, 174)); /* Use Dark RGBs */
-  --dark-gradient-accent: linear-gradient(135deg, rgb(126, 178, 174), rgb(107, 168, 163)); /* Use Dark RGBs */
-  --dark-dropdown-bg: linear-gradient(180deg, rgba(87, 157, 152, 0.03), rgba(87, 157, 152, 0.01)); /* Use Dark Primary RGB */
-  --dark-selected-item-bg: rgba(87, 157, 152, 0.1); /* Use Dark Primary RGB */
-  --dark-tag-bg: rgba(87, 157, 152, 0.08); /* Use Dark Primary RGB */
-  --dark-model-icon-bg: #6ba8a3; /* --clr-primary-a10 */
-  --dark-slider-track-bg: #575757; /* --clr-surface-a30 */
-  --dark-slider-thumb-bg: var(--dark-button-bg); /* Use button color */
-  --dark-elevated-bg: #333333; /* Slightly lighter than chat-bg for elevated components - NEW */
-  
-  /* Color palette for theming */
-  --gray-750: #313131;
-  --gray-800: #292929;
-  --gray-900: #1e1e1e;
-  
-  /* Simplified sidebar styling */
-  --dark-sidebar-text: #ededed;
-  --dark-sidebar-icon: #a4a4a4;
-  --light-sidebar-text: #333333;
-  --light-sidebar-icon: #555555;
-  
-  /* Additional sidebar and input surface variables for light theme */
-  --light-sidebar-surface: #f5f5f5;
-  --light-sidebar-surface-secondary: #ececec;
-  --light-sidebar-surface-tertiary: #ffffff;
-  --light-input-bg-color: #f0f0f0;
-  --light-input-container-bg: #f5f5f5;
-  --light-input-text-color: #333333;
-  --light-button-text-color: #333333;
-  --light-button-border-color: #d3d3d3;
-  --light-scrollbar-thumb-color: rgba(0, 0, 0, 0.2);
-  --light-scrollbar-track-color: rgba(0, 0, 0, 0.05);
-  --light-scrollbar-thumb-hover-color: rgba(0, 0, 0, 0.3);
-  --light-placeholder-color: #888888;
-  --light-button-bg-color: rgba(86, 18, 244, 0.75);
-  --light-button-hover-bg-color: rgba(98, 40, 231, 0.9);
-  --light-button-hover-border-color: rgba(0, 0, 0, 0.1);
-  --light-shadow-color: rgba(0, 0, 0, 0.1);
-  
-  /* Settings panel light theme variables */
-  --light-panel-bg: #f5f5f5;
-  --light-panel-border: rgba(0, 0, 0, 0.1);
-  --light-panel-shadow: rgba(0, 0, 0, 0.1);
-  --light-card-bg: rgba(240, 240, 240, 0.95);
-  --light-card-bg-hover: rgba(245, 245, 245, 1);
-  --light-border-accent: rgba(0, 0, 0, 0.15);
-  --light-accent-bg-soft: rgba(86, 18, 244, 0.1);
-  --light-accent-bg-softer: rgba(86, 18, 244, 0.05);
-
-  /* Add CSS variable for RGB version of primary color for opacity control */
-  --primary-color-rgb: 0, 123, 255; /* Default blue */
-}
-
-/* Apply theme based on body class and system preferences */
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-  }
-}
-
-body.light-mode {
-  --bg: var(--light-bg);
-  --chat-bg: var(--light-chat-bg);
-  --elevated-bg: var(--light-elevated-bg); /* NEW MAPPING */
-  --sidebar-bg: var(--light-sidebar-bg);
-  --sidebar-text: var(--light-sidebar-text);
-  --sidebar-icon: var(--light-sidebar-icon);
-  --sidebar-surface: var(--light-sidebar-surface);
-  --sidebar-surface-secondary: var(--light-sidebar-surface-secondary);
-  --sidebar-surface-tertiary: var(--light-sidebar-surface-tertiary);
-  --sidebar-title-primary: var(--light-text);
-  
-  /* Chat input specific styling */
-  --input-bg-color: var(--light-input-bg-color);
-  --input-container-bg: var(--light-input-container-bg);
-  --input-text-color: var(--light-input-text-color);
-  --button-text-color: var(--light-button-text-color);
-  --button-border-color: var(--light-button-border-color);
-  --scrollbar-thumb-color: var(--light-scrollbar-thumb-color);
-  --scrollbar-track-color: var(--light-scrollbar-track-color);
-  --scrollbar-thumb-hover-color: var(--light-scrollbar-thumb-hover-color);
-  --placeholder-color: var(--light-placeholder-color);
-  --button-bg-color: var(--light-button-bg-color);
-  --button-hover-bg-color: var(--light-button-hover-bg-color);
-  --button-hover-border-color: var(--light-button-hover-border-color);
-  --shadow-color: var(--light-shadow-color);
-  
-  /* Settings panel variables */
-  --panel-bg: var(--light-panel-bg);
-  --panel-border: var(--light-panel-border);
-  --panel-shadow: var(--light-panel-shadow);
-  --card-bg: var(--light-card-bg);
-  --card-bg-hover: var(--light-card-bg-hover);
-  --border-accent: var(--light-border-accent);
-  --accent-bg-soft: var(--light-accent-bg-soft);
-  --accent-bg-softer: var(--light-accent-bg-softer);
-  
-  --text: var(--light-text);
-  --text-primary: var(--light-text-primary);
-  --secondary-text: var(--light-secondary-text);
-  --border: var(--light-border);
-  --border-pronounced: var(--border-pronounced-light); /* Add mapping */
-  --input-bg: var(--light-input-bg);
-  --button-bg: var(--light-button-bg);
-  --button-hover: var(--light-button-hover);
-  --button-text: var(--light-button-text);
-  --message-user-bg: var(--light-message-user-bg);
-  --message-assistant-bg: var(--light-message-assistant-bg);
-  --code-bg: var(--light-code-bg);
-  --settings-bg: var(--light-settings-bg);
-  --hover: var(--light-hover);
-  --scroll-track: var(--light-scroll-track);
-  --scroll-thumb: var(--light-scroll-thumb);
-  --shadow: var(--light-shadow);
-  --toggle-bg: var(--light-toggle-bg);
-  --toggle-button: var(--light-toggle-button);
-  --status-online: var(--light-status-online);
-  --status-offline: var(--light-status-offline);
-  --gradient-primary: var(--light-gradient-primary);
-  --gradient-accent: var(--light-gradient-accent);
-  --dropdown-bg: var(--light-dropdown-bg);
-  --selected-item-bg: var(--light-selected-item-bg);
-  --tag-bg: var(--light-tag-bg);
-  --model-icon-bg: var(--light-model-icon-bg);
-  --button-bg-rgb: var(--primary-rgb);
-  --slider-track-bg: var(--light-slider-track-bg);
-  --slider-thumb-bg: var(--light-slider-thumb-bg);
-  color-scheme: light;
-}
-
-body.dark-mode {
-  --bg: var(--dark-bg);
-  --chat-bg: var(--dark-chat-bg);
-  --elevated-bg: var(--dark-elevated-bg); /* NEW MAPPING */
-  --sidebar-bg: var(--dark-sidebar-bg);
-  --sidebar-text: var(--dark-sidebar-text);
-  --sidebar-icon: var(--dark-sidebar-icon);
-  
-  /* Settings panel variables */
-  --panel-bg: var(--dark-settings-bg);
-  --panel-border: rgba(255, 255, 255, 0.1);
-  --panel-shadow: rgba(0, 0, 0, 0.25);
-  --card-bg: rgba(40, 40, 40, 0.6);
-  --card-bg-hover: rgba(50, 50, 50, 0.8);
-  --border-accent: rgba(255, 255, 255, 0.15);
-  --accent-bg-soft: rgba(87, 157, 152, 0.15);
-  --accent-bg-softer: rgba(87, 157, 152, 0.05);
-  
-  /* Input and scrollbar variables */
-  --input-bg-color: var(--dark-input-bg-color);
-  --input-container-bg: var(--dark-input-container-bg);
-  --input-text-color: var(--dark-input-text-color);
-  --button-text-color: var(--dark-button-text-color);
-  --button-border-color: var(--dark-button-border-color);
-  --scrollbar-thumb-color: var(--dark-scrollbar-thumb-color);
-  --scrollbar-track-color: var(--dark-scrollbar-track-color);
-  --scrollbar-thumb-hover-color: var(--dark-scrollbar-thumb-hover-color);
-  --placeholder-color: var(--dark-placeholder-color);
-  --button-bg-color: var(--dark-button-bg-color);
-  --button-hover-bg-color: var(--dark-button-hover-bg-color);
-  --button-hover-border-color: var(--dark-button-hover-border-color);
-  --shadow-color: var(--dark-shadow-color);
-  
-  --text: var(--dark-text);
-  --text-primary: var(--dark-text-primary);
-  --secondary-text: var(--dark-secondary-text);
-  --border: var(--dark-border);
-  --border-pronounced: var(--border-pronounced-dark); /* Add mapping */
-  --input-bg: var(--dark-input-bg);
-  --button-bg: var(--dark-button-bg);
-  --button-hover: var(--dark-button-hover);
-  --button-text: var(--dark-button-text);
-  --message-user-bg: var(--dark-message-user-bg);
-  --message-assistant-bg: var(--dark-message-assistant-bg);
-  --code-bg: var(--dark-code-bg);
-  --settings-bg: var(--dark-settings-bg);
-  --hover: var(--dark-hover);
-  --scroll-track: var(--dark-scroll-track);
-  --scroll-thumb: var(--dark-scroll-thumb);
-  --shadow: var(--dark-shadow);
-  --toggle-bg: var(--dark-toggle-bg);
-  --toggle-button: var(--dark-toggle-button);
-  --status-online: var(--dark-status-online);
-  --status-offline: var(--dark-status-offline);
-  --card-bg: var(--dark-card-bg);
-  --gradient-primary: var(--dark-gradient-primary);
-  --gradient-accent: var(--dark-gradient-accent);
-  --dropdown-bg: var(--dark-dropdown-bg);
-  --selected-item-bg: var(--dark-selected-item-bg);
-  --tag-bg: var(--dark-tag-bg);
-  --model-icon-bg: var(--dark-model-icon-bg);
-  --button-bg-rgb: var(--primary-rgb);
-  --slider-track-bg: var(--dark-slider-track-bg);
-  --slider-thumb-bg: var(--dark-slider-thumb-bg);
-  color-scheme: dark;
-}
+@import './styles/theme.css';
+@import './styles/common/common.css'; /* Added import for common styles */
 
 /* Base styles */
 * {
@@ -308,8 +14,8 @@ body {
   font-family: var(--font-family);
   font-size: 16px;
   line-height: 1.5;
-  color: var(--text);
-  background-color: var(--bg);
+  color: var(--text); /* Applied via body theme classes */
+  background-color: var(--bg); /* Applied via body theme classes */
 }
 
 body {
@@ -347,133 +53,44 @@ svg {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--scroll-track);
+  background: var(--scroll-track); /* Applied via body theme classes */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--scroll-thumb);
-  border-radius: var(--radius-lg);
+  background: var(--scroll-thumb); /* Applied via body theme classes */
+  border-radius: var(--radius-lg); /* Ensure this token exists */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary-text);
+  background: var(--secondary-text); /* Applied via body theme classes */
 }
 
-/* Loading screen */
-.loading-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background-color: var(--bg);
-  color: var(--text);
+/* Removed variable definitions */
+/* Removed theme application logic (body.light-mode, body.dark-mode) */
+/* Removed media query overrides for color-scheme (handled in theme.css) */
+/* Removed utility classes (.card, .button-primary, .gradient-text) - Moved to common.css */
+/* Removed loading screen styles (.loading-screen) - Moved to common.css */
+/* Removed pulse loader styles (.pulse-loader, @keyframes pulse) - Moved to common.css */
+/* Removed mobile keyboard handling media query - Moved to common.css */
+
+/* Global Button Hover Effect */
+#root button:not(.Sidebar button):not([class*="SettingsPanel"]):not([class*="Settings"]):not(.ChatInput button):hover {
+  background-color: var(--button-global-hover-bg-light);
 }
 
-.loading-screen p {
-  margin-top: 1rem;
-  font-size: 1.2rem;
-  font-weight: var(--font-weight-lg);
+body.dark-mode #root button:not(.Sidebar button):not([class*="SettingsPanel"]):not([class*="Settings"]):not(.ChatInput button):hover {
+  background-color: var(--button-global-hover-bg-dark);
 }
 
-/* Common utility classes */
-.card {
-  background-color: var(--card-bg);
-  border-radius: 0.5rem;
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  /* Combine existing transitions with theme transitions */
-  transition: transform 0.2s ease, 
-              box-shadow var(--theme-transition-duration) var(--theme-transition-timing),
-              background-color var(--theme-transition-duration) var(--theme-transition-timing);
+/* Remove all hover transition timing for buttons */
+button {
+  transition: none !important;
 }
 
-.card:hover {
-  transform: translateY(-2px);
-  /* Update shadow transition to match (optional, could be faster/slower) */
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); 
-}
-
-.button-primary {
-  background: var(--button-bg);
-  color: var(--button-text);
-  border: none;
-  border-radius: 0.375rem;
-  padding: 0.5rem 1rem;
-  font-weight: var(--font-weight-lg);
-  cursor: pointer;
-  /* Update transition */
-  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
-              color var(--theme-transition-duration) var(--theme-transition-timing);
-}
-
-.button-primary:hover {
-  background: var(--button-hover);
-}
-
-.gradient-text {
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  display: inline-block;
-  /* Add transition for potential color changes if applicable */
-  transition: color var(--theme-transition-duration) var(--theme-transition-timing);
-}
-
-/* Lightweight pulse loader for ultra fast initial rendering */
-.pulse-loader {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: rgba(var(--primary-color-rgb, 0, 123, 255), 0.2);
-  animation: pulse 1.2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb, 0, 123, 255), 0.5);
-  }
-  
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 10px rgba(var(--primary-color-rgb, 0, 123, 255), 0);
-  }
-  
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb, 0, 123, 255), 0);
-  }
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-color: #121212;
-    --primary-color-rgb: 66, 165, 245;
-  }
-}
-
-/* Add CSS for handling virtual keyboard on mobile */
-@media (max-width: 768px) {
-  body.keyboard-open {
-    /* Prevent content from being pushed up or obscured by keyboard */
-    height: 100%;
-    overflow: hidden;
-  }
-  
-  body.keyboard-open #root {
-    /* Allow scrolling within the app when keyboard is open */
-    overflow-y: auto;
-    height: 100%;
-  }
-
-  /* When keyboard is open, ensure fixed elements remain visible */
-  body.keyboard-open .fixedInputArea,
-  body.keyboard-open [class*="fixedInputArea"] {
-    position: fixed !important;
-    bottom: 0 !important;
-    z-index: 1000 !important;
-  }
+/*------------------------------------------------------------------
+  Override: Disable global hover for buttons inside SettingsPanel
+-------------------------------------------------------------------*/
+#root [class*="SettingsPanel"] button:hover,
+#root [class*="Settings"] button:hover {
+  background-color: transparent !important;
 } 

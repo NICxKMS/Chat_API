@@ -1,71 +1,60 @@
 .ModelSearch {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--sidebar-bg);
-}
-
-.ModelSearch__inputWrapper {
+  margin-bottom: var(--space-md);
   position: relative;
-  display: flex;
-  align-items: center;
-  background: var(--input-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 0.5rem;
-  transition: 
-    background-color var(--theme-transition-duration) var(--theme-transition-timing),
-    border-color var(--theme-transition-duration) var(--theme-transition-timing),
-    box-shadow 0.2s ease;
-}
-
-.ModelSearch__inputWrapper:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
-}
-
-.ModelSearch__icon {
-  color: var(--secondary-text);
-  margin-right: 0.5rem;
-  flex-shrink: 0;
 }
 
 .ModelSearch__input {
-  flex: 1;
-  border: none;
-  background: transparent;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  padding-right: var(--space-xxl); /* Space for clear button */
+  border: var(--border-width-sm) solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--input-bg);
   color: var(--text);
-  font-size: 0.9rem;
-  padding: 0;
-  outline: none;
+  font-size: var(--font-size-md);
+  transition: var(--transition-standard);
+  appearance: none;
+  box-shadow: var(--shadow-inset-sm);
 }
 
 .ModelSearch__input::placeholder {
   color: var(--secondary-text);
+  opacity: 0.7;
+}
+
+.ModelSearch__input:focus {
+  outline: none;
+  border-color: var(--accent-text-color);
+  box-shadow: var(--shadow-md), 0 0 0 var(--border-width-sm) var(--accent-text-color);
+  background-color: color-mix(in srgb, var(--input-bg) 95%, var(--accent-text-color) 5%);
 }
 
 .ModelSearch__clearButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute;
+  right: var(--space-sm);
+  top: 50%;
+  transform: translateY(-50%);
   background: transparent;
   border: none;
   color: var(--secondary-text);
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  margin-left: 0.5rem;
-  transition: 
-    background-color var(--theme-transition-duration) var(--theme-transition-timing),
-    color var(--theme-transition-duration) var(--theme-transition-timing);
+  padding: var(--space-xxs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: var(--transition-standard);
 }
 
 .ModelSearch__clearButton:hover {
-  background: var(--hover);
   color: var(--text);
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
 }
 
-.ModelSearch__clearIcon {
-  flex-shrink: 0;
+.ModelSearch__clearButton svg {
+  width: 18px;
+  height: 18px;
 }
 
 .ModelSearch__results {

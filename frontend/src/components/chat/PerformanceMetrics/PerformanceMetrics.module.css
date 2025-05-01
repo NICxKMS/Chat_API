@@ -1,17 +1,17 @@
 .PerformanceMetrics {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-xs);
   color: var(--secondary-text);
-  border-top: 1px solid var(--border);
+  border-top: var(--border-width-sm) solid var(--border);
 }
 
 .PerformanceMetrics__metric {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-xxs);
 }
 
 /* Modifiers for metric types */
@@ -19,25 +19,25 @@
 .PerformanceMetrics__metric--tokens { }
 .PerformanceMetrics__metric--tps { }
 .PerformanceMetrics__metric--detailed {
-  color: var(--accent-color, #06c);
+  color: var(--accent-color); /* Use mapped variable */
 }
 
 .PerformanceMetrics__icon {
-  width: 12px;
-  height: 12px;
+  width: var(--space-sm);
+  height: var(--space-sm);
   opacity: 0.7;
 }
 
 /* Responsive adjustments */
 @media (width <= 480px) {
   .PerformanceMetrics {
-    padding: 0.5rem;
-    font-size: 0.7rem;
-    gap: 0.5rem;
+    padding: var(--space-xs);
+    font-size: var(--font-size-xs);
+    gap: var(--space-xs);
   }
   
   .PerformanceMetrics__icon {
-    width: 10px;
-    height: 10px;
+    width: var(--space-sm);
+    height: var(--space-sm);
   }
 } 

@@ -1,4 +1,5 @@
 import { memo, useMemo, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import styles from './PerformanceMetrics.module.css';
 
 /**
@@ -7,7 +8,7 @@ import styles from './PerformanceMetrics.module.css';
  * @param {Object} props.metrics - Metrics data including token counts and timing
  * @returns {JSX.Element|null} - Rendered component or null if no metrics
  */
-const PerformanceMetrics = memo(({ metrics }) => {
+const PerformanceMetrics = memo(({ metrics = null }) => {
   const { 
     elapsedTime, 
     tokensPerSecond, 
@@ -179,5 +180,20 @@ const InfoIcon = ({ className }) => (
 
 // Display name for debugging
 PerformanceMetrics.displayName = 'PerformanceMetrics';
+
+// PropTypes
+PerformanceMetrics.propTypes = {
+  metrics: PropTypes.shape({
+    elapsedTime: PropTypes.number,
+    tokensPerSecond: PropTypes.number,
+    isComplete: PropTypes.bool,
+    promptTokens: PropTypes.number,
+    completionTokens: PropTypes.number,
+    totalTokens: PropTypes.number,
+    finishReason: PropTypes.string
+  })
+};
+
+// Removed defaultProps; default parameter used instead
 
 export default PerformanceMetrics; 

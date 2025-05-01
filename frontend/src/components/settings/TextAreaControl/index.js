@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import styles from './TextAreaControl.module.css';
+import commonStyles from '../common/ControlStyles.module.css';
 
 /**
  * TextArea control component for settings
@@ -12,7 +13,6 @@ import styles from './TextAreaControl.module.css';
  * @param {Function} props.onChange Change handler
  * @param {string} props.tooltip Tooltip text
  * @param {string} props.placeholder Placeholder text
- * @param {number} props.rows Number of rows for the textarea
  * @returns {JSX.Element} Rendered component
  */
 const TextAreaControl = ({ 
@@ -21,8 +21,7 @@ const TextAreaControl = ({
   value, 
   onChange, 
   tooltip, 
-  placeholder = 'Enter text here...', 
-  rows = 4 
+  placeholder = 'Enter text here...'
 }) => {
   const [localValue, setLocalValue] = useState(value);
   
@@ -44,9 +43,9 @@ const TextAreaControl = ({
   };
   
   return (
-    <div className={styles.TextAreaControl}>
-      <div className={styles.TextAreaControl__header}>
-        <label htmlFor={id} className={styles.TextAreaControl__label} title={tooltip}>
+    <div className={commonStyles.controlContainer}>
+      <div className={commonStyles.controlHeader}>
+        <label htmlFor={id} className={commonStyles.controlLabel} title={tooltip}>
           {label}
         </label>
       </div>
@@ -59,12 +58,11 @@ const TextAreaControl = ({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        rows={rows}
         aria-label={label}
       />
       
       {tooltip && (
-        <div className={styles.TextAreaControl__description}>
+        <div className={commonStyles.controlDescription}>
           {tooltip}
         </div>
       )}
@@ -78,8 +76,7 @@ TextAreaControl.propTypes = {
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
   tooltip: PropTypes.string,
-  placeholder: PropTypes.string,
-  rows: PropTypes.number
+  placeholder: PropTypes.string
 };
 
 export default TextAreaControl; 

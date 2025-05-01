@@ -3,6 +3,8 @@ import { useApi } from './ApiContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useAuth } from './AuthContext';
 import { useCacheToggle } from '../hooks/useCacheToggle';
+import { useToast } from './ToastContext';
+import { useLoading } from './LoadingContext';
 
 // Cache expiry time in milliseconds (5 days)
 const CACHE_EXPIRY_TIME = 5 * 24 * 60 * 60 * 1000;
@@ -34,6 +36,7 @@ export const ModelProvider = ({ children }) => {
   const { cacheEnabled } = useCacheToggle();
   const { apiUrl } = useApi();
   const { idToken } = useAuth();
+  const { showToast } = useToast();
   
   // State for model data
   const [allModels, setAllModels] = useState([]);
@@ -53,6 +56,13 @@ export const ModelProvider = ({ children }) => {
       'Embedding': true
     }
   });
+  
+  // Sync with global loading context
+  const [, startModelsLoading, stopModelsLoading] = useLoading('models');
+  useEffect(() => {
+    if (isLoading) startModelsLoading();
+    else stopModelsLoading();
+  }, [isLoading, startModelsLoading, stopModelsLoading]);
   
   // Check if cache is valid
   const isCacheValid = useCallback((cache) => {
@@ -154,6 +164,7 @@ export const ModelProvider = ({ children }) => {
         if (msg.error) {
           console.error('[ModelContext] Worker error:', msg.error);
           setError(msg.error);
+          showToast({ type: 'error', message: msg.error });
         } else {
           const {
             allModels: fetchedAllModels,
@@ -187,18 +198,22 @@ export const ModelProvider = ({ children }) => {
       worker.onerror = (err) => {
         console.error('[ModelContext] Worker unexpected error:', err);
         setError(err.message);
+        showToast({ type: 'error', message: err.message });
         setIsLoading(false);
         worker.terminate();
       };
     } catch (err) {
       console.error('Failed to fetch or process models:', err);
       setError(err.message || 'Failed to load model data');
+      showToast({ type: 'error', message: err.message || 'Failed to load model data' });
       // Attempt to load from potentially expired cache as a last resort?
     }
-  }, [apiUrl, cacheModels, idToken, cacheEnabled]);
+  }, [apiUrl, cacheModels, idToken, cacheEnabled, showToast]);
   
   // Initial fetch once on mount
   const initialFetchDoneRef = useRef(false);
+  // track if we've already fetched models with authentication
+  const didAuthFetchRef = useRef(false);
 
   useEffect(() => {
     if (!initialFetchDoneRef.current) {
@@ -216,8 +231,11 @@ export const ModelProvider = ({ children }) => {
       let cachedToken = null;
       try { cachedToken = localStorage.getItem('idToken'); } catch {}
       if (cachedToken) {
+        // initial authenticated fetch
+        didAuthFetchRef.current = true;
         fetchModels(true, cachedToken);
       } else {
+        // initial unauthenticated fetch
         fetchModels(false);
       }
       initialFetchDoneRef.current = true;
@@ -227,7 +245,9 @@ export const ModelProvider = ({ children }) => {
 
   // After login, fetch authenticated models
   useEffect(() => {
-    if (initialFetchDoneRef.current && idToken) {
+    // only fetch once after obtaining idToken if not already done
+    if (initialFetchDoneRef.current && idToken && !didAuthFetchRef.current) {
+      didAuthFetchRef.current = true;
       fetchModels(true);
     }
   }, [idToken, fetchModels]);

@@ -1,0 +1,124 @@
+/* Overlay Layout */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 1000;
+}
+
+.overlay--open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Panel Layout */
+.panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.75);
+  background-color: var(--panel-bg);
+  border-radius: 8px;
+  width: 600px;
+  height: 66%;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel--open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Header Section */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--card-bg);
+}
+
+.title {
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.25rem;
+  transition: color 0.2s ease;
+}
+
+.closeButton:hover,
+button.closeButton:hover {
+  color: var(--text-primary);
+  background-color: transparent !important;
+}
+
+/* Content Section */
+.content {
+  padding: 1rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background-color: rgb(255 255 255 / 20%);
+  border-radius: 6px;
+}
+
+/* Global Overrides */
+:global(.SettingsPanel) button:hover,
+:global([class*="SettingsPanel"]) button:hover,
+:global([class*="Settings"]) button:hover {
+  background-color: transparent !important;
+}
+
+/* ===============================
+   MEDIA QUERIES
+   =============================== */
+
+/* Mobile (≤ 550px) */
+@media (max-width: 550px) {
+  .panel {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 90%;
+    height: 85%;
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 12px;
+  }
+  .panel--open {
+    transform: translate(-50%, -50%) scale(1);
+  }
+} 

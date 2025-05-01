@@ -1,19 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSettings } from '../../contexts/SettingsContext';
-import { useCacheToggle } from '../../hooks/useCacheToggle';
-import { useAuth } from '../../contexts/AuthContext';
-import { BooleanControl, SettingsSlider, SettingsGroup, TextAreaControl } from './index';
-import { 
-  IconSlider, 
-  IconStream, 
-  IconCache, 
-  IconOutput, 
-  IconRepeat, 
-  IconClose, 
-  IconRefresh
-} from './icons';
-import { IconSystem } from './icons.js';
+import { useSettingsController } from '../../../hooks/useSettingsController';
+import { BooleanControl, SettingsSlider, TextAreaControl } from '..';
+import { IconSlider, IconStream, IconClose, IconSystem } from '../icons';
 import styles from './SettingsPanel.module.css';
+import { default as SettingsSidebarOverlay } from '../SettingsSidebarOverlay';
+import { useIsSettingsMobile } from '../../../hooks/useMediaQuery';
 
 /**
  * Main settings panel component 
@@ -25,11 +16,18 @@ import styles from './SettingsPanel.module.css';
  * @returns {JSX.Element} - Rendered component
  */
 const SettingsPanel = ({ isOpen, onClose }) => {
-  const { settings, updateSetting, resetSettings } = useSettings();
-  const { cacheEnabled, toggleCache, refreshModels } = useCacheToggle();
-  const { currentUser } = useAuth();
+  const { settings, updateSetting, resetSettings, cacheEnabled, toggleCache, currentUser } = useSettingsController();
   const [activeTab, setActiveTab] = useState('general');
   const [animateItems, setAnimateItems] = useState(false);
+  
+  // Use media query hook for mobile detection
+  const isMobile = useIsSettingsMobile();
+  // Ensure activeTab is not 'general' on mobile
+  useEffect(() => {
+    if (isMobile && activeTab === 'general') {
+      setActiveTab('advanced');
+    }
+  }, [isMobile, activeTab]);
   
   // Get the default user name to use consistently throughout the app
   const userName = currentUser?.displayName || currentUser?.email || 'Sir';
@@ -122,11 +120,15 @@ const SettingsPanel = ({ isOpen, onClose }) => {
   // Tab definitions
   const tabs = [
     { id: 'general', label: 'General', icon: <IconStream /> },
-    { id: 'system', label: 'System', icon: <IconSystem /> },
-    { id: 'generation', label: 'Generation', icon: <IconSlider /> },
-    { id: 'output', label: 'Output', icon: <IconOutput /> },
-    { id: 'repetition', label: 'Repetition', icon: <IconRepeat /> }
+    { id: 'advanced', label: 'Advanced', icon: <IconSlider /> },
+    { id: 'system', label: 'System', icon: <IconSystem /> }
   ];
+
+  // Show only Advanced & System tabs on mobile
+  const visibleTabs = useMemo(
+    () => (isMobile ? tabs.filter(tab => tab.id !== 'general') : tabs),
+    [isMobile, tabs]
+  );
 
   // Render a setting control based on its type
   const renderSettingControl = useCallback((settingId) => {
@@ -134,7 +136,7 @@ const SettingsPanel = ({ isOpen, onClose }) => {
     if (!config) return null;
     
     let value = settings[settingId];
-    const itemClass = `${styles.settingItem} ${animateItems ? styles.animate : ''}`;
+    const itemClass = `${styles.settingItem} ${animateItems ? styles.animate : ''} ${settingId === 'systemPrompt' ? styles.fullHeight : ''}`;
     
     // If this is the system prompt, customize it with the user's name
     if (settingId === 'systemPrompt') {
@@ -216,133 +218,101 @@ const SettingsPanel = ({ isOpen, onClose }) => {
     [activeSettings, renderSettingControl]
   );
 
+  // Add model cache toggle control
+  const renderCacheToggle = useCallback(() => {
+    const itemClass = `${styles.settingItem} ${animateItems ? styles.animate : ''}`;
+    return (
+      <div key="cache" className={itemClass}>
+        <BooleanControl
+          id="cacheEnabled"
+          label="Enable Model Cache"
+          isChecked={cacheEnabled}
+          onChange={() => toggleCache()}
+          tooltip="Toggle model caching to speed up repeated requests"
+        />
+      </div>
+    );
+  }, [cacheEnabled, toggleCache, animateItems]);
+
+  // Render controls based on activeTab, adjusting for mobile layout
+  const renderTabContent = () => {
+    if (activeTab === 'general') {
+      // Desktop only
+      return [
+        renderSettingControl('streaming'),
+        renderCacheToggle(),
+        renderSettingControl('max_tokens')
+      ];
+    }
+    if (activeTab === 'advanced') {
+      const advancedControls = [
+        renderSettingControl('temperature'),
+        renderSettingControl('top_p'),
+        renderSettingControl('frequency_penalty'),
+        renderSettingControl('presence_penalty')
+      ];
+      if (isMobile) {
+        // On mobile, include streaming and max_tokens
+        return [
+          renderSettingControl('streaming'),
+          renderSettingControl('max_tokens'),
+          ...advancedControls
+        ];
+      }
+      return advancedControls;
+    }
+    if (activeTab === 'system') {
+      const systemControls = [renderSettingControl('systemPrompt')];
+      if (isMobile) {
+        // On mobile, move cache toggle here
+        return [renderCacheToggle(), ...systemControls];
+      }
+      return systemControls;
+    }
+    return null;
+  };
+
   return (
-    <>
-      {/* Backdrop overlay */}
-      <div 
-        className={`${styles['SettingsPanel__overlay']} ${isOpen ? styles['SettingsPanel__overlay--open'] : ''}`}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      
-      {/* Settings panel */}
-      <div 
-        className={`${styles.SettingsPanel} ${isOpen ? styles['SettingsPanel--open'] : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="settings-title"
-      >
-        {/* Header */}
-        <div className={styles.header}>
-          <h2 id="settings-title" className={styles.title}>Settings</h2>
-          
-          {/* User Profile Section */}
-          {currentUser && (
-            <div className={styles.userProfile}>
-              {currentUser.photoURL ? (
-                <img 
-                  src={currentUser.photoURL} 
-                  alt={`${userName}'s profile`}
-                  className={styles.userAvatar}
-                />
-              ) : (
-                <div className={styles.userInitial}>
-                  {userName.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <span className={styles.userName}>{userName}</span>
-            </div>
-          )}
-          
-          <button 
-            onClick={onClose} 
-            className={styles.closeButton} 
-            aria-label="Close settings"
-            title="Close settings"
-          >
-            <IconClose />
-          </button>
-        </div>
-        
-        {/* Tab navigation */}
-        <div className={styles.tabsContainer}>
-          {tabs.map(tab => (
+    <SettingsSidebarOverlay isOpen={isOpen} onClose={onClose}>
+      {/* Header with title and close button */}
+      <div className={styles.header}>
+        <h2 id="settings-title" className={styles.title}>Settings</h2>
+        <button onClick={onClose} className={styles.closeButton} aria-label="Close settings">
+          <IconClose />
+        </button>
+      </div>
+
+      {/* Body wrapper: vertical on desktop, horizontal on mobile */}
+      <div className={styles.bodyWrapper}>
+        {/* Minimal horizontal tabs (become vertical on desktop) */}
+        <nav className={styles.navTabs} role="tablist">
+          {visibleTabs.map(tab => (
             <button
               key={tab.id}
-              className={`${styles.tabButton} ${activeTab === tab.id ? styles.activeTab : ''}`}
+              className={`${styles.navTab} ${activeTab === tab.id ? styles.navTabActive : ''}`}
               onClick={() => setActiveTab(tab.id)}
-              aria-selected={activeTab === tab.id}
               role="tab"
-              title={tab.label}
+              aria-selected={activeTab === tab.id}
             >
-              <span className={styles.tabIcon}>{tab.icon}</span>
-              <span className={styles.tabLabel}>{tab.label}</span>
+              <div className={styles.navTabContent}>
+                <span className={styles.tabIcon}>{tab.icon}</span>
+                <span className={styles.tabLabel}>{tab.label}</span>
+              </div>
             </button>
           ))}
-        </div>
-        
-        {/* Content area */}
-        <div className={styles.content}>
-          {/* Conditional rendering based on active tab */}
-          {activeTab === 'general' && (
-            <SettingsGroup title="General Settings">
-              {/* Custom toggle for streaming */}
-              {renderSettingControl('streaming')}
-              
-              {/* Model cache section */}
-              <div className={`${styles.settingItem} ${animateItems ? styles.animate : ''}`} style={{ animationDelay: '100ms' }}>
-                <div className={styles.settingHeader}>
-                  <div className={styles.headingWithIcon}>
-                    <IconCache />
-                    <label className={styles.settingLabel}>Model Caching</label>
-                  </div>
-                </div>
-                <BooleanControl
-                  id="modelCache"
-                  label="Enable Model Cache"
-                  isChecked={cacheEnabled}
-                  onChange={toggleCache}
-                  tooltip="Store model data in your browser to reduce API calls and improve loading times."
-                />
-                <button 
-                  onClick={refreshModels} 
-                  className={styles.refreshButton}
-                  disabled={!cacheEnabled}
-                >
-                  <IconRefresh /> Refresh Model Data
-                </button>
-              </div>
-            </SettingsGroup>
-          )}
-          
-          {/* Other tabs */}
-          {activeTab !== 'general' && (
-            <SettingsGroup title={`${tabs.find(t => t.id === activeTab)?.label} Settings`}>
-              {renderedSettings}
-            </SettingsGroup>
-          )}
-        </div>
-        
-        {/* Footer */}
-        <div className={styles.footer}>
-          <button 
-            onClick={resetSettings} 
-            className={styles.resetButton}
-            aria-label="Reset all settings to default values"
-          >
-            Reset to Defaults
-          </button>
-          <button 
-            onClick={onClose} 
-            className={styles.applyButton}
-            aria-label="Save settings and close panel"
-          >
-            Done
-          </button>
+        </nav>
+        {/* Simple stacked controls for the active tab */}
+        <div className={styles.controlsContainer} role="tabpanel">
+          {renderTabContent()}
         </div>
       </div>
-    </>
+
+      {/* Footer actions */}
+      <div className={styles.footer}>
+        <button onClick={resetSettings} className={styles.resetButton}>Reset to Defaults</button>
+        <button onClick={onClose} className={styles.resetButton}>Done</button>
+      </div>
+    </SettingsSidebarOverlay>
   );
 };
 

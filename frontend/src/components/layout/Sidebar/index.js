@@ -1,6 +1,8 @@
 import { memo } from 'react';
-import { PlusIcon, GearIcon } from '@primer/octicons-react';
+import PropTypes from 'prop-types';
+import { PlusIcon, GearIcon, ChevronLeftIcon } from '@primer/octicons-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useChatControl } from '../../../contexts/ChatControlContext';
 import styles from './Sidebar.module.css';
 // Remove unused icons if PlusIcon/GearIcon only used for floating buttons
 // import { GearIcon, PlusIcon } from '@primer/octicons-react'; 
@@ -21,32 +23,25 @@ const sampleSessions = [
  * Sidebar component containing app controls and chat session list
  * @param {Object} props - Component props
  * @param {string} [props.className] - Additional CSS class
- * @param {Function} [props.onNewChat] - Handler for new chat button click
  * @param {Function} [props.onToggleSettings] - Handler for settings button click
+ * @param {Function} [props.onToggleSidebar] - Handler for sidebar toggle button click
  * @returns {JSX.Element} - Rendered sidebar
  */
-const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
+const Sidebar = memo(({ className = '', onToggleSettings = () => console.warn('Settings handler not provided to Sidebar'), onToggleSidebar = () => console.warn('Sidebar toggle handler not provided to Sidebar') }) => {
   const { currentUser, isAuthenticated } = useAuth();
+  const { newChat } = useChatControl();
   
   const userName = currentUser?.displayName || currentUser?.email || 'Sir';
   
   // Handle button clicks with fallbacks
   const handleNewChat = (e) => {
     e.preventDefault();
-    if (onNewChat) {
-      onNewChat();
-    } else {
-      console.warn('New chat handler not provided');
-    }
+    newChat();
   };
 
   const handleSettings = (e) => {
     e.preventDefault();
-    if (onToggleSettings) {
-      onToggleSettings();
-    } else {
-      console.warn('Settings handler not provided');
-    }
+    onToggleSettings();
   };
 
   return (
@@ -70,6 +65,14 @@ const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
             title="Settings"
           >
             <GearIcon size={20} />
+          </button>
+          <button
+            className={styles.Sidebar__iconButton}
+            onClick={onToggleSidebar}
+            aria-label="Close sidebar"
+            title="Close sidebar"
+          >
+            <ChevronLeftIcon size={20} />
           </button>
         </div>
       </div>
@@ -114,5 +117,12 @@ const Sidebar = memo(({ className = '', onNewChat, onToggleSettings }) => {
 });
 
 Sidebar.displayName = 'Sidebar';
+
+// Define PropTypes
+Sidebar.propTypes = {
+  className: PropTypes.string,
+  onToggleSettings: PropTypes.func,
+  onToggleSidebar: PropTypes.func
+};
 
 export default Sidebar; 

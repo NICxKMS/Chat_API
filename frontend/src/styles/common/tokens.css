@@ -1,20 +1,73 @@
 /* Spacing scale */
 :root {
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  --space-xxxs: 0.125rem;
+  --space-xxs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.25rem;
+  --space-xl: 1.5rem;
+  --space-xxl: 2rem;
+  --space-xxxl: 2.5rem;
+  --space-xxxxl: 3rem;
 
   /* Typography scale */
-  --font-size-small: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-large: 1.125rem;
-  --font-size-xlarge: 1.25rem;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-xxl: 1.5rem;
+  --font-size-xxxl: 1.75rem;
+  --font-size-xxxxl: 2rem;
 
-  /* Responsive breakpoints */
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
+  --border-width-sm: 1px;
+  --border-width-md: 2px;
+  --border-width-lg: 3px;
+
+  /* Border Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-xxl: 24px;
+  --radius-full: 9999px;
+  --radius-toggle-track: 34px;
+  --radius-toggle-thumb: 50%;
+
+  /* Z-Indexes */
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+
+  /* Transitions */
+  --transition-duration-short: 150ms;
+  --transition-duration-medium: 250ms;
+  --transition-duration-long: 400ms;
+  --transition-timing-fast-out: ease-out;
+  --transition-timing-slow-in: ease-in;
+  --transition-timing-default: ease;
+  --transition-standard: all var(--transition-duration-medium) var(--transition-timing-default);
+
+  /* ==========================================================================
+     Buttons (Common values)
+     ========================================================================== */
+  --button-size: 36px; /* Default size, e.g., for icon buttons */
+  --button-padding-y: var(--space-xs);
+  --button-padding-x: var(--space-md);
+  --button-hover-scale: 1.05;
+  --button-active-scale: 0.98;
+  --button-disabled-opacity: 0.6;
+  --button-transition: all var(--transition-duration-short) ease;
+
+  /* Box Shadows */
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 6%);
+  --shadow-md: 0 2px 5px rgb(0 0 0 / 10%);
+  --shadow-lg: 0 0 20px rgb(0 0 0 / 5%);
+  --shadow-inset-sm: inset 0 1px 3px rgb(0 0 0 / 10%);
+  --shadow-focus-light: 0 0 5px rgb(255 255 255 / 30%); /* For light elements on dark bg */
 } 

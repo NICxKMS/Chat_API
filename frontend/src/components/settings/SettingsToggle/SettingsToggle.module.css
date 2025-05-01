@@ -1,19 +1,9 @@
 .SettingsToggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background-color: var(--bg-secondary);
+  /* background-color: var(--card-bg); */
   border: 1px solid var(--border);
   color: var(--text);
   cursor: pointer;
   transition: background-color 0.2s, transform 0.2s;
-}
-
-.SettingsToggle:hover {
-  background-color: var(--hover);
 }
 
 .SettingsToggle:active {
@@ -25,22 +15,16 @@
   box-shadow: 0 0 0 2px rgb(var(--button-bg-rgb), 0.3);
 }
 
-.SettingsToggle--open {
-  background-color: var(--button-bg);
-  color: var(--button-text);
-}
-
 .SettingsToggle__toggleContainer,
 .SettingsToggle__switchContainer {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0.75rem 0;
+  padding: 0.5rem 0;
 }
 
 .SettingsToggle--disabled {
-  opacity: 0.6;
+  opacity: 0.8;
   cursor: not-allowed;
 }
 
@@ -62,7 +46,7 @@
   position: relative;
   width: 42px;
   height: 22px;
-  background-color: rgb(255 255 255 / 15%);
+  background-color: var(--toggle-track, rgba(150, 150, 150, 0.7));
   border-radius: 34px;
   transition: background-color 0.3s;
   cursor: pointer;
@@ -74,24 +58,35 @@
   width: 18px;
   left: 2px;
   bottom: 2px;
-  background-color: white;
+  background-color: var(--toggle-thumb, #ffffff);
   border-radius: 50%;
   transition: transform 0.3s;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .SettingsToggle__track--checked {
-  background-color: var(--button-bg-color, rgb(87 157 152 / 75%));
+  background-color: var(--toggle-track-active, rgba(87, 157, 152, 0.9));
 }
 
 .SettingsToggle__track--checked .SettingsToggle__thumb {
   transform: translateX(20px);
 }
 
+/* Disabled styles */
+.SettingsToggle--disabled .SettingsToggle__track {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.SettingsToggle--disabled .SettingsToggle__thumb {
+  opacity: 0.8;
+}
+
 .SettingsToggle__switchTrack {
   position: relative;
   width: 38px;
   height: 20px;
-  background-color: rgb(255 255 255 / 15%);
+  background-color: var(--toggle-track, rgba(150, 150, 150, 0.7));
   border-radius: 34px;
   transition: background-color 0.3s;
   cursor: pointer;
@@ -103,19 +98,87 @@
   width: 16px;
   left: 2px;
   bottom: 2px;
-  background-color: white;
+  background-color: var(--toggle-thumb, #ffffff);
   border-radius: 50%;
   transition: transform 0.3s;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .SettingsToggle__switchTrack--checked {
-  background-color: var(--button-bg-color, rgb(87 157 152 / 75%));
+  background-color: var(--toggle-track-active, rgba(87, 157, 152, 0.9));
 }
 
 .SettingsToggle__switchTrack--checked .SettingsToggle__switchThumb {
   transform: translateX(18px);
 }
 
+/* Disabled switch styles */
+.SettingsToggle--disabled .SettingsToggle__switchTrack {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.SettingsToggle--disabled .SettingsToggle__switchThumb {
+  opacity: 0.8;
+}
+
+.SettingsToggle__srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ===============================
+   MEDIA QUERIES
+   =============================== */
+
+/* Mobile (≤ 550px) */
+@media (width <= 550px) {
+  .SettingsToggle__track {
+    width: 36px;
+    height: 20px;
+  }
+  
+  .SettingsToggle__thumb {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .SettingsToggle__track--checked .SettingsToggle__thumb {
+    transform: translateX(16px);
+  }
+  
+  .SettingsToggle__switchTrack {
+    width: 34px;
+    height: 18px;
+  }
+  
+  .SettingsToggle__switchThumb {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .SettingsToggle__switchTrack--checked .SettingsToggle__switchThumb {
+    transform: translateX(16px);
+  }
+  
+  .SettingsToggle__labelText {
+    font-size: 0.85rem;
+  }
+}
+
+/* Desktop (> 550px) */
+@media (min-width: 551px) {
+  /* Default styles already work for desktop */
+}
+
+/* Size variants - maintain these for explicit size overrides */
 .SettingsToggle--small .SettingsToggle__track {
   width: 36px;
   height: 20px;
@@ -191,16 +254,4 @@
   position: absolute;
   width: 0;
   height: 0;
-}
-
-.SettingsToggle__srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
 }

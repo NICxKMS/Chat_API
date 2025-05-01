@@ -1,0 +1,129 @@
+/* Styles for ChatInputTextArea extracted from ChatInput.module.css */
+.ChatInput__inputWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  overflow: visible;
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.ChatInput__inputWrapper.noModelSelected::after {
+  display: none;
+}
+
+.ChatInput__chatInput {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  padding-right: 50px;
+  background-color: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  resize: none;
+  min-height: 24px;
+  max-height: 200px;
+  overflow-y: auto;
+  line-height: 1.5;
+  transition: all var(--transition-duration-short) ease;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+  box-sizing: border-box;
+  margin-right: 0;
+}
+
+.ChatInput__chatInput::-webkit-scrollbar {
+  width: var(--space-xxs);
+  position: absolute;
+  right: 0;
+  display: block;
+}
+
+.ChatInput__chatInput::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+  border-radius: var(--space-xxxs);
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.ChatInput__chatInput::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-color);
+  border-radius: var(--space-xxxs);
+  width: var(--space-xxs);
+}
+
+.ChatInput__chatInput::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover-color);
+}
+
+.ChatInput__chatInput:focus {
+  border: none;
+  box-shadow: none;
+  outline: none;
+  background-color: transparent;
+}
+
+.ChatInput__chatInput:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.ChatInput__chatInput::placeholder {
+  color: var(--placeholder-color);
+  opacity: 1;
+}
+
+.ChatInput__sendButtonInline {
+  position: absolute;
+  right: var(--space-xxxs);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  background-color: var(--button-bg-color);
+  border: var(--border-width-sm) solid transparent;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-duration-short) ease;
+  z-index: 5;
+}
+
+.ChatInput__sendButtonInline:hover:not(:disabled) {
+  color: var(--text-primary);
+  background-color: var(--button-hover-bg-color);
+  border-color: var(--button-hover-border-color);
+  box-shadow: var(--shadow-focus-light);
+}
+
+.ChatInput__sendButtonInline:disabled {
+  display: none;
+}
+
+.ChatInput__sendButtonInline::before {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--space-xs));
+  z-index: -1;
+}
+
+.ChatInput__sendButtonInline.noModelSelected {
+  background-color: var(--model-button-bg);
+  color: var(--model-button-color);
+}
+
+.ChatInput__stopButton {
+  background-color: var(--error-color) !important;
+  color: var(--bg) !important;
+}
+
+.ChatInput__stopButton:hover {
+  background-color: var(--error-emphasis) !important;
+} 

@@ -2,6 +2,7 @@ import { memo, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { InfoIcon } from '../icons';
 import styles from './SettingsSlider.module.css';
+import commonStyles from '../common/ControlStyles.module.css';
 
 /**
  * Slider control for numeric settings
@@ -47,7 +48,7 @@ const SettingsSlider = memo(({
   const displayValue = Number(value).toFixed(step < 1 ? 2 : 0);
   
   // Build class list for SettingsSlider
-  const sliderClasses = [styles.SettingsSlider];
+  const sliderClasses = [commonStyles.controlContainer, styles.SettingsSlider];
   if (disabled) sliderClasses.push(styles['SettingsSlider--disabled']);
   if (size === 'small') sliderClasses.push(styles['SettingsSlider--small']);
   else if (size === 'large') sliderClasses.push(styles['SettingsSlider--large']);
@@ -92,8 +93,8 @@ const SettingsSlider = memo(({
   
   return (
     <div className={sliderClasses.join(' ')}>
-      <div className={styles.SettingsSlider__labelContainer}>
-        <label htmlFor={id} className={styles.SettingsSlider__label}>
+      <div className={commonStyles.controlHeader}>
+        <label htmlFor={id} className={commonStyles.controlLabel}>
           {label}
           {tooltip && (
             <span className={styles.SettingsSlider__tooltipWrapper}>

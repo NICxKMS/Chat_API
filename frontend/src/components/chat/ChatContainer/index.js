@@ -3,6 +3,7 @@ import { useChatLogic } from '../../../hooks/useChatLogic';
 import { ChevronDownIcon } from '@primer/octicons-react';
 import styles from './ChatContainer.module.css';
 import throttle from 'lodash.throttle';
+import PropTypes from 'prop-types';
 
 // Lazy-loaded components
 const MessageList = lazy(() => import(/* webpackChunkName: "chat-messagelist" */ '../MessageList'));
@@ -17,7 +18,7 @@ const ChatContainer = memo(({
   selectedModel: passedSelectedModel,
   isLoadingModels, 
   toggleModelSelector,
-  onNewChat,
+  onToggleSettings,
   isSidebarOpen,
   isSettingsOpen,
   isModelSelectorOpen
@@ -39,6 +40,7 @@ const ChatContainer = memo(({
   const isActiveChat = chatHistory.length > 0;
   const [showScrollToBottomButton, setShowScrollToBottomButton] = useState(false);
   const prevWaitingForResponse = useRef(isWaitingForResponse);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
   // === Performance-tuned handlers ===
   // Smooth scroll to bottom, memoized
@@ -56,6 +58,7 @@ const ChatContainer = memo(({
     const scrollThreshold = 10;
     const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < scrollThreshold;
     setShowScrollToBottomButton(!atBottom);
+    setIsAtBottom(atBottom);
   }, []);
   const throttledHandleScroll = useMemo(
     () => throttle(handleScroll, 100),
@@ -119,6 +122,7 @@ const ChatContainer = memo(({
       const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < scrollThreshold;
       // Show the button if user is NOT at the bottom
       setShowScrollToBottomButton(!atBottom);
+      setIsAtBottom(atBottom);
     };
 
     // Run handler once initially to set correct state
@@ -172,7 +176,6 @@ const ChatContainer = memo(({
 
   // Helper function to render the input area contents
   const renderInputAreaContents = (isFixedLayout) => {
-    const isStaticLayout = !isFixedLayout;
     
     return (
       <>
@@ -192,13 +195,12 @@ const ChatContainer = memo(({
               onSendMessage={handleSendMessage}
               disabled={isWaitingForResponse} 
               selectedModel={modelFromLogic} 
-              onNewChat={onNewChat}
-              isStaticLayout={isStaticLayout}
               editingMessage={editingMessage}
               onCancelEdit={handleCancelEdit}
               isStreaming={isWaitingForResponse}
               toggleModelSelector={toggleModelSelector}
               onFocus={focusInputField}
+              isAtBottom={isAtBottom}
             />
           </Suspense>
         </div>
@@ -277,5 +279,15 @@ const ChatContainer = memo(({
 });
 
 ChatContainer.displayName = 'ChatContainer';
+
+ChatContainer.propTypes = {
+  selectedModel: PropTypes.object, // Shape could be refined
+  isLoadingModels: PropTypes.bool,
+  toggleModelSelector: PropTypes.func.isRequired,
+  onToggleSettings: PropTypes.func.isRequired,
+  isSidebarOpen: PropTypes.bool,
+  isSettingsOpen: PropTypes.bool,
+  isModelSelectorOpen: PropTypes.bool
+};
 
 export default ChatContainer; 

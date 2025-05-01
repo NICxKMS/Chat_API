@@ -2,14 +2,20 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 12px;
-  padding-right: 8px; /* Reduced right padding to allow scrollbar to align with container edge */
+  padding: var(--space-sm); /* 12px */
+  padding-right: var(--space-xs); /* 8px */
   background-color: var(--input-bg-color, #303030);
-  border-radius: 16px;
-  border: 1px solid var(--border-color, #3f3f3f);
+  border-radius: var(--radius-xl); /* 16px */
+  border: var(--border-width-sm) solid var(--border-color, #3f3f3f);
   position: relative;
-  box-shadow: 0 2px 5px var(--shadow-color, rgb(0 0 0 / 10%));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   overflow: hidden; /* Ensure no content spills outside */
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.ChatInput:focus-within {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25), 0 3px 6px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(var(--accent-color-rgb, 137 207 240), 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
 }
 
 .ChatInput__inputWrapper {
@@ -25,19 +31,19 @@
   width: 100%;
   height: 48px;
   border: none;
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: var(--radius-md); /* 8px */
+  padding: var(--space-sm); /* 12px */
   padding-right: 50px; /* Make room for send button */
   background-color: transparent;
   color: var(--text-primary, #e0e0e0);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--font-size-md); /* 1rem */
   resize: none;
   min-height: 24px;
   max-height: 200px;
   overflow-y: auto;
   line-height: 1.5;
-  transition: all 0.2s ease;
+  transition: all var(--transition-duration-short) ease;
   position: relative;
   scrollbar-width: thin; /* For Firefox */
   scrollbar-color: var(--scrollbar-thumb-color, rgb(255 255 255 / 20%)) var(--scrollbar-track-color, rgb(0 0 0 / 10%)); /* For Firefox */
@@ -47,7 +53,7 @@
 
 /* Scrollbar styling for the chat input */
 .ChatInput__chatInput::-webkit-scrollbar {
-  width: 3px; /* Even slimmer scrollbar */
+  width: var(--space-xxs); /* 3px -> 4px? */
   position: absolute;
   right: 0;
   display: block;
@@ -55,15 +61,15 @@
 
 .ChatInput__chatInput::-webkit-scrollbar-track {
   background: var(--scrollbar-track-color, rgb(0 0 0 / 10%));
-  border-radius: 1.5px;
+  border-radius: var(--space-xxxs); /* 1.5px -> 2px */
   margin-right: 0;
   margin-left: auto;
 }
 
 .ChatInput__chatInput::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb-color, rgb(255 255 255 / 20%));
-  border-radius: 1.5px;
-  width: 3px;
+  border-radius: var(--space-xxxs); /* 1.5px -> 2px */
+  width: var(--space-xxs); /* 3px -> 4px? */
 }
 
 .ChatInput__chatInput::-webkit-scrollbar-thumb:hover {
@@ -78,7 +84,7 @@
 
 /* Add a subtle visual indicator when waiting for response */
 .ChatInput--waitingForResponse .ChatInput__chatInput {
-  border-left: 3px solid var(--waiting-border-color, #f44336);
+  border-left: var(--border-width-lg) solid var(--waiting-border-color, #f44336);
 }
 
 .ChatInput__chatInput:disabled {
@@ -92,184 +98,14 @@
   opacity: 1;
 }
 
-/* Send button positioned inside input - ENABLED STATE (normal) */
-.ChatInput__sendButtonInline {
-  position: absolute;
-  right: 2px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-primary, #fff);
-  background-color: var(--button-bg-color, rgb(87 157 152 / 75%));
-  border: 1px solid transparent;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  z-index: 5;
-}
-
-/* HOVER on enabled state */
-.ChatInput__sendButtonInline:hover:not(:disabled) {
-  color: var(--text-primary, #fff);
-  background-color: var(--button-hover-bg-color, rgb(107 168 163 / 90%));
-  border-color: var(--button-hover-border-color, rgb(255 255 255 / 30%));
-  box-shadow: 0 0 5px rgb(255 255 255 / 20%);
-}
-
-/* DISABLED STATE - completely hide the button */
-.ChatInput__sendButtonInline:disabled {
-  display: none;
-}
-
-/* Left side buttons */
-.ChatInput__leftButtons {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 8px;
-}
-
-/* Right side buttons */
-.ChatInput__rightButtons {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 8px;
-  margin-left: auto;
-}
-
-/* Buttons in a row */
-.ChatInput__actionRow {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  align-items: center;
-  height: 36px;
-}
-
-/* General Action Button Style */
-.ChatInput__actionButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  background-color: transparent;
-  color: var(--button-text-color, #999);
-  border: 2px solid var(--button-border-color, #4a4a4a);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 36px;
-  min-height: 36px;
-  flex-shrink: 0;
-}
-
-.ChatInput__actionButton:hover:not(:disabled) {
-  background-color: var(--button-hover-bg-color, rgb(255 255 255 / 10%));
-  color: var(--text-primary, #fff);
-}
-
-.ChatInput__actionButton:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.ChatInput__actionButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Button with text (like "Reason") */
-.ChatInput__textButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 14px;
-  background-color: transparent;
-  color: var(--button-text-color, #999);
-  border: 2px solid var(--button-border-color, #4a4a4a);
-  border-radius: 18px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-  gap: 6px;
-}
-
-.ChatInput__textButton .buttonText {
-  margin-left: 4px;
-  white-space: nowrap;
-}
-
-.ChatInput__textButton:hover:not(:disabled) {
-  background-color: var(--button-hover-bg-color, rgb(255 255 255 / 10%));
-  color: var(--text-primary, #fff);
-}
-
-/* Icon-only button style for mobile */
-.ChatInput__iconOnlyButton {
-  padding: 8px;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  font-size: 0;
-}
-
-.ChatInput__iconOnlyButton .buttonText {
-  display: none;
-}
-
 /* New Chat Button (Plus) */
 .ChatInput__newChatButton {
-  color: #999;
-}
-
-/* Upload button styling */
-.ChatInput__uploadButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: transparent;
-  color: var(--button-text-color, #999);
-  border: 2px solid var(--button-border-color, #4a4a4a);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.ChatInput__uploadButton:hover:not(:disabled) {
-  background-color: var(--button-hover-bg-color, rgb(255 255 255 / 10%));
-  color: var(--text-primary, #fff);
-}
-
-.ChatInput__uploadButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* AI model button (dotted pattern) */
-.ChatInput__modelButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: var(--model-button-bg, #fff);
-  color: var(--model-button-color, #1a1a1a);
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  color: var(--placeholder-color); /* #999 -> variable */
 }
 
 /* Edit mode styles */
 .ChatInput--editing {
-  border: 1px solid var(--edit-border-color, #4a4a4a);
+  border: var(--border-width-sm) solid var(--edit-border-color, #4a4a4a);
   background-color: var(--edit-bg-color, #2f2f2f);
 }
 
@@ -291,6 +127,11 @@
 /* Mobile view specific class - applied directly by component */
 .ChatInput__mobileView {
   border-top: 1px solid var(--border-color, #3f3f3f);
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.15), 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ChatInput__mobileView:focus-within {
+  box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.2), 0 -2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .ChatInput__mobileView .ChatInput__chatInput {
@@ -306,12 +147,31 @@
 @media (width <= 600px) {
   /* Simplify input container in mobile view */
   .ChatInput {
-    padding: 8px 4px;
+    padding: var(--space-xs) var(--space-xs) var(--space-xs); /* Keep padding all around */
+    border-radius: 0; /* Remove border radius to merge with screen edges */
+    border: var(--border-width-sm) solid var(--border-color, #3f3f3f); /* Restore border */
+    border-bottom: none;
     border-left: none;
     border-right: none;
-    border-bottom: none;
-    box-shadow: none;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.15), 0 -2px 4px rgba(0, 0, 0, 0.1);
     background-color: var(--input-bg-color, #1e1e1e);
+    margin: 0; /* Remove any margins */
+    width: 100%; /* Ensure it extends full width */
+  }
+
+  .ChatInput:focus-within {
+    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.2), 0 -2px 6px rgba(0, 0, 0, 0.15);
+    transform: none;
+  }
+
+  /* Add border when at bottom of page (for messages that aren't at the bottom) */
+  .ChatInput:not(.ChatInput--atBottom) {
+    border-top: var(--border-width-sm) solid var(--border-color, #3f3f3f);
+  }
+
+  /* Remove the top border when at the bottom of the page */
+  .ChatInput.ChatInput--atBottom {
+    border-top: none;
   }
 
   /* Simplify input wrapper */
@@ -327,7 +187,8 @@
     overflow-x: auto;
     scrollbar-width: none; /* Hide scrollbar for Firefox */
     -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
-    padding-bottom: 4px;
+    padding-bottom: var(--space-xs); /* 8px - Keep bottom padding for buttons */
+    margin-bottom: 0;
   }
   
   /* Hide scrollbar for Chrome/Safari */
@@ -340,19 +201,18 @@
     margin-top: 0;
     width: auto;
     flex-wrap: nowrap;
+    flex-shrink: 0;
   }
   
   .ChatInput__rightButtons {
-    margin-left: auto;
+    margin-left: var(--space-xs); /* 8px */
   }
   
   /* Convert text buttons to icon buttons on mobile */
   .ChatInput__textButton {
-    padding: 8px;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    border-width: 1px;
+    padding: var(--space-xxs) var(--space-sm); /* 6px 14px -> 4px 12px? */
+    border-radius: var(--radius-xl); /* 18px -> 16px */
+    font-size: var(--font-size-sm); /* 0.9rem -> 0.875rem */
   }
   
   .ChatInput__textButton .buttonText {
@@ -362,11 +222,12 @@
   /* Ensure all buttons have consistent styling */
   .ChatInput__actionButton, .ChatInput__uploadButton, .ChatInput__textButton, .ChatInput__modelButton {
     margin: 0 2px;
-    border-width: 1px;
+    border-width: var(--border-width-sm); /* 1px border */
     min-width: 32px;
     min-height: 32px;
     width: 32px;
     height: 32px;
+    padding: var(--space-xxs); /* 4px */
   }
 
   /* Style text input to match mobile mockup */
@@ -374,9 +235,9 @@
     height: 40px;
     min-height: 20px;
     max-height: 120px;
-    padding: 10px;
+    padding: var(--space-xs) var(--space-sm); /* 8px 12px */
     padding-right: 44px;
-    font-size: 0.95rem;
+    font-size: var(--font-size-sm); /* 0.95rem -> 0.875rem */
     border-radius: 20px;
     background-color: var(--input-wrapper-bg, #303030);
   }
@@ -415,12 +276,13 @@
 
 /* Add this CSS for the stop button */
 .ChatInput__stopButton {
-  background-color: #f44336 !important;
-  color: white !important;
+  background-color: var(--error-color) !important;
+  color: var(--bg) !important;
+  border: none;
 }
 
 .ChatInput__stopButton:hover {
-  background-color: #d32f2f !important;
+  background-color: var(--error-emphasis) !important;
 }
 
 .ChatInput__mobileView .ChatInput__sendButtonInline {
@@ -439,14 +301,13 @@
 
 /* Style for the input area when no model is selected */
 .ChatInput__inputWrapper.noModelSelected::after {
-  content: 'Select model';
+  content: 'Select Model';
   position: absolute;
-  right: 50px;
+  right: 45px; /* Adjust based on button size */
   top: 50%;
   transform: translateY(-50%);
   color: var(--placeholder-color, #999);
-  font-size: 0.9rem;
-  opacity: 0.7;
+  font-size: var(--font-size-sm); /* 0.9rem -> 0.875rem */
   pointer-events: none;
 }
 
@@ -454,7 +315,7 @@
 .ChatInput__imagePreviewContainer {
   display: flex; /* Arrange previews horizontally */
   overflow-x: auto; /* Allow horizontal scrolling if needed */
-  padding: 5px 0; /* Add some vertical padding */
+  padding: var(--space-xs) 0; /* 5px -> 8px */
   width: 100%; /* Take full width */
   box-sizing: border-box;
 }
@@ -472,7 +333,7 @@
   max-height: 120px; /* Set a fixed height for previews */
   width: auto; /* Maintain aspect ratio */
   max-width: 170px; /* Limit maximum width */
-  border-radius: 4px; /* Slightly rounded corners */
+  border-radius: var(--radius-xs); /* 4px */
   object-fit: cover; /* Cover the area nicely */
   background: none; /* Ensure no background */
 }
@@ -481,12 +342,12 @@
   position: absolute;
   top: -3px;
   right: 0;
-  background-color: rgb(0 0 0 / 60%); /* Semi-transparent black */
-  color: white;
+  background-color: var(--overlay-bg-strong); /* rgb(0 0 0 / 60%) */
+  color: var(--bg); /* Use theme-agnostic */
   border: none;
-  border-radius: 50%; /* Circular button */
-  width: 23px;
-  height: 23px;
+  border-radius: var(--radius-full);
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -509,4 +370,43 @@
 /* Hidden file input helper */
 .ChatInput__hiddenInput {
   display: none;
-} 
+}
+
+/* New styles for inline error message */
+.ChatInput__error {
+  padding: var(--space-xs) var(--space-md); /* 0.5rem 1rem */
+  margin-top: var(--space-xs); /* 8px */
+  color: var(--error-color);
+  background-color: var(--error-bg);
+  border: var(--border-width-sm) solid var(--error-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm); /* 0.875rem */
+  text-align: center;
+  animation: fadeIn 0.3s ease-out; /* Add a subtle fade-in */
+}
+
+.micButton .micIcon path {
+  fill: var(--mic-icon-color, white);
+  color: var(--bg) !important; /* Use theme-agnostic */
+}
+
+.pluginButton {
+  color: var(--bg); /* Use theme-agnostic */
+}
+
+/* Hover border for chat input buttons using global variables */
+:global(body.light-mode) .ChatInput__actionButton:hover:not(:disabled),
+:global(body.light-mode) .ChatInput__uploadButton:hover:not(:disabled),
+:global(body.light-mode) .ChatInput__textButton:hover:not(:disabled),
+:global(body.light-mode) .ChatInput__modelButton:hover:not(:disabled),
+:global(body.light-mode) .ChatInput__iconOnlyButton:hover:not(:disabled) {
+  border: var(--border-width-md) solid var(--button-global-hover-bg-light);
+}
+
+:global(body.dark-mode) .ChatInput__actionButton:hover:not(:disabled),
+:global(body.dark-mode) .ChatInput__uploadButton:hover:not(:disabled),
+:global(body.dark-mode) .ChatInput__textButton:hover:not(:disabled),
+:global(body.dark-mode) .ChatInput__modelButton:hover:not(:disabled),
+:global(body.dark-mode) .ChatInput__iconOnlyButton:hover:not(:disabled) {
+  border: var(--border-width-md) solid var(--button-global-hover-bg-dark);
+}

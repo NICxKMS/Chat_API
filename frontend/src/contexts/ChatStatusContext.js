@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useMemo } from 'react';
+import { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import { useLoading } from './LoadingContext';
 
 // Create chat status context
 const ChatStatusContext = createContext();
@@ -16,6 +17,12 @@ export const useChatStatus = () => {
 export const ChatStatusProvider = ({ children }) => {
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const [error, setError] = useState(null);
+  // Sync with global loading context for chat
+  const [, startChatLoading, stopChatLoading] = useLoading('chat');
+  useEffect(() => {
+    if (isWaitingForResponse) startChatLoading();
+    else stopChatLoading();
+  }, [isWaitingForResponse, startChatLoading, stopChatLoading]);
 
   const value = useMemo(() => ({
     isWaitingForResponse,

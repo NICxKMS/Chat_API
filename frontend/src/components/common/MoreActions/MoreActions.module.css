@@ -8,19 +8,20 @@
 
 .actionsMenu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + var(--space-xs));
   right: 0;
-  background-color: var(--chat-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background-color: var(--input-bg-color);
+  border: var(--border-width-sm) solid var(--border);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   min-width: 180px;
   opacity: 0;
   visibility: hidden;
   transform-origin: top right;
   transform: scale(0.95) translateY(-10px);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
+  transition: all var(--transition-duration-short) cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: var(--z-index-dropdown);
+  padding: var(--space-xs);
 }
 
 .actionsMenu.open {
@@ -33,15 +34,17 @@
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 10px 16px;
+  padding: var(--space-sm) var(--space-md);
   background: none;
   border: none;
   color: var(--text);
   cursor: pointer;
   opacity: 0;
   transform: translateX(-10px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-duration-medium) cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
+  margin: var(--space-xxs) 0;
+  border-radius: var(--radius-sm);
 }
 
 .open .actionButton {
@@ -61,11 +64,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  margin-right: 12px;
+  width: var(--space-xl);
+  height: var(--space-xl);
+  margin-right: var(--space-sm);
   opacity: 0.8;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-duration-short) ease;
 }
 
 .actionButton:hover .actionIcon {
@@ -73,10 +76,10 @@
 }
 
 .actionLabel {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   white-space: nowrap;
   opacity: 0.9;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-duration-short) ease;
 }
 
 .actionButton:hover .actionLabel {
@@ -87,7 +90,7 @@
 @media (width <= 768px) {
   .actionsMenu {
     position: absolute;
-    top: calc(100% + 8px);
+    top: calc(100% + var(--space-xs));
     min-width: 200px;
     right: 0;
     max-width: 80vw;
@@ -100,17 +103,18 @@
   }
 
   .actionButton {
-    padding: 14px 16px;
+    padding: var(--space-sm) var(--space-md);
     min-height: 48px;
+    border-radius: var(--radius-full);
   }
 
   .actionIcon {
-    width: 24px;
-    height: 24px;
-    margin-right: 12px;
+    width: var(--space-xl);
+    height: var(--space-xl);
+    margin-right: var(--space-sm);
   }
 
   .actionLabel {
-    font-size: 16px;
+    font-size: var(--font-size-md);
   }
 } 

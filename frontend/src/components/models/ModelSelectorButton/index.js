@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { useState, useEffect, useRef } from 'react';
 import { ChevronDownIcon } from '@primer/octicons-react';
 import styles from './ModelSelectorButton.module.css';
+import Spinner from '../../common/Spinner';
 
 /**
  * Button to trigger the model selection UI (Dropdown/Modal)
@@ -99,15 +100,19 @@ const ModelSelectorButton = ({
       aria-haspopup="true"
       aria-label={`Select Model (Current: ${selectedModelName || 'None'})`}
     >
-      <span className={styles.ModelSelectorButton__innerContent}>
-        <span 
-          ref={textRef}
-          className={`${styles['ModelSelectorButton__text']} ${showProvider ? styles['ModelSelectorButton__text--showProvider'] : ''} ${hasOverflow && showProvider ? styles['ModelSelectorButton__text--scrollText'] : ''}`}
-        >
-          {displayText()}
-        </span>
-        <ChevronDownIcon size={16} className={styles.ModelSelectorButton__icon} />
-      </span>
+      {disabled && !selectedModelName ? (
+        <Spinner size="small" className={styles.ModelSelectorButton__spinner} />
+      ) : (
+        <div className={styles.ModelSelectorButton__innerContent}>
+          <span 
+            ref={textRef}
+            className={`${styles.ModelSelectorButton__text} ${showProvider ? styles['ModelSelectorButton__text--showProvider'] : ''} ${hasOverflow && showProvider ? styles['ModelSelectorButton__text--scrollText'] : ''}`}
+          >
+            {displayText()}
+          </span>
+          <ChevronDownIcon size={16} className={styles.ModelSelectorButton__icon} />
+        </div>
+      )}
     </button>
   );
 };

@@ -22,10 +22,10 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 3px solid rgb(0 0 0 / 10%);
+  width: var(--space-xxxl);
+  height: var(--space-xxxl);
+  border-radius: var(--radius-full);
+  border: var(--border-width-lg) solid rgba(0, 0, 0, 0.1);
   border-top-color: var(--button-bg);
   animation: spin 1s linear infinite;
 }
@@ -37,34 +37,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgb(var(--bg-rgb), 0.6);
+  background-color: rgba(var(--bg-rgb), 0.6);
   backdrop-filter: blur(4px);
   z-index: 10;
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn var(--transition-duration-medium) ease-in-out;
 }
 
 .MainContent__modelLoadingContent {
   background-color: var(--card-bg);
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-md);
   max-width: 80%;
 }
 
 .MainContent__modelLoadingText {
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
   animation: pulse 1.5s infinite ease-in-out alternate;
 }
 
 .MainContent__sidebarOverlay {
   position: fixed;
   inset: 0;
-  background-color: rgb(0 0 0 / 50%);
+  background-color: var(--overlay-bg-medium);
   z-index: 5;
 }
 
@@ -78,27 +78,8 @@
   }
 }
 
-/* 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-*/
-
 @keyframes pulse {
   from { opacity: 0.6; }
   to { opacity: 1; }
 }
 
-/* Remove Wrapper style for the model selector button */
-
-/*
-.modelButtonWrapper {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
-  padding-top: 1.5rem;
-  z-index: 30;
-}
-*/ 

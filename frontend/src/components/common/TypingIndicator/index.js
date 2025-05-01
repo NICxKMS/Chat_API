@@ -1,3 +1,5 @@
+import React from 'react';
+import PropTypes from 'prop-types';
 import { memo } from 'react';
 import styles from './TypingIndicator.module.css';
 
@@ -17,5 +19,9 @@ const TypingIndicator = memo(() => {
 
 // Display name for debugging
 TypingIndicator.displayName = 'TypingIndicator';
+
+TypingIndicator.propTypes = {
+  isVisible: PropTypes.bool.isRequired
+};
 
 export default TypingIndicator; 
