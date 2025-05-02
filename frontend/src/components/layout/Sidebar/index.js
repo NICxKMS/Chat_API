@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { PlusIcon, GearIcon, ChevronLeftIcon } from '@primer/octicons-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useChatControl } from '../../../contexts/ChatControlContext';
+import { useProfilePicture } from '../../../hooks/useProfilePicture';
+import Spinner from '../../common/Spinner';
 import styles from './Sidebar.module.css';
 // Remove unused icons if PlusIcon/GearIcon only used for floating buttons
 // import { GearIcon, PlusIcon } from '@primer/octicons-react'; 
@@ -30,6 +32,7 @@ const sampleSessions = [
 const Sidebar = memo(({ className = '', onToggleSettings = () => console.warn('Settings handler not provided to Sidebar'), onToggleSidebar = () => console.warn('Sidebar toggle handler not provided to Sidebar') }) => {
   const { currentUser, isAuthenticated } = useAuth();
   const { newChat } = useChatControl();
+  const { profilePicture: userAvatar, loading: avatarLoading } = useProfilePicture(currentUser?.photoURL);
   
   const userName = currentUser?.displayName || currentUser?.email || 'Sir';
   
@@ -96,11 +99,19 @@ const Sidebar = memo(({ className = '', onToggleSettings = () => console.warn('S
         {isAuthenticated ? (
           <div className={styles.Sidebar__userProfile}>
             {currentUser?.photoURL ? (
-              <img 
-                src={currentUser.photoURL} 
-                alt={`${userName}'s profile`}
-                className={styles.Sidebar__userAvatar}
-              />
+              avatarLoading ? (
+                <Spinner size="small" tag="avatar" />
+              ) : userAvatar ? (
+                <img
+                  src={userAvatar}
+                  alt={`${userName}'s profile`}
+                  className={styles.Sidebar__userAvatar}
+                />
+              ) : (
+                <div className={styles.Sidebar__userInitial}>
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+              )
             ) : (
               <div className={styles.Sidebar__userInitial}>
                 {userName.charAt(0).toUpperCase()}

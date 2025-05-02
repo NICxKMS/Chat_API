@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import PropTypes from 'prop-types';
 import { SignInIcon} from '@primer/octicons-react';
+import { useProfilePicture } from '../../../hooks/useProfilePicture';
 // Import icons using the correct paths
 import '../../../styles/common/buttons.css';
 // import component-specific styles for avatar/initial only
@@ -26,6 +27,8 @@ const AuthButton = memo(({
   isLoading = false,
   currentUser = null
 }) => {
+  const { profilePicture, loading: avatarLoading } = useProfilePicture(currentUser?.photoURL);
+
   return (
     <button
       className="circleActionButton"
@@ -38,12 +41,20 @@ const AuthButton = memo(({
         <Spinner size="small" tag="auth" />
       ) : isAuthenticated ? (
         currentUser?.photoURL ? (
-          <img 
-            src={currentUser.photoURL} 
-            alt={`${userName}'s profile`}
-            className={styles.AuthButton__avatar}
-            loading="lazy"
-          />
+          avatarLoading ? (
+            <Spinner size="small" tag="avatar" />
+          ) : profilePicture ? (
+            <img 
+              src={profilePicture} 
+              alt={`${userName}'s profile`}
+              className={styles.AuthButton__avatar}
+              loading="lazy"
+            />
+          ) : (
+            <div className={styles.AuthButton__initial}>
+              {userName.charAt(0).toUpperCase()}
+            </div>
+          )
         ) : (
           <div className={styles.AuthButton__initial}>
             {userName.charAt(0).toUpperCase()}

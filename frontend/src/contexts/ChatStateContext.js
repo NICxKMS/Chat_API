@@ -24,7 +24,7 @@ export const ChatStateProvider = ({ children }) => {
     chatHistoryRef,
     isWaitingForResponse,
     error
-  }), [chatHistory, isWaitingForResponse, error]);
+  }), [chatHistory, chatHistoryRef, isWaitingForResponse, error]);
 
   return (
     <ChatStateContext.Provider value={value}>

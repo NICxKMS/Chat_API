@@ -118,11 +118,11 @@ const SettingsPanel = ({ isOpen, onClose }) => {
   }), []);
 
   // Tab definitions
-  const tabs = [
+  const tabs = useMemo(() => [
     { id: 'general', label: 'General', icon: <IconStream /> },
     { id: 'advanced', label: 'Advanced', icon: <IconSlider /> },
     { id: 'system', label: 'System', icon: <IconSystem /> }
-  ];
+  ], []);
 
   // Show only Advanced & System tabs on mobile
   const visibleTabs = useMemo(

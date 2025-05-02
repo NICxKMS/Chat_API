@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
       setError(msg);
       showToast({ type: 'error', message: msg });
     }
-  }, [isFirebaseInitialized, setError]);
+  }, [isFirebaseInitialized, setError, showToast]);
 
   // Effect to listen for Firebase auth state changes
   useEffect(() => {
@@ -127,7 +127,7 @@ export const AuthProvider = ({ children }) => {
         unsubscribe();
       }
     };
-  }, []);
+  }, [showToast]);
 
   const value = useMemo(() => ({
     currentUser,

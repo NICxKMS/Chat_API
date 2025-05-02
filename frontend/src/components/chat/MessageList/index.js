@@ -5,6 +5,7 @@ import ChatMessage from '../ChatMessage';
 import ImageOverlay from '../../common/ImageOverlay';
 import PropTypes from 'prop-types';
 import { processMessageContent } from '../../../utils/messageHelpers';
+import { useProfilePicture } from '../../../hooks/useProfilePicture';
 
 /**
  * Simple message list without virtualization
@@ -18,6 +19,8 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
   const { isWaitingForResponse } = useChatState();
   // Local state for dynamic auth values
   const [avatarUrl, setAvatarUrl] = useState(null);
+  // Use hook to fetch and cache avatar Data URL
+  const { profilePicture: cachedAvatar } = useProfilePicture(avatarUrl);
   const [idToken, setIdToken] = useState(() => localStorage.getItem('idToken'));
 
   const [overlayImageSrc, setOverlayImageSrc] = useState(null);
@@ -123,7 +126,7 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
                   overrideContent={text || undefined}
                   isStreaming={isStreaming}
                   onEditMessage={message.role === 'user' ? onEditMessage : undefined}
-                  avatarUrl={message.role === 'user' && idToken ? avatarUrl : undefined}
+                  avatarUrl={message.role === 'user' && idToken ? (cachedAvatar || avatarUrl) : undefined}
                 />
               )}
             </div>

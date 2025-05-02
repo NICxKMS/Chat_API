@@ -258,7 +258,7 @@ export const ModelProvider = ({ children }) => {
     if (!selectedModel && allModels.length > 0) {
       setSelectedModel(allModels[0]);
     }
-  }, [allModels, selectedModel]);
+  }, [allModels, selectedModel, setSelectedModel]);
   
   // Create toggleExperimentalModels callback at the top level
   const toggleExperimentalModels = useCallback(() => {
