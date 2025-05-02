@@ -2,28 +2,28 @@
 /static/js/*
   Content-Encoding: br
   Content-Type: application/javascript
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=31536000, 
 /static/css/*
   Content-Encoding: br
   Content-Type: text/css
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=31536000, 
 /favicon.ico
   Content-Type: image/x-icon
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=31536000, 
 /static/media/*.woff
   Content-Type: font/woff
   Content-Encoding: br
-    Cache-Control: public, max-age=31536000, immutable
+    Cache-Control: public, max-age=31536000, 
 
 /static/media/*.woff2
   Content-Type: font/woff2
   Content-Encoding: br
-    Cache-Control: public, max-age=31536000, immutable
+    Cache-Control: public, max-age=31536000, 
 
 /static/media/*.ttf
   Content-Type: font/ttf
   Content-Encoding: br
-    Cache-Control: public, max-age=31536000, immutable
+    Cache-Control: public, max-age=31536000, 
 
 # Fallback for other static assets (revalidate) - might inherit Cloudflare default
 #/static/*
