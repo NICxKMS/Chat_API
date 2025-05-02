@@ -22,10 +22,7 @@ class GeminiProvider extends BaseProvider {
     super(config);
     this.name = "gemini";
     
-    // Debug API key loading
-    const keyDebug = config.apiKey ? 
-      `${config.apiKey.substring(0, 5)}...${config.apiKey.substring(config.apiKey.length - 4)}` : 
-      "missing";
+
     
     // Validate API key
     if (!config.apiKey) {
@@ -66,7 +63,7 @@ class GeminiProvider extends BaseProvider {
   /**
    * Get available models from Google Generative AI
    */
-  async getModels(options = {}) {
+  async getModels() {
     try {
       // Start with hardcoded models for fast initial response
       let modelIds = this.config.models || [

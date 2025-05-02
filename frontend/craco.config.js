@@ -1,12 +1,20 @@
-// let BundleAnalyzerPlugin;
-// try {
-//   BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-// } catch (error) {
-//   console.warn('webpack-bundle-analyzer not found. Bundle analysis will be disabled.');
-//   BundleAnalyzerPlugin = null;
-// }
+let BundleAnalyzerPlugin;
+try {
+  BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+} catch (error) {
+  console.warn('webpack-bundle-analyzer not found. Bundle analysis will be disabled.');
+  BundleAnalyzerPlugin = null;
+}
+let ESLintPlugin;
+try {
+  ESLintPlugin = require('eslint-webpack-plugin').default;
+} catch (error) {
+  console.warn('eslint-webpack-plugin not found. ESLint will be disabled.');
+  ESLintPlugin = null;
+}
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const { version } = require('./package.json');
 
 module.exports = {
   devServer: {
@@ -144,6 +152,17 @@ module.exports = {
             new CssMinimizerPlugin()
           ]
         };
+
+        // add version-based cache busting to filenames
+        const ver = version.replace(/\./g, '_');
+        webpackConfig.output.filename = `static/js/[name].[contenthash:10].v${ver}.js`;
+        webpackConfig.output.chunkFilename = `static/js/[name].[contenthash:10].chunk.v${ver}.js`;
+        webpackConfig.plugins.forEach(plugin => {
+          if (plugin.constructor.name === 'MiniCssExtractPlugin') {
+            plugin.options.filename = `static/css/[name].[contenthash:10].v${ver}.css`;
+            plugin.options.chunkFilename = `static/css/[name].[contenthash:10].chunk.v${ver}.css`;
+          }
+        });
 
         if (process.env.ANALYZE === 'true' && BundleAnalyzerPlugin) {
           webpackConfig.plugins.push(

@@ -78,7 +78,7 @@
 }
 
 /* Responsive adjustments */
-@media (width <= 768px) {
+@media (width <= 600px) {
   .MessageList__messageRow {
     padding: var(--space-sm) 0;
   }

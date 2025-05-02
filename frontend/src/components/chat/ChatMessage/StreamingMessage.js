@@ -76,6 +76,7 @@ const StreamingMessage = ({ content, isStreaming }) => {
         </div>
         <SyntaxHighlighter
           style={syntaxTheme}
+          customStyle={{ background: 'transparent' }}
           language={language}
           PreTag="div" // Use div instead of pre, SyntaxHighlighter wraps in its own pre
           className={styles.pre}

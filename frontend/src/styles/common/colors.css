@@ -7,11 +7,11 @@
   /* Markdown-specific variables - Light theme */
   --link-color: #0366d6;
   --code-bg: #f6f8fa;
-  --code-header-bg: #f1f3f4;
+  --code-header-bg: #fafbfc;
   --inline-code-bg: #42423E;
   --inline-code-color: #24292f;
   --blockquote-bg: #f6f8fa;
-  --table-header-bg: #f6f8fa;
+  --table-header-bg: #e9ecef;
   --table-body-bg: #fff;
   --table-row-alt-bg: #f8f9fa;
   --avatar-bg: #f1f3f4;
@@ -22,6 +22,7 @@
   --button-hover-bg: #f6f8fa;
   --text-primary: #24292f;
   --text-secondary: #57606a;
+  --table-border: #dfe2e5;
 
   /* Rich markdown features */
   --syntax-keyword: #cf222e;
@@ -54,15 +55,15 @@
   --callout-success-border: #2da44e;
 }
 
-[data-theme="dark"] {
+body.dark-mode {
   /* Dark theme overrides */
   --link-color: #58a6ff;
-  --code-bg: #161b22;
-  --code-header-bg: #21262d;
+  --code-bg: #121212;
+  --code-header-bg: #333333;
   --inline-code-bg: rgb(110 118 129 / 40%);
   --inline-code-color: #c9d1d9;
   --blockquote-bg: #21262d;
-  --table-header-bg: #21262d;
+  --table-header-bg: #1a1a1a;
   --table-body-bg: #0d1117;
   --table-row-alt-bg: #161b22;
   --avatar-bg: #21262d;
@@ -73,6 +74,7 @@
   --button-hover-bg: #21262d;
   --text-primary: #c9d1d9;
   --text-secondary: #8b949e;
+  --table-border-dark: #343b43;
 
   /* Dark theme syntax highlighting */
   --syntax-keyword: #ff7b72;

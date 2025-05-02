@@ -106,7 +106,7 @@
 }
 
 /* Add CSS for handling virtual keyboard on mobile */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   body.keyboard-open {
     /* Prevent content from being pushed up or obscured by keyboard */
     height: 100%;

@@ -32,7 +32,7 @@ function generateKey(keyOrData, ...args) {
       // Stringify with sorted keys for consistency
       baseString = JSON.stringify(keyOrData, Object.keys(keyOrData).sort());
     } catch (e) {
-      console.error("Error stringifying object for cache key:", e);
+      logger.error("Error stringifying object for cache key:", e);
       baseString = "cache-key-stringify-error"; // Fallback string
     }
     // Create SHA-256 hash of the stable string
@@ -70,7 +70,7 @@ function generateKey(keyOrData, ...args) {
  * @param {string} category - Optional category for metrics
  * @returns {Promise<any|null>} Cached value or null if not found
  */
-async function get(key, category = "general") {
+async function get(key) {
   const cacheItem = cacheStore.get(key);
   
   if (!cacheItem) {

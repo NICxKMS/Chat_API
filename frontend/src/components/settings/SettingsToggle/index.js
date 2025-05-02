@@ -25,8 +25,6 @@ const BooleanControl = ({
 
   const containerClass = variant === 'switch' ? styles.SettingsToggle__switchContainer : styles.SettingsToggle__toggleContainer;
   const trackClass = variant === 'switch' ? styles.SettingsToggle__switchTrack : styles.SettingsToggle__track;
-  const thumbClass = variant === 'switch' ? styles.SettingsToggle__switchThumb : styles.SettingsToggle__toggleThumb;
-  const sizeClass = size === 'small' ? styles['SettingsToggle--small'] : size === 'large' ? styles['SettingsToggle--large'] : '';
   const checkedClass = variant === 'switch' 
     ? styles['SettingsToggle__switchTrack--checked'] 
     : styles['SettingsToggle__track--checked'];

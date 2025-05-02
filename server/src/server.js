@@ -53,43 +53,6 @@ try {
   logger.error("Firebase Admin SDK initialization error:", error);
   process.exit(1); // Exit if Firebase Admin fails to initialize
 }
-// ------------------------------------
-
-// --- Legacy Firebase Authentication Hook ---
-// Keeping this for reference - now replaced with authenticateUser middleware
-async function firebaseAuthHook(request, reply) {
-  logger.debug("=========== FIREBASE AUTH HOOK START ===========");
-  // Initialize request.user to null for every request
-  request.user = null;
-  const authHeader = request.headers.authorization;
-
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    const idToken = authHeader.split("Bearer ")[1];
-    try {
-      logger.debug("Verifying Firebase token...");
-      // Verify the ID token using Firebase Admin SDK
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
-      // Attach decoded user information if token is valid
-      request.user = {
-        uid: decodedToken.uid,
-        email: decodedToken.email,
-        // Add other properties from decodedToken as needed
-      };
-      logger.debug(`Authenticated user via hook: ${request.user.uid}`);
-    } catch (error) {
-      // Token provided but invalid/expired. Log warning but allow request to proceed
-      logger.warn(`Firebase token verification failed (allowing anonymous access): ${error.message}`, { code: error.code });
-    }
-  } else {
-    // No token provided, proceed as anonymous
-    logger.debug("No auth token provided, proceeding as anonymous.");
-  }
-
-  logger.debug("=========== FIREBASE AUTH HOOK END ===========");
-  // Always return (allow request to proceed)
-  return;
-}
-// ------------------------------------
 
 // Start the server (using async/await)
 const start = async () => {
@@ -170,13 +133,6 @@ const start = async () => {
     if (config.rateLimiting?.enabled !== false) {
       fastify.addHook("onRequest", rateLimiterHook);
     }
-
-    // Add universal request logging hook to verify execution
-    fastify.addHook("onRequest", async (request, reply) => {
-      logger.debug("=========== UNIVERSAL REQUEST HOOK START ===========");
-      logger.debug(`Request path: ${request.url}`);
-      logger.debug("=========== UNIVERSAL REQUEST HOOK END ===========");
-    });
 
     // Register Firebase Auth Hook globally - USE NEW MIDDLEWARE
     fastify.addHook("onRequest", authenticateUser());

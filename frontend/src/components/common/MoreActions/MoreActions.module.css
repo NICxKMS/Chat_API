@@ -87,7 +87,7 @@
 }
 
 /* Mobile-specific styles */
-@media (width <= 768px) {
+@media (width <= 600px) {
   .actionsMenu {
     position: absolute;
     top: calc(100% + var(--space-xs));

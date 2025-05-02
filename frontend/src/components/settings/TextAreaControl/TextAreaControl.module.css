@@ -35,7 +35,7 @@
   .TextAreaControl__textarea {
     padding: 0.6rem;
     font-size: 0.85rem;
-    min-height: 100px;
+    min-height: 28vh;
   }
 }
 

@@ -42,7 +42,7 @@ export const ModelProvider = ({ children }) => {
   const [allModels, setAllModels] = useState([]);
   const [processedModels, setProcessedModels] = useState({});
   const [experimentalModels, setExperimentalModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState(null);
+  const [selectedModel, setSelectedModel] = useLocalStorage('selectedModel', null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   

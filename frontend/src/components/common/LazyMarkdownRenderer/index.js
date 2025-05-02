@@ -13,5 +13,5 @@ export default function LazyMarkdownRenderer({ children }) {
 }
 
 LazyMarkdownRenderer.propTypes = {
-  markdownText: PropTypes.string.isRequired
+  children: PropTypes.node.isRequired
 }; 

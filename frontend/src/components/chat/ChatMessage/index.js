@@ -1,7 +1,7 @@
 // eslint-disable import/first
 import React, { memo, useMemo, useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
-import { PersonIcon, CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon, PencilIcon } from '@primer/octicons-react';
+import { CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon, PencilIcon } from '@primer/octicons-react';
 import styles from './ChatMessage.module.css';
 import { formatTime } from '../../../utils/messageHelpers';
 import { convertTeXToMathDollars } from '../../../utils/formatters';
@@ -26,9 +26,10 @@ const getTexWorker = () => {
  * @param {string} props.content - Message content
  * @param {number} props.index - Message index in the chat history
  * @param {boolean} props.isStreaming - Whether this message is currently streaming
+ * @param {string} props.avatarUrl - Optional URL for user avatar image
  * @returns {JSX.Element} - Rendered component
  */
-const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overrideContent = null }) => {
+const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overrideContent = null, avatarUrl = null }) => {
   // Use overrideContent if provided, else fall back to message.content
   const content = overrideContent != null ? overrideContent : message.content;
 
@@ -39,6 +40,11 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
       : convertTeXToMathDollars(content)
   ), [content, message.role]);
   const [processedMessage, setProcessedMessage] = useState(defaultProcessedMessage);
+
+  // Update processedMessage whenever the underlying content changes (e.g., after editing)
+  useEffect(() => {
+    setProcessedMessage(defaultProcessedMessage);
+  }, [defaultProcessedMessage]);
 
   useEffect(() => {
     if (message.role !== 'assistant' || typeof content !== 'string' || typeof Worker === 'undefined') {
@@ -62,7 +68,9 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
   const icon = useMemo(() => {
     switch (message.role) {
       case 'user':
-        return <PersonIcon size={16} className={styles.ChatMessage__icon} />;
+        return avatarUrl
+          ? <img src={avatarUrl} alt="User avatar" className={styles.ChatMessage__avatarImg} />
+          : null;
       case 'assistant':
         return <CopilotIcon size={16} className={styles.ChatMessage__icon} />;
       case 'system':
@@ -72,7 +80,7 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
       default:
         return null;
     }
-  }, [message.role]);
+  }, [message.role, avatarUrl]);
   
   // Select CSS classes based on message role
   const messageClass = useMemo(() => {
@@ -224,8 +232,8 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
           </span>
         )}
         
-        {/* Status */}
-        {finishReason != null && finishReason !== '' && (
+        {/* Status (only show if meaningful) */}
+        {finishReason != null && finishReason !== '' && finishReason.toLowerCase() !== 'stop' && finishReason.toLowerCase() !== 'unknown' && (
           <span className={styles.ChatMessage__metric}>
             <AlertIcon size={14} className={styles.ChatMessage__metricIcon} />
             {finishReason}
@@ -247,37 +255,40 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
   // Main return
   return (
     <div className={styles.ChatMessage + ' ' + messageClass}>
-      {/* Avatar */}
-      <div className={styles.ChatMessage__avatar}>{icon}</div>
+      <div className={styles.ChatMessage__body}>
+        {/* Avatar (only render if icon exists) */}
+        {icon && (
+          <div className={styles.ChatMessage__avatar}>{icon}</div>
+        )}
 
-      {/* Message content section */}
-      <div className={styles.ChatMessage__contentWrapper}>
-        <Suspense fallback={null}>
-          <div className={styles.ChatMessage__content}>
-            {message.role === 'assistant' ? (
-              <StreamingMessage
-                content={processedMessage}
-                isStreaming={isStreaming}
-              />
-            ) : (
-              // Render markdown lazily for user/system/error messages
-              <LazyMarkdownRenderer>
-                {processedMessage}
-              </LazyMarkdownRenderer>
-            )}
-          </div>
-        </Suspense>
+        {/* Message content section */}
+        <div className={styles.ChatMessage__contentWrapper}>
+          <Suspense fallback={null}>
+            <div className={styles.ChatMessage__content}>
+              {message.role === 'assistant' ? (
+                <StreamingMessage
+                  content={processedMessage}
+                  isStreaming={isStreaming}
+                />
+              ) : (
+                // Render markdown lazily for user/system/error messages
+                <LazyMarkdownRenderer>
+                  {processedMessage}
+                </LazyMarkdownRenderer>
+              )}
+            </div>
+          </Suspense>
 
-        {/* Render performance metrics for assistant messages */}
-        {message.role === 'assistant' && renderMetrics()}
+          {/* Render performance metrics for assistant messages */}
+          {message.role === 'assistant' && renderMetrics()}
 
-        {/* Copy button for non-user messages, hide when assistant metrics exist */}
-        {message.role !== 'user' && (message.role !== 'assistant' || !shouldShowMetrics) && copyButtonJsx}
+          {/* Copy button for non-user messages, hide when assistant metrics exist */}
+          {message.role !== 'user' && (message.role !== 'assistant' || !shouldShowMetrics) && copyButtonJsx}
+        </div>
       </div>
 
-      {/* User-specific buttons */}
       {message.role === 'user' && (
-        <div className={styles.ChatMessage__userButtonContainer}>
+        <div className={styles.ChatMessage__actions}>
           {editButtonJsx}
           {copyButtonJsx}
         </div>
@@ -318,7 +329,8 @@ ChatMessage.propTypes = {
   }).isRequired,
   isStreaming: PropTypes.bool,
   onEditMessage: PropTypes.func,
-  overrideContent: PropTypes.string // Optional override for rendering previews
+  overrideContent: PropTypes.string, // Optional override for rendering previews
+  avatarUrl: PropTypes.string, // Optional URL for user avatar image
 };
 
 export default memo(ChatMessage); 

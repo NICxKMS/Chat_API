@@ -1,4 +1,4 @@
-import { forwardRef, useState, useMemo, memo } from 'react';
+import { forwardRef, useState, useMemo, memo, useEffect } from 'react';
 import styles from './MessageList.module.css';
 import { useChatState } from '../../../contexts/ChatStateContext';
 import ChatMessage from '../ChatMessage';
@@ -16,7 +16,38 @@ import { processMessageContent } from '../../../utils/messageHelpers';
  */
 const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
   const { isWaitingForResponse } = useChatState();
+  // Local state for dynamic auth values
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [idToken, setIdToken] = useState(() => localStorage.getItem('idToken'));
+
   const [overlayImageSrc, setOverlayImageSrc] = useState(null);
+
+  // Dynamically import Firebase auth only if a token is already cached
+  useEffect(() => {
+    if (!idToken) return;
+    let unsubscribe;
+    (async () => {
+      const { getFirebaseAuth } = await import('../../../firebaseConfig');
+      const { onAuthStateChanged } = await import('firebase/auth');
+      const auth = getFirebaseAuth();
+      if (!auth) return;
+      unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          setAvatarUrl(user.photoURL || null);
+          try {
+            const token = await user.getIdToken();
+            setIdToken(token);
+          } catch {
+            setIdToken(null);
+          }
+        } else {
+          setAvatarUrl(null);
+          setIdToken(null);
+        }
+      });
+    })();
+    return () => { if (unsubscribe) unsubscribe(); };
+  }, [idToken]);
 
   // Combine regular messages with error content (if any)
   const finalMessages = useMemo(() => {
@@ -24,10 +55,12 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
     
     // Add error message if any
     if (error) {
+      const errorTimestamp = Date.now();
       result.push({
+        id: errorTimestamp,
         role: 'error',
         content: error,
-        timestamp: Date.now()
+        timestamp: errorTimestamp
       });
     }
     
@@ -90,6 +123,7 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
                   overrideContent={text || undefined}
                   isStreaming={isStreaming}
                   onEditMessage={message.role === 'user' ? onEditMessage : undefined}
+                  avatarUrl={message.role === 'user' && idToken ? avatarUrl : undefined}
                 />
               )}
             </div>
@@ -98,7 +132,13 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
       </div>
       
       {/* Render the overlay component */}
-      <ImageOverlay src={overlayImageSrc} onClose={handleCloseOverlay} />
+      {overlayImageSrc && (
+        <ImageOverlay
+          src={overlayImageSrc}
+          alt="Image preview"
+          onClose={handleCloseOverlay}
+        />
+      )}
     </>
   );
 });

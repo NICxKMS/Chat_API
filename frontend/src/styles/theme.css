@@ -238,7 +238,6 @@ body.light-mode {
   --button-teal-bg: var(--button-teal-bg-light); /* Map teal button bg for light mode */
   --message-user-bg: var(--light-message-user-bg);
   --message-assistant-bg: var(--light-surface-tertiary); /* Use adjusted tertiary */
-  --code-bg: var(--light-surface-tertiary); /* Use adjusted tertiary */
   --settings-bg: var(--light-surface-secondary); /* Use adjusted secondary */
   --hover: var(--light-hover);
   --scroll-track: var(--light-surface-tertiary); /* Use adjusted tertiary */
@@ -296,6 +295,9 @@ body.light-mode {
   --disabled-text: var(--light-disabled-text);
   --stats-bg: var(--light-surface-secondary); /* Use adjusted secondary */
 
+  /* Add explicit mapping */
+  --border-pronounced: var(--border-pronounced-light);
+
   /* Toggle specific variables */
   --toggle-disabled-track: var(--toggle-track-light);
   --toggle-disabled-thumb: var(--toggle-thumb-light);
@@ -348,7 +350,6 @@ body.dark-mode {
   --button-teal-bg: var(--button-teal-bg); /* Map teal button bg for dark mode */
   --message-user-bg: var(--dark-message-user-bg);
   --message-assistant-bg: var(--dark-surface-quaternary);
-  --code-bg: var(--dark-bg);
   --settings-bg: var(--dark-surface-quaternary);
   --hover: var(--dark-hover);
   --scroll-track: var(--dark-sidebar-surface-tertiary);
@@ -406,6 +407,9 @@ body.dark-mode {
   --disabled-text: var(--dark-disabled-text);
   --stats-bg: var(--dark-sidebar-surface-secondary); /* Map stats-bg */
 
+  /* Add explicit mapping */
+  --border-pronounced: var(--border-pronounced-dark);
+
   /* Toggle specific variables */
   --toggle-disabled-track: var(--toggle-track-dark);
   --toggle-disabled-thumb: var(--toggle-thumb-dark);
@@ -428,10 +432,3 @@ body.dark-mode {
 
 /* Removed [data-theme="dark"] block as body.dark-mode handles overrides */
 
-[data-theme="dark"] {
-  /* Dark theme overrides */
-  
-  /* Dark theme syntax highlighting */
-  
-  /* Dark theme diagram and special features */
-} 

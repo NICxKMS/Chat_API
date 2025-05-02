@@ -9,7 +9,6 @@ import { getCircuitBreakerStates } from "../utils/circuitBreaker.js";
 import logger from "../utils/logger.js";
 
 // Helper function to roughly validate base64 (more robust checks might be needed)
-const isPotentialBase64 = (str) => typeof str === "string" && /^[A-Za-z0-9+/=]+$/.test(str) && str.length % 4 === 0;
 
 // Increased payload size limit for image data
 export const bodyLimit = 10 * 1024 * 1024; // 10MB
@@ -38,7 +37,6 @@ class ChatController {
    * @param {FastifyReply} reply - Fastify reply object.
    */
   async chatCompletion(request, reply) {
-    const startTime = Date.now();
     let providerName, modelName; // Declare here for potential use in error logging
     // Create an AbortController and derive requestId (client-supplied wins)
     let abortController = new AbortController();
@@ -148,7 +146,6 @@ class ChatController {
         }
         
         // Return the response using reply.send
-        console.log(response);
         return reply.send(response); // Explicit return
 
       } catch (providerError) {
@@ -205,7 +202,26 @@ class ChatController {
       
       // Catch errors from validation, provider setup, caching, or thrown provider errors
       logger.error(`Server error in chatCompletion handler: ${error.message}`, { provider: providerName, model: modelName, stack: error.stack });
-      // Throw error to be handled by Fastify's central error handler
+      
+      // Send error response as HTTP 200 with an `error` field to avoid fetch network error
+      if (!reply.sent) {
+        const errorPayload = {
+          id: requestId,
+          model: modelName,
+          provider: providerName,
+          error: {
+            message: error.message || "An unexpected error occurred.",
+            code: error.status || error.statusCode || 500,
+            type: error.code || error.name || "ServerError"
+          },
+          finishReason: "error",
+          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          latency: null
+        };
+        return reply.status(200).send(errorPayload);
+      }
+
+      // Throw error to be handled by Fastify's central error handler if already sent
       throw error; 
     }
     
@@ -383,7 +399,6 @@ class ChatController {
       // Optimized stream processing with immediate chunk writing
       for await (const chunk of providerStream) {
         lastProviderChunk = chunk; // Store the latest chunk
-        console.log(chunk);
         if (streamClosed) { break; }
         lastActivityTime = Date.now(); 
         chunkCounter++;
@@ -536,7 +551,6 @@ class ChatController {
     try {
       metrics.incrementRequestCount();
       
-      const providersInfo = await providerFactory.getProvidersInfo();
       const circuitBreakerStates = getCircuitBreakerStates();
       
       let cacheStats = { enabled: false };

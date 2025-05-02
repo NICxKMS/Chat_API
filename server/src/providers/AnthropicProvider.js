@@ -7,7 +7,6 @@ import axios from "axios";
 import { createBreaker } from "../utils/circuitBreaker.js";
 import logger from "../utils/logger.js";
 import * as metrics from "../utils/metrics.js";
-import { promisify } from "util";
 
 // Helper to check if a string is a base64 data URL and extract parts
 const parseBase64DataUrl = (str) => {
@@ -318,7 +317,7 @@ export class AnthropicProvider extends BaseProvider {
   /**
    * Handle streaming response from Anthropic
    */
-  async handleStreamResponse(response, model) {
+  async handleStreamResponse() {
     // Implementation for streaming would go here
     throw new Error("Streaming not implemented for Anthropic provider");
   }
@@ -472,7 +471,6 @@ export class AnthropicProvider extends BaseProvider {
         standardOptions.abortSignal.addEventListener("abort", cleanupStream, { once: true });
       }
 
-      let accumulatedLatency = 0; // Only for TTFB
       let firstChunk = true;
       let usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
       let finishReason = "unknown";
@@ -481,7 +479,6 @@ export class AnthropicProvider extends BaseProvider {
       // Process the stream
       for await (const chunk of stream) {
         const chunkLatency = firstChunk ? Date.now() - streamStartTime : 0;
-        accumulatedLatency += chunkLatency;
 
         if (firstChunk) {
           // Convert latency to seconds for the metrics function

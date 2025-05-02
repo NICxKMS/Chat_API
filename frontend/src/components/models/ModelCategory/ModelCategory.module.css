@@ -267,7 +267,7 @@
 }
 
 /* Responsive adjustments */
-@media (width <= 768px) {
+@media (width <= 600px) {
   .ModelCategory__header,
   .ModelCategory__providerHeader,
   .ModelCategory__typeGroupHeader {

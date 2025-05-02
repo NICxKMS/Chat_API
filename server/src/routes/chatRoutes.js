@@ -7,7 +7,7 @@ import chatController from "../controllers/ChatController.js";
 // import cors from "cors"; // Removed - Handled globally by @fastify/cors
 
 // Fastify Plugin function
-async function chatRoutes (fastify, options) {
+async function chatRoutes (fastify) {
 
   // The explicit OPTIONS handler is removed as @fastify/cors handles preflight requests.
 

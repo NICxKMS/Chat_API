@@ -10,13 +10,6 @@ import * as metrics from "../utils/metrics.js";
 import logger from "../utils/logger.js";
 
 // Helper to check if a string is a base64 data URL and extract parts
-const parseBase64DataUrl = (str) => {
-  const match = str.match(/^data:(image\/(?:jpeg|png|gif|webp));base64,(.*)$/);
-  if (match) {
-    return { mimeType: match[1], data: match[2] };
-  }
-  return null;
-};
 
 class OpenRouterProvider extends BaseProvider {
   constructor(config) {

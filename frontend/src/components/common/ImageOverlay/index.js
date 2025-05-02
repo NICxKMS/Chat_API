@@ -1,14 +1,13 @@
 import ReactDOM from 'react-dom'; // Import ReactDOM
 import PropTypes from 'prop-types';
-import { XIcon } from '@primer/octicons-react';
 import styles from './ImageOverlay.module.css';
 
 /**
  * Full-screen overlay for displaying an image using React Portal.
  * Clicking anywhere on the overlay closes it.
  */
-const ImageOverlay = ({ src, alt, isOpen, onClose }) => {
-  if (!src || !isOpen) return null;
+const ImageOverlay = ({ src, alt, onClose }) => {
+  if (!src) return null;
 
   // Prevent clicks on the image itself from closing if needed (optional)
   const handleImageClick = (e) => {
@@ -40,8 +39,6 @@ ImageOverlay.propTypes = {
   src: PropTypes.string.isRequired,
   /** The alt text for the image */
   alt: PropTypes.string.isRequired,
-  /** Whether the overlay is open or not */
-  isOpen: PropTypes.bool.isRequired,
   /** Function to call when the overlay should be closed */
   onClose: PropTypes.func.isRequired,
 };

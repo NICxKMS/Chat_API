@@ -65,7 +65,7 @@ const MoreActions = ({ actions = [], triggerButtonClassName = 'circleActionButto
         aria-label={isOpen ? 'Close actions menu' : 'Open actions menu'}
         aria-expanded={isOpen}
       >
-        <KebabHorizontalIcon size={20} />
+        <KebabHorizontalIcon size={20} style={{ transform: 'rotate(90deg)' }} />
       </button>
       
       <div 

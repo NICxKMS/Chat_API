@@ -214,11 +214,9 @@ button.resetButton:hover {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
 }
 .fullHeight textarea {
   flex: 1;
-  min-height: 0;
 }
 
 /* Ensure body flex doesn't overflow */
@@ -285,7 +283,7 @@ button.resetButton:hover {
   }
   
   .settingHeader {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
     gap: 0.5rem;
   }

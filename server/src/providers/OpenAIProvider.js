@@ -8,14 +8,6 @@ import { createBreaker } from "../utils/circuitBreaker.js";
 import * as metrics from "../utils/metrics.js";
 import logger from "../utils/logger.js";
 
-// Helper to check if a string is a base64 data URL and extract parts
-const parseBase64DataUrl = (str) => {
-  const match = str.match(/^data:(image\/(?:jpeg|png|gif|webp));base64,(.*)$/);
-  if (match) {
-    return { mimeType: match[1], data: match[2] };
-  }
-  return null;
-};
 
 class OpenAIProvider extends BaseProvider {
   constructor(config) {
@@ -341,8 +333,9 @@ class OpenAIProvider extends BaseProvider {
       ...(options.response_format?.type === "json_object" && { response_format: { type: "json_object" } })
     };
 
+    let startTime;
     try {
-      const startTime = Date.now();
+      startTime = Date.now();
       // logger.debug({ openAIPayload: payload }, "Sending request to OpenAI");
 
       const response = await this.client.chat.completions.create(
@@ -350,13 +343,12 @@ class OpenAIProvider extends BaseProvider {
         { signal: options.abortSignal }
       );
 
-      const latency = Date.now() - startTime;
+      const latency = startTime ? Date.now() - startTime : 0;
       logger.debug("Received response from OpenAI");
 
       // Normalize the response
       return this._normalizeResponse(response, modelName, latency);
     } catch (error) {
-      const latency = Date.now() - startTime; // Record latency even on error
       logger.error(`OpenAI raw completion error: ${error.message}`, { model: modelName, error });
       // Enhance error handling: Check for specific OpenAI error types/codes
       let statusCode = 500;
@@ -407,7 +399,6 @@ class OpenAIProvider extends BaseProvider {
   async *chatCompletionStream(options) {
     let modelName;
     let streamStartTime;
-    let latency = 0;
     try {
       // Standardize and validate options
       const standardOptions = this.standardizeOptions(options);
@@ -446,7 +437,6 @@ class OpenAIProvider extends BaseProvider {
         { signal: standardOptions.abortSignal }
       );
 
-      let accumulatedLatency = 0;
       let firstChunk = true;
       let usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 }; // Initialize usage
       let finishReason = "unknown"; // Initialize finish reason
@@ -454,7 +444,6 @@ class OpenAIProvider extends BaseProvider {
 
       for await (const chunk of stream) {
         const chunkLatency = firstChunk ? Date.now() - streamStartTime : 0;
-        accumulatedLatency += chunkLatency;
 
         if (firstChunk) {
           // Convert latency to seconds for the metrics function

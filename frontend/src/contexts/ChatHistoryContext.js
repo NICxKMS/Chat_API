@@ -29,7 +29,8 @@ export const ChatHistoryProvider = ({ children }) => {
 
   // Add message, stable callback
   const addMessageToHistory = useCallback((role, content, metrics) => {
-    const message = { role, content, timestamp: Date.now(), ...(metrics && { metrics }) };
+    const timestamp = Date.now();
+    const message = { id: timestamp, role, content, timestamp, ...(metrics && { metrics }) };
     setChatHistory(prev => [...prev, message]);
     return message;
   }, [setChatHistory]);

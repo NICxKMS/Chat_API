@@ -8,14 +8,8 @@
   border-radius: var(--radius-xl); /* 16px */
   border: var(--border-width-sm) solid var(--border-color, #3f3f3f);
   position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 5px var(--shadow-color, rgb(0 0 0 / 10%));
   overflow: hidden; /* Ensure no content spills outside */
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
-}
-
-.ChatInput:focus-within {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25), 0 3px 6px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(var(--accent-color-rgb, 137 207 240), 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  transform: translateY(-1px);
 }
 
 .ChatInput__inputWrapper {
@@ -124,156 +118,6 @@
   font-style: italic;
 }
 
-/* Mobile view specific class - applied directly by component */
-.ChatInput__mobileView {
-  border-top: 1px solid var(--border-color, #3f3f3f);
-  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.15), 0 -2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.ChatInput__mobileView:focus-within {
-  box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.2), 0 -2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.ChatInput__mobileView .ChatInput__chatInput {
-  background-color: var(--input-wrapper-bg, #303030);
-  border-radius: 20px;
-}
-
-.ChatInput__mobileView .ChatInput__actionRow {
-  margin-top: 4px;
-}
-
-/* Responsive adjustments */
-@media (width <= 600px) {
-  /* Simplify input container in mobile view */
-  .ChatInput {
-    padding: var(--space-xs) var(--space-xs) var(--space-xs); /* Keep padding all around */
-    border-radius: 0; /* Remove border radius to merge with screen edges */
-    border: var(--border-width-sm) solid var(--border-color, #3f3f3f); /* Restore border */
-    border-bottom: none;
-    border-left: none;
-    border-right: none;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.15), 0 -2px 4px rgba(0, 0, 0, 0.1);
-    background-color: var(--input-bg-color, #1e1e1e);
-    margin: 0; /* Remove any margins */
-    width: 100%; /* Ensure it extends full width */
-  }
-
-  .ChatInput:focus-within {
-    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.2), 0 -2px 6px rgba(0, 0, 0, 0.15);
-    transform: none;
-  }
-
-  /* Add border when at bottom of page (for messages that aren't at the bottom) */
-  .ChatInput:not(.ChatInput--atBottom) {
-    border-top: var(--border-width-sm) solid var(--border-color, #3f3f3f);
-  }
-
-  /* Remove the top border when at the bottom of the page */
-  .ChatInput.ChatInput--atBottom {
-    border-top: none;
-  }
-
-  /* Simplify input wrapper */
-  .ChatInput__inputWrapper {
-    margin-bottom: 4px;
-  }
-
-  /* Adjust action row to be more compact */
-  .ChatInput__actionRow {
-    gap: 4px;
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none; /* Hide scrollbar for Firefox */
-    -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
-    padding-bottom: var(--space-xs); /* 8px - Keep bottom padding for buttons */
-    margin-bottom: 0;
-  }
-  
-  /* Hide scrollbar for Chrome/Safari */
-  .ChatInput__actionRow::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .ChatInput__leftButtons, .ChatInput__rightButtons {
-    justify-content: flex-start;
-    margin-top: 0;
-    width: auto;
-    flex-wrap: nowrap;
-    flex-shrink: 0;
-  }
-  
-  .ChatInput__rightButtons {
-    margin-left: var(--space-xs); /* 8px */
-  }
-  
-  /* Convert text buttons to icon buttons on mobile */
-  .ChatInput__textButton {
-    padding: var(--space-xxs) var(--space-sm); /* 6px 14px -> 4px 12px? */
-    border-radius: var(--radius-xl); /* 18px -> 16px */
-    font-size: var(--font-size-sm); /* 0.9rem -> 0.875rem */
-  }
-  
-  .ChatInput__textButton .buttonText {
-    display: none;
-  }
-  
-  /* Ensure all buttons have consistent styling */
-  .ChatInput__actionButton, .ChatInput__uploadButton, .ChatInput__textButton, .ChatInput__modelButton {
-    margin: 0 2px;
-    border-width: var(--border-width-sm); /* 1px border */
-    min-width: 32px;
-    min-height: 32px;
-    width: 32px;
-    height: 32px;
-    padding: var(--space-xxs); /* 4px */
-  }
-
-  /* Style text input to match mobile mockup */
-  .ChatInput__chatInput {
-    height: 40px;
-    min-height: 20px;
-    max-height: 120px;
-    padding: var(--space-xs) var(--space-sm); /* 8px 12px */
-    padding-right: 44px;
-    font-size: var(--font-size-sm); /* 0.95rem -> 0.875rem */
-    border-radius: 20px;
-    background-color: var(--input-wrapper-bg, #303030);
-  }
-
-  /* Make send button appear correctly inside the text input */
-  .ChatInput__sendButtonInline {
-    width: 32px;
-    height: 32px;
-    right: 6px;
-    bottom: 4px;
-    position: absolute;
-    z-index: 10;
-    border: none;
-  }
-  
-  /* Invisible touch target extension */
-  .ChatInput__sendButtonInline::before {
-    content: '';
-    position: absolute;
-    inset: -8px;
-    z-index: -1;
-  }
-
-  /* Style for the input area when no model is selected */
-  .ChatInput__inputWrapper.noModelSelected::after {
-    display: none; /* Hide the "Select model" text on mobile to save space */
-  }
-  
-  /* Make the button more obvious when no model is selected on mobile */
-  .ChatInput__mobileView .ChatInput__sendButtonInline.noModelSelected {
-    background-color: var(--model-button-bg, #fff);
-    color: var(--model-button-color, #1a1a1a);
-    border: none;
-  }
-}
-
 /* Add this CSS for the stop button */
 .ChatInput__stopButton {
   background-color: var(--error-color) !important;
@@ -283,14 +127,6 @@
 
 .ChatInput__stopButton:hover {
   background-color: var(--error-emphasis) !important;
-}
-
-.ChatInput__mobileView .ChatInput__sendButtonInline {
-  width: 32px;
-  height: 32px;
-  right: 4px;
-  background-color: var(--button-bg-color, rgb(87 157 152 / 90%));
-  border: none;
 }
 
 /* Style for send button when no model is selected */
@@ -409,4 +245,160 @@
 :global(body.dark-mode) .ChatInput__modelButton:hover:not(:disabled),
 :global(body.dark-mode) .ChatInput__iconOnlyButton:hover:not(:disabled) {
   border: var(--border-width-md) solid var(--button-global-hover-bg-dark);
+}
+
+/* Responsive adjustments */
+@media (width <= 600px) {
+  /* Mobile view specific class - applied directly by component */
+  .ChatInput__mobileView {
+    border-top: 1px solid var(--border-color, #3f3f3f);
+  }
+
+  .ChatInput__mobileView .ChatInput__chatInput {
+    background-color: var(--input-wrapper-bg, #303030);
+    border-radius: 20px;
+  }
+
+  .ChatInput__mobileView .ChatInput__actionRow {
+    margin-top: 4px;
+  }
+
+  .ChatInput__mobileView .ChatInput__sendButtonInline {
+    width: 32px;
+    height: 32px;
+    right: 4px;
+    background-color: var(--button-bg-color, rgb(87 157 152 / 90%));
+    border: none;
+  }
+  /* Simplify input container in mobile view */
+  .ChatInput {
+    padding: var(--space-xs) var(--space-xs) var(--space-xs); /* Keep padding all around */
+    border-radius: var(--radius-xl); /* Use full border radius for initial chat */
+    border: var(--border-width-sm) solid var(--border-color, #3f3f3f); /* Restore border */
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
+    background-color: var(--input-bg-color, #1e1e1e);
+    margin: 0; /* Remove any margins */
+    width: 100%; /* Ensure it extends full width */
+  }
+
+  /* Simplify input wrapper */
+  .ChatInput__inputWrapper {
+    margin-bottom: 4px;
+  }
+
+  /* Adjust action row to be more compact */
+  .ChatInput__actionRow {
+    gap: 4px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+    padding-bottom: var(--space-xs); /* 8px - Keep bottom padding for buttons */
+    margin-bottom: 0;
+  }
+  
+  /* Hide scrollbar for Chrome/Safari */
+  .ChatInput__actionRow::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .ChatInput__leftButtons, .ChatInput__rightButtons {
+    justify-content: flex-start;
+    margin-top: 0;
+    width: auto;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+  }
+  
+  .ChatInput__rightButtons {
+    margin-left: var(--space-xs); /* 8px */
+  }
+  
+  /* Convert text buttons to icon buttons on mobile */
+  .ChatInput__textButton {
+    padding: var(--space-xxs) var(--space-sm); /* 6px 14px -> 4px 12px? */
+    border-radius: var(--radius-xl); /* 18px -> 16px */
+    font-size: var(--font-size-sm); /* 0.9rem -> 0.875rem */
+  }
+  
+  .ChatInput__textButton .buttonText {
+    display: none;
+  }
+  
+  /* Ensure all buttons have consistent styling */
+  .ChatInput__actionButton, .ChatInput__uploadButton, .ChatInput__textButton, .ChatInput__modelButton {
+    margin: 0 2px;
+    border-width: var(--border-width-sm); /* 1px border */
+    min-width: 32px;
+    min-height: 32px;
+    width: 32px;
+    height: 32px;
+    padding: var(--space-xxs); /* 4px */
+  }
+
+  /* Style text input to match mobile mockup */
+  .ChatInput__chatInput {
+    height: 40px;
+    min-height: 20px;
+    max-height: 120px;
+    padding: var(--space-xs) var(--space-sm); /* 8px 12px */
+    padding-right: 44px;
+    font-size: var(--font-size-sm); /* 0.95rem -> 0.875rem */
+    border-radius: 20px;
+    background-color: var(--input-wrapper-bg, #303030);
+  }
+
+  /* Make send button appear correctly inside the text input */
+  .ChatInput__sendButtonInline {
+    width: 32px;
+    height: 32px;
+    right: 6px;
+    bottom: 4px;
+    position: absolute;
+    z-index: 10;
+    border: none;
+  }
+  
+  /* Invisible touch target extension */
+  .ChatInput__sendButtonInline::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    z-index: -1;
+  }
+
+  /* Style for the input area when no model is selected */
+  .ChatInput__inputWrapper.noModelSelected::after {
+    display: none; /* Hide the "Select model" text on mobile to save space */
+  }
+  
+  /* Make the button more obvious when no model is selected on mobile */
+  .ChatInput__mobileView .ChatInput__sendButtonInline.noModelSelected {
+    background-color: var(--model-button-bg, #fff);
+    color: var(--model-button-color, #1a1a1a);
+    border: none;
+  }
+
+  /* Add mobile input border radius and border variants for initial chat and with messages */
+  .ChatInput--mobileInitial {
+    border-radius: var(--radius-xl);
+    /* For initial chat, show full border on all sides */
+    border-bottom: var(--border-width-sm) solid var(--border-color, #3f3f3f);
+    border-left: var(--border-width-sm) solid var(--border-color, #3f3f3f);
+    border-right: var(--border-width-sm) solid var(--border-color, #3f3f3f);
+  }
+  .ChatInput--mobileWithMessages {
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    /* For chat with messages, remove the bottom, left, and right borders */
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+  }
 }

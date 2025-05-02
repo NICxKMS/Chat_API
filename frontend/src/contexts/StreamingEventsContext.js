@@ -62,28 +62,6 @@ export const StreamingEventsProvider = ({ children }) => {
     worker.postMessage(chunk);
   }), [getOrCreateStreamWorker]);
 
-  // Helper to update placeholder on error
-  const _updatePlaceholderOnError = useCallback(() => {
-    setChatHistory(prev => {
-      const newHistory = [...prev];
-      const lastMessage = newHistory[newHistory.length - 1];
-      if (lastMessage && lastMessage.role === 'assistant') {
-        const existingContent = lastMessage.content;
-        const errorSuffix = ' [Error occurred during generation]';
-        if (!existingContent.includes(errorSuffix)) {
-          lastMessage.content = existingContent
-            ? `${existingContent}${errorSuffix}`
-            : 'Error occurred during generation';
-          if (lastMessage.metrics) {
-            lastMessage.metrics.isComplete = true;
-            lastMessage.metrics.error = true;
-          }
-        }
-      }
-      return newHistory;
-    });
-  }, [setChatHistory]);
-
   // Stream a message using fetch SSE
   const streamMessageWithFetch = useCallback(async (message, editIndex = null) => {
     // Generate and store a client-side requestId for this stream
@@ -105,7 +83,9 @@ export const StreamingEventsProvider = ({ children }) => {
     if (isEditing) {
       setChatHistory(prev => {
         const truncated = prev.slice(0, editIndex);
-        userMessage = { role: 'user', content: message, timestamp: Date.now() };
+        const original = prev[editIndex];
+        // Preserve original id/timestamp, only update content
+        userMessage = { ...original, content: message };
         return [...truncated, userMessage];
       });
     } else {
@@ -171,6 +151,25 @@ export const StreamingEventsProvider = ({ children }) => {
         try {
           const msgs = await parseStreamChunk(chunk);
           for (const msg of msgs) {
+            // Handle server-sent error payload
+            if (msg.rawChunk?.error || msg.finishReason === 'error') {
+              const errMsg = msg.rawChunk?.error?.message || 'Error occurred during generation';
+              console.error('Error in SSE payload:', errMsg);
+              setError(errMsg);
+              setChatHistory(prev => {
+                const newHistory = [...prev];
+                const lastMsg = newHistory[newHistory.length - 1];
+                if (lastMsg && lastMsg.role === 'assistant') {
+                  lastMsg.content = errMsg;
+                  if (lastMsg.metrics) {
+                    lastMsg.metrics.isComplete = true;
+                    lastMsg.metrics.error = true;
+                  }
+                }
+                return newHistory;
+              });
+              return null;
+            }
             // Append any content from the chunk
             if (msg.content) {
               // Record time to first token once
@@ -192,7 +191,21 @@ export const StreamingEventsProvider = ({ children }) => {
       updateChatWithContent(streamingTextRef.current);
       return streamingTextRef.current;
     } catch (error) {
-      _updatePlaceholderOnError();
+      console.error('Error streaming message:', error);
+      setError(error.message);
+      // Show the server error content as the assistant's message
+      setChatHistory(prev => {
+        const newHistory = [...prev];
+        const lastMsg = newHistory[newHistory.length - 1];
+        if (lastMsg && lastMsg.role === 'assistant') {
+          lastMsg.content = error.message || 'Error occurred during generation';
+          if (lastMsg.metrics) {
+            lastMsg.metrics.isComplete = true;
+            lastMsg.metrics.error = true;
+          }
+        }
+        return newHistory;
+      });
       return null;
     } finally {
       clearTimeout(timeoutId);
@@ -206,7 +219,7 @@ export const StreamingEventsProvider = ({ children }) => {
     chatHistoryRef, setChatHistory, addMessageToHistory, updateChatWithContent,
     debouncedUpdateChat, setError, setIsWaitingForResponse,
     resetPerformanceMetrics, startPerformanceTimer, updatePerformanceMetrics,
-    parseStreamChunk, _updatePlaceholderOnError
+    parseStreamChunk
   ]);
 
   const stopStreaming = useCallback(async () => {

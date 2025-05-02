@@ -47,7 +47,7 @@ class BaseProvider {
    * @param {object} options - The request options (model, messages, etc.).
    * @returns {Promise<object>} A promise resolving to the standardized API response.
    */
-  async chatCompletion(options) {
+  async chatCompletion() {
     throw new Error("Method chatCompletion() must be implemented by derived classes");
   }
 
@@ -59,7 +59,7 @@ class BaseProvider {
    * @yields {object} Standardized response chunks compatible with the API format.
    * @throws {Error} If streaming is not supported or an API error occurs.
    */
-  async *chatCompletionStream(options) {
+  async *chatCompletionStream() {
     // Default implementation throws an error indicating lack of support.
     // Derived classes must override this method to provide streaming functionality.
     throw new Error(`Streaming not supported by ${this.name} provider`);

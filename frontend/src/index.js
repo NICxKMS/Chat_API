@@ -16,8 +16,6 @@ import GlobalLoadingIndicator from './components/common/GlobalLoadingIndicator';
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 // Apply body class for index.css mappings
 document.body.classList.add(prefersDark ? 'dark-mode' : 'light-mode');
-// Apply data-theme attribute for colors.css and theme.css dark mode overrides
-document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
 
 // Create root and render app with Suspense
 const root = ReactDOM.createRoot(document.getElementById('root'));

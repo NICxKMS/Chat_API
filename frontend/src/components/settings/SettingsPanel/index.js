@@ -16,7 +16,7 @@ import { useIsSettingsMobile } from '../../../hooks/useMediaQuery';
  * @returns {JSX.Element} - Rendered component
  */
 const SettingsPanel = ({ isOpen, onClose }) => {
-  const { settings, updateSetting, resetSettings, cacheEnabled, toggleCache, currentUser } = useSettingsController();
+  const { settings, updateSetting, resetSettings, cacheEnabled, toggleCache, clearModelCache, currentUser } = useSettingsController();
   const [activeTab, setActiveTab] = useState('general');
   const [animateItems, setAnimateItems] = useState(false);
   
@@ -201,22 +201,8 @@ const SettingsPanel = ({ isOpen, onClose }) => {
     }
   }, [settingConfig, settings, animateItems, userName, updateSetting]);
   
-  // Compute active settings for the current tab and memoize
-  const activeSettings = useMemo(
-    () => Object.keys(settingConfig).filter(
-      key => settingConfig[key].tab === activeTab
-    ),
-    [activeTab, settingConfig]
-  );
+
   // Memoize the rendered settings components to avoid inline maps on each render
-  const renderedSettings = useMemo(
-    () => activeSettings.map((settingId, index) => (
-      <div key={settingId} style={{ animationDelay: `${index * 50}ms` }}>
-        {renderSettingControl(settingId)}
-      </div>
-    )),
-    [activeSettings, renderSettingControl]
-  );
 
   // Add model cache toggle control
   const renderCacheToggle = useCallback(() => {
@@ -234,6 +220,28 @@ const SettingsPanel = ({ isOpen, onClose }) => {
     );
   }, [cacheEnabled, toggleCache, animateItems]);
 
+  // Add delete cache button control
+  const renderClearCache = useCallback(() => {
+    const itemClass = `${styles.settingItem} ${animateItems ? styles.animate : ''}`;
+    return (
+      <div key="clearCache" className={itemClass}>
+        <div className={styles.settingHeader}>
+          <div className={styles.settingLabel}>Delete Model Cache</div>
+          <button
+            className={styles.resetButton}
+            onClick={() => clearModelCache()}
+            title="Delete the stored model cache from localStorage"
+          >
+            Delete Cache
+          </button>
+        </div>
+        <div className={styles.settingDescription}>
+          Deletes the saved model cache so that fresh data will be fetched on next load.
+        </div>
+      </div>
+    );
+  }, [clearModelCache, animateItems]);
+
   // Render controls based on activeTab, adjusting for mobile layout
   const renderTabContent = () => {
     if (activeTab === 'general') {
@@ -241,6 +249,7 @@ const SettingsPanel = ({ isOpen, onClose }) => {
       return [
         renderSettingControl('streaming'),
         renderCacheToggle(),
+        renderClearCache(),
         renderSettingControl('max_tokens')
       ];
     }
@@ -264,8 +273,8 @@ const SettingsPanel = ({ isOpen, onClose }) => {
     if (activeTab === 'system') {
       const systemControls = [renderSettingControl('systemPrompt')];
       if (isMobile) {
-        // On mobile, move cache toggle here
-        return [renderCacheToggle(), ...systemControls];
+        // On mobile, show clear cache and cache toggle above system prompt
+        return [renderClearCache(), renderCacheToggle(), ...systemControls];
       }
       return systemControls;
     }

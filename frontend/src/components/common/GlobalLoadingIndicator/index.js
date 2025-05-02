@@ -24,7 +24,7 @@ const GlobalLoadingIndicator = () => {
         toastIdRef.current = null;
       }
     };
-  }, [authLoading]);
+  }, [isLoading, showToast, dismissToast]);
 
   // No overlay spinner; toasts still handled in useEffect
   return null;

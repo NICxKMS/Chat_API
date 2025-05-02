@@ -8,7 +8,6 @@ import { useChatStatus } from './ChatStatusContext';
 import { usePerformanceMetrics } from './PerformanceMetricsContext';
 import { useStreamingEvents } from './StreamingEventsContext';
 import { fetchWithRetry } from '../utils/network';
-import { useIsDesktop } from '../hooks/useMediaQuery';
 import { useToast } from './ToastContext';
 
 // Context for chat actions (controls)
@@ -35,7 +34,6 @@ export const ChatControlProvider = ({ children }) => {
   const { setIsWaitingForResponse, setError } = useChatStatus();
   const { resetPerformanceMetrics, startPerformanceTimer, setTokenMetricsForLastMessage } = usePerformanceMetrics();
   const { streamMessageWithFetch, stopStreaming } = useStreamingEvents();
-  const isDesktop = useIsDesktop();
   const { showToast } = useToast();
 
   // Helpers
@@ -68,7 +66,9 @@ export const ChatControlProvider = ({ children }) => {
     if (isEditing) {
       setChatHistory(prev => {
         const truncated = prev.slice(0, editIndex);
-        userMessage = { role: 'user', content: message, timestamp: Date.now() };
+        const original = prev[editIndex];
+        // Preserve original id/timestamp, only update content
+        userMessage = { ...original, content: message };
         return [...truncated, userMessage];
       });
     } else {
@@ -108,6 +108,35 @@ export const ChatControlProvider = ({ children }) => {
       const data = await response.json();
       console.log('Received non-streaming chat data:', data);
 
+      // Handle server-sent error in response payload
+      if (data.error?.message || data.finishReason === 'error') {
+        const errMsg = data.error?.message || 'Error occurred during generation';
+        console.error('Error in API response:', errMsg);
+        setError(errMsg);
+        const rawUsage = data.usage || {};
+        const promptTokens = rawUsage.promptTokens ?? rawUsage.prompt_tokens ?? 0;
+        const completionTokens = rawUsage.completionTokens ?? rawUsage.completion_tokens ?? 0;
+        const totalTokens = rawUsage.totalTokens ?? rawUsage.total_tokens ?? completionTokens;
+        const requestEndTime = Date.now();
+        const elapsed = requestEndTime - requestStartTime;
+        const tokensPerSecond = elapsed ? Math.round((completionTokens / (elapsed / 1000)) * 10) / 10 : null;
+        const errorMetrics = {
+          startTime: requestStartTime,
+          endTime: requestEndTime,
+          elapsedTime: elapsed,
+          tokenCount: completionTokens,
+          tokensPerSecond,
+          isComplete: true,
+          timeToFirstToken: null,
+          promptTokens,
+          completionTokens,
+          totalTokens,
+          finishReason: data.finishReason || 'error',
+          error: true
+        };
+        addMessageToHistory('assistant', errMsg, errorMetrics);
+        return null;
+      }
       const content = data.content || 'No Response returned';
       // Use server-provided usage tokens directly
       const rawUsage = data.usage || {};
@@ -139,7 +168,8 @@ export const ChatControlProvider = ({ children }) => {
     } catch (err) {
       console.error('Error sending message:', err);
       setError(err.message);
-      addMessageToHistory('error', err.message || 'An error occurred');
+      // Show the server error as an assistant reply
+      addMessageToHistory('assistant', err.message || 'An error occurred');
       return null;
     } finally {
       // Clear the clientRequestId after completion

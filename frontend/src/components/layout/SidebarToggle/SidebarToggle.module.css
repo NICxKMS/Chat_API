@@ -13,7 +13,7 @@
 }
 
 /* Media queries for mobile view */
-@media (width <= 768px) {
+@media (width <= 600px) {
   .SidebarToggle__container {
     /* Keep at top-left corner */
     top: var(--space-md);

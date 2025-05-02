@@ -23,7 +23,7 @@
 }
 
 /* Disable button transitions on mobile screens */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   :root {
     --button-transition: none !important;
   }

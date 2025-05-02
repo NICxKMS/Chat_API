@@ -7,7 +7,7 @@ import modelController from "../controllers/ModelController.js";
 import logger from "../utils/logger.js";
 
 // Fastify Plugin function
-async function modelRoutes (fastify, options) {
+async function modelRoutes (fastify) {
 
   // GET / - Get all models from all providers
   fastify.get("/", modelController.getAllModels);
@@ -28,7 +28,7 @@ async function modelRoutes (fastify, options) {
   // router.get('/capabilities/all', modelController.getProviderCapabilities.bind(modelController));
 
   // GET /classified - Get models classified by external service
-  fastify.get("/classified", (request, reply, done) => {
+  fastify.get("/classified", (request, reply) => {
     logger.debug("=========== MODEL CLASSIFIED ROUTE ===========");
     logger.debug(`Request user: ${JSON.stringify(request.user)}`);
     logger.debug(`Auth header: ${request.headers.authorization ? "Present" : "Not present"}`);

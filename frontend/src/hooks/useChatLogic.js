@@ -48,16 +48,6 @@ export const useChatLogic = () => {
           (typeof msg.content === 'string' && msg.content === editedMessage.content && msg.role === 'user')
         );
         if (editIndex === -1) {
-          if (process.env.NODE_ENV === 'development') {
-            console.error("Could not find message to edit");
-            console.log("Edited message:", editedMessage);
-            console.log("Chat history:", chatHistory.map(m => ({ 
-              role: m.role, 
-              uniqueId: m.uniqueId, 
-              timestamp: m.timestamp,
-              contentPreview: typeof m.content === 'string' ? m.content.substring(0, 20) : 'non-string'
-            })));
-          }
           return;
         }
         // Ensure the message to be submitted has the correct uniqueId

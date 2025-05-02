@@ -30,7 +30,7 @@
 }
 
 /* Responsive adjustments */
-@media (width <= 768px) {
+@media (width <= 600px) {
   .GlobalMetricsBar {
     gap: var(--space-md); /* 1rem */
     padding: var(--space-xxs) var(--space-sm); /* 0.4rem -> 4px, 0.75rem -> 12px */

@@ -70,7 +70,7 @@
   background-color: transparent;
   color: var(--button-text-color);
   border: var(--border-width-md) solid var(--border-accent);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition-duration-short) ease;
   font-size: var(--font-size-sm);
@@ -98,4 +98,11 @@
 .ChatInput__modelButton:hover:not(:disabled) {
   background-color: var(--button-hover-bg-color);
   color: var(--text-primary);
+}
+
+/* NEW RULE: Ensure icon-only buttons are perfectly round in mobile view */
+.ChatInput__textButton.ChatInput__iconOnlyButton {
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
 }

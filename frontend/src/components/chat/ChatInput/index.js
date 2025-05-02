@@ -35,7 +35,8 @@ const ChatInput = memo(({
   isStreaming = false,
   toggleModelSelector = () => {},
   onFocus = () => {},
-  isAtBottom = false
+  isInitialChat = false,
+  onSendMessage,
 }) => {
   const [message, setMessage] = useState('');
   const [selectedImages, setSelectedImages] = useState([]);
@@ -44,7 +45,7 @@ const ChatInput = memo(({
   const isEditing = !!editingMessage;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
   const { isWaitingForResponse } = useChatState();
-  const { stopGeneration, sendMessage, newChat } = useChatControl();
+  const { stopGeneration, newChat } = useChatControl();
   const [inputError, setInputError] = useState(null);
   const errorTimeoutRef = useRef(null); // Ref to manage error timeout
   
@@ -181,7 +182,7 @@ const ChatInput = memo(({
     if (hasImages) selectedImages.forEach(img => contentPayload.push({ type: 'image_url', image_url: { url: img.url } }));
 
     if (contentPayload.length > 0) {
-      sendMessage(contentPayload, isEditing ? editingMessage : null);
+      onSendMessage(contentPayload, isEditing ? editingMessage : null);
     }
 
     setMessage('');
@@ -192,7 +193,7 @@ const ChatInput = memo(({
       textareaRef.current.style.height = 'auto'; // Reset height immediately
       setTimeout(() => textareaRef.current?.focus(), 0);
     }
-  }, [message, selectedImages, disabled, selectedModel, toggleModelSelector, sendMessage, isEditing, editingMessage, onCancelEdit]);
+  }, [message, selectedImages, disabled, selectedModel, toggleModelSelector, onSendMessage, isEditing, editingMessage, onCancelEdit]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -312,11 +313,14 @@ const ChatInput = memo(({
       {/* Image Previews */} 
       <ImagePreviewList images={selectedImages} onRemoveImage={removeImage} />
 
-      <div className={`${styles.ChatInput} 
-                      ${isEditing ? styles['ChatInput--editing'] : ''} 
-                      ${isWaitingForResponse ? styles['ChatInput--waitingForResponse'] : ''} 
-                      ${isMobile ? styles['ChatInput__mobileView'] : ''}
-                      ${isMobile && isAtBottom ? styles['ChatInput--atBottom'] : ''}`}>
+      <div className={[
+          styles.ChatInput, 
+          isEditing ? styles['ChatInput--editing'] : '', 
+          isWaitingForResponse ? styles['ChatInput--waitingForResponse'] : '', 
+          isMobile ? styles['ChatInput__mobileView'] : '',
+          isMobile ? (isInitialChat ? styles['ChatInput--mobileInitial'] : styles['ChatInput--mobileWithMessages']) : '',
+        ].filter(Boolean).join(' ')}
+      >
         {/* Inline Error Message */} 
         {inputError && (
           <div className={styles.ChatInput__error} role="alert">
@@ -395,7 +399,8 @@ ChatInput.propTypes = {
   isStreaming: PropTypes.bool,
   toggleModelSelector: PropTypes.func,
   onFocus: PropTypes.func,
-  isAtBottom: PropTypes.bool
+  isInitialChat: PropTypes.bool,
+  onSendMessage: PropTypes.func.isRequired,
 };
 
 export default ChatInput; 

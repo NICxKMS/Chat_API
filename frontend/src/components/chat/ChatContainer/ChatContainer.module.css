@@ -185,8 +185,8 @@
 
 /* Scroll to Bottom Button */
 .ChatContainer__scrollToBottomButton {
-  position: fixed;
-  bottom: calc(var(--input-height, 80px) + var(--space-xl));
+  position: absolute;
+  bottom: calc(var(--input-height, 80px) + var(--space-md));
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-index-sticky);
@@ -201,7 +201,6 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: var(--shadow-lg);
-  opacity: 0.9;
   transition: opacity var(--transition-duration-short) ease, transform 0.1s ease, bottom var(--transition-duration-short) ease;
 }
 
@@ -214,7 +213,7 @@
 }
 
 /* Responsive adjustments */
-@media (width <= 768px) {
+@media (width <= 600px) {
   .ChatContainer {
     border-radius: 0;
     box-shadow: none;
@@ -262,6 +261,5 @@
 }
 
 .ChatContainer--editingMode .ChatContainer__fixedInputArea {
-  border-top: 2px solid var(--accent-color);
   background-color: var(--hover);
 }
