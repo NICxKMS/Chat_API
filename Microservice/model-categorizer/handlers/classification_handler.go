@@ -296,10 +296,13 @@ func (h *ModelClassificationHandler) applyModelMetadata(model *models.Model, met
 
 	// Check if model is a default one
 	model.IsDefault = h.classifier.IsDefaultModelName(model.ID)
-	if metadata.DisplayName != "" {
-		model.DisplayName = metadata.DisplayName
-	} else {
-		model.DisplayName = strings.ReplaceAll(model.ID, "-", " ")
+	// only override DisplayName if not already set in the request
+	if model.DisplayName == "" {
+		if metadata.DisplayName != "" {
+			model.DisplayName = metadata.DisplayName
+		} else {
+			model.DisplayName = strings.ReplaceAll(model.ID, "-", " ")
+		}
 	}
 	
 	// Only set context size for Gemini models

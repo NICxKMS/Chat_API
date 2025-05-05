@@ -1,0 +1,36 @@
+[package]
+name = "model-categorizer-rust"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Asynchronous runtime
+tokio = { version = "1.28", features = ["full"] }
+# gRPC framework
+tonic = { version = "0.9", features = ["transport"] }
+# Protobuf types and serialization
+prost = "0.11"
+# Error definitions
+thiserror = "1.0"
+# Tracing and logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+# Health checks and reflection
+tonic-health = "0.9"
+tonic-reflection = "0.9"
+
+[build-dependencies]
+# Generate Rust types from .proto files
+tonic-build = "0.9"
+prost-build = "0.11"
+
+[profile.release]
+opt-level = 3
+lto = 'fat'
+
+codegen-units = 1
+overflow-checks= false
+debug = false
+incremental = false
+strip = "symbols"
+panic = 'abort'

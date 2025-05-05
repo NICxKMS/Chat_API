@@ -1,6 +1,7 @@
 package classifiers
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -295,6 +296,11 @@ func (mc *ModelClassifier) detectCapabilities(modelName, provider, series string
 	for cap := range capabilities {
 		result = append(result, cap)
 	}
+
+	// Sort capabilities alphabetically for consistency
+	sort.Slice(result, func(i, j int) bool {
+		return strings.ToLower(result[i]) < strings.ToLower(result[j])
+	})
 
 	return result
 }
