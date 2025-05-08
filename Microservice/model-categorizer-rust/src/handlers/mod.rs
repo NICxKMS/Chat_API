@@ -16,13 +16,9 @@ use crate::handlers::utils::{
     convert_proto_models_to_internal,
     convert_internal_hierarchical_group_to_proto,
     convert_to_proto_properties,
-    categorize_context_window,
-    bool_to_yes_no,
-    filter_models_by_criteria,
     sort_models,
-    classify_models_by_property,
 };
-use crate::models::{available_classification_properties, Model, HierarchicalModelGroup};
+use crate::models::available_classification_properties;
 
 /// gRPC handler for model classification
 pub struct ModelClassificationHandler {

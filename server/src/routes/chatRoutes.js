@@ -2,32 +2,41 @@
  * Chat Routes Plugin
  * Routes for the chat API endpoints
  */
-// import express from "express"; // Removed
 import chatController from "../controllers/ChatController.js";
-// import cors from "cors"; // Removed - Handled globally by @fastify/cors
+import { chatPayloadSchema, stopSchema } from "../schemas/chatSchemas.js";
 
 // Fastify Plugin function
 async function chatRoutes (fastify) {
-
-  // The explicit OPTIONS handler is removed as @fastify/cors handles preflight requests.
 
   /**
    * POST /completions (within plugin prefix)
    * Endpoint for standard (non-streaming) chat completion requests.
    */
-  fastify.post("/completions", chatController.chatCompletion);
+  fastify.post(
+    "/completions",
+    { schema: chatPayloadSchema },
+    chatController.chatCompletion
+  );
 
   /**
    * POST /stream (within plugin prefix)
    * Endpoint for streaming chat completion requests.
    */
-  fastify.post("/stream", chatController.chatCompletionStream);
+  fastify.post(
+    "/stream",
+    { schema: chatPayloadSchema },
+    chatController.chatCompletionStream
+  );
 
   /**
    * POST /stop (within plugin prefix)
    * Endpoint for stopping an ongoing generation (streaming or non-streaming)
    */
-  fastify.post("/stop", chatController.stopGeneration);
+  fastify.post(
+    "/stop",
+    { schema: stopSchema },
+    chatController.stopGeneration
+  );
 
   /**
    * GET /capabilities (within plugin prefix)

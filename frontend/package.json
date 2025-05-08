@@ -1,6 +1,6 @@
 {
   "name": "ai-chat-interface",
-  "version": "1.8.5",
+  "version": "1.8.8",
   "private": true,
   "dependencies": {
     "@primer/octicons-react": "^19.15.1",

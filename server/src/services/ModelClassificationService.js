@@ -108,14 +108,15 @@ export class ModelClassificationService {
         const timeout = setTimeout(() => {
           reject(new Error("Classification request timed out after 15 seconds"));
         }, 15000);
+        timeout.unref();
         
         // Call the gRPC service with retry logic
         const attemptClassify = (retryCount = 0, maxRetries = 3) => {
           // Write request body to file
           // try {
-          //   fs.writeFileSync('req.json', JSON.stringify(modelList, null, 2));
+          //   fs.writeFileSync("req.json", JSON.stringify(modelList, null, 2));
           // } catch (writeError) {
-          //   logger.error(`[Debug] Error writing request body to req.json`, { error: writeError.message });
+          //   logger.error("[Debug] Error writing request body to req.json", { error: writeError.message });
           // }
           this.client.classifyModels(modelList, (error, response) => {
             clearTimeout(timeout); // Clear timeout once callback is received
@@ -132,7 +133,8 @@ export class ModelClassificationService {
               if (isRetryable && retryCount < maxRetries) {
                 // Exponential backoff delay with jitter: 2^n * 500ms + random(0-200ms)
                 const backoff = Math.min((Math.pow(2, retryCount) * 500) + Math.random() * 200, 5000);
-                setTimeout(() => attemptClassify(retryCount + 1, maxRetries), backoff);
+                const retryTimeout = setTimeout(() => attemptClassify(retryCount + 1, maxRetries), backoff);
+                retryTimeout.unref();
               } else {
                 // No more retries or non-retryable error, reject the promise
                 reject(new Error(`gRPC classifyModels failed after ${retryCount + 1} attempts: ${error.details || error.message}`));
@@ -145,7 +147,14 @@ export class ModelClassificationService {
                 return;
               }
 
-              resolve(response); // Resolve the promise with the response, not return it from callback
+              // Write classification response to a file
+              // try {
+              //   fs.writeFileSync("classified_response.json", JSON.stringify(response, null, 2));
+              // } catch (writeError) {
+              //   logger.error("[Debug] Error writing classification response to file", { error: writeError.message });
+              // }
+
+              resolve(response); // Resolve the promise with the response
             }
           });
         };
@@ -181,6 +190,7 @@ export class ModelClassificationService {
         const timeout = setTimeout(() => {
           reject(new Error("Get models by criteria request timed out after 10 seconds"));
         }, 10000);
+        timeout.unref();
         
         // Call the gRPC service with retry logic
         const attemptGetModelsByCriteria = (retryCount = 0, maxRetries = 2) => {
@@ -198,7 +208,8 @@ export class ModelClassificationService {
               if (isRetryable && retryCount < maxRetries) {
                 // Exponential backoff delay with jitter: 2^n * 500ms + random(0-200ms)
                 const backoff = Math.min((Math.pow(2, retryCount) * 500) + Math.random() * 200, 3000);
-                setTimeout(() => attemptGetModelsByCriteria(retryCount + 1, maxRetries), backoff);
+                const retryTimeout = setTimeout(() => attemptGetModelsByCriteria(retryCount + 1, maxRetries), backoff);
+                retryTimeout.unref();
               } else {
                 // No more retries or non-retryable error, reject the promise
                 reject(new Error(`gRPC getModelsByCriteria failed after ${retryCount + 1} attempts: ${error.details || error.message}`));

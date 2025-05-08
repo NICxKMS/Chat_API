@@ -1,14 +1,9 @@
 use crate::classifiers::{PatternMatcher, ContextResolver, DefaultModels,
-    PROVIDER_OPENAI, PROVIDER_ANTHROPIC, PROVIDER_GEMINI, PROVIDER_META,
-    PROVIDER_MISTRAL, PROVIDER_OTHER, PROVIDER_OPENROUTER,
-    SERIES_CLAUDE3, SERIES_CLAUDE2, SERIES_CLAUDE1,
-    TYPE_O, TYPE_35, TYPE_4, TYPE_45, TYPE_MINI,
-    TYPE_OPUS, TYPE_SONNET, TYPE_HAIKU, TYPE_THINKING, TYPE_PRO,
-    TYPE_GEMMA, TYPE_FLASH_LITE, TYPE_FLASH, TYPE_VISION,
+    PROVIDER_OPENAI, PROVIDER_ANTHROPIC, PROVIDER_GEMINI, PROVIDER_OTHER, PROVIDER_OPENROUTER,
     TYPE_STANDARD, TYPE_EMBEDDING, TYPE_IMAGE,
     VERSION_10, VERSION_15, VERSION_20, VERSION_25, VERSION_30,
     VERSION_35, VERSION_37, VERSION_40, VERSION_45,
-    CAP_VISION, CAP_FUNCTION_CALLING, CAP_EMBEDDING, CAP_CHAT};
+    CAP_VISION, CAP_EMBEDDING, CAP_CHAT};
 
 /// Structured metadata for a model
 #[derive(Debug, Clone)]
@@ -89,7 +84,7 @@ impl ModelClassifier {
         let model_type = self.determine_type(model_name, &provider, &series);
         let variant = self.determine_variant(model_name, &provider, &series);
         let context = self.context.get_context_size(model_name);
-        let mut caps = self.detect_capabilities(model_name, &provider, &series);
+        let caps = self.detect_capabilities(model_name, &provider, &series);
         let is_multimodal = self.is_multimodal(model_name, &caps, &series);
         let is_experimental = self.is_experimental(model_name);
         ModelMetadata {

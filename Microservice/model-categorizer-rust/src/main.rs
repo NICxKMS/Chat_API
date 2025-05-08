@@ -1,6 +1,4 @@
 use tonic::transport::Server;
-use tonic_health::server::health_reporter;
-use tracing::info;
 use tracing_subscriber;
 
 mod handlers;

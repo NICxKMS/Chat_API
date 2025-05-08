@@ -8,6 +8,14 @@ import BaseProvider from "./BaseProvider.js";
 import { createBreaker } from "../utils/circuitBreaker.js";
 import * as metrics from "../utils/metrics.js";
 import logger from "../utils/logger.js";
+import http from "http";
+import https from "https";
+import { 
+  ProviderSseError,
+  // Import other custom errors if needed directly
+} from "../utils/CustomError.js";
+
+// Agents for keep-alive connections
 
 // Helper to check if a string is a base64 data URL and extract parts
 
@@ -25,9 +33,9 @@ class OpenRouterProvider extends BaseProvider {
     this.client = axios.create({
       baseURL: this.baseUrl,
       timeout: this.timeout,
-      headers: {
-        "Authorization": `Bearer ${this.apiKey}`
-      }
+      headers: { Authorization: `Bearer ${this.apiKey}` },
+      httpAgent: new http.Agent({ keepAlive: true }),
+      httpsAgent: new https.Agent({ keepAlive: true })
     });
     
     // Extract API version info
@@ -72,10 +80,10 @@ class OpenRouterProvider extends BaseProvider {
         name: id,
         provider: this.name,
         tokenLimit: 8192, // Default token limit
-        features: {
-          streaming: true,
-          system: true
-        }
+        // features: {
+        //   streaming: true,
+        //   system: true
+        // }
       }));
       
       // Dynamically fetch models if enabled
@@ -83,32 +91,32 @@ class OpenRouterProvider extends BaseProvider {
         try {
           // Call OpenRouter API for models
           const response = await this.client.get("/models");
+          // Dump raw OpenRouter models to file
+          // try {
+          //   fs.writeFileSync("openrouter_raw_models.json", JSON.stringify(response.data, null, 2));
+          // } catch (err) {
+          //   logger.error("Error writing raw OpenRouter models to file", { error: err.message });
+          // }
           
           if (response.data && Array.isArray(response.data.data)) {
-            // Process each model from the API
-            const dynamicModels = response.data.data.map((model) => {
-              return {
-                id: model.id,
-                name: model.name || model.id,
-                provider: this.name,
-                tokenLimit: model.context_length || 8192,
-                features: {
-                  streaming: model.features?.includes("streaming") || true,
-                  vision: model.features?.includes("vision") || false,
-                  json: model.features?.includes("json") || false,
-                  tools: model.features?.includes("tools") || false,
-                  system: true
-                }
-              };
-            });
-            
-            // Combine with existing models, prioritizing API results
-            const modelIds = new Set(models.map(m => m.id));
-            for (const model of dynamicModels) {
-              if (!modelIds.has(model.id)) {
-                models.push(model);
-              }
-            }
+            // Map the API's model objects directly to our ProviderModel format
+            const apiModels = response.data.data.map(raw => ({
+              id: raw.id,
+              name: raw.name || raw.id,
+              provider: this.name,
+              tokenLimit: raw.top_provider.max_completion_tokens || raw.context_length || 8192,
+              contextSize: raw.context_length || 8192,
+              description: raw.description || "",
+              // features: {
+              //   streaming: raw.features?.includes("streaming") ?? true,
+              //   vision: raw.features?.includes("vision") ?? false,
+              //   json: raw.features?.includes("json") ?? false,
+              //   tools: raw.features?.includes("tools") ?? false,
+              //   system: true
+              // }
+            }));
+            // Return the API models (skip config fallback)
+            return apiModels;
           }
         } catch (error) {
           logger.warn(`Failed to dynamically load OpenRouter models: ${error.message}`);
@@ -329,161 +337,62 @@ class OpenRouterProvider extends BaseProvider {
    * @throws {Error} If the API request fails or the stream encounters an error.
    */
   async *chatCompletionStream(options) {
-    const startTime = process.hrtime();
-    let modelName;
-    let accumulatedLatency = 0;
-    let firstChunk = true;
-    let stream;
+    const so = this.standardizeOptions(options);
+    this.validateOptions(so);
+    
+    // OpenRouter model IDs are often prefixed (e.g., "openai/gpt-3.5-turbo")
+    // The payload should send the model ID as is, BaseProvider might use parts of it for metrics.
+    const payload = {
+      model: so.model, // Use the full model string from options
+      messages: this._processMessagesForOpenRouter(so.messages), // Ensure this method exists and is correct
+      temperature: so.temperature,
+      max_tokens: so.max_tokens, // OpenRouter uses max_tokens, not max_completion_tokens
+      stream: true,
+      // OpenRouter might support stream_options like OpenAI, but it's not explicitly documented for all models.
+      // Adding it might be benign or could cause issues with some models. Best to check OpenRouter docs.
+      // stream_options: { include_usage: true }, 
+      ...(so.top_p !== undefined && { top_p: so.top_p }),
+      ...(so.frequency_penalty !== undefined && { frequency_penalty: so.frequency_penalty }),
+      ...(so.presence_penalty !== undefined && { presence_penalty: so.presence_penalty }),
+      ...(so.stop && { stop: so.stop }),
+      // ...(so.response_format?.type === "json_object" && { response_format: { type: "json_object" } }) // Check if OpenRouter supports this for all models
+    };
 
     try {
-      // Standardize and validate options
-      const standardOptions = this.standardizeOptions(options);
-      this.validateOptions(standardOptions);
-      
-      modelName = standardOptions.model;
+      for await (const evt of this._streamViaGot("chat/completions", payload, so.abortSignal)) {
+        if (evt.event === "error") { // Check for LLM-sent error events
+          const errData = evt.data || {};
+          logger.warn("[OpenRouterProvider] Received error event from LLM stream", { errData });
+          throw new ProviderSseError(
+            errData.message || "An error occurred in the OpenRouter stream.",
+            this.name,
+            errData.code || errData.type || "LLM_STREAM_ERROR",
+            errData,
+            evt
+          );
+        }
 
-      // Prepare request body for OpenRouter API (OpenAI-compatible)
-      const requestBody = {
-        model: modelName,
-        messages: standardOptions.messages,
-        temperature: standardOptions.temperature,
-        max_tokens: standardOptions.max_tokens,
-        stream: true // Enable streaming
-      };
-      
-      // Add optional parameters if provided
-      if (standardOptions.top_p !== undefined) {requestBody.top_p = standardOptions.top_p;}
-      if (standardOptions.frequency_penalty !== undefined) {requestBody.frequency_penalty = standardOptions.frequency_penalty;}
-      if (standardOptions.presence_penalty !== undefined) {requestBody.presence_penalty = standardOptions.presence_penalty;}
-      if (standardOptions.stop) {requestBody.stop = standardOptions.stop;}
+        const chunk = evt.data;
+        if (chunk === "[DONE]") {
+          logger.debug("[OpenRouterProvider] Received [DONE] marker.");
+          continue;
+        }
 
-      // Create request configuration
-      const requestConfig = {
-        responseType: "stream"
-      };
-
-      // Add abort signal if provided
-      if (standardOptions.abortSignal instanceof AbortSignal) {
-        requestConfig.signal = standardOptions.abortSignal;
+        // Normalize and yield the actual data chunk
+        const normalized = this._normalizeStreamChunk(chunk, so.model); // Pass so.model for consistency
+        if (normalized) { // _normalizeStreamChunk might return null for invalid chunks
+          yield normalized;
+        }
       }
-
-      // Use axios with responseType: 'stream' to handle the SSE stream
-      const response = await this.client.post("/chat/completions", requestBody, requestConfig);
-
-      stream = response.data; // Get the stream from the response data
-      
-      let buffer = "";
-      let ended = false;
-      
-      // Clean up function to ensure stream is properly destroyed
-      const cleanupStream = () => {
-        ended = true;
-        if (stream && !stream.destroyed && typeof stream.destroy === "function") {
-          try {
-            stream.destroy();
-          } catch (e) {
-            logger.error("Error destroying stream:", e);
-          }
-        }
-      };
-
-      // Handle abort signal if provided
-      if (standardOptions.abortSignal instanceof AbortSignal) {
-        standardOptions.abortSignal.addEventListener("abort", cleanupStream, { once: true });
-      }
-
-      try {
-        for await (const chunk of stream) {
-          if (ended) {break;} // Check if stream was aborted
-          buffer += chunk.toString(); // Append chunk to buffer
-
-          // Process complete messages in the buffer
-          let processedMessages = 0;
-          let boundary = buffer.indexOf("\n\n");
-          
-          while (boundary !== -1) {
-            processedMessages++;
-            const message = buffer.substring(0, boundary);
-            buffer = buffer.substring(boundary + 2);
-            
-            if (message.startsWith("data: ")) {
-              const dataStr = message.substring(6);
-              if (dataStr.trim() === "[DONE]") {
-                ended = true;
-                break; // Stream finished with DONE marker
-              }
-              
-              try {
-                const data = JSON.parse(dataStr);
-                
-                if (firstChunk) {
-                  const duration = process.hrtime(startTime);
-                  accumulatedLatency = (duration[0] * 1000) + (duration[1] / 1000000);
-                  metrics.recordStreamTtfb(this.name, modelName, accumulatedLatency / 1000);
-                  firstChunk = false;
-                }
-                
-                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency);
-                yield normalizedChunk;
-
-              } catch (jsonError) {
-                // Log the error and the problematic string data correctly
-                logger.error(`Error processing OpenRouter stream chunk: ${jsonError.message}`, { dataStr });
-                // Log error but continue processing other messages
-              }
-            }
-            boundary = buffer.indexOf("\n\n");
-          }
-          
-          // If multiple messages were processed, log it
-          if (processedMessages > 1) {
-            // logger.debug(`Processed ${processedMessages} messages from buffer in one chunk`);
-          }
-          
-          // Check for [DONE] outside of complete messages to handle edge cases
-          if (buffer.includes("[DONE]")) {
-            ended = true;
-            break;
-          }
-        }
-        
-        // Process any remaining data in the buffer after the stream ends
-        if (buffer.length > 0 && !ended) {
-          if (buffer.startsWith("data: ")) {
-            const dataStr = buffer.substring(6).trim();
-            if (dataStr && dataStr !== "[DONE]") {
-              try {
-                const data = JSON.parse(dataStr);
-                const normalizedChunk = this._normalizeStreamChunk(data, modelName, accumulatedLatency);
-                yield normalizedChunk;
-              } catch (jsonError) {
-                logger.error(`Error parsing final JSON from buffer: ${jsonError.message}`, buffer);
-              }
-            }
-          }
-        }
-        
-        // Record successful stream completion
-        metrics.incrementProviderRequestCount(this.name, modelName, "success");
-
-      } finally {
-        // Clean up the abort signal listener if it was added
-        if (standardOptions.abortSignal instanceof AbortSignal) {
-          standardOptions.abortSignal.removeEventListener("abort", cleanupStream);
-        }
-        
-        // Always ensure the stream is properly destroyed
-        cleanupStream();
-      }
-
     } catch (error) {
-      this._handleApiError(error, `OpenRouter stream with ${modelName || "unknown model"}`);
-      if (modelName) {
-        metrics.incrementProviderRequestCount(this.name, modelName, "error");
-        metrics.incrementProviderErrorCount(this.name, modelName, error.response?.status || "network");
-      }
-      // Throw specific error message for upstream handling
-      throw new Error(`OpenRouter stream error: ${error.message}`);
+      logger.error(`[OpenRouterProvider.chatCompletionStream] Error during streaming for ${so.model}: ${error.message}`, {
+        errorName: error.name,
+        errorCode: error.code,
+        statusCode: error.statusCode,
+        providerDetails: error.details,
+        stack: error.stack 
+      });
+      throw error; // Re-throw the caught error (custom or otherwise)
     }
   }
 
@@ -491,44 +400,38 @@ class OpenRouterProvider extends BaseProvider {
    * Normalizes a streaming chunk received from the OpenRouter API (which uses OpenAI format).
    * @param {object} chunk - The raw, parsed JSON object from an SSE data line.
    * @param {string} model - The model name used for the request.
-   * @param {number} latency - The latency to the first chunk (milliseconds).
    * @returns {object} A standardized chunk object matching the API schema.
    */
-  _normalizeStreamChunk(chunk, model, latency) {
-    try {
-      // OpenRouter stream chunks often follow OpenAI's format
-      const choice = chunk.choices?.[0];
-      const delta = choice?.delta;
-      
-      // Extract finish_reason and usage *from the chunk* if available
-      const finishReason = choice?.finish_reason || "unknown";
-      const usage = chunk.usage || { // Initialize usage, OpenRouter might send it in the last chunk
-        promptTokens: 0,
-        completionTokens: 0,
-        totalTokens: 0
-      };
-
-      return {
-        id: chunk.id,
-        model: chunk.model || model, // Use model from chunk if available
-        provider: this.name,
-        createdAt: chunk.created ? new Date(chunk.created * 1000).toISOString() : new Date().toISOString(),
-        content: delta?.content || null,
-        toolCalls: delta?.tool_calls || null, // Include tool call deltas
-        usage: usage, // Use usage extracted from chunk or default
-        latency: latency,
-        finishReason: finishReason, // Use finishReason extracted from chunk or default
-        raw: chunk
-      };
-    } catch (error) {
-      logger.error(`Error normalizing OpenRouter stream chunk: ${error.message}`, { chunk });
-      // Return a minimal error chunk or rethrow
-      return {
-        id: `error-chunk-${Date.now()}`,
-        error: `Failed to normalize chunk: ${error.message}`,
-        raw: chunk
-      };
+  _normalizeStreamChunk(chunk, modelName) {
+    if (typeof chunk !== "object" || chunk === null) {
+      logger.warn("[OpenRouterProvider._normalizeStreamChunk] Received non-object chunk, skipping normalization.", { chunk });
+      return null;
     }
+
+    // OpenRouter generally follows OpenAI's streaming format
+    const choice = chunk.choices?.[0];
+    const delta = choice?.delta;
+    const finishReason = choice?.finish_reason;
+    
+    // OpenRouter can also send a final chunk with usage details (especially for OpenAI-compatible models)
+    const usage = chunk.usage ? {
+      promptTokens: chunk.usage.prompt_tokens || 0,
+      completionTokens: chunk.usage.completion_tokens || 0,
+      totalTokens: chunk.usage.total_tokens || 0
+    } : null;
+
+    return {
+      id: chunk.id,
+      model: chunk.model || modelName, // Use model from chunk if available, else fallback to request's modelName
+      provider: this.name,
+      createdAt: chunk.created ? new Date(chunk.created * 1000).toISOString() : new Date().toISOString(),
+      content: delta?.content || null,
+      toolCalls: delta?.tool_calls || null,
+      usage: usage,
+      latency: 0, // TTFB handled in BaseProvider
+      finishReason: finishReason || null,
+      raw: chunk
+    };
   }
 }
 

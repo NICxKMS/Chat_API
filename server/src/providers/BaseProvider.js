@@ -3,6 +3,20 @@
  * Defines the interface that all AI provider implementations must follow
  */
 
+// Add imports for HTTP/2 client and SSE parsing
+import got from "got";
+import { Agent as Http2Agent } from "http2-wrapper";
+import { createParser } from "eventsource-parser";
+import JSONParse from "jsonparse";
+import * as metrics from "../utils/metrics.js";
+import logger from "../utils/logger.js";
+import {
+  ProviderHttpError,
+  ProviderRateLimitError,
+  ProviderAuthenticationError,
+  StreamReadError
+} from "../utils/CustomError.js"; // Import custom errors
+
 class BaseProvider {
   /**
    * Create a new provider
@@ -18,6 +32,26 @@ class BaseProvider {
       version: "v1",
       lastUpdated: new Date().toISOString()
     };
+
+    // Shared HTTP/2 client for streaming calls with persistent session
+    const http2Agent = new Http2Agent({ keepAlive: true });
+    const gotOptions = {
+      http2: true,
+      agent: { http2: http2Agent },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.apiKey}`
+      },
+      responseType: "text",
+      throwHttpErrors: false
+    };
+    if (config.baseUrl) {
+      // Remove trailing slashes from baseUrl
+      gotOptions.prefixUrl = config.baseUrl.replace(/\/+$/g, "");
+    }
+    this.http2Client = got.extend(gotOptions);
+    // Track HTTP/2 session reuse
+    this._lastHttp2Session = null;
   }
 
   /**
@@ -133,6 +167,182 @@ class BaseProvider {
         throw new Error(`Message at index ${index} must have role and content properties`);
       }
     });
+  }
+
+  /**
+   * Parse a Server-Sent Events (SSE) stream into JSON objects.
+   * @param {ReadableStream<Buffer>} stream - Incoming SSE data stream.
+   * @returns {AsyncGenerator<any>} Yields parsed JSON event data objects.
+   */
+  async *_parseSSE(stream) {
+    const parserQueue = [];
+    let resolveParserPromise;
+    let parserPromise = new Promise(resolve => { resolveParserPromise = resolve; });
+
+    // Use a streaming JSON parser for efficient per-chunk parsing
+    const jsonParser = new JSONParse();
+    let currentEventType = null;
+    jsonParser.onValue = function (value) {
+      // Emit only completed top-level values
+      if (this.stack.length === 0) {
+        parserQueue.push({ event: currentEventType, data: value });
+        const oldResolve = resolveParserPromise;
+        parserPromise = new Promise(resolve => { resolveParserPromise = resolve; });
+        oldResolve();
+      }
+    };
+    const parser = createParser((event) => {
+      if (event.type === "event") {
+        const type = event.event || "message";
+        if (event.data === "[DONE]") {
+          parserQueue.push({ event: type, data: "[DONE]" });
+          const oldResolve = resolveParserPromise;
+          parserPromise = new Promise(resolve => { resolveParserPromise = resolve; });
+          oldResolve();
+        } else if (event.data) {
+          // Stream JSON text into the parser
+          currentEventType = type;
+          jsonParser.write(event.data);
+        }
+      }
+    });
+
+    let streamEnded = false;
+
+    const streamReader = async () => {
+      try {
+        for await (const chunk of stream) {
+          const raw = chunk.toString();
+          parser.feed(raw);
+        }
+      } catch (err) {
+        // Instead of pushing an error event, throw a custom error
+        logger.error("[_parseSSE.streamReader] Stream read error", { error: err });
+        throw new StreamReadError(err.message, this.name, err);
+      } finally {
+        streamEnded = true;
+        if (resolveParserPromise) {
+          resolveParserPromise(); // Ensure promise resolves
+        }
+      }
+    };
+
+    const readerPromise = streamReader().catch(err => {
+      // Ensure the main generator loop is aware of the error from streamReader
+      // This makes the error propagate to the consumer of _parseSSE
+      throw err; 
+    });
+
+    try {
+      while (true) {
+        if (parserQueue.length > 0) {
+          const item = parserQueue.shift();
+          yield item;
+          // No longer yielding StreamReadError as an event, it's thrown by streamReader
+        } else if (streamEnded) {
+          break;
+        } else {
+          await parserPromise;
+        }
+      }
+    } finally {
+      await readerPromise; // Ensure streamReader finishes and its potential error is surfaced
+    }
+  }
+
+  /**
+   * Generic SSE POST over HTTP/2 using got + eventsource-parser.
+   * Yields parsed JSON chunks.
+   */
+  async *_streamViaGot(path, payload, signal) {
+    const start = Date.now();
+    const stream = this.http2Client.stream(path, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      signal,
+    });
+
+    let httpErrorResponseInfo = null;
+    let httpErrorDataBuffer = "";
+    let isErrorResponse = false;
+    let ttfbRecorded = false;
+
+    const initialResponsePromise = new Promise((resolve, reject) => {
+      stream.once("error", (err) => {
+        logger.error("[BaseProvider._streamViaGot] Stream error during initial response phase.", { error: err });
+        reject(err); // This could be a network error, SSL error, etc.
+      });
+
+      stream.once("response", (res) => {
+        if (res.statusCode >= 400) {
+          isErrorResponse = true;
+          httpErrorResponseInfo = {
+            statusCode: res.statusCode,
+            headers: res.headers,
+            httpVersion: res.httpVersion
+          };
+          logger.warn(`[BaseProvider._streamViaGot] HTTP error response detected: ${res.statusCode}. Buffering error body.`, { path });
+          stream.on("data", (chunk) => httpErrorDataBuffer += chunk.toString());
+          stream.once("end", () => resolve(res));
+          stream.once("error", (bodyError) => {
+            logger.error("[BaseProvider._streamViaGot] Error reading error response body.", { error: bodyError });
+            reject(new StreamReadError(`Failed to read error response body: ${bodyError.message}`, this.name, bodyError));
+          });
+        } else {
+          const currSession = stream.session;
+          
+          this._lastHttp2Session = currSession;
+          resolve(res);
+        }
+      });
+    });
+
+    try {
+      await initialResponsePromise;
+    } catch (streamSetupError) {
+      logger.error("[BaseProvider._streamViaGot] Stream setup error (initialResponsePromise rejected).", { streamSetupError });
+      // If it's already a custom error, rethrow. Otherwise, wrap as a generic ProviderHttpError.
+      if (streamSetupError instanceof StreamReadError || streamSetupError instanceof ProviderHttpError) {
+        throw streamSetupError;
+      }
+      throw new ProviderHttpError(streamSetupError.message, 503, "PROVIDER_SETUP_FAILURE", this.name, streamSetupError);
+    }
+
+    if (isErrorResponse) {
+      let message = `Upstream provider error: ${httpErrorResponseInfo.statusCode}`;
+      let type = "PROVIDER_HTTP_ERROR"; // Default type
+      let providerErrorPayload = null;
+      try {
+        providerErrorPayload = JSON.parse(httpErrorDataBuffer);
+        message = providerErrorPayload.error?.message || message;
+        type = providerErrorPayload.error?.type || type; // Use type from payload if available
+      } catch (e) {
+        logger.warn("[BaseProvider._streamViaGot] Could not parse HTTP error data as JSON.", { data: httpErrorDataBuffer, parseError: e.message });
+        // Keep the generic message and type if parsing fails
+      }
+      
+      // Throw specific custom error types based on status code
+      if (httpErrorResponseInfo.statusCode === 429) {
+        throw new ProviderRateLimitError(this.name, providerErrorPayload, message);
+      }
+      if (httpErrorResponseInfo.statusCode === 401 || httpErrorResponseInfo.statusCode === 403) {
+        throw new ProviderAuthenticationError(this.name, providerErrorPayload, message);
+      }
+      // Default to ProviderHttpError for other 4xx/5xx errors
+      throw new ProviderHttpError(message, httpErrorResponseInfo.statusCode, type.toUpperCase().replace(/\s+/g, "_"), this.name, providerErrorPayload);
+    }
+
+    logger.debug("[BaseProvider._streamViaGot] No HTTP error, proceeding with SSE parsing.", { path });
+    for await (const data of this._parseSSE(stream)) {
+      if (!ttfbRecorded) {
+        metrics.recordStreamTtfb(this.name, payload.model, (Date.now() - start) / 1000);
+        ttfbRecorded = true;
+      }
+      yield data;
+    }
+
+    metrics.recordStreamDuration(this.name, payload.model, (Date.now() - start) / 1000);
+    logger.debug(`[BaseProvider._streamViaGot] Streaming finished successfully for ${path}`);
   }
 }
 

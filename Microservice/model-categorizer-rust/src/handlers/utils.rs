@@ -2,9 +2,7 @@ use std::collections::HashMap;
 use std::cmp::Ordering;
 use crate::models::{Model as InternalModel, HierarchicalModelGroup as InternalHierarchicalModelGroup};
 use crate::proto::modelservice::{Model as ProtoModel, ClassificationProperty as ProtoClassificationProperty, HierarchicalModelGroup as ProtoHierarchicalModelGroup, ClassifiedModelGroup as ProtoClassifiedModelGroup};
-use crate::models::ClassificationProperty;
 use crate::classifiers::{
-    PROVIDER_OPENAI, PROVIDER_ANTHROPIC, PROVIDER_GEMINI,
     TYPE_FLASH_LITE, TYPE_FLASH, TYPE_PRO, TYPE_THINKING, TYPE_GEMMA, TYPE_STANDARD,
     TYPE_MINI, TYPE_O, TYPE_45, TYPE_4, TYPE_35, TYPE_SONNET, TYPE_OPUS, TYPE_HAIKU
 };
@@ -238,8 +236,8 @@ pub fn sort_models(models_list: &mut [InternalModel]) {
             if ta == TYPE_4 && tb == TYPE_4 {
                 let na = a.name.clone().unwrap_or_else(|| a.id.clone()).to_lowercase();
                 let nb = b.name.clone().unwrap_or_else(|| b.id.clone()).to_lowercase();
-                let ba = (na == "gpt-4o" || na == "4o");
-                let bb = (nb == "gpt-4o" || nb == "4o");
+                let ba = na == "gpt-4o" || na == "4o";
+                let bb = nb == "gpt-4o" || nb == "4o";
                 if ba != bb { return bb.cmp(&ba); }
                 let va = na.contains("4o") && !na.contains("4o-mini");
                 let vb = nb.contains("4o") && !nb.contains("4o-mini");

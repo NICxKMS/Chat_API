@@ -160,7 +160,7 @@ export const StreamingEventsProvider = ({ children }) => {
                 const newHistory = [...prev];
                 const lastMsg = newHistory[newHistory.length - 1];
                 if (lastMsg && lastMsg.role === 'assistant') {
-                  lastMsg.content = errMsg;
+                  lastMsg.content += `\n\n**Error:** ${errMsg}`;
                   if (lastMsg.metrics) {
                     lastMsg.metrics.isComplete = true;
                     lastMsg.metrics.error = true;
@@ -198,7 +198,7 @@ export const StreamingEventsProvider = ({ children }) => {
         const newHistory = [...prev];
         const lastMsg = newHistory[newHistory.length - 1];
         if (lastMsg && lastMsg.role === 'assistant') {
-          lastMsg.content = error.message || 'Error occurred during generation';
+          lastMsg.content += `\n\n**Error:** ${error.message || 'Error occurred during generation'}`;
           if (lastMsg.metrics) {
             lastMsg.metrics.isComplete = true;
             lastMsg.metrics.error = true;

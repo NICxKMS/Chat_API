@@ -7,6 +7,7 @@ import * as cache from "../utils/cache.js";
 import * as metrics from "../utils/metrics.js";
 import { getCircuitBreakerStates } from "../utils/circuitBreaker.js";
 import logger from "../utils/logger.js";
+import { PassThrough } from "stream";
 
 // Helper function to roughly validate base64 (more robust checks might be needed)
 
@@ -27,7 +28,6 @@ class ChatController {
     this.chatCompletionStream = this.chatCompletionStream.bind(this);
     this.getChatCapabilities = this.getChatCapabilities.bind(this);
     this.stopGeneration = this.stopGeneration.bind(this);
-    logger.info("ChatController initialized");
   }
 
   /**
@@ -44,18 +44,8 @@ class ChatController {
     const requestId = clientRequestId || request.id || `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
     try {
-      metrics.incrementRequestCount();
-      
-      // Use request.body - add extraction of top_p, frequency_penalty, and presence_penalty
-      const { model, messages, temperature = 0.7, max_tokens = 1000, top_p, frequency_penalty, presence_penalty, nocache } = request.body;
-      
-      if (!model) {
-        return reply.status(400).send({ error: "Missing required parameter: model" });
-      }
-      
-      if (!Array.isArray(messages) || messages.length === 0) {
-        return reply.status(400).send({ error: "Missing or invalid messages array" });
-      }
+      // Extract all validated/coerced body properties (validation done by Fastify schema)
+      const { model, messages, temperature, max_tokens, top_p, frequency_penalty, presence_penalty, nocache } = request.body;
       
       // Extract provider name and model name
       const separatorIndex = model.indexOf("/");
@@ -72,18 +62,22 @@ class ChatController {
       const provider = providerFactory.getProvider(providerName);
       
       if (!provider) {
-        return reply.status(404).send({ 
-          error: `Provider '${providerName}' not found or not configured`
-        });
+        const err = new Error(`Provider '${providerName}' not found or not configured.`);
+        err.name = "NotFoundError";
+        throw err;
       }
       
-      logger.info(`Processing chat request for ${providerName}/${modelName} (requestId: ${requestId})`);
+      // logger.info(`Processing chat request for ${providerName}/${modelName} (requestId: ${requestId})`);
       
       // Store the abort controller keyed by our requestId
       activeGenerations.set(requestId, abortController);
       
       // Echo the requestId back for consistency
       reply.header("X-Request-ID", requestId);
+      // Disable Nagle for low-latency small responses
+      if (reply.raw.socket && typeof reply.raw.socket.setNoDelay === "function") {
+        reply.raw.socket.setNoDelay(true);
+      }
       
       // Cache check logic 
       try {
@@ -109,19 +103,18 @@ class ChatController {
         logger.warn(`Failed to check cache status: ${cacheCheckError.message}. Continuing without cache.`);
       }
       
-      // Prepare options - include optional parameters only if they exist
+      // Prepare options with validated/coerced values
       const options = {
         model: modelName,
         messages,
-        temperature: parseFloat(temperature?.toString() || "0.7"),
-        max_tokens: parseInt(max_tokens?.toString() || "1000", 10),
+        temperature,
+        max_tokens,
         abortSignal: abortController.signal
       };
-      
-      // Add optional parameters only if they exist in the request
-      if (top_p !== undefined) {options.top_p = parseFloat(top_p);}
-      if (frequency_penalty !== undefined) {options.frequency_penalty = parseFloat(frequency_penalty);}
-      if (presence_penalty !== undefined) {options.presence_penalty = parseFloat(presence_penalty);}
+      // Add optional parameters
+      if (top_p !== undefined) { options.top_p = top_p; }
+      if (frequency_penalty !== undefined) { options.frequency_penalty = frequency_penalty; }
+      if (presence_penalty !== undefined) { options.presence_penalty = presence_penalty; }
       
       try {
         // Send request to provider (unchanged)
@@ -153,7 +146,10 @@ class ChatController {
         activeGenerations.delete(requestId);
         
         // Check if this was an abort error
-        if (providerError.name === "AbortError" || providerError.message?.includes("aborted")) {
+        if (
+          providerError.name === "AbortError" ||
+          (providerError.message && /aborted|canceled/i.test(providerError.message))
+        ) {
           logger.info(`Request ${requestId} was aborted`);
           return reply.status(499).send({
             error: "Request aborted",
@@ -248,32 +244,22 @@ class ChatController {
     let lastActivityTime = Date.now();
     let heartbeatInterval = null;
     let timeoutCheckInterval = null;
-    // Create the abort controller and derive requestId (client-supplied wins)
     let abortController = new AbortController();
     const clientRequestId = request.body?.requestId;
     const requestId = clientRequestId || request.id || `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     let streamStartTime = null;
     let ttfbRecorded = false;
-    let chunkCounter = 0;
-    let lastProviderChunk = null; // Variable to store the last chunk
+    let lastProviderChunk = null;
 
-    // Store the abort controller for potential stopping
     activeGenerations.set(requestId, abortController);
-
-    // Create a PassThrough stream with a low highWaterMark for immediate flushing
-    const { PassThrough } = await import("node:stream");
-    const stream = new PassThrough({ 
+    await new Promise(resolve => setImmediate(resolve));
+    const stream = new PassThrough({
       highWaterMark: 1,  // Use smallest highWaterMark to ensure immediate chunk delivery
       autoDestroy: true  // Automatically destroy when finished
     });
 
-    // Set up stream ending utility function
-    const safelyEndStream = (message, errorType = null, finalChunk = null) => {
+    const safelyEndStream = (message, errorType = null) => {
       if (!streamClosed) {
-        logger.info(`${message} (sent ${chunkCounter} chunks)`);
-        if (finalChunk && errorType === null) { // Log only on normal completion
-          // logger.debug('[SERVER LAST RAW CHUNK]'); // REMOVING THIS
-        }
 
         streamClosed = true;
         
@@ -292,43 +278,25 @@ class ChatController {
         // Remove from active generations
         activeGenerations.delete(requestId);
 
-        // Send final [DONE] event to explicitly signal completion to clients
-        try {
+        // Conditionally write and flush final marker, then close or destroy
+        if (!stream.writableEnded && stream.writable) {
           stream.write("data: [DONE]\n\n");
-          // Explicitly flush any remaining buffered data
-          stream.uncork();
-        } catch (e) {
-          logger.warn(`Error sending final [DONE] event: ${e.message}`);
-        }
-
-        // End the stream properly
-        if (!stream.writableEnded) {
+          stream.uncork && stream.uncork();
           stream.end();
+        } else if (!stream.destroyed) {
+          stream.destroy();
         }
       }
     };
 
     try {
-      metrics.incrementRequestCount();
-      
-      // Use request.body - add extraction of top_p, frequency_penalty, and presence_penalty
-      const { model, messages, temperature = 0.7, max_tokens = 1000, top_p, frequency_penalty, presence_penalty } = request.body;
-      
-      if (!model) {
-        return reply.status(400).send({ error: "Missing required parameter: model" });
-      }
-      
-      if (!Array.isArray(messages) || messages.length === 0) {
-        return reply.status(400).send({ error: "Missing or invalid messages array" });
-      }
-
-      // Extract provider name and model name
+      // Extract all validated/coerced body properties (validation done by Fastify schema)
+      const { model, messages, temperature, max_tokens, top_p, frequency_penalty, presence_penalty } = request.body;
       const separatorIndex = model.indexOf("/");
-      if (separatorIndex !== -1) { // Check if "/" exists
-        providerName = model.substring(0, separatorIndex); // Part before the first "/"
-        modelName = model.substring(separatorIndex + 1); // Part after the first "/"
+      if (separatorIndex !== -1) {
+        providerName = model.substring(0, separatorIndex);
+        modelName = model.substring(separatorIndex + 1);
       } else {
-        // Fallback logic (unchanged)
         const defaultProvider = providerFactory.getProvider();
         providerName = defaultProvider.name;
         modelName = model;
@@ -336,26 +304,35 @@ class ChatController {
 
       const provider = providerFactory.getProvider(providerName);
       if (!provider) {
-        return reply.status(404).send({ error: `Provider '${providerName}' not found or not configured` });
+        const err = new Error(`Provider '${providerName}' not found or not configured.`);
+        err.name = "NotFoundError";
+        throw err;
       }
 
-      logger.info(`Processing STREAMING chat request for ${providerName}/${modelName} (requestId: ${requestId})`);
       streamStartTime = Date.now();
       
-      // Set headers optimized for streaming
       reply.header("Content-Type", "text/event-stream");
       reply.header("Cache-Control", "no-cache, no-transform");
-      reply.header("Connection", "keep-alive");
       reply.header("X-Accel-Buffering", "no"); // Prevent nginx buffering
-      reply.header("Transfer-Encoding", "chunked"); // Enable chunked encoding
-      // Echo the client requestId for stop calls
-      reply.header("X-Request-ID", requestId);
+      reply.header("X-Request-ID", requestId); // Echo the client requestId for stop calls
+
+      if (request.raw.httpVersion && request.raw.httpVersion.startsWith("1.")) {
+        reply.header("Connection", "keep-alive");
+        reply.header("Transfer-Encoding", "chunked");
+        logger.debug("HTTP/1.1 detected, setting Connection and Transfer-Encoding headers for stream.");
+      } else {
+        logger.debug(`HTTP/2 or newer detected (${request.raw.httpVersion}), skipping HTTP/1.1 specific stream headers.`);
+      }
       
-      // Send the stream to the client
       reply.send(stream);
+      if (typeof reply.raw.flushHeaders === "function") {
+        reply.raw.flushHeaders();
+      }
+      if (reply.raw.socket && typeof reply.raw.socket.setNoDelay === "function") {
+        reply.raw.socket.setNoDelay(true);
+      }
       lastActivityTime = Date.now();
 
-      // Set up heartbeat interval
       heartbeatInterval = setInterval(() => {
         if (!streamClosed && !stream.writableEnded) { 
           try {
@@ -366,7 +343,6 @@ class ChatController {
         }
       }, HEARTBEAT_INTERVAL_MS);
 
-      // Setup inactivity timeout check
       timeoutCheckInterval = setInterval(() => {
         if (Date.now() - lastActivityTime > TIMEOUT_DURATION_MS) {
           safelyEndStream(`Stream timed out due to inactivity for ${providerName}/${modelName}`, "timeout");
@@ -374,54 +350,37 @@ class ChatController {
         }
       }, TIMEOUT_DURATION_MS / 2);
 
-      // Handle client disconnect
       request.raw.on("close", () => {
         safelyEndStream(`Client disconnected stream for ${providerName}/${modelName}`, "client_disconnect");
         abortController.abort();
       });
 
-      // Prepare options - include additional parameters
       const options = {
         model: modelName,
         messages,
-        temperature: parseFloat(temperature?.toString() || "0.7"),
-        max_tokens: parseInt(max_tokens?.toString() || "1000", 10),
-        abortSignal: abortController.signal,
+        temperature,
+        max_tokens,
+        abortSignal: abortController.signal
       };
-      
-      // Add optional parameters only if they exist in the request
-      if (top_p !== undefined) {options.top_p = parseFloat(top_p);}
-      if (frequency_penalty !== undefined) {options.frequency_penalty = parseFloat(frequency_penalty);}
-      if (presence_penalty !== undefined) {options.presence_penalty = parseFloat(presence_penalty);}
+      if (top_p !== undefined) { options.top_p = top_p; }
+      if (frequency_penalty !== undefined) { options.frequency_penalty = frequency_penalty; }
+      if (presence_penalty !== undefined) { options.presence_penalty = presence_penalty; }
 
-      // Get provider stream
       const providerStream = provider.chatCompletionStream(options);
-      // Optimized stream processing with immediate chunk writing
       for await (const chunk of providerStream) {
-        lastProviderChunk = chunk; // Store the latest chunk
+        lastProviderChunk = chunk;
         if (streamClosed) { break; }
-        lastActivityTime = Date.now(); 
-        chunkCounter++;
-        
-        if (!ttfbRecorded) {
+        lastActivityTime = Date.now();
+        if (!ttfbRecorded && streamStartTime) {
           const ttfbSeconds = (Date.now() - streamStartTime) / 1000;
           metrics.recordStreamTtfb(providerName, modelName, ttfbSeconds);
           ttfbRecorded = true;
         }
-        metrics.incrementStreamChunkCount(providerName, modelName);
-
         const sseFormattedChunk = `data: ${JSON.stringify(chunk)}\n\n`;
-        // logger.debug(`[SSE SENT] Chunk ${chunkCounter} for ${providerName}/${modelName}`, { sseChunk: sseFormattedChunk }); // REMOVING THIS
-
         if (!streamClosed && !stream.writableEnded) {
           try {
-            // Write each chunk immediately without buffering
             stream.write(sseFormattedChunk);
-            
-            // Force immediate flush after each chunk for optimal responsiveness
-            if (typeof stream.uncork === "function") {
-              stream.uncork();
-            }
+            stream.uncork && stream.uncork();
           } catch (writeError) {
             logger.error(`Error writing chunk to stream: ${writeError.message}`);
             safelyEndStream(`Error writing chunk to stream: ${writeError.message}`, "write_error");
@@ -430,76 +389,84 @@ class ChatController {
         }
       }
       
-      // If loop completes normally, end the stream and pass the last chunk
       safelyEndStream(`Stream finished normally for ${providerName}/${modelName}`, null, lastProviderChunk);
       
     } catch (error) {
-      // Handle errors
-      logger.error(`Stream error: ${error.message}`, { provider: providerName, model: modelName, stack: error.stack });
-      
-      // Check if this was an abort error
-      if (error.name === "AbortError" || error.message?.includes("aborted")) {
-        // Send a special message for aborted requests
+      logger.error(`[ChatController.chatCompletionStream] Error: ${error.message}`, {
+        provider: error.providerName || providerName, // Use error.providerName if available
+        model: modelName, // modelName might not be set if error was very early
+        requestId: requestId,
+        errorName: error.name, // e.g., ProviderRateLimitError, StreamReadError
+        errorCode: error.code, // e.g., PROVIDER_RATE_LIMIT, STREAM_READ_ERROR
+        statusCode: error.statusCode, // e.g., 429, 500
+        details: error.details, // Raw error details from provider or system
+        stack: error.stack
+      });
+
+      if (error.name === "AbortError" || (error.message && /aborted|canceled/i.test(error.message))) {
         if (!streamClosed && !stream.writableEnded) {
           try {
-            const abortEventData = {
-              type: "abort",
-              message: "Generation was stopped by the client"
-            };
+            const abortEventData = { type: "abort", message: "Generation was stopped by the client" };
             stream.write(`event: abort\ndata: ${JSON.stringify(abortEventData)}\n\n`);
-          } catch (e) {
-            logger.warn(`Error sending abort event: ${e.message}`);
-          }
+          } catch (e) { logger.warn(`Error sending abort event: ${e.message}`); }
         }
-        
-        safelyEndStream(`Stream aborted for ${providerName}/${modelName}`, "client_abort");
-        return; // Exit early
+        safelyEndStream(`Stream aborted for ${providerName || "unknown"}/${modelName || "unknown"}`, "client_abort");
+        return;
       }
-      
-      const errorType = "provider_error";
-      
-      // Check if headers have been sent
-      if (!reply.sent && !streamClosed) {
-        // Headers not sent, we can use reply to send a JSON error
-        streamClosed = true; 
+
+      const metricsErrorType = error.code || error.name || "UNKNOWN_STREAM_ERROR";
+
+      if (!reply.raw.headersSent && !streamClosed) {
+        streamClosed = true;
         if (heartbeatInterval) { clearInterval(heartbeatInterval); }
         if (timeoutCheckInterval) { clearInterval(timeoutCheckInterval); }
         
-        // Determine appropriate status code from error if possible
-        const statusCode = error.status || 500;
-        reply.status(statusCode)
-          .type("application/json") // Explicitly set content type
-          .send(JSON.stringify({  // Explicitly stringify
-            error: "Stream processing error", 
-            message: error.message 
-          }));
-        
-        // Record error metric
-        if (providerName && modelName) {
-          metrics.incrementStreamErrorCount(providerName, modelName, errorType);
-        }
-        
-        // Remove from active generations
-        activeGenerations.delete(requestId);
-      } else if (!streamClosed && !stream.writableEnded) {
-        // Headers ARE sent, try to send a structured error event over the stream
-        const errorPayload = {
-          code: error.code || error.name || "ProviderStreamError",
-          message: error.message || "An error occurred during streaming.",
-          status: error.status || 500,
-          provider: providerName,
-          model: modelName
-        };
-        
-        try {
-          const sseErrorEvent = `event: error\ndata: ${JSON.stringify(errorPayload)}\n\n`;
-          stream.write(sseErrorEvent);
-          safelyEndStream(`Error sent to client for ${providerName}/${modelName}`, errorType);
-        } catch (e) {
-          logger.warn(`Error sending error event: ${e.message}`);
-          safelyEndStream(`Failed to send error to client for ${providerName}/${modelName}`, errorType);
-        }
+        const responseStatusCode = error.statusCode || 500;
+        reply.status(responseStatusCode).type("application/json").send({
+          error: {
+            message: error.message || "Stream setup error before headers sent.",
+            code: error.code || error.name || "STREAM_SETUP_ERROR", 
+            type: error.name || "StreamSetupError",
+            details: error.details,
+            ...(error.providerName && { provider: error.providerName })
+          }
+        });
+        return;
       }
+
+      if (!streamClosed && !stream.writableEnded && reply.raw.headersSent) {
+        const effectiveProviderName = error.providerName || providerName || "unknown_provider";
+        const effectiveModelName = modelName || "unknown_model"; // modelName from controller scope
+
+        const errorPayloadForStream = {
+          id: `${effectiveProviderName}-stream-error-${Date.now()}`,
+          model: effectiveModelName,
+          provider: effectiveProviderName,
+          error: {
+            message: error.message || "An error occurred during streaming.",
+            code: error.code || "UNKNOWN_ERROR", // Our app-specific string code
+            type: error.name || "StreamError", // The actual class name of the error
+            ...(error.statusCode && { httpStatusCode: error.statusCode }),
+            details: error.details,
+          },
+          finishReason: "error",
+          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          latency: streamStartTime ? Date.now() - streamStartTime : 0
+        };
+        try {
+          stream.write(`data: ${JSON.stringify(errorPayloadForStream)}\n\n`);
+          stream.uncork && stream.uncork();
+        } catch (e) {
+          logger.warn(`Error writing error data to stream: ${e.message}`);
+        }
+        safelyEndStream(
+          `Stream error for ${effectiveProviderName}/${effectiveModelName}`,
+          metricsErrorType,
+          lastProviderChunk 
+        );
+      }
+    } finally {
+      activeGenerations.delete(requestId);
     }
   }
 
@@ -512,12 +479,6 @@ class ChatController {
   async stopGeneration(request, reply) {
     try {
       const { requestId } = request.body;
-      
-      if (!requestId) {
-        return reply.status(400).send({ 
-          error: "Missing required parameter: requestId" 
-        });
-      }
       
       // Look up the abort controller (idempotent stop)
       const abortController = activeGenerations.get(requestId);
@@ -549,8 +510,6 @@ class ChatController {
    */
   async getChatCapabilities(request, reply) {
     try {
-      metrics.incrementRequestCount();
-      
       const circuitBreakerStates = getCircuitBreakerStates();
       
       let cacheStats = { enabled: false };

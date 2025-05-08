@@ -7,6 +7,11 @@ import BaseProvider from "./BaseProvider.js";
 import { createBreaker } from "../utils/circuitBreaker.js";
 import * as metrics from "../utils/metrics.js";
 import logger from "../utils/logger.js";
+import { 
+  
+  ProviderSseError,
+  // Import other custom errors if needed directly, though BaseProvider should handle most.
+} from "../utils/CustomError.js";
 
 
 class OpenAIProvider extends BaseProvider {
@@ -46,7 +51,7 @@ class OpenAIProvider extends BaseProvider {
     this.hasModels = this.cachedModels.length > 0;
     
     // Log initialization status
-    logger.info(`OpenAIProvider initialized with ${this.cachedModels.length} initial models from config`);
+    // logger.info(`OpenAIProvider initialized with ${this.cachedModels.length} initial models from config`);
   }
 
   /**
@@ -61,7 +66,7 @@ class OpenAIProvider extends BaseProvider {
         return this.cachedModels;
       }
       
-      logger.info("Fetching models from OpenAI API...");
+      // logger.info("Fetching models from OpenAI API...");
       
       // Create fallback models in case API call fails
       const fallbackModels = [
@@ -78,12 +83,19 @@ class OpenAIProvider extends BaseProvider {
         // Explicitly call the list method and await the response
         const response = await this.client.models.list();
         
+        // Dump raw API model list to file
+        // try {
+        //   fs.writeFileSync("openai_raw_models.json", JSON.stringify(response.data, null, 2));
+        // } catch (writeErr) {
+        //   logger.error("Error writing raw OpenAI models to file", { error: writeErr.message });
+        // }
+        
         if (!response || !response.data || !Array.isArray(response.data)) {
           logger.error("Invalid response format from OpenAI API", { response });
           throw new Error("Invalid response format from OpenAI models API");
         }
         
-        logger.info(`Received ${response.data.length} models from OpenAI API`);
+        // logger.info(`Received ${response.data.length} models from OpenAI API`);
         
         let filteredModels = response.data
           .filter(model => {
@@ -103,49 +115,24 @@ class OpenAIProvider extends BaseProvider {
             name: model.id,
             provider: this.name,
             tokenLimit: this._getTokenLimit(model.id),
-            features: this._getModelFeatures(model.id)
+            // features: this._getModelFeatures(model.id)
           }));
-      
-      
-        // Cache all available models from API - no config filtering
-        this.cachedModels = filteredModels;
-        this.modelsLoadedFromAPI = true;
-        this.hasModels = true;
-        
-        logger.info(`Successfully loaded ${this.cachedModels.length} models from OpenAI API`);
+              
         
         return filteredModels;
       } catch (error) {
         logger.error("Error fetching OpenAI models from API", { error: error.message });
-        
-        // If we have previously loaded models from the API, return those
-        if (this.modelsLoadedFromAPI && this.cachedModels.length > 0) {
-          logger.warn(`Using ${this.cachedModels.length} previously cached models from API due to error`);
-          return this.cachedModels;
-        }
-        
-        // If we have config models, return those
-        if (this.hasModels && this.cachedModels.length > 0) {
-          logger.warn(`Using ${this.cachedModels.length} models from config due to API error`);
-          return this.cachedModels;
-        }
-        
-        // Otherwise use fallback models
+                
+        // use fallback models
         logger.warn(`Using ${fallbackModels.length} hardcoded fallback models due to API error`);
         const models = this._createModelObjects(fallbackModels);
-        this.cachedModels = models;
-        this.hasModels = true;
         return models;
       }
     } catch (error) {
       logger.error("Error in getModels", { error: error.message });
       
-      // Return any models we have or use fallback models
-      if (this.hasModels && this.cachedModels.length > 0) {
-        return this.cachedModels;
-      }
-      
-      return this._createModelObjects(this.config.models || []);
+
+      return this._createModelObjects(fallbackModels|| []);
     }
   }
 
@@ -158,7 +145,7 @@ class OpenAIProvider extends BaseProvider {
       name: id,
       provider: this.name,
       tokenLimit: this._getTokenLimit(id),
-      features: this._getModelFeatures(id)
+      // features: this._getModelFeatures(id)
     }));
   }
 
@@ -183,38 +170,38 @@ class OpenAIProvider extends BaseProvider {
     return baseModel ? tokenLimits[baseModel] : 4096; // Default to 4K
   }
   
-  /**
-   * Get features supported by a model
-   */
-  _getModelFeatures(modelId) {
-    // Default features
-    const features = {
-      vision: false,
-      streaming: true,
-      functionCalling: false,
-      tools: false,
-      json: false,
-      system: true
-    };
-    
-    // GPT-4 Vision models
-    if (modelId.includes("vision") || modelId.includes("gpt-4-turbo") || modelId.includes("gpt-4o")) {
-      features.vision = true;
-    }
-    
-    // Tool/function calling models
-    if (modelId.includes("gpt-4") || modelId.includes("gpt-3.5-turbo")) {
-      features.functionCalling = true;
-      features.tools = true;
-    }
-    
-    // JSON mode support
-    if (modelId.includes("gpt-4") || modelId.includes("gpt-3.5-turbo")) {
-      features.json = true;
-    }
-    
-    return features;
-  }
+  // /**
+  //  * Get features supported by a model
+  //  */
+  // _getModelFeatures(modelId) {
+  //   // Default features
+  //   const features = {
+  //     vision: false,
+  //     streaming: true,
+  //     functionCalling: false,
+  //     tools: false,
+  //     json: false,
+  //     system: true
+  //   };
+  //   
+  //   // GPT-4 Vision models
+  //   if (modelId.includes("vision") || modelId.includes("gpt-4-turbo") || modelId.includes("gpt-4o")) {
+  //     features.vision = true;
+  //   }
+  //   
+  //   // Tool/function calling models
+  //   if (modelId.includes("gpt-4") || modelId.includes("gpt-3.5-turbo")) {
+  //     features.functionCalling = true;
+  //     features.tools = true;
+  //   }
+  //   
+  //   // JSON mode support
+  //   if (modelId.includes("gpt-4") || modelId.includes("gpt-3.5-turbo")) {
+  //     features.json = true;
+  //   }
+  //   
+  //   return features;
+  // }
 
   /**
    * Send a chat completion request to OpenAI
@@ -392,178 +379,101 @@ class OpenAIProvider extends BaseProvider {
 
   /**
    * Send a chat completion request with streaming response (SSE).
-   * @param {object} options - Standardized request options.
-   * @yields {object} Standardized response chunks.
-   * @throws {Error} If API error occurs.
+   * Delegates to BaseProvider._streamViaGot for HTTP/2 + SSE parsing.
    */
   async *chatCompletionStream(options) {
-    let modelName;
-    let streamStartTime;
+    const so = this.standardizeOptions(options);
+    this.validateOptions(so);
+    const modelName = so.model.includes("/") ? so.model.split("/")[1] : so.model;
+    const payload = {
+      model: modelName,
+      messages: this._processMessagesForOpenAI(so.messages),
+      temperature: so.temperature,
+      max_completion_tokens: so.max_tokens,
+      stream: true,
+      stream_options: { include_usage: true },
+      ...(so.top_p !== undefined && { top_p: so.top_p }),
+      ...(so.frequency_penalty !== undefined && { frequency_penalty: so.frequency_penalty }),
+      ...(so.presence_penalty !== undefined && { presence_penalty: so.presence_penalty }),
+      ...(so.stop && { stop: so.stop }),
+      ...(so.response_format?.type === "json_object" && { response_format: { type: "json_object" } })
+    };
+
     try {
-      // Standardize and validate options
-      const standardOptions = this.standardizeOptions(options);
-      this.validateOptions(standardOptions);
-
-      // Extract model name
-      modelName = standardOptions.model.includes("/")
-        ? standardOptions.model.split("/")[1]
-        : standardOptions.model;
-
-      // Process messages for potential multimodal content
-      const processedMessages = this._processMessagesForOpenAI(standardOptions.messages);
-
-      // Prepare the payload for streaming
-      const payload = {
-        model: modelName,
-        messages: processedMessages,
-        temperature: standardOptions.temperature,
-        max_completion_tokens: standardOptions.max_tokens,
-        stream_options: { include_usage: true },
-        stream: true,
-        // Include other optional parameters
-        ...(standardOptions.top_p !== undefined && { top_p: standardOptions.top_p }),
-        ...(standardOptions.frequency_penalty !== undefined && { frequency_penalty: standardOptions.frequency_penalty }),
-        ...(standardOptions.presence_penalty !== undefined && { presence_penalty: standardOptions.presence_penalty }),
-        ...(standardOptions.stop && { stop: standardOptions.stop }),
-        ...(standardOptions.response_format?.type === "json_object" && { response_format: { type: "json_object" } })
-      };
-
-      // logger.debug({ openAIStreamPayload: payload }, "Sending stream request to OpenAI");
-      streamStartTime = Date.now();
-
-      // Use the OpenAI SDK's streaming method
-      const stream = await this.client.chat.completions.create(
-        payload,
-        { signal: standardOptions.abortSignal }
-      );
-
-      let firstChunk = true;
-      let usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 }; // Initialize usage
-      let finishReason = "unknown"; // Initialize finish reason
-      let finalChunkProcessed = false;
-
-      for await (const chunk of stream) {
-        const chunkLatency = firstChunk ? Date.now() - streamStartTime : 0;
-
-        if (firstChunk) {
-          // Convert latency to seconds for the metrics function
-          metrics.recordStreamTtfb(this.name, modelName, chunkLatency / 1000); 
-          firstChunk = false;
+      for await (const evt of this._streamViaGot("chat/completions", payload, so.abortSignal)) {
+        if (evt.event === "error") { // This is an error *event* sent by the LLM within the SSE stream
+          const errData = evt.data || {};
+          logger.warn("[OpenAIProvider] Received error event from LLM stream", { errData });
+          throw new ProviderSseError(
+            errData.message || "An error occurred in the OpenAI stream.",
+            this.name,
+            errData.code || errData.type || "LLM_STREAM_ERROR",
+            errData, // details
+            evt // originalEvent
+          );
+        }
+        
+        // Assuming evt.data contains the actual chunk data for normal events
+        const chunk = evt.data;
+        if (chunk === "[DONE]") { // Check for our [DONE] marker from _parseSSE
+          logger.debug("[OpenAIProvider] Received [DONE] marker.");
+          // Potentially yield a final chunk if OpenAI has specific end-of-stream data not in [DONE]
+          // Or just break/return if [DONE] is the true end for normalized data.
+          // For now, assume [DONE] is final and _normalizeStreamChunk handles regular chunks.
+          continue; 
         }
 
-        // Extract usage and finish reason if available in the chunk
-        // OpenAI stream chunks typically contain delta content, but the final chunk might have full usage/finish_reason.
-        // Sometimes usage/finish reason might be on the `.x_stream_final_response.usage` or similar experimental fields.
-
-        // Prioritize final response data if available (check varies by SDK version)
-        const finalResponse = chunk.x_stream_final_response; // Example check
-        if (finalResponse) {
-          if (finalResponse.usage) {
-            usage = { // Update with final accurate usage
-              promptTokens: finalResponse.usage.prompt_tokens || usage.promptTokens,
-              completionTokens: finalResponse.usage.completion_tokens || usage.completionTokens,
-              totalTokens: finalResponse.usage.total_tokens || usage.totalTokens
-            };
-          }
-          if (finalResponse.choices && finalResponse.choices[0]?.finish_reason) {
-            finishReason = finalResponse.choices[0].finish_reason;
-          }
-          finalChunkProcessed = true; // Mark that we got the final meta-data chunk
-        } else {
-          // For regular delta chunks, update based on the chunk data itself
-          const choice = chunk.choices?.[0];
-          if (choice?.finish_reason) {
-            finishReason = choice.finish_reason; // Update finish reason if present in a delta
-          }
-          // Usage might be harder to accumulate accurately from deltas alone
-          // We often rely on the final chunk or estimate based on content length.
-        }
-
-
-        const normalizedChunk = this._normalizeStreamChunk(chunk, modelName, chunkLatency, finishReason, usage);
-        if (normalizedChunk.content || normalizedChunk.finishReason !== "unknown" || normalizedChunk.toolCalls) { // Yield if there is content, tool calls, or a finish reason update
-          yield normalizedChunk;
-        }
-
+        // Normalize and yield the actual data chunk
+        // TTFB is handled in _streamViaGot, so latency here is effectively 0 for subsequent chunks.
+        // Finish reason and usage might come in the *last* data chunk from OpenAI if stream_options: { include_usage: true } is set.
+        const normalized = this._normalizeStreamChunk(chunk, modelName);
+        yield normalized;
       }
-
-      logger.info(`OpenAI stream completed for model ${modelName}. Finish Reason: ${finishReason}`);
-      // If the final metadata wasn't processed via an x_stream_final_response chunk,
-      // send one last meta-chunk if the finish reason is known.
-      if (!finalChunkProcessed && finishReason !== "unknown") {
-        yield {
-          id: `openai-final-${Date.now()}`,
-          model: modelName,
-          provider: this.name,
-          createdAt: new Date().toISOString(),
-          content: null,
-          usage: usage, // Send last known usage
-          latency: 0,
-          finishReason: finishReason,
-          raw: null
-        };
-      }
-
-
     } catch (error) {
-      const streamLatency = streamStartTime ? Date.now() - streamStartTime : 0;
-      logger.error(`OpenAI stream error: ${error.message}`, { model: modelName, error });
-      let statusCode = 500;
-      if (error.status) {
-        statusCode = error.status;
-      }
-      metrics.incrementStreamErrorCount(this.name, modelName, statusCode.toString());
-
-      // Yield a final error chunk
-      yield {
-        id: `openai-stream-error-${Date.now()}`,
-        model: modelName,
-        provider: this.name,
-        error: {
-          message: `OpenAI stream error: ${error.message}`,
-          code: statusCode,
-          type: error.name || "ProviderStreamError"
-        },
-        finishReason: "error",
-        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-        latency: streamLatency
-      };
-      // throw error; // Option to rethrow
-
-    } finally {
-      if (streamStartTime) {
-        const durationSeconds = (Date.now() - streamStartTime) / 1000;
-        metrics.recordStreamDuration(this.name, modelName, durationSeconds);
-      }
+      // Log the error with provider context
+      logger.error(`[OpenAIProvider.chatCompletionStream] Error during streaming for ${modelName}: ${error.message}`, {
+        errorName: error.name,
+        errorCode: error.code,
+        statusCode: error.statusCode,
+        providerDetails: error.details,
+        stack: error.stack
+      });
+      // Re-throw the error; it will be one of our custom errors or a generic Error
+      // The ChatController will handle formatting it for the client.
+      throw error;
     }
   }
 
-  /**
-   * Normalizes a streaming chunk from the OpenAI API response.
-   * @param {object} chunk - Raw chunk data from the OpenAI stream.
-   * @param {string} model - Model name.
-   * @param {number} latency - Latency for this chunk (usually only first chunk).
-   * @param {string} finishReason - Current best guess of finish reason.
-   * @param {object} usage - Current accumulated usage data.
-   * @returns {object} Standardized stream chunk.
-   */
-  _normalizeStreamChunk(chunk, model, latency, finishReason, usage) {
+  _normalizeStreamChunk(chunk, modelName) {
+    // If chunk is not an object (e.g. [DONE] string that wasn't caught above, or other non-JSON) return null or handle as error.
+    if (typeof chunk !== "object" || chunk === null) {
+      logger.warn("[OpenAIProvider._normalizeStreamChunk] Received non-object chunk, skipping normalization.", { chunk });
+      return null; // Or throw new Error("Invalid chunk type");
+    }
+
     const choice = chunk.choices?.[0];
     const delta = choice?.delta;
+    const finishReason = choice?.finish_reason;
+    
+    // OpenAI with `stream_options: { include_usage: true }` sends usage in the *last* event
+    // This event might have null delta content but will contain the usage object.
+    const usage = chunk.usage ? {
+      promptTokens: chunk.usage.prompt_tokens || 0,
+      completionTokens: chunk.usage.completion_tokens || 0,
+      totalTokens: chunk.usage.total_tokens || 0
+    } : null; // Default to null if not present in this specific chunk
 
     return {
       id: chunk.id,
-      model: chunk.model || model,
+      model: chunk.model || modelName,
       provider: this.name,
       createdAt: chunk.created ? new Date(chunk.created * 1000).toISOString() : new Date().toISOString(),
-      // Extract content delta safely
       content: delta?.content || null,
-      // Include tool calls delta if present
       toolCalls: delta?.tool_calls || null,
-      usage: usage, // Send current state of usage
-      latency: latency, // Only relevant for first chunk (TTFB)
-      finishReason: finishReason, // Send current state of finish reason
-      raw: chunk // Include the raw chunk for potential downstream use
+      usage: usage, // Will be null for most chunks, populated for the last one if stream_options used
+      latency: 0, // TTFB is handled by BaseProvider, subsequent chunk latency is not individually tracked here
+      finishReason: finishReason || null, // Will be null for most chunks, populated for the last one
+      raw: chunk
     };
   }
 }
