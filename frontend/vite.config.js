@@ -61,7 +61,7 @@ export default defineConfig(({ command, mode }) => {
       open: true, // Automatically open in browser
     },
     build: {
-      outDir: 'dist', // CRA default output folder
+      outDir: 'build', // CRA default output folder
       sourcemap: true, // Enable source maps for debugging
       rollupOptions: {
         output: {
