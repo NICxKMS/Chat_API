@@ -1,0 +1,2 @@
+var n,e;function g(){if(e)return n;function g(n){var e;(e=n).languages.ignore={comment:/^#.*/m,entry:{pattern:/\S(?:.*(?:(?:\\ )|\S))?/,alias:"string",inside:{operator:/^!|\*\*?|\?/,regex:{pattern:/(^|[^\\])\[[^\[\]]*\]/,lookbehind:!0},punctuation:/\//}}},e.languages.gitignore=e.languages.ignore,e.languages.hgignore=e.languages.ignore,e.languages.npmignore=e.languages.ignore}return e=1,n=g,g.displayName="ignore",g.aliases=["gitignore","hgignore","npmignore"],n}export{g as r};
+//# sourceMappingURL=refractor-ignore-CH7nrlHF.js.map

@@ -1,0 +1,2 @@
+var a,e;function n(){if(e)return a;function n(a){!function(a){function e(e,n){a.languages[e]&&a.languages.insertBefore(e,"comment",{"doc-comment":n})}var n=a.languages.markup.tag,t={pattern:/\/\/\/.*/,greedy:!0,alias:"comment",inside:{tag:n}},r={pattern:/'''.*/,greedy:!0,alias:"comment",inside:{tag:n}};e("csharp",t),e("fsharp",t),e("vbnet",r)}(a)}return e=1,a=n,n.displayName="xmlDoc",n.aliases=[],a}export{n as r};
+//# sourceMappingURL=refractor-xml-doc-Cgen3Isw.js.map

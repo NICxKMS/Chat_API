@@ -1,0 +1,2 @@
+import{r as a}from"./refractor-scheme-B5M-55xg.js";var e,r;function t(){if(r)return e;r=1;var t=a();function n(a){a.register(t),a.languages.racket=a.languages.extend("scheme",{"lambda-parameter":{pattern:/([(\[]lambda\s+[(\[])[^()\[\]'\s]+/,lookbehind:!0}}),a.languages.insertBefore("racket","string",{lang:{pattern:/^#lang.+/m,greedy:!0,alias:"keyword"}}),a.languages.rkt=a.languages.racket}return e=n,n.displayName="racket",n.aliases=["rkt"],e}export{t as r};
+//# sourceMappingURL=refractor-racket-Cxey_NLm.js.map

@@ -1,0 +1,2 @@
+var t,e;function a(){if(e)return t;function a(t){t.languages.editorconfig={comment:/[;#].*/,section:{pattern:/(^[ \t]*)\[.+\]/m,lookbehind:!0,alias:"selector",inside:{regex:/\\\\[\[\]{},!?.*]/,operator:/[!?]|\.\.|\*{1,2}/,punctuation:/[\[\]{},]/}},key:{pattern:/(^[ \t]*)[^\s=]+(?=[ \t]*=)/m,lookbehind:!0,alias:"attr-name"},value:{pattern:/=.*/,alias:"attr-value",inside:{punctuation:/^=/}}}}return e=1,t=a,a.displayName="editorconfig",a.aliases=[],t}export{a as r};
+//# sourceMappingURL=refractor-editorconfig-hVZgJ1-r.js.map

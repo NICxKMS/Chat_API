@@ -1,0 +1,2 @@
+import{f as n}from"./vendor-micromark-factory-space-BuxqzSY_.js";function r(r,e){let i;return function t(f){if(function(n){return null!==n&&n<-2}(f))return r.enter("lineEnding"),r.consume(f),r.exit("lineEnding"),i=!0,t;if(function(n){return-2===n||-1===n||32===n}(f))return n(r,t,i?"linePrefix":"lineSuffix")(f);return e(f)}}export{r as f};
+//# sourceMappingURL=vendor-micromark-factory-whitespace-YzaPLww_.js.map

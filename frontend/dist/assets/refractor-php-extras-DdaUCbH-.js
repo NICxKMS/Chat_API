@@ -1,0 +1,2 @@
+import{r}from"./refractor-php-zZfqPVqE.js";var e,a;function t(){if(a)return e;a=1;var t=r();function s(r){r.register(t),r.languages.insertBefore("php","variable",{this:{pattern:/\$this\b/,alias:"keyword"},global:/\$(?:GLOBALS|HTTP_RAW_POST_DATA|_(?:COOKIE|ENV|FILES|GET|POST|REQUEST|SERVER|SESSION)|argc|argv|http_response_header|php_errormsg)\b/,scope:{pattern:/\b[\w\\]+::/,inside:{keyword:/\b(?:parent|self|static)\b/,punctuation:/::|\\/}}})}return e=s,s.displayName="phpExtras",s.aliases=[],e}export{t as r};
+//# sourceMappingURL=refractor-php-extras-DdaUCbH-.js.map

@@ -55,7 +55,7 @@ jspm_packages/
 .next/
 out/
 .nuxt/
-dist/
+# dist/
 .cache/
 .vuepress/dist
 .temp

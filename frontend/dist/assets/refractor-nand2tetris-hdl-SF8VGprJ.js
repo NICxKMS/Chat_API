@@ -1,0 +1,2 @@
+var n,a;function e(){if(a)return n;function e(n){n.languages["nand2tetris-hdl"]={comment:/\/\/.*|\/\*[\s\S]*?(?:\*\/|$)/,keyword:/\b(?:BUILTIN|CHIP|CLOCKED|IN|OUT|PARTS)\b/,boolean:/\b(?:false|true)\b/,function:/\b[A-Za-z][A-Za-z0-9]*(?=\()/,number:/\b\d+\b/,operator:/=|\.\./,punctuation:/[{}[\];(),:]/}}return a=1,n=e,e.displayName="nand2tetrisHdl",e.aliases=[],n}export{e as r};
+//# sourceMappingURL=refractor-nand2tetris-hdl-SF8VGprJ.js.map
