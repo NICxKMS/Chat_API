@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Preconnect to Google Fonts for faster font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- DNS Prefetch for third-party domains -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="icon" href="/image.webp" /> <!-- Assuming image.webp is in public directory -->
+    <link rel="apple-touch-icon" href="/image.webp" />
+    <!-- Preload critical images -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="AI Chat Interface - Modern React-based chat interface for AI models"
+    />
+    <!-- <link rel="apple-touch-icon" href="/logo192.png" /> --> <!-- Assuming logo192.png is in public directory -->
+    <link rel="manifest" href="/manifest.json" /> <!-- Assuming manifest.json is in public directory -->
+    <title>AI Chat Interface</title>
+  </head>
+  <body>
+    <script>
+      (function() {
+        try {
+          var storedTheme = localStorage.getItem('theme') || 'dark';
+          var themeToApply = storedTheme;
+          if (storedTheme === 'system') {
+            var mql = window.matchMedia('(prefers-color-scheme: dark)');
+            themeToApply = mql.matches ? 'dark' : 'light';
+          }
+          document.body.classList.add(themeToApply + '-mode');
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/index.jsx"></script>
+  </body>
+</html> 

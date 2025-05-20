@@ -17,7 +17,6 @@ const ESSENTIAL_IMPORTS = {
   themeToggle: () => import(/* webpackPreload: true, webpackChunkName: "common-theme" */ './components/common/ThemeToggle'),
   sidebarToggle: () => import(/* webpackPreload: true, webpackChunkName: "layout-sidebar-toggle" */ './components/layout/SidebarToggle'),
   messageList: () => import(/* webpackPreload: true, webpackChunkName: "chat-messagelist" */ './components/chat/MessageList'),
-  authButton: () => import(/* webpackPreload: true, webpackChunkName: "auth-button" */ './components/auth/AuthButton'),
   globalMetrics: () => import(/* webpackPreload: true, webpackChunkName: "chat-globalmetrics" */ './components/chat/GlobalMetricsBar'),
   moreActions: () => import(/* webpackPreload: true, webpackChunkName: "common-more-actions" */ './components/common/MoreActions'),
 };

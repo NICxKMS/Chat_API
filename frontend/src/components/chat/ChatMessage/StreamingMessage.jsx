@@ -1,7 +1,7 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import styles from './ChatMessage.module.css';
 import atomDark from 'react-syntax-highlighter/dist/esm/styles/prism/atom-dark';
 import prism from 'react-syntax-highlighter/dist/esm/styles/prism/prism';
@@ -12,6 +12,12 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { convertTeXToMathDollars } from '../../../utils/formatters';
+
+// Track which languages have already been loaded
+const loadedLanguages = new Set();
+
+// Map of dynamic importers for Prism language modules (using REACT_APP glob)
+const languageLoaders = import.meta.glob('../../../../node_modules/react-syntax-highlighter/dist/esm/languages/prism/*.js');
 
 // Copy Icon SVG (simple inline version)
 const CopyIcon = () => (
@@ -49,10 +55,45 @@ const StreamingMessage = ({ content, isStreaming }) => {
 
   // Custom component for rendering code blocks
   const CodeBlock = useCallback(({ node, inline, className, children, ...props }) => {
-    // Only treat content wrapped in triple backticks as code blocks (ignore indents)
     const match = /language-(\w+)/.exec(className || '');
-    const language = match ? match[1] : 'plaintext'; // Default to plaintext if no language class
-    const codeContent = String(children).replace(/\n$/, ''); // Get code content
+    const rawLang = match ? match[1] : 'plaintext';
+    const language = rawLang.toLowerCase();
+    const codeContent = String(children).replace(/\n$/, '');
+
+    // Maintain local state for whether the language definition has been loaded
+    const [langLoaded, setLangLoaded] = useState(inline || loadedLanguages.has(language));
+
+    useEffect(() => {
+      if (!inline && !loadedLanguages.has(language) && language !== 'plaintext') {
+        // Map certain code-fence names to Prism file names
+        const prismLang = language === 'dockerfile' ? 'docker'
+                         : language === 'vimscript' ? 'vim'
+                         : language;
+        const importPath = `../../../../node_modules/react-syntax-highlighter/dist/esm/languages/prism/${prismLang}.js`;
+        const importer = languageLoaders[importPath];
+        if (importer) {
+          importer()
+            .then((mod) => {
+              const langModule = mod.default || mod[prismLang] || mod;
+              // Register under original language key
+              SyntaxHighlighter.registerLanguage(language, langModule);
+              loadedLanguages.add(language);
+            })
+            .catch(() => {
+              console.warn(`Language ${language} not available for dynamic import; using plaintext fallback.`);
+            })
+            .finally(() => setLangLoaded(true));
+        } else {
+          console.warn(`Language ${language} not available for dynamic import; using plaintext fallback.`);
+          setLangLoaded(true);
+        }
+      }
+    }, [language, inline]);
+
+    if (!inline && !langLoaded) {
+      // Fallback to unstyled code block while loading
+      return <pre className={styles.pre}><code>{codeContent}</code></pre>;
+    }
 
     // Use index from node's position if available, fallback to content hash or similar
     const codeBlockKey = node?.position?.start?.offset ?? codeContent.substring(0, 20); // Example key

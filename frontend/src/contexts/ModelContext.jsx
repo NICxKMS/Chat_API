@@ -159,7 +159,7 @@ export const ModelProvider = ({ children }) => {
       console.log("[ModelContext] Raw data:", rawData);
       console.log("[ModelContext] Spawning worker for model processing...");
       // Offload model processing to Web Worker
-      const worker = new Worker(new URL('../workers/modelProcessor.js', import.meta.url), { type: 'module' });
+      const worker = new Worker(new URL('../workers/modelProcessor.jsx', import.meta.url), { type: 'module' });
       worker.postMessage(rawData);
       worker.onmessage = ({ data: msg }) => {
         if (msg.error) {

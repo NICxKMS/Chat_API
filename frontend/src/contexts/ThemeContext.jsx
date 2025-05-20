@@ -29,10 +29,31 @@ export const ThemeProvider = ({ children }) => {
     });
   }, []);
 
-  // Apply theme class to body element
+  // Apply theme class to body element, including system preference
   useEffect(() => {
-    document.body.classList.remove('light-mode', 'dark-mode');
-    document.body.classList.add(`${theme}-mode`);
+    const applyTheme = () => {
+      document.body.classList.remove('light-mode', 'dark-mode');
+      if (theme === 'system') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.body.classList.add(prefersDark ? 'dark-mode' : 'light-mode');
+      } else {
+        document.body.classList.add(`${theme}-mode`);
+      }
+    };
+    applyTheme();
+  }, [theme]);
+
+  // Listen to system theme changes when in system mode
+  useEffect(() => {
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      if (theme === 'system') {
+        document.body.classList.remove('light-mode', 'dark-mode');
+        document.body.classList.add(e.matches ? 'dark-mode' : 'light-mode');
+      }
+    };
+    mql.addEventListener('change', handleChange);
+    return () => mql.removeEventListener('change', handleChange);
   }, [theme]);
 
   // Context value - memoized to prevent unnecessary re-renders

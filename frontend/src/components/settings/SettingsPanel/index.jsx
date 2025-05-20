@@ -1,9 +1,13 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useSettingsController } from '../../../hooks/useSettingsController';
-import { BooleanControl, SettingsSlider, TextAreaControl } from '..';
+// Lazy-load settings sub-components
+const BooleanControl = lazy(() => import('../SettingsToggle'));
+const SettingsSlider = lazy(() => import('../SettingsSlider'));
+const TextAreaControl = lazy(() => import('../TextAreaControl'));
+// Lazy-load overlay for the panel
+const SettingsSidebarOverlay = lazy(() => import('../SettingsSidebarOverlay'));
 import { IconSlider, IconStream, IconClose, IconSystem } from '../icons';
 import styles from './SettingsPanel.module.css';
-import { default as SettingsSidebarOverlay } from '../SettingsSidebarOverlay';
 import { useIsSettingsMobile } from '../../../hooks/useMediaQuery';
 
 /**
@@ -148,51 +152,57 @@ const SettingsPanel = ({ isOpen, onClose }) => {
       case 'boolean':
         return (
           <div key={config.id} className={itemClass}>
-            <BooleanControl
-              id={config.id}
-              label={config.label}
-              isChecked={value}
-              onChange={val => updateSetting(config.id, val)}
-              tooltip={config.description}
-            />
+            <Suspense fallback={null}>
+              <BooleanControl
+                id={config.id}
+                label={config.label}
+                isChecked={value}
+                onChange={val => updateSetting(config.id, val)}
+                tooltip={config.description}
+              />
+            </Suspense>
           </div>
         );
         
       case 'slider':
         return (
           <div key={config.id} className={itemClass}>
-            <SettingsSlider
-              id={config.id}
-              label={config.label}
-              value={value}
-              min={config.min}
-              max={config.max}
-              step={config.step}
-              onChange={val => updateSetting(config.id, val)}
-              tooltip={config.description}
-              allowDirectInput={config.allowDirectInput}
-            />
+            <Suspense fallback={null}>
+              <SettingsSlider
+                id={config.id}
+                label={config.label}
+                value={value}
+                min={config.min}
+                max={config.max}
+                step={config.step}
+                onChange={val => updateSetting(config.id, val)}
+                tooltip={config.description}
+                allowDirectInput={config.allowDirectInput}
+              />
+            </Suspense>
           </div>
         );
         
       case 'textarea':
         return (
           <div key={config.id} className={itemClass}>
-            <TextAreaControl
-              id={config.id}
-              label={config.label}
-              value={value}
-              onChange={(val) => {
-                if (config.id === 'systemPrompt') {
-                  const standardizedVal = val.replace(new RegExp(userName, 'g'), 'Nikhil');
-                  updateSetting(config.id, standardizedVal);
-                } else {
-                  updateSetting(config.id, val);
-                }
-              }}
-              tooltip={config.description}
-              placeholder={config.placeholder}
-            />
+            <Suspense fallback={null}>
+              <TextAreaControl
+                id={config.id}
+                label={config.label}
+                value={value}
+                onChange={(val) => {
+                  if (config.id === 'systemPrompt') {
+                    const standardizedVal = val.replace(new RegExp(userName, 'g'), 'Nikhil');
+                    updateSetting(config.id, standardizedVal);
+                  } else {
+                    updateSetting(config.id, val);
+                  }
+                }}
+                tooltip={config.description}
+                placeholder={config.placeholder}
+              />
+            </Suspense>
           </div>
         );
         
@@ -209,13 +219,15 @@ const SettingsPanel = ({ isOpen, onClose }) => {
     const itemClass = `${styles.settingItem} ${animateItems ? styles.animate : ''}`;
     return (
       <div key="cache" className={itemClass}>
-        <BooleanControl
-          id="cacheEnabled"
-          label="Enable Model Cache"
-          isChecked={cacheEnabled}
-          onChange={() => toggleCache()}
-          tooltip="Toggle model caching to speed up repeated requests"
-        />
+        <Suspense fallback={null}>
+          <BooleanControl
+            id="cacheEnabled"
+            label="Enable Model Cache"
+            isChecked={cacheEnabled}
+            onChange={() => toggleCache()}
+            tooltip="Toggle model caching to speed up repeated requests"
+          />
+        </Suspense>
       </div>
     );
   }, [cacheEnabled, toggleCache, animateItems]);
@@ -282,46 +294,48 @@ const SettingsPanel = ({ isOpen, onClose }) => {
   };
 
   return (
-    <SettingsSidebarOverlay isOpen={isOpen} onClose={onClose}>
-      {/* Header with title and close button */}
-      <div className={styles.header}>
-        <h2 id="settings-title" className={styles.title}>Settings</h2>
-        <button onClick={onClose} className={styles.closeButton} aria-label="Close settings">
-          <IconClose />
-        </button>
-      </div>
-
-      {/* Body wrapper: vertical on desktop, horizontal on mobile */}
-      <div className={styles.bodyWrapper}>
-        {/* Minimal horizontal tabs (become vertical on desktop) */}
-        <nav className={styles.navTabs} role="tablist">
-          {visibleTabs.map(tab => (
-            <button
-              key={tab.id}
-              className={`${styles.navTab} ${activeTab === tab.id ? styles.navTabActive : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-              role="tab"
-              aria-selected={activeTab === tab.id}
-            >
-              <div className={styles.navTabContent}>
-                <span className={styles.tabIcon}>{tab.icon}</span>
-                <span className={styles.tabLabel}>{tab.label}</span>
-              </div>
-            </button>
-          ))}
-        </nav>
-        {/* Simple stacked controls for the active tab */}
-        <div className={styles.controlsContainer} role="tabpanel">
-          {renderTabContent()}
+    <Suspense fallback={null}>
+      <SettingsSidebarOverlay isOpen={isOpen} onClose={onClose}>
+        {/* Header with title and close button */}
+        <div className={styles.header}>
+          <h2 id="settings-title" className={styles.title}>Settings</h2>
+          <button onClick={onClose} className={styles.closeButton} aria-label="Close settings">
+            <IconClose />
+          </button>
         </div>
-      </div>
 
-      {/* Footer actions */}
-      <div className={styles.footer}>
-        <button onClick={resetSettings} className={styles.resetButton}>Reset to Defaults</button>
-        <button onClick={onClose} className={styles.resetButton}>Done</button>
-      </div>
-    </SettingsSidebarOverlay>
+        {/* Body wrapper: vertical on desktop, horizontal on mobile */}
+        <div className={styles.bodyWrapper}>
+          {/* Minimal horizontal tabs (become vertical on desktop) */}
+          <nav className={styles.navTabs} role="tablist">
+            {visibleTabs.map(tab => (
+              <button
+                key={tab.id}
+                className={`${styles.navTab} ${activeTab === tab.id ? styles.navTabActive : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+                role="tab"
+                aria-selected={activeTab === tab.id}
+              >
+                <div className={styles.navTabContent}>
+                  <span className={styles.tabIcon}>{tab.icon}</span>
+                  <span className={styles.tabLabel}>{tab.label}</span>
+                </div>
+              </button>
+            ))}
+          </nav>
+          {/* Simple stacked controls for the active tab */}
+          <div className={styles.controlsContainer} role="tabpanel">
+            {renderTabContent()}
+          </div>
+        </div>
+
+        {/* Footer actions */}
+        <div className={styles.footer}>
+          <button onClick={resetSettings} className={styles.resetButton}>Reset to Defaults</button>
+          <button onClick={onClose} className={styles.resetButton}>Done</button>
+        </div>
+      </SettingsSidebarOverlay>
+    </Suspense>
   );
 };
 
