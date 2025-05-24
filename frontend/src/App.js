@@ -53,6 +53,8 @@ const ESSENTIAL_IMPORTS = {
 };
 
 // UI Controls (Load Third) - Group small controls together
+const loginModalImport = () => import(/* webpackChunkName: "ui-controls" */ "./components/auth/LoginModal");
+
 const UI_CONTROLS_IMPORTS = createSmallChunkBundle(
   [
     () =>
@@ -75,6 +77,7 @@ const UI_CONTROLS_IMPORTS = createSmallChunkBundle(
       import(
         /* webpackChunkName: "ui-controls" */ "./components/common/MoreActions"
       ),
+    loginModalImport,
   ],
   "ui-controls"
 );
@@ -107,10 +110,6 @@ const HEAVY_IMPORTS = {
   streamingMessage: () =>
     import(
       /* webpackChunkName: "heavy-streaming" */ "./components/chat/ChatMessage/StreamingMessage"
-    ),
-  loginModal: () =>
-    import(
-      /* webpackChunkName: "heavy-auth-modal" */ "./components/auth/LoginModal"
     ),
   imageOverlay: () =>
     import(
@@ -145,7 +144,7 @@ const MICRO_IMPORTS = createSmallChunkBundle(
 
 // Lazy-load the layout using the shared import
 const Layout = lazy(CORE_IMPORTS.layout);
-const LoginModal = lazy(HEAVY_IMPORTS.loginModal);
+const LoginModal = lazy(loginModalImport);
 
 // Initialize performance monitoring and adaptive loading
 const chunkMonitor = createChunkMonitor();
@@ -224,7 +223,7 @@ function AppShell() {
           PERFORMANCE_MARKS.COMPONENT_LOAD
         );
 
-        setLoadedPhases((prev) => new Set([...prev, "controls"]));
+        setLoadedPhases((prev) => new Set([...prev, "ui-controls"]));
         setLoadingPhase("ready");
 
         // Show app as interactive
@@ -268,7 +267,7 @@ function AppShell() {
             };
 
             idlePreloadChunks(chunkGroups, {
-              maxConcurrent: strategy.maxConcurrent,
+              maxConcurrent: strategy.maxConcurrent*2,
               priorityDelay: strategy.priorityDelay,
               idleTimeout: strategy.timeout,
             });
@@ -308,7 +307,7 @@ function AppShell() {
   }, []);
 
   // Enhanced loading states with network awareness
-  const isReady = loadingPhase === "ready" || loadedPhases.has("controls");
+  const isReady = loadingPhase === "ready" || loadedPhases.has("ui-controls");
   const showSpinner =
     loadingPhase === "initializing" || loadingPhase === "core";
 
@@ -383,7 +382,7 @@ function AppShell() {
         <Layout />
       </Suspense>
 
-      {isLoggingIn && loadedPhases.has("heavy-components") && (
+      {isLoggingIn && loadedPhases.has("ui-controls") && (
         <Suspense fallback={<Spinner size="small" />}>
           <LoginModal onClose={() => setIsLoggingIn(false)} />
         </Suspense>

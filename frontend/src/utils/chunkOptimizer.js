@@ -222,7 +222,7 @@ export const createAdaptiveLoader = () => {
     
     if (network.saveData || network.effectiveType === 'slow-2g' || network.effectiveType === '2g') {
       return {
-        maxConcurrent: 1,
+        maxConcurrent: 4,
         priorityDelay: 500,
         timeout: 10000,
         skipNonEssential: true,
@@ -231,7 +231,7 @@ export const createAdaptiveLoader = () => {
     
     if (network.effectiveType === '3g') {
       return {
-        maxConcurrent: 2,
+        maxConcurrent: 8,
         priorityDelay: 200,
         timeout: 8000,
         skipNonEssential: false,
@@ -240,7 +240,7 @@ export const createAdaptiveLoader = () => {
     
     // 4g or better
     return {
-      maxConcurrent: 4,
+      maxConcurrent: 16,
       priorityDelay: 100,
       timeout: 5000,
       skipNonEssential: false,

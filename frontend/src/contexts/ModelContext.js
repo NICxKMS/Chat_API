@@ -5,7 +5,8 @@ import { useAuth } from './AuthContext';
 import { useCacheToggle } from '../hooks/useCacheToggle';
 import { useToast } from './ToastContext';
 import { useLoading } from './LoadingContext';
-
+// Inline model processing worker via worker-loader to avoid chunk loading issues
+import ModelProcessorWorker from '../workers/modelProcessor.js';
 // Cache expiry time in milliseconds (5 days)
 const CACHE_EXPIRY_TIME = 5 * 24 * 60 * 60 * 1000;
 
@@ -158,10 +159,12 @@ export const ModelProvider = ({ children }) => {
       const rawData = await response.json();
       console.log("[ModelContext] Raw data:", rawData);
       console.log("[ModelContext] Spawning worker for model processing...");
-      // Offload model processing to Web Worker
-      const worker = new Worker(new URL('../workers/modelProcessor.js', import.meta.url), { type: 'module' });
-      worker.postMessage(rawData);
+      // Offload model processing to Web Worker via inline blob
+      const worker = new ModelProcessorWorker();
+      
+      // Set up event handlers BEFORE posting the message
       worker.onmessage = ({ data: msg }) => {
+        console.log("[ModelContext] Worker message received:", msg);
         if (msg.error) {
           console.error('[ModelContext] Worker error:', msg.error);
           setError(msg.error);
@@ -203,6 +206,11 @@ export const ModelProvider = ({ children }) => {
         setIsLoading(false);
         worker.terminate();
       };
+      
+      // Now post the message to the worker
+      worker.postMessage(rawData);
+      console.log("[ModelContext] Message posted to worker, worker object:", worker);
+
     } catch (err) {
       console.error('Failed to fetch or process models:', err);
       setError(err.message || 'Failed to load model data');

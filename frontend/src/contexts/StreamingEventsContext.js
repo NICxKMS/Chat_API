@@ -9,7 +9,7 @@ import { usePerformanceMetrics } from './PerformanceMetricsContext';
 import { fetchWithRetry } from '../utils/network';
 import debounce from 'lodash.debounce';
 // Inline worker via worker-loader to avoid separate chunk files
-import StreamProcessorWorker from 'worker-loader?inline=no-fallback!../workers/streamProcessor.js';
+import StreamProcessorWorker from '../workers/streamProcessor.js';
 
 // Create a context for streaming events and logic
 const StreamingEventsContext = createContext();

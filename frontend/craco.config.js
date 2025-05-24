@@ -94,16 +94,16 @@ module.exports = {
                 priority: 40,
                 enforce: true,
               },
-              // worker: {
-              //   test(module) {
-              //     return module.resource && isWorker(module.resource);
-              //   },
-              //   chunks: 'all',
-              //   name: 'worker-bundle',
-              //   enforce: true,
-              //   minSize: 0,
-              //   maxSize: Infinity,
-              // },
+              worker: {
+                test(module) {
+                  return module.resource && isWorker(module.resource);
+                },
+                chunks: 'all',
+                name: 'worker-bundle',
+                enforce: true,
+                minSize: 0,
+                maxSize: Infinity,
+              },
               // Markdown processing packages
               // markdown: {
               //   test: /[\\/]node_modules[\\/](react-markdown|remark-gfm|remark-emoji|remark-math|rehype-raw|unified|remark-parse|rehype-stringify)[\\/]/,

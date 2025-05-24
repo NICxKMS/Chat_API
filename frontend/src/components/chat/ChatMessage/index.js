@@ -11,10 +11,12 @@ import LazyMarkdownRenderer from '../../common/LazyMarkdownRenderer';
 const StreamingMessage = lazy(() => import(/* webpackChunkName: "streaming-message", webpackPrefetch: true */ './StreamingMessage'));
 
 // Add a module-level singleton for the TeX worker so we only load the worker script once
-let texWorker;
+import TexProcessorWorker from '../../../workers/texProcessor.js';
+let texWorker; // Define texWorker here to be accessible in getTexWorker
+
 const getTexWorker = () => {
   if (typeof Worker !== 'undefined' && !texWorker) {
-    texWorker = new Worker(new URL('../../../workers/texProcessor.js', import.meta.url), { type: 'module' });
+    texWorker = new TexProcessorWorker();
   }
   return texWorker;
 };

@@ -1,3 +1,4 @@
+console.log('[TexProcessor] Worker script initializing');
 /* eslint-disable no-restricted-globals */
 
 // import { convertTeXToMathDollars } from '../utils/formatters';
@@ -95,7 +96,9 @@ export const convertTeXToMathDollars = (text) => {
 };
 
 // Worker listens for { id, content } and returns id alongside converted TeX
+console.log('[TexProcessor] Worker self.onmessage binding about to happen');
 self.onmessage = (event) => {
+  console.log('[TexProcessor] onmessage received data:', event.data);
   const { id, content } = event.data;
   try {
     const result = convertTeXToMathDollars(content);

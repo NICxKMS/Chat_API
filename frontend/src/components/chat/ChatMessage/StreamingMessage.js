@@ -23,7 +23,7 @@ const CheckIcon = () => (
 );
 
 // Import PrismLight and registerLanguage function
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 
 // Dynamically load ReactMarkdown and its plugins for streaming
 const StreamingMarkdown = lazy(async () => {

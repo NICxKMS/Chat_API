@@ -1,6 +1,9 @@
+console.log("[ModelProcessor] Worker script initializing");
 /* eslint-disable no-restricted-globals */
 // modelProcessor.js
 // Web Worker for processing model list data in the background
+
+console.log("[ModelProcessor] Worker self.onmessage binding about to happen");
 
 /**
  * processModels replicates the logic from ModelContext to transform
@@ -67,10 +70,13 @@ function processModels(data) {
 
 // Listen for messages from main thread
 self.onmessage = ({ data }) => {
+  console.log("[ModelProcessor] onmessage received raw data:", data);
   try {
     const result = processModels(data);
+    console.log("[ModelProcessor] processModels result:", result);
     self.postMessage({ ...result });
   } catch (err) {
+    console.error("[ModelProcessor] Error processing models:", err);
     self.postMessage({ error: err.message });
   }
-}; 
+};

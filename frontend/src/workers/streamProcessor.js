@@ -1,9 +1,11 @@
+console.log('[StreamProcessor] Worker script initializing');
 /* eslint-disable no-restricted-globals */
 
 // streamProcessor.js
 // Web Worker to parse SSE streaming chunks into content + tokenCount
-
+console.log('[StreamProcessor] Worker self.onmessage binding about to happen');
 self.onmessage = ({ data: chunk }) => {
+  console.log('[StreamProcessor] onmessage received data:', chunk);
   // data is the raw chunk string from fetch streams
   const messages = [];
   const parts = chunk.split('\n\n');

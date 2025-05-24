@@ -91,13 +91,20 @@ const ChatInput = memo(({
     const textarea = textareaRef.current;
     if (!textarea) return;
     textarea.style.height = 'auto';
-    const newHeight = Math.min(textarea.scrollHeight + 2, 200);
+    let newHeight;
+    if (isMobile) {
+      // On mobile, keep the original logic (max 200px)
+      newHeight = Math.min(textarea.scrollHeight + 2, 200);
+    } else {
+      // On desktop, use a minimum height of 48px, but allow to grow up to 200px
+      newHeight = Math.max(48, Math.min(textarea.scrollHeight + 2, 200));
+    }
     textarea.style.height = `${newHeight}px`;
     const inputContainer = textarea.closest(`.${styles.ChatInput}`);
     if (inputContainer) {
-      inputContainer.style.setProperty('--textarea-height', `${newHeight}px`); // Use CSS var
+      inputContainer.style.setProperty('--textarea-height', `${newHeight}px`);
     }
-  }, []);
+  }, [isMobile]);
   
   useEffect(() => {
     adjustTextareaHeight();
