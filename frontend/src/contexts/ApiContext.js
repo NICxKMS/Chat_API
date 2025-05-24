@@ -14,7 +14,7 @@ export const useApi = () => {
 
 // API provider component
 export const ApiProvider = ({ children }) => {
-  const [apiUrl] = useState(import.meta.env.REACT_APP_API_URL || 'http://localhost:3000/api'); // Base API URL
+  const [apiUrl] = useState(process.env.REACT_APP_API_URL || 'http://localhost:3000/api'); // Base API URL
 
   // Memoize context value to prevent unnecessary re-renders
   const value = useMemo(() => ({

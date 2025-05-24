@@ -3,7 +3,7 @@ import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
 import { useAuth } from '../../../contexts/AuthContext'; // Import useAuth
 import { useTheme } from '../../../contexts/ThemeContext'; // Import ThemeContext
-import { GearIcon, SignInIcon } from '@primer/octicons-react';
+import { GearIcon} from '@primer/octicons-react';
 import styles from './Layout.module.css';
 // Import icons using the correct paths
 // Import only the specific icons needed
@@ -58,13 +58,6 @@ const Layout = () => {
     setIsModelSelectorOpen(prev => !prev);
   }, []);
 
-  // Lazy-load placeholder logic for AuthButton
-  const [authLoaded, setAuthLoaded] = useState(false);
-  const handleAuthPlaceholderClick = useCallback(() => {
-    setAuthLoaded(true);
-    login();
-  }, [login]);
-
   // Determine layout classes based on state and viewport
   const isSidebarEffectivelyHidden = isDesktop && !isSidebarOpen;
   const layoutClasses = [
@@ -83,32 +76,17 @@ const Layout = () => {
             <ThemeToggle />
           </Suspense>
           
-          {/* Auth Button placeholder: show generic icon, load AuthButton on click */}
-          {authLoaded ? (
-            <Suspense fallback={
-              <button className={styles.Layout__mobileActionButton} disabled aria-label="Loading Authentication">
-                <SignInIcon size={20} />
-              </button>
-            }>
-              <AuthButton 
-                isAuthenticated={isAuthenticated}
-                onLogin={login}
-                onLogout={logout}
-                userName={currentUser?.displayName || currentUser?.email || 'User'}
-                isLoading={authLoading}
-                currentUser={currentUser}
-              />
-            </Suspense>
-          ) : (
-            <button
-              className={styles.Layout__mobileActionButton}
-              onClick={handleAuthPlaceholderClick}
-              aria-label="Login"
-              title="Login or Sign Up"
-            >
-              <SignInIcon size={20} />
-            </button>
-          )}
+          {/* Auth Button */}
+          <Suspense fallback={null}>
+            <AuthButton 
+              isAuthenticated={isAuthenticated}
+              onLogin={login}
+              onLogout={logout}
+              userName={currentUser?.displayName || currentUser?.email || 'User'}
+              isLoading={authLoading}
+              currentUser={currentUser}
+            />
+          </Suspense>
           
           {/* Settings Button */}
           <button 
@@ -208,13 +186,13 @@ const Layout = () => {
         />
       )}
 
-      {/* Conditionally render Settings Panel */}
-      {/* Always mount SettingsPanel to enable CSS transitions on open/close */}
-      <Suspense fallback={null}>
+      {/* Conditionally render Settings Panel */} 
+      {/* Always render Settings Panel for CSS transitions, control visibility via props/classes */}
+      <Suspense fallback={null}> {/* No visible fallback needed */}
         <SettingsPanel 
           isOpen={isSettingsOpen} 
           onClose={toggleSettings} 
-        />
+        /> 
       </Suspense>
     </div>
   );

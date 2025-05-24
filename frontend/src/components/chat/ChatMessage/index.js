@@ -14,7 +14,7 @@ const StreamingMessage = lazy(() => import(/* webpackChunkName: "streaming-messa
 let texWorker;
 const getTexWorker = () => {
   if (typeof Worker !== 'undefined' && !texWorker) {
-    texWorker = new Worker(new URL('../../../workers/texProcessor.jsx', import.meta.url), { type: 'module' });
+    texWorker = new Worker(new URL('../../../workers/texProcessor.js', import.meta.url), { type: 'module' });
   }
   return texWorker;
 };

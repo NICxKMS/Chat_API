@@ -3,15 +3,12 @@ import React, {
   useRef, 
   useCallback, 
   useMemo, 
-  useState,
-  lazy,
-  Suspense
+  useState
 } from 'react';
 import PropTypes from 'prop-types';
 import { useModel, useModelFilter } from '../../../contexts/ModelContext';
-// Lazy-load sub-components for dynamic loading
-const ModelItem = lazy(() => import('../ModelItem'));
-const ModelSearch = lazy(() => import('../ModelSearch'));
+import ModelItem from '../ModelItem';
+import ModelSearch from '../ModelSearch';
 import styles from './ModelDropdown.module.css';
 
 /**
@@ -104,14 +101,13 @@ const ModelList = React.memo(({ isLoading, groupedModels, selectedModel, onSelec
           </div>
           
           {group.models.map(model => (
-            <Suspense fallback={null} key={model.id}>
-              <ModelItem
-                model={model}
-                selected={selectedModel?.id === model.id}
-                onClick={onSelectModel}
-                searchTerm={searchTerm}
-              />
-            </Suspense>
+            <ModelItem
+              key={model.id}
+              model={model}
+              selected={selectedModel?.id === model.id}
+              onClick={onSelectModel}
+              searchTerm={searchTerm}
+            />
           ))}
         </div>
       ))
@@ -151,13 +147,11 @@ ModelList.propTypes = {
  */
 const SearchContainer = React.memo(({ searchTerm, onSearchChange, totalCount }) => (
   <div className={styles.ModelDropdown__searchContainer}>
-    <Suspense fallback={null}>
-      <ModelSearch 
-        searchTerm={searchTerm}
-        onSearchChange={onSearchChange}
-        resultCount={totalCount} 
-      />
-    </Suspense>
+    <ModelSearch 
+      searchTerm={searchTerm}
+      onSearchChange={onSearchChange}
+      resultCount={totalCount} 
+    />
   </div>
 ));
 
@@ -251,7 +245,23 @@ const shouldIncludeModel = (model, showExperimental, searchTerm, provider, forma
   return true;
 };
 
-
+// ExperimentalToggle component is not currently used, commented out
+// const ExperimentalToggle = React.memo(({ isEnabled, onToggle }) => (
+//   <div className={styles.experimentalToggle}>
+//     <label className={styles.toggleLabel}>
+//       <input
+//         type="checkbox"
+//         checked={isEnabled}
+//         onChange={onToggle}
+//         className={styles.toggleInput}
+//       />
+//       <span className={styles.toggleTrack}>
+//         <span className={styles.toggleThumb} />
+//       </span>
+//       <span className={styles.toggleText}>Show experimental models</span>
+//     </label>
+//   </div>
+// ));
 
 /**
  * Main ModelSelection component that orchestrates all model selection UI

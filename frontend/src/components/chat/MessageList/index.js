@@ -1,12 +1,11 @@
-import { forwardRef, useState, useMemo, memo, useEffect, lazy, Suspense } from 'react';
+import { forwardRef, useState, useMemo, memo, useEffect } from 'react';
 import styles from './MessageList.module.css';
 import { useChatState } from '../../../contexts/ChatStateContext';
+import ChatMessage from '../ChatMessage';
+import ImageOverlay from '../../common/ImageOverlay';
 import PropTypes from 'prop-types';
 import { processMessageContent } from '../../../utils/messageHelpers';
 import { useProfilePicture } from '../../../hooks/useProfilePicture';
-// Lazy-load sub-components
-const ChatMessage = lazy(() => import('../ChatMessage'));
-const ImageOverlay = lazy(() => import('../../common/ImageOverlay'));
 
 /**
  * Simple message list without virtualization
@@ -122,15 +121,13 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
               )}
               {/* Render ChatMessage if there's text content or it's not a user message */}
               {(text || message.role !== 'user') && (
-                <Suspense fallback={null}>
-                  <ChatMessage
-                    message={message}
-                    overrideContent={text || undefined}
-                    isStreaming={isStreaming}
-                    onEditMessage={message.role === 'user' ? onEditMessage : undefined}
-                    avatarUrl={message.role === 'user' && idToken ? (cachedAvatar || avatarUrl) : undefined}
-                  />
-                </Suspense>
+                <ChatMessage
+                  message={message}
+                  overrideContent={text || undefined}
+                  isStreaming={isStreaming}
+                  onEditMessage={message.role === 'user' ? onEditMessage : undefined}
+                  avatarUrl={message.role === 'user' && idToken ? (cachedAvatar || avatarUrl) : undefined}
+                />
               )}
             </div>
           );
@@ -139,13 +136,11 @@ const MessageList = forwardRef(({ messages, error, onEditMessage }, ref) => {
       
       {/* Render the overlay component */}
       {overlayImageSrc && (
-        <Suspense fallback={null}>
-          <ImageOverlay
-            src={overlayImageSrc}
-            alt="Image preview"
-            onClose={handleCloseOverlay}
-          />
-        </Suspense>
+        <ImageOverlay
+          src={overlayImageSrc}
+          alt="Image preview"
+          onClose={handleCloseOverlay}
+        />
       )}
     </>
   );

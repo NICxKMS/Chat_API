@@ -1,13 +1,13 @@
-import { useState, useRef, useEffect, useCallback, memo, lazy, Suspense } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
 import styles from './ChatInput.module.css';
 import { useChatState } from '../../../contexts/ChatStateContext';
 import { useChatControl } from '../../../contexts/ChatControlContext';
 
-// Lazy-load sub-components
-const ImagePreviewList = lazy(() => import('./subcomponents/ImagePreviewList'));
-const ChatInputTextArea = lazy(() => import('./subcomponents/ChatInputTextArea'));
-const ChatInputActionRow = lazy(() => import('./subcomponents/ChatInputActionRow'));
+// Import sub-components
+import ImagePreviewList from './subcomponents/ImagePreviewList';
+import ChatInputTextArea from './subcomponents/ChatInputTextArea';
+import ChatInputActionRow from './subcomponents/ChatInputActionRow';
 
 /**
  * Reads a file and returns its base64 representation.
@@ -311,9 +311,7 @@ const ChatInput = memo(({
   return (
     <>
       {/* Image Previews */} 
-      <Suspense fallback={null}>
-        <ImagePreviewList images={selectedImages} onRemoveImage={removeImage} />
-      </Suspense>
+      <ImagePreviewList images={selectedImages} onRemoveImage={removeImage} />
 
       <div className={[
           styles.ChatInput, 
@@ -341,35 +339,31 @@ const ChatInput = memo(({
         />
 
         {/* Text Area and Inline Button */} 
-        <Suspense fallback={null}>
-          <ChatInputTextArea 
-             ref={textareaRef}
-             value={message}
-             onChange={handleChange}
-             onKeyDown={handleKeyDown}
-             onPaste={handlePaste}
-             placeholder={placeholderText}
-             disabled={disabled}
-             isEditing={isEditing}
-             isWaitingForResponse={isWaitingForResponse}
-             selectedModel={selectedModel}
-             onSendClick={handleInlineSendClick}
-          />
-        </Suspense>
+        <ChatInputTextArea 
+           ref={textareaRef}
+           value={message}
+           onChange={handleChange}
+           onKeyDown={handleKeyDown}
+           onPaste={handlePaste}
+           placeholder={placeholderText}
+           disabled={disabled}
+           isEditing={isEditing}
+           isWaitingForResponse={isWaitingForResponse}
+           selectedModel={selectedModel}
+           onSendClick={handleInlineSendClick}
+        />
         
         {/* Action Button Row */} 
-        <Suspense fallback={null}>
-          <ChatInputActionRow 
-             isMobile={isMobile}
-             isEditing={isEditing}
-             disabled={disabled}
-             selectedModel={selectedModel}
-             onNewChat={newChat}
-             onUploadClick={triggerFileInput}
-             onCancelEdit={handleCancelEdit}
-             onToggleModelSelector={toggleModelSelector}
-          />
-        </Suspense>
+        <ChatInputActionRow 
+           isMobile={isMobile}
+           isEditing={isEditing}
+           disabled={disabled}
+           selectedModel={selectedModel}
+           onNewChat={newChat}
+           onUploadClick={triggerFileInput}
+           onCancelEdit={handleCancelEdit}
+           onToggleModelSelector={toggleModelSelector}
+        />
       </div>
     </>
   );
