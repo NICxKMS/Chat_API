@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useCallback,  useMemo } from 'react';
+import React, { createContext, useContext, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useApi } from './ApiContext';
 import { useModel } from './ModelContext';
 import { useSettings } from './SettingsContext';
@@ -8,6 +8,8 @@ import { useChatStatus } from './ChatStatusContext';
 import { usePerformanceMetrics } from './PerformanceMetricsContext';
 import { fetchWithRetry } from '../utils/network';
 import debounce from 'lodash.debounce';
+// Inline worker via worker-loader to avoid separate chunk files
+import StreamProcessorWorker from 'worker-loader?inline=no-fallback!../workers/streamProcessor.js';
 
 // Create a context for streaming events and logic
 const StreamingEventsContext = createContext();
@@ -47,10 +49,7 @@ export const StreamingEventsProvider = ({ children }) => {
   const streamWorkerRef = useRef(null);
   const getOrCreateStreamWorker = useCallback(() => {
     if (!streamWorkerRef.current) {
-      if (!streamWorkerUrlRef.current) {
-        streamWorkerUrlRef.current = new URL('../workers/streamProcessor.js', import.meta.url);
-      }
-      streamWorkerRef.current = new Worker(streamWorkerUrlRef.current, { type: 'module' });
+      streamWorkerRef.current = new StreamProcessorWorker();
     }
     return streamWorkerRef.current;
   }, []);
@@ -108,11 +107,13 @@ export const StreamingEventsProvider = ({ children }) => {
     abortControllerRef.current = abortController;
     try {
       const adjusted = getModelAdjustedSettings(selectedModel);
-      const historyForApi = chatHistoryRef.current.map(({ metrics, ...m }) => m);
+      // Build API history without the placeholder assistant message (empty content)
+      const historyForApi = chatHistoryRef.current
+        .slice(0, -1)
+        .map(({ metrics, ...m }) => m);
       if (adjusted.systemPrompt && (!historyForApi.length || historyForApi[0].role !== 'system')) {
         historyForApi.unshift({ role: 'system', content: adjusted.systemPrompt, timestamp: Date.now() - 1 });
       }
-      historyForApi.push(userMessage);
       const payload = {
         requestId,
         model: modelId,

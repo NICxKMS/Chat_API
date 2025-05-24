@@ -65,13 +65,7 @@ svg {
   background: var(--secondary-text); /* Applied via body theme classes */
 }
 
-/* Removed variable definitions */
-/* Removed theme application logic (body.light-mode, body.dark-mode) */
-/* Removed media query overrides for color-scheme (handled in theme.css) */
-/* Removed utility classes (.card, .button-primary, .gradient-text) - Moved to common.css */
-/* Removed loading screen styles (.loading-screen) - Moved to common.css */
-/* Removed pulse loader styles (.pulse-loader, @keyframes pulse) - Moved to common.css */
-/* Removed mobile keyboard handling media query - Moved to common.css */
+
 
 /* Global Button Hover Effect */
 #root button:not(.Sidebar button):not([class*="SettingsPanel"]):not([class*="Settings"]):not(.ChatInput button):hover {

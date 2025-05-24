@@ -67,16 +67,21 @@
     "stylelint": "^16.19.0",
     "stylelint-config-standard": "^38.0.0",
     "terser-webpack-plugin": "^5.3.14",
-    "webpack-bundle-analyzer": "^4.10.2"
+    "webpack-bundle-analyzer": "^4.10.2",
+    "worker-loader": "^3.0.8"
   },
   "scripts": {
     "start": "cross-env REACT_APP_ENV=development craco start",
-    "start:prod": "serve -s build",
+    "start:prod": "serve -s build -l 3001",
     "dev": "cross-env REACT_APP_ENV=development craco start",
     "dev:fast": "cross-env REACT_APP_ENV=development FAST_REFRESH=true craco start --no-lazy",
     "build": "cross-env REACT_APP_ENV=production GENERATE_SOURCEMAP=true craco build",
     "build:prod": "cross-env REACT_APP_ENV=production craco build",
     "build:analyze": "cross-env REACT_APP_ENV=production ANALYZE=true craco build",
+    "analyze:chunks": "node scripts/analyze-chunks.js",
+    "optimize:chunks": "node scripts/optimize-chunks.js",
+    "optimize:build": "npm run build:analyze && npm run analyze:chunks",
+    "optimize:full": "npm run build:analyze && npm run optimize:chunks",
     "test": "craco test",
     "test:coverage": "craco test --coverage --watchAll=false",
     "test:ci": "cross-env CI=true craco test",

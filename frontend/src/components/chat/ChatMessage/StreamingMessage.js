@@ -22,10 +22,8 @@ const CheckIcon = () => (
   </svg>
 );
 
-// Dynamically load PrismLight component
-const SyntaxHighlighter = lazy(() =>
-  import('react-syntax-highlighter/dist/esm/prism-light').then(mod => ({ default: mod }))
-);
+// Import PrismLight and registerLanguage function
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 
 // Dynamically load ReactMarkdown and its plugins for streaming
 const StreamingMarkdown = lazy(async () => {
@@ -54,11 +52,10 @@ const StreamingMarkdown = lazy(async () => {
   };
 });
 
-// Preload highlighter, theme, and markdown modules during idle time if not yet loaded
+// Preload theme and markdown modules during idle time if not yet loaded
 if (typeof window !== 'undefined') {
   const idleCallback = window.requestIdleCallback || (cb => setTimeout(cb, 2000));
   idleCallback(() => {
-    import('react-syntax-highlighter');
     import('react-syntax-highlighter/dist/esm/styles/prism/atom-dark');
     import('react-syntax-highlighter/dist/esm/styles/prism/prism');
     import('react-markdown');
@@ -81,12 +78,13 @@ const StreamingMessage = ({ content, isStreaming }) => {
   useEffect(() => {
     (async () => {
       try {
-        const mod = await import(
-          isDark
-            ? 'react-syntax-highlighter/dist/esm/styles/prism/atom-dark'
-            : 'react-syntax-highlighter/dist/esm/styles/prism/prism'
-        );
-        setSyntaxTheme(mod.default || mod);
+        if (isDark) {
+          const atomDark = await import('react-syntax-highlighter/dist/esm/styles/prism/atom-dark');
+          setSyntaxTheme(atomDark.default);
+        } else {
+          const prismTheme = await import('react-syntax-highlighter/dist/esm/styles/prism/prism');
+          setSyntaxTheme(prismTheme.default);
+        }
       } catch (e) {
         console.warn('Failed to load syntax theme', e);
       }

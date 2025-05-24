@@ -1,137 +1,434 @@
 /* eslint-disable no-unused-vars */
-import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { ContextManager } from './contexts/ContextManager';
-import Spinner from './components/common/Spinner';
-import { performanceMonitor, PERFORMANCE_MARKS, PERFORMANCE_MEASURES } from './utils/performance';
+import React, { lazy, Suspense, useEffect, useState } from "react";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ContextManager } from "./contexts/ContextManager";
+import Spinner from "./components/common/Spinner";
+import {
+  performanceMonitor,
+  PERFORMANCE_MARKS,
+  PERFORMANCE_MEASURES,
+} from "./utils/performance";
+import {
+  loadChunkGroup,
+  idlePreloadChunks,
+  createChunkMonitor,
+  createAdaptiveLoader,
+  createSmallChunkBundle,
+} from "./utils/chunkOptimizer";
 // (Formatting preloads removed - we rely on on-demand loading)
 
-// === Phase 1: Critical (lazy) components & essential import definitions ===
-// Define all essential dynamic imports once for reuse
+// === Enhanced Lazy Loading Strategy with Chunk Optimization ===
+// Group related components into micro-chunks for better caching and loading
+
+// Core Layout Components (Critical - Load First)
+const CORE_IMPORTS = {
+  layout: () =>
+    import(/* webpackChunkName: "core-layout" */ "./components/layout/Layout"),
+  spinner: () =>
+    import(
+      /* webpackChunkName: "core-spinner" */ "./components/common/Spinner"
+    ),
+};
+
+// Essential UI Components (Load Second)
 const ESSENTIAL_IMPORTS = {
-  layout: () => import(/* webpackPreload: true, webpackChunkName: "layout" */ './components/layout/Layout'),
-  chatContainer: () => import(/* webpackPreload: true, webpackChunkName: "chat-container" */ './components/chat/ChatContainer'),
-  chatInput: () => import(/* webpackPreload: true, webpackChunkName: "chat-input" */ './components/chat/ChatInput'),
-  modelDropdown: () => import(/* webpackPreload: true, webpackChunkName: "models-dropdown" */ './components/models/ModelDropdown'),
-  sidebar: () => import(/* webpackPreload: true, webpackChunkName: "layout-sidebar" */ './components/layout/Sidebar'),
-  themeToggle: () => import(/* webpackPreload: true, webpackChunkName: "common-theme" */ './components/common/ThemeToggle'),
-  sidebarToggle: () => import(/* webpackPreload: true, webpackChunkName: "layout-sidebar-toggle" */ './components/layout/SidebarToggle'),
-  messageList: () => import(/* webpackPreload: true, webpackChunkName: "chat-messagelist" */ './components/chat/MessageList'),
-  authButton: () => import(/* webpackPreload: true, webpackChunkName: "auth-button" */ './components/auth/AuthButton'),
-  globalMetrics: () => import(/* webpackPreload: true, webpackChunkName: "chat-globalmetrics" */ './components/chat/GlobalMetricsBar'),
-  moreActions: () => import(/* webpackPreload: true, webpackChunkName: "common-more-actions" */ './components/common/MoreActions'),
+  chatContainer: () =>
+    import(
+      /* webpackChunkName: "chat-container" */ "./components/chat/ChatContainer"
+    ),
+  chatInput: () =>
+    import(/* webpackChunkName: "chat-input" */ "./components/chat/ChatInput"),
+  messageList: () =>
+    import(
+      /* webpackChunkName: "chat-messages" */ "./components/chat/MessageList"
+    ),
+  sidebar: () =>
+    import(
+      /* webpackChunkName: "layout-sidebar" */ "./components/layout/Sidebar"
+    ),
+  mainContent: () =>
+    import(
+      /* webpackChunkName: "layout-main" */ "./components/layout/MainContent"
+    ),
 };
+
+// UI Controls (Load Third) - Group small controls together
+const UI_CONTROLS_IMPORTS = createSmallChunkBundle(
+  [
+    () =>
+      import(
+        /* webpackChunkName: "ui-controls" */ "./components/models/ModelDropdown"
+      ),
+    () =>
+      import(
+        /* webpackChunkName: "ui-controls" */ "./components/common/ThemeToggle"
+      ),
+    () =>
+      import(
+        /* webpackChunkName: "ui-controls" */ "./components/layout/SidebarToggle"
+      ),
+    () =>
+      import(
+        /* webpackChunkName: "ui-controls" */ "./components/auth/AuthButton"
+      ),
+    () =>
+      import(
+        /* webpackChunkName: "ui-controls" */ "./components/common/MoreActions"
+      ),
+  ],
+  "ui-controls"
+);
+
+// Secondary Features (Load Fourth) - Group feature components
+const SECONDARY_IMPORTS = createSmallChunkBundle(
+  [
+    () =>
+      import(
+        /* webpackChunkName: "features" */ "./components/chat/GlobalMetricsBar"
+      ),
+    () =>
+      import(
+        /* webpackChunkName: "features" */ "./components/chat/PerformanceMetrics"
+      ),
+    () =>
+      import(
+        /* webpackChunkName: "features" */ "./components/settings/SettingsPanel"
+      ),
+  ],
+  "features"
+);
+
+// Heavy/Optional Components (Load on Idle)
+const HEAVY_IMPORTS = {
+  markdownRenderer: () =>
+    import(
+      /* webpackChunkName: "heavy-markdown" */ "./components/common/LazyMarkdownRenderer/MarkdownRenderer"
+    ),
+  streamingMessage: () =>
+    import(
+      /* webpackChunkName: "heavy-streaming" */ "./components/chat/ChatMessage/StreamingMessage"
+    ),
+  loginModal: () =>
+    import(
+      /* webpackChunkName: "heavy-auth-modal" */ "./components/auth/LoginModal"
+    ),
+  imageOverlay: () =>
+    import(
+      /* webpackChunkName: "heavy-image-overlay" */ "./components/common/ImageOverlay"
+    ),
+  typingIndicator: () =>
+    import(
+      /* webpackChunkName: "heavy-typing" */ "./components/common/TypingIndicator"
+    ),
+};
+
+// External Services (Load Last)
+const EXTERNAL_IMPORTS = {
+  firebase: () =>
+    import(/* webpackChunkName: "external-firebase" */ "./firebaseConfig").then(
+      () => {
+        window.dispatchEvent(new Event("firebaseInitialized"));
+      }
+    ),
+};
+
+// Micro-components bundled together for efficiency
+const MICRO_IMPORTS = createSmallChunkBundle(
+  [
+    () => import(/* webpackChunkName: "micro-bundle" */ "react-icons"),
+    () => import(/* webpackChunkName: "micro-bundle" */ "lodash.debounce"),
+    () => import(/* webpackChunkName: "micro-bundle" */ "lodash.throttle"),
+    () => import(/* webpackChunkName: "micro-bundle" */ "clsx"),
+  ],
+  "micro-bundle"
+);
+
 // Lazy-load the layout using the shared import
-const Layout = lazy(ESSENTIAL_IMPORTS.layout);
-// Lazy-load the login modal separately
-const LoginModal = lazy(() => import(/* webpackChunkName: "login-modal" */ './components/auth/LoginModal'));
+const Layout = lazy(CORE_IMPORTS.layout);
+const LoginModal = lazy(HEAVY_IMPORTS.loginModal);
 
-// Only essential preload for core components (plus idle-loaded heavy chunks)
-const PRELOAD_IMPORTS = {
-  essential: Object.values(ESSENTIAL_IMPORTS),
-  heavy: [
-    () => import(/* webpackPrefetch: true, webpackChunkName: "markdown-renderer" */ './components/common/LazyMarkdownRenderer/MarkdownRenderer'),
-    () => import(/* webpackPrefetch: true, webpackChunkName: "streaming-message" */ './components/chat/ChatMessage/StreamingMessage'),
-    () => import(/* webpackPrefetch: true, webpackChunkName: "firebase-config" */ './firebaseConfig')
-              .then(() => {
-                window.dispatchEvent(new Event('firebaseInitialized'));
-              }),
-  ]
-};
-
-// Remove unused `preloadAsync` helper; keep `preloadSync` for essential sync loads
-const preloadSync = async (imports) => {
-  await Promise.all(imports.map(fn => fn()));
-};
-
-// Simplify idlePreload: on idle, batch load all heavy imports
-const idlePreload = (imports, onComplete) => {
-  requestIdleCallback(() => {
-    imports.forEach((fn, idx) => fn()
-      .then(() => onComplete(idx))
-      .catch(() => {})
-    );
-  });
-};
+// Initialize performance monitoring and adaptive loading
+const chunkMonitor = createChunkMonitor();
+const adaptiveLoader = createAdaptiveLoader();
 
 /**
- * AppShell handles phased loading of chunks for optimal startup.
+ * Enhanced AppShell with intelligent chunk loading and network awareness
  */
 function AppShell() {
-  const [shellReady, setShellReady] = useState(false);
-  const [firebaseReady, setFirebaseReady] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState("initializing");
+  const [loadedPhases, setLoadedPhases] = useState(new Set());
+  const [networkStrategy, setNetworkStrategy] = useState(null);
   const { isLoggingIn, setIsLoggingIn } = useAuth();
 
   useEffect(() => {
     let canceled = false;
 
-    async function runPhases() {
-      // Phase 1: Essential components
+    async function runEnhancedPhases() {
       performanceMonitor.mark(PERFORMANCE_MARKS.APP_START);
-      console.log('[Phase1] Loading essential components...');
+
+      // Get network-aware loading strategy
+      const strategy = adaptiveLoader.getStrategy();
+      setNetworkStrategy(strategy);
+
+      console.log("🌐 Network strategy:", strategy);
+
       try {
-        await preloadSync(PRELOAD_IMPORTS.essential);
+        // Phase 1: Core Components (Critical Path)
+        setLoadingPhase("core");
+        chunkMonitor.startLoad("core");
+
+        await loadChunkGroup(CORE_IMPORTS, {
+          groupName: "core",
+          timeout: strategy.timeout,
+          retries: strategy.skipNonEssential ? 1 : 2,
+        });
+
+        if (canceled) return;
+
+        chunkMonitor.endLoad("core", true);
         performanceMonitor.mark(PERFORMANCE_MARKS.IMPORTANT_COMPONENTS_LOADED);
-        performanceMonitor.measure(
-          PERFORMANCE_MEASURES.IMPORTANT_LOAD_TIME,
-          PERFORMANCE_MARKS.APP_START,
-          PERFORMANCE_MARKS.IMPORTANT_COMPONENTS_LOADED
-        );
+        setLoadedPhases((prev) => new Set([...prev, "core"]));
+
+        // Phase 2: Essential UI (Main Interface)
+        setLoadingPhase("essential");
+        chunkMonitor.startLoad("essential");
+
+        await loadChunkGroup(ESSENTIAL_IMPORTS, {
+          groupName: "essential",
+          timeout: strategy.timeout,
+          retries: strategy.skipNonEssential ? 1 : 2,
+        });
+
+        if (canceled) return;
+
+        chunkMonitor.endLoad("essential", true);
+        setLoadedPhases((prev) => new Set([...prev, "essential"]));
+
+        // Phase 3: UI Controls (Interactive Elements) - Load as bundled group
+        setLoadingPhase("controls");
+        chunkMonitor.startLoad("ui-controls");
+
+        await loadChunkGroup(UI_CONTROLS_IMPORTS, {
+          groupName: "ui-controls",
+          timeout: strategy.timeout,
+          retries: 1,
+        });
+
+        if (canceled) return;
+
+        chunkMonitor.endLoad("ui-controls", true);
         performanceMonitor.mark(PERFORMANCE_MARKS.COMPONENT_LOAD);
         performanceMonitor.measure(
           PERFORMANCE_MEASURES.COMPONENT_LOAD,
           PERFORMANCE_MARKS.APP_START,
           PERFORMANCE_MARKS.COMPONENT_LOAD
         );
-        console.log('[Phase1] Essential components loaded');
-      } catch (error) {
-        console.error('[Phase1] Error loading essential components:', error);
-      }
 
-      // Show initial shell before heavy loads
-      requestAnimationFrame(async () => {
-        if (canceled) return;
-        setShellReady(true);
-        performanceMonitor.mark(PERFORMANCE_MARKS.APP_INTERACTIVE);
-        performanceMonitor.measure(
-          PERFORMANCE_MEASURES.TIME_TO_INTERACTIVE,
-          PERFORMANCE_MARKS.APP_START,
-          PERFORMANCE_MARKS.APP_INTERACTIVE
-        );
-        console.log('[Phase1] App is interactive; idle-preloading heavy components');
-        idlePreload(PRELOAD_IMPORTS.heavy, (idx) => {
-          if (idx === PRELOAD_IMPORTS.heavy.length - 1) {
-            console.log('[Phase2] Heavy components idle-preloaded');
-            setFirebaseReady(true);
+        setLoadedPhases((prev) => new Set([...prev, "controls"]));
+        setLoadingPhase("ready");
+
+        // Show app as interactive
+        requestAnimationFrame(() => {
+          if (canceled) return;
+
+          performanceMonitor.mark(PERFORMANCE_MARKS.APP_INTERACTIVE);
+          performanceMonitor.measure(
+            PERFORMANCE_MEASURES.TIME_TO_INTERACTIVE,
+            PERFORMANCE_MARKS.APP_START,
+            PERFORMANCE_MARKS.APP_INTERACTIVE
+          );
+
+          console.log(
+            "[Enhanced] App is interactive; starting intelligent preloading"
+          );
+
+          // Phase 4+: Intelligent idle loading based on network conditions
+          if (!strategy.skipNonEssential) {
+            const chunkGroups = {
+              "secondary-features": {
+                imports: SECONDARY_IMPORTS,
+                priority: 0,
+                options: { timeout: strategy.timeout },
+              },
+              "heavy-components": {
+                imports: HEAVY_IMPORTS,
+                priority: 1,
+                options: { timeout: strategy.timeout * 1.5 },
+              },
+              "external-services": {
+                imports: EXTERNAL_IMPORTS,
+                priority: 2,
+                options: { timeout: strategy.timeout * 2 },
+              },
+              "micro-components": {
+                imports: MICRO_IMPORTS,
+                priority: 3,
+                options: { timeout: strategy.timeout },
+              },
+            };
+
+            idlePreloadChunks(chunkGroups, {
+              maxConcurrent: strategy.maxConcurrent,
+              priorityDelay: strategy.priorityDelay,
+              idleTimeout: strategy.timeout,
+            });
+
+            // Monitor chunk loading
+            Object.keys(chunkGroups).forEach((groupName) => {
+              chunkMonitor.startLoad(groupName);
+            });
+
+            // Update loaded phases as chunks complete
+            const originalOnComplete = (groupName) => {
+              chunkMonitor.endLoad(groupName, true);
+              setLoadedPhases(
+                (prev) =>
+                  new Set([...prev, groupName.toLowerCase().replace(" ", "-")])
+              );
+            };
+          } else {
+            console.log(
+              "🚫 Skipping non-essential chunks due to network conditions"
+            );
           }
         });
-      });
+      } catch (error) {
+        console.error("[Enhanced] Error in loading phases:", error);
+        chunkMonitor.endLoad(loadingPhase, false);
+        setLoadingPhase("error");
+      }
     }
 
-    runPhases();
+    runEnhancedPhases();
+
     return () => {
       canceled = true;
       performanceMonitor.clear();
     };
   }, []);
 
-  // Spinner until shell is ready
-  if (!shellReady) {
+  // Enhanced loading states with network awareness
+  const isReady = loadingPhase === "ready" || loadedPhases.has("controls");
+  const showSpinner =
+    loadingPhase === "initializing" || loadingPhase === "core";
+
+  if (showSpinner) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          flexDirection: "column",
+          gap: "1rem",
+        }}
+      >
         <Spinner size="medium" />
+        <div style={{ fontSize: "0.875rem", opacity: 0.7 }}>
+          Loading {loadingPhase}...
+          {networkStrategy && (
+            <div style={{ fontSize: "0.75rem", marginTop: "0.5rem" }}>
+              Network: {networkStrategy.effectiveType || "detecting..."}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
-  // Shell ready: render layout + chat UI
+  if (loadingPhase === "error") {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          flexDirection: "column",
+          gap: "1rem",
+        }}
+      >
+        <div>⚠️ Loading Error</div>
+        <button onClick={() => window.location.reload()}>Reload App</button>
+        {process.env.NODE_ENV === "development" && (
+          <details style={{ marginTop: "1rem", fontSize: "0.875rem" }}>
+            <summary>Performance Metrics</summary>
+            <pre style={{ textAlign: "left", fontSize: "0.75rem" }}>
+              {JSON.stringify(chunkMonitor.getMetrics(), null, 2)}
+            </pre>
+          </details>
+        )}
+      </div>
+    );
+  }
+
+  // App ready: render layout + chat UI
   return (
     <>
-      <Suspense fallback={<Spinner size="small" />}><Layout /></Suspense>
-      {isLoggingIn && firebaseReady && (
+      <Suspense
+        fallback={
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100vh",
+            }}
+          >
+            <Spinner size="small" />
+          </div>
+        }
+      >
+        <Layout />
+      </Suspense>
+
+      {isLoggingIn && loadedPhases.has("heavy-components") && (
         <Suspense fallback={<Spinner size="small" />}>
           <LoginModal onClose={() => setIsLoggingIn(false)} />
         </Suspense>
+      )}
+
+      {/* Enhanced debug info in development */}
+      {process.env.NODE_ENV === "development" && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "10px",
+            right: "10px",
+            background: "rgba(0,0,0,0.9)",
+            color: "white",
+            padding: "12px",
+            borderRadius: "8px",
+            fontSize: "11px",
+            zIndex: 9999,
+            maxWidth: "300px",
+            fontFamily: "monospace",
+          }}
+        >
+          <div>
+            <strong>Phase:</strong> {loadingPhase}
+          </div>
+          <div>
+            <strong>Loaded:</strong> {Array.from(loadedPhases).join(", ")}
+          </div>
+          {networkStrategy && (
+            <>
+              <div>
+                <strong>Network:</strong>{" "}
+                {adaptiveLoader.getNetworkInfo().effectiveType}
+              </div>
+              <div>
+                <strong>Strategy:</strong> {networkStrategy.maxConcurrent}x
+                concurrent
+              </div>
+            </>
+          )}
+          <div>
+            <strong>Chunks:</strong> {chunkMonitor.getMetrics().totalLoaded}{" "}
+            loaded, {chunkMonitor.getMetrics().totalFailed} failed
+          </div>
+        </div>
       )}
     </>
   );
@@ -146,4 +443,4 @@ export default function App() {
       </ContextManager>
     </AuthProvider>
   );
-} 
+}
