@@ -1,2 +1,0 @@
-import{v as t}from"./vendor-unist-util-visit-CYGNQgsi.js";const n={}.hasOwnProperty;function e(e){const r=Object.create(null);if(!e||!e.type)throw new Error("mdast-util-definitions expected node");return t(e,"definition",(t=>{const e=i(t.identifier);e&&!n.call(r,e)&&(r[e]=t)})),function(t){const e=i(t);return e&&n.call(r,e)?r[e]:null}}function i(t){return String(t||"").toUpperCase()}export{e as d};
-//# sourceMappingURL=vendor-mdast-util-definitions-BogZMgA2.js.map

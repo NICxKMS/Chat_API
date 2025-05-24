@@ -1,2 +1,0 @@
-import{d as r}from"./vendor-sindresorhus-DhiBqWQZ.js";import{e}from"./vendor-emojilib-CaOLuxD8.js";import{c as a}from"./vendor-char-regex-C1IE5pyU.js";a();var s=String.fromCharCode(65039),o=new RegExp(s,"g");var t=Object.entries(e.lib).map((([r,{char:e}])=>[r,e])),n=new Map(t);new Map(t.map((([r,e])=>{return[(a=e,a.replace(o,"")),r];var a})));var i=e=>{return r.assert.string(e),n.get(/:.+:/.test(a=e)?a.slice(1,-1):a);var a};export{i as g};
-//# sourceMappingURL=vendor-node-emoji-DYLhFgjT.js.map

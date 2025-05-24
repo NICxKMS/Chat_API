@@ -1,16 +1,18 @@
 import './utils/polyfills';
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles/common/colors.css';
 import './styles/common/tokens.css';
 import './styles/theme.css';
 import './index.css';
-import App from './App';
 import reportWebVitals from './reportWebVitals';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import { ToastProvider } from './contexts/ToastContext';
 import { LoadingProvider } from './contexts/LoadingContext';
 import GlobalLoadingIndicator from './components/common/GlobalLoadingIndicator';
+
+// Lazy-load the App component to reduce initial bundle size
+const App = lazy(() => import(/* webpackChunkName: "app-shell" */ './App'));
 
 // Set initial theme class on <body> so theme mappings (light-mode/dark-mode) take effect
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;

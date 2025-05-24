@@ -1,2 +1,0 @@
-var n,r;function a(){if(r)return n;function a(n){n.languages.bnf={string:{pattern:/"[^\r\n"]*"|'[^\r\n']*'/},definition:{pattern:/<[^<>\r\n\t]+>(?=\s*::=)/,alias:["rule","keyword"],inside:{punctuation:/^<|>$/}},rule:{pattern:/<[^<>\r\n\t]+>/,inside:{punctuation:/^<|>$/}},operator:/::=|[|()[\]{}*+?]|\.{3}/},n.languages.rbnf=n.languages.bnf}return r=1,n=a,a.displayName="bnf",a.aliases=["rbnf"],n}export{a as r};
-//# sourceMappingURL=refractor-bnf-Ct5dz0iD.js.map

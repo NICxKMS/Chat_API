@@ -1,17 +1,11 @@
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, lazy, Suspense, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import styles from './ChatMessage.module.css';
-import atomDark from 'react-syntax-highlighter/dist/esm/styles/prism/atom-dark';
-import prism from 'react-syntax-highlighter/dist/esm/styles/prism/prism';
 import { useTheme } from '../../../contexts/ThemeContext';
-import remarkGfm from 'remark-gfm';
-import remarkEmoji from 'remark-emoji';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
 import { convertTeXToMathDollars } from '../../../utils/formatters';
+
+// Track registered Prism languages for on-demand lazy loading (all languages supported)
+const registeredLanguages = new Set();
 
 // Copy Icon SVG (simple inline version)
 const CopyIcon = () => (
@@ -28,14 +22,76 @@ const CheckIcon = () => (
   </svg>
 );
 
+// Dynamically load PrismLight component
+const SyntaxHighlighter = lazy(() =>
+  import('react-syntax-highlighter/dist/esm/prism-light').then(mod => ({ default: mod }))
+);
+
+// Dynamically load ReactMarkdown and its plugins for streaming
+const StreamingMarkdown = lazy(async () => {
+  const [rmMod, gfmMod, emojiMod, mathMod, rehypeMod] = await Promise.all([
+    import('react-markdown'),
+    import('remark-gfm'),
+    import('remark-emoji'),
+    import('remark-math'),
+    import('rehype-katex'),
+    import('katex/dist/katex.min.css'),
+  ]);
+  return {
+    default: ({ children, components }) => (
+      <rmMod.default
+        remarkPlugins={[
+          gfmMod.default || gfmMod,
+          emojiMod.default || emojiMod,
+          mathMod.default || mathMod
+        ]}
+        rehypePlugins={[rehypeMod.default || rehypeMod]}
+        components={components}
+      >
+        {children}
+      </rmMod.default>
+    ),
+  };
+});
+
+// Preload highlighter, theme, and markdown modules during idle time if not yet loaded
+if (typeof window !== 'undefined') {
+  const idleCallback = window.requestIdleCallback || (cb => setTimeout(cb, 2000));
+  idleCallback(() => {
+    import('react-syntax-highlighter');
+    import('react-syntax-highlighter/dist/esm/styles/prism/atom-dark');
+    import('react-syntax-highlighter/dist/esm/styles/prism/prism');
+    import('react-markdown');
+    import('remark-gfm');
+    import('remark-emoji');
+    import('remark-math');
+    import('rehype-katex');
+    import('katex/dist/katex.min.css');
+  });
+}
+
 /**
  * StreamingMessage component using react-markdown for rendering the entire content.
  */
 const StreamingMessage = ({ content, isStreaming }) => {
   const { isDark } = useTheme();
   const [copiedCodeMap, setCopiedCodeMap] = useState({}); // Use a map for multiple blocks
-
-  const syntaxTheme = isDark ? atomDark : prism;
+  // Dynamically load theme style based on current theme
+  const [syntaxTheme, setSyntaxTheme] = useState(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        const mod = await import(
+          isDark
+            ? 'react-syntax-highlighter/dist/esm/styles/prism/atom-dark'
+            : 'react-syntax-highlighter/dist/esm/styles/prism/prism'
+        );
+        setSyntaxTheme(mod.default || mod);
+      } catch (e) {
+        console.warn('Failed to load syntax theme', e);
+      }
+    })();
+  }, [isDark]);
 
   // Handle copy code to clipboard, using index as key
   const handleCopyCode = useCallback((code, index) => {
@@ -52,6 +108,20 @@ const StreamingMessage = ({ content, isStreaming }) => {
     // Only treat content wrapped in triple backticks as code blocks (ignore indents)
     const match = /language-(\w+)/.exec(className || '');
     const language = match ? match[1] : 'plaintext'; // Default to plaintext if no language class
+    // Lazy-load Prism language definition on demand
+    if (language && !registeredLanguages.has(language)) {
+      import(
+        /* webpackChunkName: "prism-language-[request]" */
+        `react-syntax-highlighter/dist/esm/languages/prism/${language}.js`
+      )
+        .then(mod => {
+          SyntaxHighlighter.registerLanguage(language, mod.default || mod);
+          registeredLanguages.add(language);
+        })
+        .catch(err => {
+          console.warn(`Unable to load syntax highlighter language: ${language}`, err);
+        });
+    }
     const codeContent = String(children).replace(/\n$/, ''); // Get code content
 
     // Use index from node's position if available, fallback to content hash or similar
@@ -74,17 +144,23 @@ const StreamingMessage = ({ content, isStreaming }) => {
             )}
           </button>
         </div>
-        <SyntaxHighlighter
-          style={syntaxTheme}
-          customStyle={{ background: 'transparent' }}
-          language={language}
-          PreTag="div" // Use div instead of pre, SyntaxHighlighter wraps in its own pre
-          className={styles.pre}
-          wrapLines={true} // Consider wrapping lines based on preference
-          {...props}
-        >
-          {codeContent}
-        </SyntaxHighlighter>
+        <Suspense fallback={<pre className={styles.pre}>{codeContent}</pre>}>
+          {syntaxTheme ? (
+            <SyntaxHighlighter
+              style={syntaxTheme}
+              customStyle={{ background: 'transparent' }}
+              language={language}
+              PreTag="div" // Use div instead of pre, SyntaxHighlighter wraps in its own pre
+              className={styles.pre}
+              wrapLines={true} // Consider wrapping lines based on preference
+              {...props}
+            >
+              {codeContent}
+            </SyntaxHighlighter>
+          ) : (
+            <pre className={styles.pre}>{codeContent}</pre>
+          )}
+        </Suspense>
       </div>
     ) : (
       // Render inline code with specific styling
@@ -108,14 +184,11 @@ const StreamingMessage = ({ content, isStreaming }) => {
 
   return (
     <div className={markdownClassName}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkEmoji, remarkMath]}
-        rehypePlugins={[rehypeKatex]}
-        components={markdownComponents}
-        // skipHtml={false}
-      >
-        {contentToRender}
-      </ReactMarkdown>
+      <Suspense fallback={<div>{contentToRender}</div>}>
+        <StreamingMarkdown components={markdownComponents}>
+          {contentToRender}
+        </StreamingMarkdown>
+      </Suspense>
     </div>
   );
 };

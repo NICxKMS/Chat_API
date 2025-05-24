@@ -1,2 +1,0 @@
-import{r as n}from"./refractor-json-DVK-d709.js";var s,a;function r(){if(a)return s;a=1;var r=n();function e(n){n.register(r),n.languages.jsonp=n.languages.extend("json",{punctuation:/[{}[\]();,.]/}),n.languages.insertBefore("jsonp","punctuation",{function:/(?!\s)[_$a-zA-Z\xA0-\uFFFF](?:(?!\s)[$\w\xA0-\uFFFF])*(?=\s*\()/})}return s=e,e.displayName="jsonp",e.aliases=[],s}export{r};
-//# sourceMappingURL=refractor-jsonp-Do_LRkdO.js.map

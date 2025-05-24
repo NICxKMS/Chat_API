@@ -1,2 +1,0 @@
-var a,r;function e(){if(r)return a;function e(a){a.languages.false={comment:{pattern:/\{[^}]*\}/},string:{pattern:/"[^"]*"/,greedy:!0},"character-code":{pattern:/'(?:[^\r]|\r\n?)/,alias:"number"},"assembler-code":{pattern:/\d+`/,alias:"important"},number:/\d+/,operator:/[-!#$%&'*+,./:;=>?@\\^_`|~ßø]/,punctuation:/\[|\]/,variable:/[a-z]/,"non-standard":{pattern:/[()<BDO®]/,alias:"bold"}}}return r=1,a=e,e.displayName="$false",e.aliases=[],a}export{e as r};
-//# sourceMappingURL=refractor-false-BaPcgB8V.js.map

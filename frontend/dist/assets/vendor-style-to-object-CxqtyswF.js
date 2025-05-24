@@ -1,2 +1,0 @@
-import{g as r}from"./framework--d6mMtcS.js";import{r as t}from"./vendor-inline-style-parser-D8_Zmyug.js";var e,o={exports:{}};const n=r(function(){if(e)return o.exports;e=1;var r=t();function n(t,e){var o,n=null;if(!t||"string"!=typeof t)return n;for(var s,p,f=r(t),a="function"==typeof e,i=0,u=f.length;i<u;i++)s=(o=f[i]).property,p=o.value,a?e(s,p,o):p&&(n||(n={}),n[s]=p);return n}return o.exports=n,o.exports.default=n,o.exports}());export{n as S};
-//# sourceMappingURL=vendor-style-to-object-CxqtyswF.js.map

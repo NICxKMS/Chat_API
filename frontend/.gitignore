@@ -29,6 +29,7 @@ coverage/
 
 # Build and compiled files
 build/
+dist/
 Release/
 *.tsbuildinfo
 
@@ -55,7 +56,7 @@ jspm_packages/
 .next/
 out/
 .nuxt/
-# dist/
+/dist
 .cache/
 .vuepress/dist
 .temp

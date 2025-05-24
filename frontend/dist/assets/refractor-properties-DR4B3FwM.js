@@ -1,2 +1,0 @@
-var t,r;function n(){if(r)return t;function n(t){t.languages.properties={comment:/^[ \t]*[#!].*$/m,"attr-value":{pattern:/(^[ \t]*(?:\\(?:\r\n|[\s\S])|[^\\\s:=])+(?: *[=:] *(?! )| ))(?:\\(?:\r\n|[\s\S])|[^\\\r\n])+/m,lookbehind:!0},"attr-name":/^[ \t]*(?:\\(?:\r\n|[\s\S])|[^\\\s:=])+(?= *[=:]| )/m,punctuation:/[=:]/}}return r=1,t=n,n.displayName="properties",n.aliases=[],t}export{n as r};
-//# sourceMappingURL=refractor-properties-DR4B3FwM.js.map

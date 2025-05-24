@@ -1,20 +1,25 @@
-// let BundleAnalyzerPlugin;
-// try {
-//   BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-// } catch (error) {
-//   console.warn('webpack-bundle-analyzer not found. Bundle analysis will be disabled.');
-//   BundleAnalyzerPlugin = null;
-// }
-// let ESLintPlugin;
-// try {
-//   ESLintPlugin = require('eslint-webpack-plugin').ESLintPlugin;
-// } catch (error) {
-//   console.warn('eslint-webpack-plugin not found. ESLint will be disabled.');
-//   ESLintPlugin = null;
-// }
+let BundleAnalyzerPlugin;
+try {
+  BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+} catch (error) {
+  console.warn('webpack-bundle-analyzer not found. Bundle analysis will be disabled.');
+  BundleAnalyzerPlugin = null;
+}
+let ESLintPlugin;
+try {
+  ESLintPlugin = require('eslint-webpack-plugin').ESLintPlugin;
+} catch (error) {
+  console.warn('eslint-webpack-plugin not found. ESLint will be disabled.');
+  ESLintPlugin = null;
+}
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const CompressionPlugin = require('compression-webpack-plugin');
+const Critters = require('critters-webpack-plugin');
 const { version } = require('./package.json');
+// Plugins for inlining runtime chunks
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin');
 
 module.exports = {
   devServer: {
@@ -24,16 +29,31 @@ module.exports = {
   },
   webpack: {
     configure: (webpackConfig, { env, paths }) => {
+      // Alias React to Preact for smaller builds
+      webpackConfig.resolve = {
+        ...(webpackConfig.resolve || {}),
+        alias: {
+          ...(webpackConfig.resolve.alias || {}),
+          'react': 'preact/compat',
+          'react-dom': 'preact/compat',
+          'react-dom/test-utils': 'preact/test-utils',
+          'react/jsx-runtime': 'preact/jsx-runtime'
+        }
+      };
       if (env === 'production') {
+        // Use relative asset URLs to fix MIME type issues when serving static files
+        webpackConfig.output.publicPath = './';
         webpackConfig.optimization = {
+          chunkIds: 'named',
+          moduleIds: 'deterministic',
           ...webpackConfig.optimization,
           runtimeChunk: { name: 'runtime' },
           splitChunks: {
             chunks: 'all',
-            minSize: 15000,
+            minSize: 20000,
             maxSize: 50000,
-            maxInitialRequests: 10,
-            maxAsyncRequests: 10,
+            maxInitialRequests: 15,
+            maxAsyncRequests: 15,
             cacheGroups: {
               // Framework/UI libraries (should be cached long-term)
               react: {
@@ -125,7 +145,7 @@ module.exports = {
                 chunks: 'all',
                 priority: 50, // Highest priority to override all other rules
               },
-              // // Small modules bundled together
+              // Small modules bundled together
               // smallChunks: {
               //   // Merge all modules smaller than 10KB into this bundle
               //   test: module => module.size() < 10000,
@@ -163,31 +183,48 @@ module.exports = {
             plugin.options.chunkFilename = `static/css/[name].[contenthash:10].chunk.v${ver}.css`;
           }
         });
+        // Inline small runtime chunks into HTML to avoid extra round-trips
+        webpackConfig.plugins.push(
+          new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/runtime~.+[.]js/])
+        );
+        // Add gzip and brotli compression of assets
+        webpackConfig.plugins.push(
+          // new CompressionPlugin({ filename: '[path][base].gz', algorithm: 'gzip', test: /\.(js|css|html|svg)$/, threshold: 10240, minRatio: 0.8 }),
+          // new CompressionPlugin({ filename: '[path][base].br', algorithm: 'brotliCompress', compressionOptions: { level: 11 }, test: /\.(js|css|html|svg)$/, threshold: 10240, minRatio: 0.8 })
+        );
+        // Inline critical CSS for above-the-fold content
+        webpackConfig.plugins.push(
+          new Critters({
+            preload: false,
+            noscriptFallback: true
+          })
+        );
 
-        // if (process.env.ANALYZE === 'true' && BundleAnalyzerPlugin) {
-        //   webpackConfig.plugins.push(
-        //     new BundleAnalyzerPlugin({
-        //       analyzerMode: 'static',
-        //       reportFilename: 'bundle-report.html',
-        //       generateStatsFile: true,
-        //       statsFilename: 'stats.json'
-        //     })
-        //   );
-        // } else if (process.env.ANALYZE === 'true') {
-        //   console.warn('Analysis requested (ANALYZE=true), but webpack-bundle-analyzer is not installed or failed to load.');
-        // }
+        if (process.env.ANALYZE === 'true' && BundleAnalyzerPlugin) {
+          webpackConfig.plugins.push(
+            new BundleAnalyzerPlugin({
+              analyzerMode: 'static',
+              reportFilename: 'bundle-report.html',
+              generateStatsFile: true,
+              statsFilename: 'stats.json'
+            })
+          );
+        } else if (process.env.ANALYZE === 'true') {
+          console.warn('Analysis requested (ANALYZE=true), but webpack-bundle-analyzer is not installed or failed to load.');
+        }
       }
       return webpackConfig;
     }
   },
   babel: {
     presets: [
-      '@babel/preset-env',
+      ['@babel/preset-env', { useBuiltIns: 'usage', corejs: 3 }],
       ['@babel/preset-react', {
         runtime: 'automatic'
       }]
     ],
     plugins: [
+      'lodash',
       '@babel/plugin-syntax-dynamic-import',
       process.env.REACT_APP_ENV === 'production' && ['babel-plugin-transform-react-remove-prop-types', {
         removeImport: true,

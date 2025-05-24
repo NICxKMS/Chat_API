@@ -30,9 +30,9 @@ const LoginModal = lazy(() => import(/* webpackChunkName: "login-modal" */ './co
 const PRELOAD_IMPORTS = {
   essential: Object.values(ESSENTIAL_IMPORTS),
   heavy: [
-    () => import(/* webpackChunkName: "markdown-renderer" */ './components/common/LazyMarkdownRenderer/MarkdownRenderer'),
-    () => import(/* webpackChunkName: "streaming-message" */ './components/chat/ChatMessage/StreamingMessage'),
-    () => import(/* webpackChunkName: "firebase-config" */ './firebaseConfig')
+    () => import(/* webpackPrefetch: true, webpackChunkName: "markdown-renderer" */ './components/common/LazyMarkdownRenderer/MarkdownRenderer'),
+    () => import(/* webpackPrefetch: true, webpackChunkName: "streaming-message" */ './components/chat/ChatMessage/StreamingMessage'),
+    () => import(/* webpackPrefetch: true, webpackChunkName: "firebase-config" */ './firebaseConfig')
               .then(() => {
                 window.dispatchEvent(new Event('firebaseInitialized'));
               }),
@@ -41,10 +41,9 @@ const PRELOAD_IMPORTS = {
 
 // Remove unused `preloadAsync` helper; keep `preloadSync` for essential sync loads
 const preloadSync = async (imports) => {
-  for (const fn of imports) {
-    await fn();
-  }
+  await Promise.all(imports.map(fn => fn()));
 };
+
 // Simplify idlePreload: on idle, batch load all heavy imports
 const idlePreload = (imports, onComplete) => {
   requestIdleCallback(() => {

@@ -1,2 +1,0 @@
-import{r}from"./refractor-t4-templating-D2Dq0Upo.js";import{r as a}from"./refractor-csharp-CAzzBGqJ.js";var t,e;function s(){if(e)return t;e=1;var s=r(),i=a();function n(r){r.register(s),r.register(i),r.languages.t4=r.languages["t4-cs"]=r.languages["t4-templating"].createT4("csharp")}return t=n,n.displayName="t4Cs",n.aliases=[],t}export{s as r};
-//# sourceMappingURL=refractor-t4-cs-CaAfd0mr.js.map
