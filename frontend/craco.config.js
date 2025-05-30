@@ -10,7 +10,7 @@ try {
 }
 let ESLintPlugin;
 try {
-  ESLintPlugin = require("eslint-webpack-plugin").ESLintPlugin;
+  ESLintPlugin = import("eslint-webpack-plugin").then(module => module.default);
 } catch (error) {
   console.warn("eslint-webpack-plugin not found. ESLint will be disabled.");
   ESLintPlugin = null;
@@ -71,10 +71,10 @@ module.exports = {
           splitChunks: {
             chunks: "all",
             minSize: 16000, // ~5KB gzipped - minimum chunk size
-            maxSize: 80000, // ~25KB gzipped - maximum chunk size
+            maxSize: 90000, // ~25KB gzipped - maximum chunk size
             minChunks: 1,
             maxInitialRequests: 20, // Increased to allow more initial chunks
-            maxAsyncRequests: 20, // Increased to allow more async chunks
+            maxAsyncRequests: 10, // Increased to allow more async chunks
             cacheGroups: {
               // Bundle all worker modules into a single worker-bundle file
               workerBundles: {
@@ -105,13 +105,16 @@ module.exports = {
                 maxSize: Infinity,
               },
               // Markdown processing packages
-              // markdown: {
-              //   test: /[\\/]node_modules[\\/](react-markdown|remark-gfm|remark-emoji|remark-math|rehype-raw|unified|remark-parse|rehype-stringify)[\\/]/,
-              //   name: "markdown",
-              //   chunks: "all",
-              //   priority: 30,
-              //   enforce: true,
-              // },
+              markdown: {
+                test: /[\\/]node_modules[\\/](react-markdown|emojilib|remark-gfm|remark-emoji|remark-math|rehype-raw|unified|remark-parse|rehype-stringify|.*msat.*|.*micromark.*|.*unist.*|.*gfm.*)[\\/]/,
+                name: "markdown",
+                chunks: "all",
+                priority: 30,
+                minSize: 80000,
+                maxSize: 85000,
+                enforce: true,
+              },
+              
               // Math rendering
               katex: {
                 test: /[\\/]node_modules[\\/](rehype-katex|katex)[\\/]/,
@@ -126,6 +129,8 @@ module.exports = {
                 name: "syntax-highlighter",
                 chunks: "all",
                 priority: 30,
+                minSize: 200000,
+                maxSize: 1000000,
                 enforce: true,
               },
               // // Icons packages
@@ -142,24 +147,25 @@ module.exports = {
                 name: "firebase",
                 chunks: "all",
                 priority: 20,
+                minSize: 200000,
                 enforce: true,
               },
               // Virtualization libraries
-              virtualization: {
-                test: /[\\/]node_modules[\\/](react-virtuoso|react-window|react-virtualized-auto-sizer)[\\/]/,
-                name: "virtualization",
-                chunks: "all",
-                priority: 25,
-                enforce: true,
-              },
+              // virtualization: {
+              //   test: /[\\/]node_modules[\\/](react-virtuoso|react-window|react-virtualized-auto-sizer)[\\/]/,
+              //   name: "virtualization",
+              //   chunks: "all",
+              //   priority: 25,
+              //   enforce: true,
+              // },
               // Utility libraries
-              utils: {
-                test: /[\\/]node_modules[\\/](lodash|date-fns|web-vitals|clsx|prop-types)[\\/]/,
-                name: "utils",
-                chunks: "all",
-                priority: 15,
-                enforce: true,
-              },
+              // utils: {
+              //   test: /[\\/]node_modules[\\/](lodash|date-fns|web-vitals|clsx|prop-types)[\\/]/,
+              //   name: "utils",
+              //   chunks: "all",
+              //   priority: 15,
+              //   enforce: true,
+              // },
               // Small vendor chunks (merge into 10KB gzipped bundles)
               // smallVendor: {
               //   test: /[\\/]node_modules[\\/]/,
@@ -196,28 +202,18 @@ module.exports = {
                 name: "vendor-refractor",
                 chunks: "all",
                 priority: 21,
-                minSize: 3000,
-                maxSize: 19200, // ~6KB gzipped
+                minSize: 80000,
+                maxSize: 100000, // ~6KB gzipped
                 enforce: true,
               },
-              // Large vendor chunks (>25KB gzipped) - Split into smaller pieces
-              largeVendor: {
+              // Combined vendor bundle for all remaining node_modules packages
+              vendorBundle: {
                 test: /[\\/]node_modules[\\/]/,
+                name: "vendor-bundle",
                 chunks: "all",
-                priority: 12,
-                name(module, chunks, cacheGroupKey) {
-                  const packageNameMatch = module.context.match(
-                    /[\\\\/]node_modules[\\\\/](.*?)([\\\\/]|$)/
-                  );
-                  const packageName =
-                    packageNameMatch && packageNameMatch[1]
-                      ? packageNameMatch[1].replace("@", "").replace("/", "-")
-                      : "vendor";
-                  return `large-vendor-${packageName}`;
-                },
-                minSize: 80000, // ~25KB gzipped
-                maxSize: 80000, // Force splitting above 25KB gzipped
-                minChunks: 2,
+                minSize: 300000,
+                maxSize: 500000,
+                priority: 10,
                 enforce: true,
               },
               // CSS files
@@ -225,6 +221,8 @@ module.exports = {
                 test: /\.css$/,
                 name: "styles",
                 chunks: "all",
+                minSize: 100000,
+                maxSize: 200000,
                 enforce: true,
                 priority: 30,
               },
@@ -240,28 +238,28 @@ module.exports = {
               //   enforce: true,
               // },
               // Medium application chunks (10-25KB gzipped)
-              mediumAppChunks: {
-                test: /[\\/]src[\\/]/,
-                chunks: "all",
-                priority: 6,
-                name(module, chunks, cacheGroupKey) {
-                  // Extract meaningful names from file paths
-                  const path = module.resource || module.identifier();
-                  if (path.includes("/components/")) {
-                    const componentMatch = path.match(/\/components\/([^\/]+)/);
-                    return componentMatch
-                      ? `app-${componentMatch[1]}`
-                      : "app-components";
-                  }
-                  if (path.includes("/contexts/")) return "app-contexts";
-                  if (path.includes("/hooks/")) return "app-hooks";
-                  if (path.includes("/utils/")) return "app-utils";
-                  return "app-misc";
-                },
-                minSize: 33000, // ~10KB gzipped
-                maxSize: 80000, // ~25KB gzipped
-                enforce: true,
-              },
+              // mediumAppChunks: {
+              //   test: /[\\/]src[\\/]/,
+              //   chunks: "all",
+              //   priority: 6,
+              //   name(module, chunks, cacheGroupKey) {
+              //     // Extract meaningful names from file paths
+              //     const path = module.resource || module.identifier();
+              //     if (path.includes("/components/")) {
+              //       const componentMatch = path.match(/\/components\/([^\/]+)/);
+              //       return componentMatch
+              //         ? `app-${componentMatch[1]}`
+              //         : "app-components";
+              //     }
+              //     if (path.includes("/contexts/")) return "app-contexts";
+              //     if (path.includes("/hooks/")) return "app-hooks";
+              //     if (path.includes("/utils/")) return "app-utils";
+              //     return "app-misc";
+              //   },
+              //   minSize: 50000, // ~10KB gzipped
+              //   maxSize: 80000, // ~25KB gzipped
+              //   enforce: true,
+              // },
               // Large application chunks (>25KB gzipped) - Split into smaller pieces
               largeAppChunks: {
                 test: /[\\/]src[\\/]/,
@@ -279,8 +277,8 @@ module.exports = {
                   }
                   return "app-large";
                 },
-                minSize: 15000, // ~15KB gzipped
-                maxSize: 35000, // Force splitting above 25KB gzipped
+                minSize: 50000, // ~15KB gzipped
+                maxSize: 70000, // Force splitting above 25KB gzipped
                 enforce: true,
               },
               // Custom chunks defined by webpackChunkName - Highest priority
@@ -373,6 +371,10 @@ module.exports = {
               reportFilename: "bundle-report.html",
               generateStatsFile: true,
               statsFilename: "stats.json",
+              defaultSizes: "parsed", // Show uncompressed sizes
+              statsOptions: {
+                all: true
+              },
             })
           );
         } else if (process.env.ANALYZE === "true") {

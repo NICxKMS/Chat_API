@@ -108,7 +108,7 @@ const HEAVY_IMPORTS = {
     ),
   streamingMessage: () =>
     import(
-      /* webpackChunkName: "heavy-streaming" */ "./components/chat/ChatMessage/StreamingMessage"
+      /* webpackChunkName: "streaming-message" */ "./components/chat/ChatMessage/StreamingMessage"
     ),
   imageOverlay: () =>
     import(
@@ -119,16 +119,6 @@ const HEAVY_IMPORTS = {
       /* webpackChunkName: "heavy-typing" */ "./components/common/TypingIndicator"
     ),
 };
-
-// External Services (Load Last)
-// const EXTERNAL_IMPORTS = {
-//   // firebase: () =>  // Removed from here
-//   //   import(/* webpackChunkName: "external-firebase" */ "./firebaseConfig").then(
-//   //     () => {
-//   //       window.dispatchEvent(new Event("firebaseInitialized"));
-//   //     }
-//   //   ),
-// };
 
 // Micro-components bundled together for efficiency
 const MICRO_IMPORTS = createSmallChunkBundle(
@@ -242,49 +232,51 @@ function AppShell() {
 
           // Phase 4+: Intelligent idle loading based on network conditions
           if (!strategy.skipNonEssential) {
-            performanceMonitor.mark(PERFORMANCE_MARKS.POST_INTERACTIVE_PRELOAD_START);
-            const chunkGroups = {
-              "secondary-features": {
-                imports: SECONDARY_IMPORTS,
-                priority: 0,
-                options: { timeout: strategy.timeout },
-              },
-              "heavy-components": {
-                imports: HEAVY_IMPORTS,
-                priority: 1,
-                options: { timeout: strategy.timeout * 1.5 },
-              },
-              "external-services": {
-                imports: EXTERNAL_IMPORTS,
-                priority: 2,
-                options: { timeout: strategy.timeout * 2 },
-              },
-              "micro-components": {
-                imports: MICRO_IMPORTS,
-                priority: 3,
-                options: { timeout: strategy.timeout },
-              },
-            };
+            // Delay idle preload start by at least 1.5 seconds after interactive
+            setTimeout(() => {
+              performanceMonitor.mark(PERFORMANCE_MARKS.POST_INTERACTIVE_PRELOAD_START);
+              const chunkGroups = {
+                "secondary-features": {
+                  imports: SECONDARY_IMPORTS,
+                  priority: 0,
+                  options: { timeout: strategy.timeout },
+                },
+                "heavy-components": {
+                  imports: {
+                    streamingMessage: HEAVY_IMPORTS.streamingMessage,
+                    imageOverlay: HEAVY_IMPORTS.imageOverlay,
+                    typingIndicator: HEAVY_IMPORTS.typingIndicator,
+                  },
+                  priority: 1,
+                  options: { timeout: strategy.timeout * 1.5 },
+                },
+                "micro-components": {
+                  imports: MICRO_IMPORTS,
+                  priority: 3,
+                  options: { timeout: strategy.timeout },
+                },
+              };
 
-            idlePreloadChunks(chunkGroups, {
-              maxConcurrent: strategy.maxConcurrent*2,
-              priorityDelay: strategy.priorityDelay,
-              idleTimeout: strategy.timeout,
-            });
+              idlePreloadChunks(chunkGroups, {
+                maxConcurrent: strategy.maxConcurrent * 2,
+                priorityDelay: strategy.priorityDelay,
+                idleTimeout: strategy.timeout,
+              });
 
-            // Monitor chunk loading
-            Object.keys(chunkGroups).forEach((groupName) => {
-              chunkMonitor.startLoad(groupName);
-            });
+              // Monitor chunk loading
+              Object.keys(chunkGroups).forEach((groupName) => {
+                chunkMonitor.startLoad(groupName);
+              });
 
-            // Update loaded phases as chunks complete
-            const originalOnComplete = (groupName) => {
-              chunkMonitor.endLoad(groupName, true);
-              setLoadedPhases(
-                (prev) =>
-                  new Set([...prev, groupName.toLowerCase().replace(" ", "-")])
-              );
-            };
+              // Update loaded phases as chunks complete
+              const originalOnComplete = (groupName) => {
+                chunkMonitor.endLoad(groupName, true);
+                setLoadedPhases(
+                  (prev) =>
+                    new Set([...prev, groupName.toLowerCase().replace(" ", "-")])
+                );
+              };
+            }, 250);
           } else {
             console.log(
               "🚫 Skipping non-essential chunks due to network conditions"
