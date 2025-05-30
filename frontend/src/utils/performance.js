@@ -14,6 +14,7 @@ const PERFORMANCE_MARKS = {
   FIRST_PAINT: 'first-paint',
   FIRST_CONTENTFUL_PAINT: 'first-contentful-paint',
   APP_INTERACTIVE: 'app-interactive',
+  POST_INTERACTIVE_PRELOAD_START: 'post-interactive-preload-start',
   APP_READY: 'app-ready'
 };
 

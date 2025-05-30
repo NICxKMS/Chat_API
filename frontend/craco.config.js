@@ -226,7 +226,7 @@ module.exports = {
                 name: "styles",
                 chunks: "all",
                 enforce: true,
-                priority: 20,
+                priority: 30,
               },
               // // Small application chunks (merge into 10KB gzipped bundles)
               // smallAppChunks: {
@@ -317,6 +317,9 @@ module.exports = {
           minimize: true,
           minimizer: [
             new TerserPlugin({
+              // Only minify JS files
+              test: /\.m?js(\?.*)?$/i,
+              exclude: /\.css$/i,
               terserOptions: {
                 compress: {
                   drop_console: true,
@@ -329,18 +332,20 @@ module.exports = {
                 },
               },
             }),
-            new CssMinimizerPlugin(),
+            new CssMinimizerPlugin({
+              // Only minify CSS files
+              test: /\.css$/i,
+            }),
           ],
         };
-
         // add version-based cache busting to filenames
         const ver = version.replace(/\./g, "_");
         webpackConfig.output.filename = `static/js/[name].[contenthash:10].v${ver}.js`;
         webpackConfig.output.chunkFilename = `static/js/[name].[contenthash:10].chunk.v${ver}.js`;
         webpackConfig.plugins.forEach((plugin) => {
           if (plugin.constructor.name === "MiniCssExtractPlugin") {
-            plugin.options.filename = `static/css/[name].[contenthash:10].v${ver}.css`;
-            plugin.options.chunkFilename = `static/css/[name].[contenthash:10].chunk.v${ver}.css`;
+            // plugin.options.filename = `static/css/[name].[contenthash:10].v${ver}.css`;
+            // plugin.options.chunkFilename = `static/css/[name].[contenthash:10].chunk.v${ver}.css`;
           }
         });
         // Inline small runtime chunks into HTML to avoid extra round-trips

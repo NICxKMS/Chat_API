@@ -8,6 +8,9 @@ import styles from './Layout.module.css';
 // Import icons using the correct paths
 // Import only the specific icons needed
 
+const SettingsPanel = lazy(() => {
+  return import(/* webpackChunkName: "settings-panel" */ '../../settings/SettingsPanel');
+});
 
 // Lazily loaded components - Prefetch hints removed for manual loading
 const Sidebar = lazy(() => import(/* webpackChunkName: "layout-sidebar" */ '../Sidebar'));
@@ -15,7 +18,6 @@ const MainContent = lazy(() => import(/* webpackPreload: true, webpackChunkName:
 const ModelDropdown = lazy(() => import(/* webpackChunkName: "models-dropdown" */ '../../models/ModelDropdown'));
 const Spinner = lazy(() => import(/* webpackChunkName: "common-spinner" */ '../../common/Spinner'));
 const ThemeToggle = lazy(() => import(/* webpackChunkName: "common-theme" */ '../../common/ThemeToggle'));
-const SettingsPanel = lazy(() => import(/* webpackChunkName: "settings-panel" */ '../../settings/SettingsPanel'));
 const SidebarToggle = lazy(() => import(/* webpackChunkName: "layout-sidebar-toggle" */ '../SidebarToggle'));
 const MoreActions = lazy(() => import(/* webpackChunkName: "common-more-actions" */ '../../common/MoreActions'));
 const AuthButton = lazy(() => import(/* webpackChunkName: "auth-button" */ '../../auth/AuthButton'));
@@ -52,7 +54,7 @@ const Layout = () => {
       // console.log("Previous state:", prev, "New state:", !prev); // Log state change
       return !prev;
     });
-  }, []);
+  }, [isSettingsOpen]);
 
   const toggleModelSelector = useCallback(() => {
     setIsModelSelectorOpen(prev => !prev);
@@ -188,12 +190,14 @@ const Layout = () => {
 
       {/* Conditionally render Settings Panel */} 
       {/* Always render Settings Panel for CSS transitions, control visibility via props/classes */}
-      <Suspense fallback={null}> {/* No visible fallback needed */}
-        <SettingsPanel 
-          isOpen={isSettingsOpen} 
-          onClose={toggleSettings} 
-        /> 
-      </Suspense>
+      {isSettingsOpen && (
+        <Suspense fallback={null}> {/* No visible fallback needed */}
+          <SettingsPanel 
+            isOpen={isSettingsOpen} 
+            onClose={toggleSettings} 
+          /> 
+        </Suspense>
+      )}
     </div>
   );
 };

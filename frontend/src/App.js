@@ -53,7 +53,7 @@ const ESSENTIAL_IMPORTS = {
 };
 
 // UI Controls (Load Third) - Group small controls together
-const loginModalImport = () => import(/* webpackChunkName: "ui-controls" */ "./components/auth/LoginModal");
+const loginModalImport = () => import(/* webpackChunkName: "login-modal" */ "./components/auth/LoginModal");
 
 const UI_CONTROLS_IMPORTS = createSmallChunkBundle(
   [
@@ -77,7 +77,6 @@ const UI_CONTROLS_IMPORTS = createSmallChunkBundle(
       import(
         /* webpackChunkName: "ui-controls" */ "./components/common/MoreActions"
       ),
-    loginModalImport,
   ],
   "ui-controls"
 );
@@ -122,14 +121,14 @@ const HEAVY_IMPORTS = {
 };
 
 // External Services (Load Last)
-const EXTERNAL_IMPORTS = {
-  firebase: () =>
-    import(/* webpackChunkName: "external-firebase" */ "./firebaseConfig").then(
-      () => {
-        window.dispatchEvent(new Event("firebaseInitialized"));
-      }
-    ),
-};
+// const EXTERNAL_IMPORTS = {
+//   // firebase: () =>  // Removed from here
+//   //   import(/* webpackChunkName: "external-firebase" */ "./firebaseConfig").then(
+//   //     () => {
+//   //       window.dispatchEvent(new Event("firebaseInitialized"));
+//   //     }
+//   //   ),
+// };
 
 // Micro-components bundled together for efficiency
 const MICRO_IMPORTS = createSmallChunkBundle(
@@ -243,6 +242,7 @@ function AppShell() {
 
           // Phase 4+: Intelligent idle loading based on network conditions
           if (!strategy.skipNonEssential) {
+            performanceMonitor.mark(PERFORMANCE_MARKS.POST_INTERACTIVE_PRELOAD_START);
             const chunkGroups = {
               "secondary-features": {
                 imports: SECONDARY_IMPORTS,

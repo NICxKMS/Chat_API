@@ -21,28 +21,52 @@ export const AuthProvider = ({ children }) => {
   const [, startAuthLoading, stopAuthLoading] = useLoading('auth');
   const [error, setError] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false); // State to trigger login UI
-  const [isFirebaseInitialized, setIsFirebaseInitialized] = useState(false);
+  const [isFirebaseReady, setIsFirebaseReady] = useState(false); 
   const { showToast } = useToast();
 
   useEffect(() => {
     if (loading) startAuthLoading(); else stopAuthLoading();
   }, [loading, startAuthLoading, stopAuthLoading]);
 
+  const ensureFirebaseReady = useCallback(async () => {
+    if (isFirebaseReady) return true;
+    try {
+      const { getFirebaseAuth } = await import(/* webpackChunkName: "firebase-config" */ '../firebaseConfig');
+      const auth = getFirebaseAuth(); // This ensures initialization via firebaseConfig.js
+      if (auth) {
+        console.log("Firebase is ready through ensureFirebaseReady.");
+        setIsFirebaseReady(true);
+        return true;
+      }
+      throw new Error("Firebase Auth could not be initialized by ensureFirebaseReady");
+    } catch (e) {
+      console.error("Failed to ensure Firebase readiness:", e);
+      setError(e.message || "Failed to initialize authentication service.");
+      setIsFirebaseReady(false);
+      showToast({ type: 'error', message: e.message || "Failed to initialize auth service." });
+      return false;
+    }
+  }, [isFirebaseReady, showToast]);
+
   const login = useCallback(async () => {
     console.log("Login button clicked, setting isLoggingIn to true.");
     setIsLoggingIn(true);
-  }, [setIsLoggingIn]);
+    // Ensure Firebase is ready when login process starts, LoginModal might need it soon.
+    await ensureFirebaseReady(); 
+  }, [setIsLoggingIn, ensureFirebaseReady]);
 
   const logout = useCallback(async () => {
-    if (!isFirebaseInitialized) {
-      console.log("Firebase not initialized yet, cannot logout.");
+    const ready = await ensureFirebaseReady();
+    if (!ready) {
+      console.log("Firebase not ready, cannot logout.");
+      showToast({ type: 'error', message: 'Authentication service not ready for logout.' });
       return;
     }
     const { getFirebaseAuth } = await import(/* webpackChunkName: "firebase-config" */ '../firebaseConfig');
     const { signOut: firebaseSignOut } = await import(/* webpackChunkName: "firebase-auth" */ 'firebase/auth');
     const auth = getFirebaseAuth();
     if (!auth) {
-      const msg = "Firebase not initialized.";
+      const msg = "Firebase not initialized for logout.";
       setError(msg);
       showToast({ type: 'error', message: msg });
       return;
@@ -56,21 +80,19 @@ export const AuthProvider = ({ children }) => {
       setError(msg);
       showToast({ type: 'error', message: msg });
     }
-  }, [isFirebaseInitialized, setError, showToast]);
+  }, [ensureFirebaseReady, setError, showToast]);
 
-  // Effect to listen for Firebase auth state changes
   useEffect(() => {
     let unsubscribe = null;
 
-    // Listen for the 'firebaseInitialized' event from App.js
-    const handleFirebaseInit = () => {
-      console.log("Received Firebase initialized event");
-      setIsFirebaseInitialized(true);
-      initializeAuthListener();
-    };
-
-    // Function to initialize auth listener
     const initializeAuthListener = async () => {
+      // Attempt to make Firebase ready if not already, e.g., for existing sessions
+      const ready = await ensureFirebaseReady();
+      if (!ready) {
+        console.log("Firebase not ready, skipping auth listener setup.");
+        return; // If still not ready, abort.
+      }
+      
       setLoading(true);
       // Dynamically import Firebase auth
       const { getFirebaseAuth } = await import(/* webpackChunkName: "firebase-config" */ '../firebaseConfig');
@@ -88,12 +110,11 @@ export const AuthProvider = ({ children }) => {
         setCurrentUser(user);
         if (user) {
           try {
-            // Force refresh is false by default, gets cached token if available
             const token = await user.getIdToken();
             setIdToken(token);
             try { localStorage.setItem('idToken', token); } catch (e) { console.warn('Failed to cache idToken', e); }
-            setError(null); // Clear previous errors on successful login
-            setIsLoggingIn(false); // Ensure login UI closes if open
+            setError(null); 
+            setIsLoggingIn(false); 
             console.log("User signed in, token obtained.");
           } catch (err) {
             console.error("Failed to get ID token:", err);
@@ -101,33 +122,32 @@ export const AuthProvider = ({ children }) => {
             setError(msg);
             showToast({ type: 'error', message: msg });
             setIdToken(null);
-            // Optionally sign out the user if token fetch fails critically
-            const { signOut: firebaseSignOut } = await import(/* webpackChunkName: "firebase-auth" */ 'firebase/auth');
-            await firebaseSignOut(auth);
+            try {
+                const { signOut: firebaseSignOutFallback } = await import(/* webpackChunkName: "firebase-auth" */ 'firebase/auth');
+                await firebaseSignOutFallback(auth);
+            } catch (signOutError) {
+                console.error("Fallback sign out failed:", signOutError);
+            }
           }
         } else {
-          // User is signed out
           setIdToken(null);
           try { localStorage.removeItem('idToken'); } catch (e) { console.warn('Failed to remove cached idToken', e); }
-          setIsLoggingIn(false); // Ensure login UI closes if open
+          setIsLoggingIn(false); 
           console.log("User signed out.");
         }
-        setLoading(false); // Auth state determined
+        setLoading(false); 
       });
     };
 
-    // Define a custom event for Firebase initialization
-    window.addEventListener('firebaseInitialized', handleFirebaseInit);
+    initializeAuthListener();
 
-    // Cleanup listener on component unmount
     return () => {
-      window.removeEventListener('firebaseInitialized', handleFirebaseInit);
       if (typeof unsubscribe === 'function') {
-      console.log("Cleaning up Firebase onAuthStateChanged listener.");
+        console.log("Cleaning up Firebase onAuthStateChanged listener.");
         unsubscribe();
       }
     };
-  }, [showToast]);
+  }, [showToast, ensureFirebaseReady]); // ensureFirebaseReady is a dependency
 
   const value = useMemo(() => ({
     currentUser,
@@ -139,8 +159,9 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!currentUser && !!idToken,
     isLoggingIn,
     setIsLoggingIn,
-    isFirebaseInitialized
-  }), [currentUser, idToken, loading, error, login, logout, isLoggingIn, setIsLoggingIn, isFirebaseInitialized]);
+    isFirebaseReady, // expose this if LoginModal needs to check it
+    ensureFirebaseReady // Expose this if LoginModal needs to trigger/wait for it
+  }), [currentUser, idToken, loading, error, login, logout, isLoggingIn, setIsLoggingIn, isFirebaseReady, ensureFirebaseReady]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }; 
