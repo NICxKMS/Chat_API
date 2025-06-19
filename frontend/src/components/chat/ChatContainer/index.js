@@ -145,29 +145,20 @@ const ChatContainer = memo(({
 
   // Handle edit message request from a message
   const handleEditMessage = useCallback((message) => {
-    // Can't edit while waiting for response
-    if (isWaitingForResponse) return;
     setEditingMessage(message);
     // Scroll to input area if needed
     setTimeout(() => {
       const inputArea = document.querySelector(`.${styles.ChatContainer__fixedInputArea}`);
       if (inputArea) {
-        // inputArea.scrollIntoView({ behavior: 'smooth' }); // Commented out to prevent scroll
+        // inputArea.scrollIntoView({ behavior: 'smooth' });
       }
     }, 100);
-  }, [isWaitingForResponse]);
+  }, [setEditingMessage]);
 
   // Handle cancel edit
   const handleCancelEdit = useCallback(() => {
     setEditingMessage(null);
   }, []);
-
-  // Disable editing if the model starts responding
-  useEffect(() => {
-    if (isWaitingForResponse && editingMessage) {
-      setEditingMessage(null);
-    }
-  }, [isWaitingForResponse, editingMessage]);
 
   // Classes for the main container
   const chatContainerClasses = `${styles.ChatContainer} ${isActiveChat ? styles['ChatContainer--activeChat'] : styles['ChatContainer--emptyChat']} ${editingMessage ? styles['ChatContainer--editingMode'] : ''}`;
@@ -194,7 +185,6 @@ const ChatContainer = memo(({
             <ChatInput
               isInitialChat={isInitialChat}
               onSendMessage={handleSendMessage}
-              disabled={isWaitingForResponse} 
               selectedModel={modelFromLogic} 
               editingMessage={editingMessage}
               onCancelEdit={handleCancelEdit}

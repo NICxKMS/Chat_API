@@ -88,7 +88,7 @@ CapabilityTabs.propTypes = {
  */
 const ModelList = React.memo(({ isLoading, groupedModels, selectedModel, onSelectModel, searchTerm, totalCount, activeCapability, onClearSearch }) => (
   <div className={styles.ModelDropdown__modelList} role="listbox">
-    {isLoading ? (
+    {isLoading && groupedModels.length === 0 ? (
       <div className={styles.ModelDropdown__loading}>Loading models...</div>
     ) : groupedModels && Object.keys(groupedModels).length > 0 ? (
       groupedModels.map((group) => (
