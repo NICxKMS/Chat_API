@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkai_chat_interface=self.webpackChunkai_chat_interface||[]).push([["heavy-typing"],{29078:(a,i,c)=>{c.r(i),c.d(i,{default:()=>d});var n=c(85908);const e="TypingIndicator_TypingIndicator__dot__V1-Du";var s=c(44440);const t=(0,n.ph)((()=>(0,s.FD)("div",{className:"TypingIndicator_TypingIndicator__g9IVa","aria-label":"AI is typing",children:[(0,s.Y)("div",{className:e}),(0,s.Y)("div",{className:e}),(0,s.Y)("div",{className:e})]})));t.displayName="TypingIndicator";const d=t}}]);
+//# sourceMappingURL=heavy-typing.88cc965417.chunk.v1_9_7.js.map
