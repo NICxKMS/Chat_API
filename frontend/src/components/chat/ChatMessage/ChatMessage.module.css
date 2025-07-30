@@ -11,6 +11,11 @@
   }
 }
 
+/* Fade-in animation for new streaming text chunks */
+.streamingChunk {
+  animation: fadeIn 0.3s ease-out;
+}
+
 @keyframes cursor-blink {
   0%,
   100% {

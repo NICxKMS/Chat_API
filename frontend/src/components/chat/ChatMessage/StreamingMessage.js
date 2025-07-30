@@ -1,8 +1,11 @@
-import React, { useState, useCallback, useMemo, lazy, Suspense, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, lazy, Suspense, useEffect, useRef, useTransition } from 'react';
 import PropTypes from 'prop-types';
 import styles from './ChatMessage.module.css';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { convertTeXToMathDollars } from '../../../utils/formatters';
+
+// Import PrismLight and registerLanguage function
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 
 // Track registered Prism languages for on-demand lazy loading (all languages supported)
 const registeredLanguages = new Set();
@@ -21,9 +24,6 @@ const CheckIcon = () => (
     <path fillRule="evenodd" d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"></path>
   </svg>
 );
-
-// Import PrismLight and registerLanguage function
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 
 // Dynamically load ReactMarkdown and its plugins for streaming
 const StreamingMarkdown = lazy(async () => {
@@ -176,17 +176,75 @@ const StreamingMessage = ({ content, isStreaming }) => {
   // Apply streaming class based on the passed-in prop
   const markdownClassName = `${styles.markdown} ${styles.ChatMessage__streamingContent} ${isStreaming ? styles['ChatMessage__streamingContent--streaming'] : ''}`;
 
-  // Use a zero-width space for this purpose.
-  const actualContent = typeof content === 'string' ? content : String(content || '');
-  const contentToRender = !actualContent ? '\u200B' : convertTeXToMathDollars(actualContent);
+  // --- OPTIMIZED STREAMING STATE LOGIC ---
+  // Use state, refs, and transitions to manage stable vs streaming segments efficiently
+  const [stableContent, setStableContent] = useState('');
+  const [streamingContent, setStreamingContent] = useState('');
+  const prevBoundaryRef = useRef(0);
+  const [isPending, startTransition] = useTransition();
+
+  const [streamKey, setStreamKey] = useState(0);
+
+  // Increment key to trigger mount animation for new streaming chunks
+  useEffect(() => {
+    if (streamingContent) {
+      setStreamKey(k => k + 1);
+    }
+  }, [streamingContent]);
+
+  useEffect(() => {
+    if (!isStreaming) {
+      setStableContent(content);
+      setStreamingContent('');
+      prevBoundaryRef.current = content.length;
+    } else {
+      const idx = content.lastIndexOf('\n\n');
+      if (idx > prevBoundaryRef.current) {
+        setStableContent(content.substring(0, idx));
+        prevBoundaryRef.current = idx;
+      }
+      startTransition(() => {
+        setStreamingContent(content.substring(prevBoundaryRef.current));
+      });
+    }
+  }, [content, isStreaming]);
+
+  const stableContentToRender = useMemo(
+    () => convertTeXToMathDollars(stableContent),
+    [stableContent]
+  );
+  const streamingContentToRender = useMemo(
+    () => convertTeXToMathDollars(streamingContent),
+    [streamingContent]
+  );
+
+  const MemoizedStableMarkdown = useMemo(() => {
+    if (!stableContentToRender) return null;
+    return (
+      <StreamingMarkdown components={markdownComponents}>
+        {stableContentToRender}
+      </StreamingMarkdown>
+    );
+  }, [stableContentToRender, markdownComponents]);
+
+  // Handle the case of no content at all.
+  if (!content) {
+    return <div className={markdownClassName}>{'\u200B'}</div>;
+  }
 
   return (
     <div className={markdownClassName}>
-      <Suspense fallback={<div>{contentToRender}</div>}>
-        <StreamingMarkdown components={markdownComponents}>
-          {contentToRender}
-        </StreamingMarkdown>
-      </Suspense>
+        <Suspense fallback={<div>{convertTeXToMathDollars(content)}</div>}>
+            {MemoizedStableMarkdown}
+            {/* The streaming part is always rendered with a fade-in animation */}
+            {streamingContent && (
+              <div key={streamKey} className={styles.streamingChunk}>
+                <StreamingMarkdown components={markdownComponents}>
+                  {streamingContentToRender}
+                </StreamingMarkdown>
+              </div>
+            )}
+        </Suspense>
     </div>
   );
 };
