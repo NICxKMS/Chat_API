@@ -102,12 +102,10 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
   
   // Determine if we should show metrics (only for assistant messages)
   const shouldShowMetrics = useMemo(() => {
-    // Show metrics if this is an assistant message with any metrics
     if (message.role !== 'assistant' || !message.metrics) return false;
     return true;
   }, [message.role, message.metrics]);
   
-  // Copy message content to clipboard
   const handleCopyMessage = useCallback(() => {
     const content = typeof message.content === 'string' 
       ? message.content 
@@ -123,7 +121,6 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
     });
   }, [message.content]);
   
-  // === BUTTON JSX (Moved here for reuse) ===
   const copyButtonJsx = useMemo(() => (
     <button
       className={`${styles.ChatMessage__copyMessageButton} ${
@@ -137,7 +134,6 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
     </button>
   ), [handleCopyMessage, message.role, shouldShowMetrics, messageCopied]);
 
-  // Edit button only for user messages
   const handleEditClick = useCallback(() => {
     if (onEditMessage) onEditMessage(message);
   }, [onEditMessage, message]);
@@ -151,91 +147,65 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
       <PencilIcon size={16} />
     </button>
   ) : null, [message.role, handleEditClick]);
-  // ==========================================
   
   // Render performance metrics (only for assistant messages)
   const renderMetrics = () => {
     if (!shouldShowMetrics || !message.metrics) return null;
     
-    // Use the specific isStreaming prop passed down to determine if THIS message is generating
     const isGenerating = isStreaming;
     const { 
       elapsedTime, 
-      tokenCount, 
       tokensPerSecond, 
       timeToFirstToken, 
       promptTokens, 
       completionTokens, 
       totalTokens,
-      finishReason 
+      finishReason,
+      generationTime
     } = message.metrics;
-    
-    // Check if we have any valid metrics to show
-    const hasValidMetrics = 
-      elapsedTime != null || 
-      tokenCount != null || 
-      tokensPerSecond != null || 
-      timeToFirstToken != null ||
-      promptTokens != null ||
-      completionTokens != null ||
-      totalTokens != null ||
-      finishReason != null;
-      
-    // Don't render anything if no valid metrics are found
-    if (!hasValidMetrics) return null;
-    
+
+    const genTimeMs = (typeof generationTime === 'number')
+      ? generationTime
+      : (elapsedTime != null && timeToFirstToken != null
+        ? Math.max(0, elapsedTime - timeToFirstToken)
+        : elapsedTime);
+
+    // Build clear, compact labels
+    const timeLabelParts = [];
+    if (timeToFirstToken != null && timeToFirstToken !== 0) timeLabelParts.push(`TTFT: ${formatTime(timeToFirstToken)}`);
+    if (genTimeMs != null && genTimeMs !== 0) timeLabelParts.push(`Gen: ${formatTime(genTimeMs)}`);
+    const timeLabel = timeLabelParts.join(' · ');
+
+    const tokenLabelParts = [];
+    if (promptTokens != null && promptTokens !== 0) tokenLabelParts.push(`Input: ${promptTokens}`);
+    if (completionTokens != null && completionTokens !== 0) tokenLabelParts.push(`Output: ${completionTokens}`);
+    if (totalTokens != null && totalTokens !== 0) tokenLabelParts.push(`Total: ${totalTokens}`);
+    const tokenLabel = tokenLabelParts.join(' · ');
+
+    const hasAny = timeLabel || tokenLabel || (tokensPerSecond != null && tokensPerSecond !== 0) || finishReason;
+    if (!hasAny) return null;
+
     return (
       <div className={styles.ChatMessage__metricsContainer}>
-        {/* Time metrics */}
-        {timeToFirstToken != null && timeToFirstToken !== 0 && (
-          <span className={styles.ChatMessage__metric}>
+        {timeLabel && (
+          <span className={styles.ChatMessage__metric} title="Time to first token and generation time">
             <ClockIcon size={14} className={styles.ChatMessage__metricIcon} />
-            First Token: {formatTime(timeToFirstToken)}
+            {timeLabel}
           </span>
         )}
-        {elapsedTime != null && elapsedTime !== 0 && (
-          <span className={styles.ChatMessage__metric}>
-            <ClockIcon size={14} className={styles.ChatMessage__metricIcon} />
-            Total Time: {formatTime(elapsedTime)}
-          </span>
-        )}
-        
-        {/* Token metrics */}
-        {tokenCount != null && tokenCount !== 0 && (
-          <span className={styles.ChatMessage__metric}>
+        {tokenLabel && (
+          <span className={styles.ChatMessage__metric} title="Input, output, and total tokens">
             <CopilotIcon size={14} className={styles.ChatMessage__metricIcon} />
-            Tokens: {tokenCount}
+            {tokenLabel}
           </span>
         )}
-        {promptTokens != null && promptTokens !== 0 && (
-          <span className={styles.ChatMessage__metric}>
-            <CopilotIcon size={14} className={styles.ChatMessage__metricIcon} />
-            Prompt: {promptTokens}
-          </span>
-        )}
-        {completionTokens != null && completionTokens !== 0 && (
-          <span className={styles.ChatMessage__metric}>
-            <CopilotIcon size={14} className={styles.ChatMessage__metricIcon} />
-            Completion: {completionTokens}
-          </span>
-        )}
-        {totalTokens != null && totalTokens !== 0 && (
-          <span className={styles.ChatMessage__metric}>
-            <CopilotIcon size={14} className={styles.ChatMessage__metricIcon} />
-            Total: {totalTokens}
-          </span>
-        )}
-        
-        {/* Speed metrics */}
         {tokensPerSecond != null && tokensPerSecond !== 0 && (
-          <span className={styles.ChatMessage__metric}>
+          <span className={styles.ChatMessage__metric} title="Tokens per second">
             <PulseIcon size={14} className={styles.ChatMessage__metricIcon} />
-            Speed: {tokensPerSecond} t/s
+            Token/s {tokensPerSecond}
           </span>
         )}
-        
-        {/* Status (only show if meaningful) */}
-        {finishReason != null && finishReason !== '' && finishReason.toLowerCase() !== 'stop' && finishReason.toLowerCase() !== 'unknown' && (
+        {finishReason && finishReason.toLowerCase() !== 'stop' && finishReason.toLowerCase() !== 'unknown' && (
           <span className={styles.ChatMessage__metric}>
             <AlertIcon size={14} className={styles.ChatMessage__metricIcon} />
             {finishReason}
@@ -247,23 +217,18 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
             Generating...
           </span>
         )}
-        
-        {/* Copy button */}
         {copyButtonJsx}
       </div>
     );
   };
   
-  // Main return
   return (
     <div className={styles.ChatMessage + ' ' + messageClass}>
       <div className={styles.ChatMessage__body}>
-        {/* Avatar (only render if icon exists) */}
         {icon && (
           <div className={styles.ChatMessage__avatar}>{icon}</div>
         )}
 
-        {/* Message content section */}
         <div className={styles.ChatMessage__contentWrapper}>
           <Suspense fallback={null}>
             <div className={styles.ChatMessage__content}>
@@ -273,7 +238,6 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
                   isStreaming={isStreaming}
                 />
               ) : (
-                // Render markdown lazily for user/system/error messages
                 <LazyMarkdownRenderer>
                   {processedMessage}
                 </LazyMarkdownRenderer>
@@ -281,10 +245,8 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
             </div>
           </Suspense>
 
-          {/* Render performance metrics for assistant messages */}
           {message.role === 'assistant' && renderMetrics()}
 
-          {/* Copy button for non-user messages, hide when assistant metrics exist */}
           {message.role !== 'user' && (message.role !== 'assistant' || !shouldShowMetrics) && copyButtonJsx}
         </div>
       </div>
@@ -299,10 +261,8 @@ const ChatMessage = ({ message, isStreaming = false, onEditMessage = null, overr
   );
 };
 
-// Display name
 ChatMessage.displayName = 'ChatMessage';
 
-// PropTypes
 ChatMessage.propTypes = {
   message: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
@@ -320,7 +280,7 @@ ChatMessage.propTypes = {
     timestamp: PropTypes.number.isRequired,
     metrics: PropTypes.shape({
       elapsedTime: PropTypes.number,
-      tokenCount: PropTypes.number,
+      generationTime: PropTypes.number,
       tokensPerSecond: PropTypes.number,
       timeToFirstToken: PropTypes.number,
       promptTokens: PropTypes.number,

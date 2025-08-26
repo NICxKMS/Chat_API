@@ -20,8 +20,10 @@ export const PerformanceMetricsProvider = ({ children }) => {
     startTime: null,
     endTime: null,
     elapsedTime: null,
+    generationTime: null,
     tokenCount: null,
     tokensPerSecond: null,
+    generationSpeed: null,
     isComplete: false,
     timeToFirstToken: null,
     promptTokens: null,
@@ -35,8 +37,10 @@ export const PerformanceMetricsProvider = ({ children }) => {
       startTime: null,
       endTime: null,
       elapsedTime: null,
+      generationTime: null,
       tokenCount: null,
       tokensPerSecond: null,
+      generationSpeed: null,
       isComplete: false,
       timeToFirstToken: null,
       promptTokens: null,
@@ -59,23 +63,30 @@ export const PerformanceMetricsProvider = ({ children }) => {
     setCurrentMessageMetrics(prev => {
       const endTime = Date.now();
       const elapsedTime = prev.startTime ? endTime - prev.startTime : 0;
-      const tokensPerSecond = newTokenCount && elapsedTime ?
-        Math.round((newTokenCount / (elapsedTime / 1000)) * 10) / 10 :
-        prev.tokensPerSecond;
-      const timeToFirstToken = prev.timeToFirstToken ||
-        (newTokenCount > 0 ? elapsedTime : null);
+      const timeToFirstToken = prev.timeToFirstToken || (newTokenCount > 0 ? elapsedTime : null);
+      const generationTime = timeToFirstToken != null ? Math.max(0, elapsedTime - timeToFirstToken) : 0;
+
+      const nextPromptTokens = tokenInfo?.promptTokens ?? prev.promptTokens;
+      const nextCompletionTokens = tokenInfo?.completionTokens ?? prev.completionTokens ?? newTokenCount ?? 0;
+      const nextTotalTokens = tokenInfo?.totalTokens ?? prev.totalTokens;
+
+      const generationSpeed = generationTime > 0
+        ? Math.round((nextCompletionTokens / (generationTime / 1000)) * 10) / 10
+        : prev.generationSpeed;
 
       const newMetrics = {
         startTime: prev.startTime,
         endTime,
         elapsedTime,
+        generationTime,
         tokenCount: newTokenCount,
-        tokensPerSecond,
+        tokensPerSecond: generationSpeed, // backward compat
+        generationSpeed,
         isComplete,
         timeToFirstToken,
-        promptTokens: tokenInfo?.promptTokens || prev.promptTokens,
-        completionTokens: tokenInfo?.completionTokens || prev.completionTokens,
-        totalTokens: tokenInfo?.totalTokens || prev.totalTokens,
+        promptTokens: nextPromptTokens,
+        completionTokens: nextCompletionTokens,
+        totalTokens: nextTotalTokens,
         finishReason: finishReason || prev.finishReason
       };
 
