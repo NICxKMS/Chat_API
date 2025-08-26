@@ -1,2 +1,0 @@
-"use strict";(self.webpackChunkai_chat_interface=self.webpackChunkai_chat_interface||[]).push([["heavy-markdown"],{18623:(e,a,r)=>{r.r(a),r.d(a,{default:()=>l}),r(85908);var n=r(43387),t=r(25879),u=r(74607),c=r(66771),i=(r(96106),r(44440));function l(e){let{children:a}=e;return(0,i.Y)(n.$,{remarkPlugins:[t.default,u.default],rehypePlugins:[c.A],children:a})}}}]);
-//# sourceMappingURL=heavy-markdown.6961907e8c.chunk.v1_9_7.js.map
