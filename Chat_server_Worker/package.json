@@ -1,0 +1,27 @@
+{
+  "name": "chat-api-serverless",
+  "version": "3.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Serverless-migrated Chat API for AWS Lambda and Cloudflare Workers",
+  "scripts": {
+    "build": "echo 'Nothing to build for shared; adapters are runtime specific'",
+    "lint": "eslint --ext .js .",
+    "aws:local": "node aws-lambda/local-dev.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google/genai": "^1.11.0",
+    "@opentelemetry/api": "^1.9.0",
+    "axios": "^1.8.4",
+    "firebase-admin": "^13.2.0",
+    "jose": "^5.9.6",
+    "openai": "^4.90.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.23.0",
+    "dotenv": "^16.4.5",
+    "eslint": "^9.23.0"
+  }
+}

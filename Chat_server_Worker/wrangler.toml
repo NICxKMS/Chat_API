@@ -1,0 +1,31 @@
+name = "chat-api-worker"
+main = "cloudflare-worker/worker.js"
+compatibility_date = "2024-08-01"
+
+# Optionally configure routes when deploying
+# [[routes]]
+# pattern = "your.domain.com/*"
+# zone_id = "YOUR_ZONE_ID"
+
+[vars]
+# Non-sensitive config (secrets must be set via `wrangler secret put`)
+NODE_ENV = "production"
+CACHE_ENABLED = "true"
+USE_CLASSIFICATION_SERVICE = "true"
+DEFAULT_PROVIDER = "gemini"
+
+# Provider base URLs
+OPENAI_BASE_URL = "https://api.openai.com/v1"
+ANTHROPIC_BASE_URL = "https://api.anthropic.com"
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+# OpenRouter app metadata (not secret)
+OPENROUTER_HTTP_REFERER = "https://localhost:3000"
+OPENROUTER_TITLE = "Your App Name"
+
+# App behavior
+RESPONSE_TIMEOUT = "30000"
+DYNAMIC_MODEL_LOADING = "true"
+MEMORY_CACHE_TTL = "300"
+
+
