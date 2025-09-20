@@ -6,21 +6,13 @@ import { useChatControl } from '../../../contexts/ChatControlContext';
 import { useProfilePicture } from '../../../hooks/useProfilePicture';
 import Spinner from '../../common/Spinner';
 import styles from './Sidebar.module.css';
-// Remove unused icons if PlusIcon/GearIcon only used for floating buttons
-// import { GearIcon, PlusIcon } from '@primer/octicons-react'; 
 
-// Remove imports for components moved out
-// const ThemeToggle = lazy(() => import('../../common/ThemeToggle'));
-// const ApiStatus = lazy(() => import('../../common/ApiStatus'));
-
-// Sample data (keep for now)
 const sampleSessions = [
   { id: 'session-1', title: 'LLM Explanation Chat', timestamp: '2 hours ago' },
   { id: 'session-2', title: 'React Component Refactoring', timestamp: 'Yesterday' },
   { id: 'session-3', title: 'CSS Grid Layout Ideas', timestamp: 'Mar 30' },
   { id: 'session-4', title: 'Python Script Debugging', timestamp: 'Mar 28' },
 ];
-
 /**
  * Sidebar component containing app controls and chat session list
  * @param {Object} props - Component props

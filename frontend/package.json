@@ -1,6 +1,6 @@
 {
   "name": "ai-chat-interface",
-  "version": "2.0.1",
+  "version": "3.0.1",
   "engines": {
     "node": ">=20.0.0"
   },

@@ -1,4 +1,3 @@
-// eslint-disable import/first
 import React, { memo, useMemo, useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
 import { CopilotIcon, GearIcon, AlertIcon, CheckIcon, CopyIcon, ClockIcon, PulseIcon, PencilIcon } from '@primer/octicons-react';

@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ContextManager } from "./contexts/ContextManager";
@@ -15,7 +14,6 @@ import {
   createAdaptiveLoader,
   createSmallChunkBundle,
 } from "./utils/chunkOptimizer";
-// (Formatting preloads removed - we rely on on-demand loading)
 
 // === Enhanced Lazy Loading Strategy with Chunk Optimization ===
 // Group related components into micro-chunks for better caching and loading
@@ -147,7 +145,7 @@ function AppShell() {
   const [loadedPhases, setLoadedPhases] = useState(new Set());
   const [networkStrategy, setNetworkStrategy] = useState(null);
   const { isLoggingIn, setIsLoggingIn } = useAuth();
-
+  
   useEffect(() => {
     let canceled = false;
 
@@ -419,7 +417,7 @@ function AppShell() {
             <strong>Chunks:</strong> {chunkMonitor.getMetrics().totalLoaded}{" "}
             loaded, {chunkMonitor.getMetrics().totalFailed} failed
           </div>
-        </div>
+    </div>
       )}
     </>
   );

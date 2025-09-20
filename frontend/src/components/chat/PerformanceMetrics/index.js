@@ -19,18 +19,6 @@ const PerformanceMetrics = memo(({ metrics = null }) => {
     finishReason
   } = metrics || {};
   
-  // Debug metrics data
-  useEffect(() => {
-    if (metrics) {
-      console.log('PerformanceMetrics received:', { 
-        promptTokens, 
-        completionTokens, 
-        totalTokens,
-        finishReason,
-        allMetrics: metrics 
-      });
-    }
-  }, [metrics, promptTokens, completionTokens, totalTokens, finishReason]);
   
   // Format elapsed time
   const formattedTime = useMemo(() => {

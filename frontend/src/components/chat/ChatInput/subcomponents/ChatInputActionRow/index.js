@@ -30,7 +30,6 @@ const ChatInputActionRow = ({
           <ImageIcon size={16} />
         </button>
         
-        {/* Placeholder Buttons - Add onClick handlers later */}
         <button
           className={`${styles['ChatInput__textButton']} ${isMobile ? styles['ChatInput__iconOnlyButton'] : ''}`}
           aria-label="Search"

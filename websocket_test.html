@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        button { padding: 10px 15px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        #messages { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin: 10px 0; background-color: #f8f9fa; }
+        input[type="text"] { width: 300px; padding: 8px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Integration Test</h1>
+        <p>This page tests the WebSocket functionality between the React frontend and Cloudflare Worker backend.</p>
+        
+        <div class="test-section">
+            <h3>Connection Status</h3>
+            <p>Status: <span id="connectionStatus">Disconnected</span></p>
+            <p>URL: <input type="text" id="wsUrl" value="ws://localhost:8787" placeholder="WebSocket URL"></p>
+            <button onclick="connect()">Connect</button>
+            <button onclick="disconnect()">Disconnect</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Authentication Test</h3>
+            <p>Token: <input type="text" id="authToken" placeholder="Firebase ID Token (optional)"></p>
+            <button onclick="authenticate()">Authenticate</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Chat Stream Test</h3>
+            <p>Model: <input type="text" id="model" value="gemini/gemini-2.0-flash-exp" placeholder="Provider/Model"></p>
+            <p>Message: <input type="text" id="message" value="Hello, how are you?" placeholder="Test message"></p>
+            <button onclick="sendChatMessage()">Send Message</button>
+            <button onclick="stopStream()">Stop Stream</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Message Splitting Test</h3>
+            <button onclick="testLargeMessage()">Test Large Message (>800KB)</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Heartbeat Test</h3>
+            <button onclick="sendPing()">Send Manual Ping</button>
+            <p><small>Note: Automatic heartbeat pings are sent every 30 seconds when connected.</small></p>
+        </div>
+        
+        <div class="test-section">
+            <h3>Messages</h3>
+            <button onclick="clearMessages()">Clear</button>
+            <div id="messages"></div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let currentRequestId = null;
+        let messageChunks = new Map();
+
+        function log(message, type = 'info') {
+            const messagesDiv = document.getElementById('messages');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            messagesDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function updateConnectionStatus(status) {
+            document.getElementById('connectionStatus').textContent = status;
+        }
+
+        function connect() {
+            const url = document.getElementById('wsUrl').value;
+            
+            if (ws) {
+                log('Closing existing connection...', 'info');
+                ws.close();
+            }
+
+            log(`Connecting to ${url}...`, 'info');
+            updateConnectionStatus('Connecting...');
+
+            try {
+                ws = new WebSocket(url);
+
+                ws.onopen = () => {
+                    log('WebSocket connection opened', 'success');
+                    updateConnectionStatus('Connected');
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const rawMessage = JSON.parse(event.data);
+                        log(`Received: ${JSON.stringify(rawMessage, null, 2)}`, 'info');
+                        
+                        // Handle chunked messages
+                        const message = handleMessageChunk(rawMessage);
+                        if (message) {
+                            handleMessage(message);
+                        }
+                    } catch (error) {
+                        log(`Error parsing message: ${error.message}`, 'error');
+                    }
+                };
+
+                ws.onclose = (event) => {
+                    log(`WebSocket connection closed: ${event.code} - ${event.reason}`, 'info');
+                    updateConnectionStatus('Disconnected');
+                    ws = null;
+                };
+
+                ws.onerror = (error) => {
+                    log(`WebSocket error: ${error}`, 'error');
+                    updateConnectionStatus('Error');
+                };
+
+            } catch (error) {
+                log(`Failed to connect: ${error.message}`, 'error');
+                updateConnectionStatus('Error');
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close(1000, 'User disconnect');
+                ws = null;
+                updateConnectionStatus('Disconnected');
+                log('Disconnected by user', 'info');
+            }
+        }
+
+        function handleMessageChunk(message) {
+            const { type, id } = message;
+            
+            if (type === 'complete') {
+                return message.data;
+            }
+            
+            if (type === 'chunk') {
+                const { chunkIndex, totalChunks, data } = message;
+                
+                if (!messageChunks.has(id)) {
+                    messageChunks.set(id, {
+                        chunks: new Array(totalChunks),
+                        receivedCount: 0,
+                        totalChunks
+                    });
+                }
+                
+                const messageData = messageChunks.get(id);
+                messageData.chunks[chunkIndex] = data;
+                messageData.receivedCount++;
+                
+                log(`Received chunk ${chunkIndex + 1}/${totalChunks} for message ${id}`, 'info');
+                
+                if (messageData.receivedCount === messageData.totalChunks) {
+                    const completeMessage = JSON.parse(messageData.chunks.join(''));
+                    messageChunks.delete(id);
+                    log(`Reassembled complete message ${id}`, 'success');
+                    return completeMessage;
+                }
+                
+                return null;
+            }
+            
+            if (type === 'done') {
+                messageChunks.delete(id);
+                return null;
+            }
+            
+            return message;
+        }
+
+        function handleMessage(message) {
+            const { type } = message;
+            
+            switch (type) {
+                case 'connection':
+                    log(`Connected with ID: ${message.connectionId}`, 'success');
+                    break;
+                case 'auth':
+                    log(`Authentication: ${message.status}`, message.status === 'authenticated' ? 'success' : 'error');
+                    break;
+                case 'stream_start':
+                    log(`Stream started for request: ${message.requestId}`, 'success');
+                    break;
+                case 'stream_chunk':
+                    if (message.content) {
+                        log(`Stream content: "${message.content}"`, 'info');
+                    }
+                    break;
+                case 'stream_complete':
+                    log(`Stream completed for request: ${message.requestId}`, 'success');
+                    break;
+                case 'stream_error':
+                    log(`Stream error: ${message.error?.message || 'Unknown error'}`, 'error');
+                    break;
+                case 'error':
+                    log(`Error: ${message.error?.message || 'Unknown error'}`, 'error');
+                    break;
+                case 'pong':
+                    log(`Heartbeat pong received`, 'info');
+                    break;
+                default:
+                    log(`Unknown message type: ${type}`, 'error');
+            }
+        }
+
+        function sendMessage(message) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('WebSocket not connected', 'error');
+                return false;
+            }
+
+            try {
+                ws.send(JSON.stringify(message));
+                log(`Sent: ${JSON.stringify(message, null, 2)}`, 'info');
+                return true;
+            } catch (error) {
+                log(`Failed to send message: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        function authenticate() {
+            const token = document.getElementById('authToken').value.trim();
+            
+            const authMessage = {
+                type: 'auth',
+                token: token || undefined
+            };
+
+            sendMessage(authMessage);
+        }
+
+        function sendChatMessage() {
+            const model = document.getElementById('model').value.trim();
+            const messageText = document.getElementById('message').value.trim();
+
+            if (!model || !messageText) {
+                log('Please enter both model and message', 'error');
+                return;
+            }
+
+            currentRequestId = crypto.randomUUID ? crypto.randomUUID() : 
+                Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+            const chatMessage = {
+                type: 'chat',
+                requestId: currentRequestId,
+                model: model,
+                messages: [
+                    { role: 'user', content: messageText, timestamp: Date.now() }
+                ],
+                temperature: 0.7,
+                max_tokens: 150
+            };
+
+            sendMessage(chatMessage);
+        }
+
+        function stopStream() {
+            if (!currentRequestId) {
+                log('No active stream to stop', 'error');
+                return;
+            }
+
+            const stopMessage = {
+                type: 'stop',
+                requestId: currentRequestId
+            };
+
+            sendMessage(stopMessage);
+        }
+
+        function testLargeMessage() {
+            // Create a large message to test chunking
+            const largeContent = 'A'.repeat(900 * 1024); // 900KB of 'A's
+            
+            currentRequestId = crypto.randomUUID ? crypto.randomUUID() : 
+                Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+            const largeMessage = {
+                type: 'chat',
+                requestId: currentRequestId,
+                model: 'gemini/gemini-2.0-flash-exp',
+                messages: [
+                    { role: 'user', content: largeContent, timestamp: Date.now() }
+                ],
+                temperature: 0.7,
+                max_tokens: 50
+            };
+
+            // Calculate message size
+            const messageStr = JSON.stringify(largeMessage);
+            const messageSize = new TextEncoder().encode(messageStr).length;
+            
+            log(`Sending large message (${Math.round(messageSize / 1024)}KB) to test chunking...`, 'info');
+            log(`Expected chunks: ${Math.ceil(messageSize / (800 * 1024))}`, 'info');
+            
+            sendMessage(largeMessage);
+        }
+
+        function sendPing() {
+            const pingMessage = {
+                type: 'ping'
+            };
+            
+            if (sendMessage(pingMessage)) {
+                log('Manual ping sent - waiting for pong...', 'info');
+            }
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        // Auto-connect on page load if URL is localhost
+        window.addEventListener('load', () => {
+            const url = document.getElementById('wsUrl').value;
+            if (url.includes('localhost')) {
+                log('Auto-connecting to localhost...', 'info');
+                // connect();
+            }
+        });
+    </script>
+</body>
+</html>

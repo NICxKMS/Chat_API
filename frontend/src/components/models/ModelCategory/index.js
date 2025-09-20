@@ -1,12 +1,11 @@
-import { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import styles from './ModelCategory.module.css';
 import ModelItem from '../ModelItem';
+import { useExpanded } from '../../../hooks/useToggle';
 
 // --- Sub-component for Type Group (e.g., GPT 4, Flash) ---
 const TypeGroup = ({ typeGroupName, models, onSelectModel, selectedModelId, searchTerm, showExperimental }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const toggleExpanded = useCallback(() => setIsExpanded(prev => !prev), []);
+  const [isExpanded, toggleExpanded] = useExpanded(true);
   const modelCount = models.length;
 
   if (modelCount === 0) return null;
@@ -69,8 +68,7 @@ TypeGroup.propTypes = {
 
 // --- Sub-component for Provider Group (e.g., openai, gemini) ---
 const ProviderGroup = ({ providerName, typeGroups, onSelectModel, selectedModelId, searchTerm, showExperimental }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const toggleExpanded = useCallback(() => setIsExpanded(prev => !prev), []);
+  const [isExpanded, toggleExpanded] = useExpanded(true);
 
   // Calculate total model count for this provider
   const totalModelsInProvider = typeGroups.reduce((count, group) => count + group.models.length, 0);
@@ -157,8 +155,7 @@ const ModelCategory = ({
   searchTerm, 
   showExperimental 
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const toggleExpanded = useCallback(() => setIsExpanded(prev => !prev), []);
+  const [isExpanded, toggleExpanded] = useExpanded(true);
   
   // Calculate total model count for this category
   const totalModelsInCategory = providers.reduce((count, provider) => 

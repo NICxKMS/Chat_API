@@ -1,18 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import styles from './SettingsSidebarOverlay.module.css';
+import { useEscapeKey } from '../../../hooks/useEventHandlers';
 
 const SettingsSidebarOverlay = ({ isOpen, onClose, children }) => {
   const overlayRef = useRef(null);
   const panelRef = useRef(null);
 
-  useEffect(() => {
-    const handleKeyDown = e => {
-      if (e.key === 'Escape' && isOpen) onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  useEscapeKey(onClose, isOpen);
 
   useEffect(() => {
     if (isOpen && panelRef.current) panelRef.current.focus();

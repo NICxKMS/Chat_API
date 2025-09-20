@@ -1,18 +1,16 @@
 import { lazy, useState, useCallback, Suspense } from 'react';
 import { useIsDesktop } from '../../../hooks/useMediaQuery';
 import { useModel } from '../../../contexts/ModelContext';
-import { useAuth } from '../../../contexts/AuthContext'; // Import useAuth
-import { useTheme } from '../../../contexts/ThemeContext'; // Import ThemeContext
+import { useAuth } from '../../../contexts/AuthContext';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { GearIcon} from '@primer/octicons-react';
 import styles from './Layout.module.css';
-// Import icons using the correct paths
-// Import only the specific icons needed
 
 const SettingsPanel = lazy(() => {
   return import(/* webpackChunkName: "settings-panel" */ '../../settings/SettingsPanel');
 });
 
-// Lazily loaded components - Prefetch hints removed for manual loading
+// Lazily loaded components
 const Sidebar = lazy(() => import(/* webpackChunkName: "layout-sidebar" */ '../Sidebar'));
 const MainContent = lazy(() => import(/* webpackPreload: true, webpackChunkName: "layout-main" */ '../MainContent'));
 const ModelDropdown = lazy(() => import(/* webpackChunkName: "models-dropdown" */ '../../models/ModelDropdown'));

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useCallback } from 'react';
 import ToastContainer from '../components/common/ToastNotification';
+import { generateToastId } from '../utils/uuid';
 
 // Create context for toast notifications
 const ToastContext = createContext();
@@ -35,7 +36,7 @@ export const ToastProvider = ({ children }) => {
 
   // Function to show a toast
   const showToast = useCallback(({ type, message, duration = 3000 }) => {
-    const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    const id = generateToastId();
     dispatch({ type: ADD_TOAST, payload: { id, type, message, duration } });
     // Auto-dismiss toast after duration
     setTimeout(() => dispatch({ type: REMOVE_TOAST, payload: id }), duration);

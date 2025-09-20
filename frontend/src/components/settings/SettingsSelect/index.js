@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import styles from './SettingsSelect.module.css';
 import commonStyles from '../common/ControlStyles.module.css';
+import { useClickOutside } from '../../../hooks/useEventHandlers';
 
 const SettingsSelect = ({
   id,
@@ -71,23 +72,8 @@ const SettingsSelect = ({
   }, [disabled, isOpen, options, value, toggleDropdown, onChange]);
 
   // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        isOpen &&
-        selectRef.current && 
-        !selectRef.current.contains(event.target) &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+  const containerRef = useClickOutside(() => {
+    if (isOpen) setIsOpen(false);
   }, [isOpen]);
 
   // Memoize the rendered options list
@@ -107,7 +93,7 @@ const SettingsSelect = ({
   }), [options, value, handleOptionSelect]);
 
   return (
-    <div className={selectClasses.join(' ')}> 
+    <div className={selectClasses.join(' ')} ref={containerRef}> 
       <div className={commonStyles.controlHeader}>
         <label 
           htmlFor={id} 

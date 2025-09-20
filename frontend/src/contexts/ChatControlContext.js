@@ -9,6 +9,7 @@ import { usePerformanceMetrics } from './PerformanceMetricsContext';
 import { useStreamingEvents } from './StreamingEventsContext';
 import { fetchWithRetry } from '../utils/network';
 import { useToast } from './ToastContext';
+import { generateRequestId } from '../utils/uuid';
 
 // Context for chat actions (controls)
 const ChatControlContext = createContext();
@@ -45,9 +46,7 @@ export const ChatControlProvider = ({ children }) => {
   // Action: sendMessage
   const sendMessage = useCallback(async (message, editIndex = null) => {
     // Generate unique client-side requestId
-    const clientRequestId = (typeof crypto !== 'undefined' && crypto.randomUUID)
-      ? crypto.randomUUID()
-      : Math.random().toString(36).substring(2) + Date.now().toString(36);
+    const clientRequestId = generateRequestId();
     currentRequestIdRef.current = clientRequestId;
     const isEditing = editIndex !== null && Number.isInteger(editIndex) && editIndex >= 0;
     if (settings.streaming) {

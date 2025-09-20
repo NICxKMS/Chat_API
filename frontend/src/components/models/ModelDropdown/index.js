@@ -245,23 +245,6 @@ const shouldIncludeModel = (model, showExperimental, searchTerm, provider, forma
   return true;
 };
 
-// ExperimentalToggle component is not currently used, commented out
-// const ExperimentalToggle = React.memo(({ isEnabled, onToggle }) => (
-//   <div className={styles.experimentalToggle}>
-//     <label className={styles.toggleLabel}>
-//       <input
-//         type="checkbox"
-//         checked={isEnabled}
-//         onChange={onToggle}
-//         className={styles.toggleInput}
-//       />
-//       <span className={styles.toggleTrack}>
-//         <span className={styles.toggleThumb} />
-//       </span>
-//       <span className={styles.toggleText}>Show experimental models</span>
-//     </label>
-//   </div>
-// ));
 
 /**
  * Main ModelSelection component that orchestrates all model selection UI

@@ -28,7 +28,6 @@ const MainContent = ({
 }) => {
   return (
     <main className={styles.MainContent}>
-      {/* Removed full-screen model loading overlay; spinner moved to ModelSelectorButton */}
       
       {/* Chat area - Pass down remaining relevant props */}
       <Suspense fallback={<div className={styles.MainContent__chatPlaceholder} />}>

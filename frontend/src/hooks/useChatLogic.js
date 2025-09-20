@@ -3,11 +3,8 @@ import { useChatState } from '../contexts/ChatStateContext';
 import { useChatControl } from '../contexts/ChatControlContext';
 import { useModel } from '../contexts/ModelContext';
 import { useSettings } from '../contexts/SettingsContext';
-
-// Helper to generate unique IDs
-const generateUniqueId = () => {
-  return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-};
+import { generateMessageId } from '../utils/uuid';
+import { validateMessageContent, findMessageIndex, prepareMessageForSubmission } from '../utils/messageProcessing';
 
 /**
  * Custom Hook for Chat Container Logic
@@ -30,50 +27,33 @@ export const useChatLogic = () => {
   const handleSendMessage = useCallback(async (message, editedMessage = null) => {
     const isEditing = !!editedMessage;
     
-    // Handle both string and array payloads for content validation
-    const messageContent = Array.isArray(message) 
-      ? message.map(part => part.type === 'text' ? part.text : '').join(' ').trim()
-      : message;
-
-    if (!messageContent && !Array.isArray(message)) return;
+    // Validate message content using utility
+    const validation = validateMessageContent(message);
+    if (!validation.isValid) {
+      console.warn('Invalid message:', validation.reason);
+      return;
+    }
+    
     if (!selectedModel) return;
     
     try {
       if (isEditing) {
         // Get or create unique identifier for the message
         const editMsgId = editedMessage.uniqueId || editedMessage.id || editedMessage.timestamp;
-        // Find the index of the message being edited with a single pass
-        const editIndex = chatHistory.findIndex(msg =>
-          [msg.uniqueId, msg.id, msg.timestamp].includes(editMsgId) ||
-          (typeof msg.content === 'string' && msg.content === editedMessage.content && msg.role === 'user')
-        );
+        // Find the index of the message being edited using utility
+        const editIndex = findMessageIndex(chatHistory, editedMessage);
         if (editIndex === -1) {
           return;
         }
-        // Ensure the message to be submitted has the correct uniqueId
-        const finalMessage = Array.isArray(message) ? message : { type: 'text', text: message };
-        
-        // Add uniqueId to message
-        if (Array.isArray(finalMessage)) {
-          finalMessage.uniqueId = editMsgId;
-        } else {
-          finalMessage.uniqueId = editMsgId;
-        }
+        // Prepare message for submission using utility
+        const finalMessage = prepareMessageForSubmission(message, editMsgId);
         
         // Call the submitMessage function with the truncated history index
         await submitMessage(finalMessage, editIndex);
       } else {
-        // For new messages, generate a unique ID
-        const uniqueId = generateUniqueId();
-        
-        // Add uniqueId to new message
-        const finalMessage = Array.isArray(message) 
-          ? message.map(part => ({...part, uniqueId}))
-          : message;
-          
-        if (!Array.isArray(finalMessage)) {
-          finalMessage.uniqueId = uniqueId;
-        }
+        // For new messages, generate a unique ID and prepare message
+        const uniqueId = generateMessageId();
+        const finalMessage = prepareMessageForSubmission(message, uniqueId);
         
         // Normal message submission with uniqueId
         await submitMessage(finalMessage);

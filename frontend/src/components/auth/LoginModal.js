@@ -5,10 +5,6 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
 import Spinner from '../common/Spinner';
 import styles from './LoginModal.module.css';
-// Assuming a Spinner component exists
-
-// Import icons using the correct paths
-// Icon for email/pass
 
 const LoginModal = ({ onClose }) => {
   const { setIsLoggingIn, error: authContextError } = useAuth();

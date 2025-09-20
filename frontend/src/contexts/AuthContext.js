@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from './ToastContext';
 import { useLoading } from './LoadingContext';
+import { setRawStorageItem, removeStorageItem } from '../utils/storage';
 // Firebase is dynamically imported to avoid blocking
 
 const AuthContext = createContext();
@@ -112,7 +113,7 @@ export const AuthProvider = ({ children }) => {
           try {
             const token = await user.getIdToken();
             setIdToken(token);
-            try { localStorage.setItem('idToken', token); } catch (e) { console.warn('Failed to cache idToken', e); }
+            setRawStorageItem('idToken', token);
             setError(null); 
             setIsLoggingIn(false); 
             console.log("User signed in, token obtained.");
@@ -131,7 +132,7 @@ export const AuthProvider = ({ children }) => {
           }
         } else {
           setIdToken(null);
-          try { localStorage.removeItem('idToken'); } catch (e) { console.warn('Failed to remove cached idToken', e); }
+          removeStorageItem('idToken');
           setIsLoggingIn(false); 
           console.log("User signed out.");
         }

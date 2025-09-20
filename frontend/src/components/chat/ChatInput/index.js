@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import styles from './ChatInput.module.css';
 import { useChatState } from '../../../contexts/ChatStateContext';
 import { useChatControl } from '../../../contexts/ChatControlContext';
+import { useResize } from '../../../hooks/useEventHandlers';
 
 // Import sub-components
 import ImagePreviewList from './subcomponents/ImagePreviewList';
@@ -49,12 +50,8 @@ const ChatInput = memo(({
   const [inputError, setInputError] = useState(null);
   const errorTimeoutRef = useRef(null); // Ref to manage error timeout
   
-  // Mobile detection
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 600);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // Mobile detection with resize hook
+  useResize(() => setIsMobile(window.innerWidth <= 600));
   
   // Focus input on mount
   useEffect(() => {
