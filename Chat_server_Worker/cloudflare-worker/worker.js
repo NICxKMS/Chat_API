@@ -31,7 +31,35 @@ const performanceMetrics = {
   totalMessages: 0,
   cacheHits: 0,
   averageLatency: 0,
-  connectionReuse: 0
+  connectionReuse: 0,
+  streamChunkCount: 0,
+  streamChunkLatency: 0,
+  directSendCount: 0
+};
+
+// Pre-compiled message templates to reduce object creation overhead
+const MESSAGE_TEMPLATES = {
+  ERROR_VALIDATION: (message, code = 400) => ({
+    type: 'error',
+    error: {
+      message,
+      code,
+      type: 'ValidationError'
+    }
+  }),
+  STREAM_START: (requestId) => ({
+    type: 'stream_start',
+    requestId
+  }),
+  STREAM_COMPLETE: (requestId) => ({
+    type: 'stream_complete',
+    requestId
+  }),
+  CONNECTION_STATUS: (connectionId, status) => ({
+    type: 'connection',
+    connectionId,
+    status
+  })
 };
 
 // Connection pool for HTTP/2 reuse
@@ -163,14 +191,27 @@ class StreamingPipeline {
   }
   
   processChunk(chunk, provider) {
-    this.buffer += chunk;
-    const lines = this.buffer.split('\n');
-    this.buffer = lines.pop() || ''; // Keep incomplete line
+    // Optimized buffer handling to reduce string operations
+    if (this.buffer) {
+      chunk = this.buffer + chunk;
+      this.buffer = '';
+    }
     
-    for (const line of lines) {
+    // Process complete lines immediately without storing in buffer
+    let lastNewlineIndex = -1;
+    let currentIndex = 0;
+    
+    while ((currentIndex = chunk.indexOf('\n', lastNewlineIndex + 1)) !== -1) {
+      const line = chunk.slice(lastNewlineIndex + 1, currentIndex);
       if (line.startsWith('data: ') && line !== 'data: [DONE]') {
         this.sendChunk(line.slice(6), provider);
       }
+      lastNewlineIndex = currentIndex;
+    }
+    
+    // Store incomplete line for next chunk
+    if (lastNewlineIndex + 1 < chunk.length) {
+      this.buffer = chunk.slice(lastNewlineIndex + 1);
     }
   }
   
@@ -439,9 +480,19 @@ async function decompressData(compressedData) {
 function sendMessage(webSocket, message, connectionId = null) {
   // OPTIMIZATION: Direct send for stream chunks to eliminate latency
   if (message.type === 'stream_chunk') {
+    const startTime = Date.now();
     try {
-      const messageStr = getSerializedMessage(message);
+      // Skip serialization cache for unique streaming content
+      const messageStr = JSON.stringify(message);
       webSocket.send(messageStr);
+      
+      // Track performance metrics
+      performanceMetrics.streamChunkCount++;
+      performanceMetrics.directSendCount++;
+      const latency = Date.now() - startTime;
+      performanceMetrics.streamChunkLatency = 
+        (performanceMetrics.streamChunkLatency + latency) / 2;
+      
       return;
     } catch (error) {
       console.error('Failed to send stream chunk directly:', error);
@@ -609,11 +660,7 @@ function handleWebSocket(webSocket, request, env) {
   webSocket.accept();
   
   // Send connection confirmation
-  sendMessage(webSocket, {
-    type: 'connection',
-    connectionId: connectionId,
-    status: 'connected'
-  }, connectionId);
+  sendMessage(webSocket, MESSAGE_TEMPLATES.CONNECTION_STATUS(connectionId, 'connected'), connectionId);
 
   // Set up heartbeat monitoring
   const updateActivity = () => {
@@ -804,14 +851,7 @@ async function handleChatMessage(webSocket, message, connection, env) {
   const { requestId, model, messages, temperature, max_tokens, top_p, frequency_penalty, presence_penalty } = message;
   
   if (!requestId) {
-    sendMessage(webSocket, {
-      type: 'error',
-      error: {
-        message: 'requestId is required',
-        code: 400,
-        type: 'ValidationError'
-      }
-    });
+    sendMessage(webSocket, MESSAGE_TEMPLATES.ERROR_VALIDATION('requestId is required'), connection.id);
     return;
   }
   
@@ -828,10 +868,7 @@ async function handleChatMessage(webSocket, message, connection, env) {
     };
     
     // Start streaming response
-    sendMessage(webSocket, {
-      type: 'stream_start',
-      requestId: requestId
-    }, connection.id);
+    sendMessage(webSocket, MESSAGE_TEMPLATES.STREAM_START(requestId), connection.id);
     
     for await (const chunk of _chat.chatCompletionStream(chatBody)) {
       if (!chunk) continue;
@@ -889,10 +926,7 @@ async function handleChatMessage(webSocket, message, connection, env) {
     }
     
     // Send completion message
-    sendMessage(webSocket, {
-      type: 'stream_complete',
-      requestId: requestId
-    }, connection.id);
+    sendMessage(webSocket, MESSAGE_TEMPLATES.STREAM_COMPLETE(requestId), connection.id);
     
   } catch (error) {
     console.error('Chat streaming error:', error);

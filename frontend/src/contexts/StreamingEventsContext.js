@@ -455,6 +455,14 @@ export const StreamingEventsProvider = ({ children }) => {
     // OPTIMIZATION: Ultra-fast path for stream chunks (most common during streaming)
     if (message.type === 'stream_chunk') {
       processRegularMessage(message);
+      
+      // Track fast path usage for performance metrics
+      const processingTime = performance.now() - startTime;
+      updatePerformanceMetrics({
+        fastPathUsed: true,
+        processingTime: processingTime,
+        messageType: 'stream_chunk'
+      });
       return;
     }
     
