@@ -58,7 +58,7 @@ export const StreamingEventsProvider = ({ children }) => {
   const WS_OPTIMIZATION = {
     binaryType: 'arraybuffer', // Use binary frames for better performance
     maxBackpressure: 16 * 1024, // 16KB backpressure limit
-    compressionThreshold: 1024, // Compress messages > 1KB
+    compressionThreshold: 2048, // Compress messages > 2KB (increased from 1KB to match backend)
     batchingWindow: 3, // 3ms batching window for non-critical messages
   };
 
@@ -189,8 +189,8 @@ export const StreamingEventsProvider = ({ children }) => {
     const messageStr = JSON.stringify(message);
     const originalSize = new TextEncoder().encode(messageStr).byteLength;
     
-    // Step 1: Compress if beneficial (>40KB)
-    const shouldCompress = originalSize > 40 * 1024;
+    // Step 1: Compress if beneficial (>2KB and not a stream response)
+    const shouldCompress = originalSize > WS_OPTIMIZATION.compressionThreshold;
     let compressed, compressedSize;
     
     if (shouldCompress) {
@@ -510,7 +510,9 @@ export const StreamingEventsProvider = ({ children }) => {
               }
               
               streamingTextRef.current += message.content;
-              debouncedUpdateChat(streamingTextRef.current);
+              
+              // Instant update for stream chunks - no debouncing for real-time feel
+              updateChatWithContent(streamingTextRef.current);
             }
             
             // Always use server-reported completion tokens for metrics
@@ -522,6 +524,7 @@ export const StreamingEventsProvider = ({ children }) => {
         case 'stream_complete':
           if (requestId === currentRequestIdRef.current) {
             console.log('Stream completed for request:', requestId);
+            // Use debounced update for final completion to ensure UI consistency
             debouncedUpdateChat.flush();
             updateChatWithContent(streamingTextRef.current);
             isStreamingRef.current = false;

@@ -45,9 +45,20 @@ class WebSocketOptimizer {
     this.compressionCache = new Map(); // Message compression cache
   }
 
-  // Optimize WebSocket message sending with batching
+  // Optimize WebSocket message sending with instant streaming for critical messages
   optimizedSend(webSocket, message, connectionId) {
-    // Add to queue for potential batching
+    // Stream chunks and other critical messages send immediately for minimal latency
+    if (this.isCriticalMessage(message)) {
+      try {
+        const serialized = getSerializedMessage(message);
+        webSocket.send(serialized);
+      } catch (error) {
+        console.error('Failed to send critical message:', error);
+      }
+      return;
+    }
+    
+    // Add non-critical messages to queue for potential batching
     if (!this.messageQueue.has(connectionId)) {
       this.messageQueue.set(connectionId, []);
     }
@@ -55,17 +66,11 @@ class WebSocketOptimizer {
     const queue = this.messageQueue.get(connectionId);
     queue.push(message);
     
-    // For critical messages, send immediately
-    if (this.isCriticalMessage(message)) {
-      this.flushQueue(webSocket, connectionId);
-      return;
-    }
-    
     // Batch non-critical messages for efficiency
     if (!this.batchTimers.has(connectionId)) {
       this.batchTimers.set(connectionId, setTimeout(() => {
         this.flushQueue(webSocket, connectionId);
-      }, 5)); // 5ms batching window
+      }, 5)); // 5ms batching window for non-critical only
     }
   }
   
@@ -194,7 +199,7 @@ class StreamingPipeline {
       }
       
       if (content) {
-        // Minimal processing for maximum speed
+        // Minimal processing for maximum speed - create normalized chunk directly
         const normalizedChunk = {
           type: 'stream_chunk',
           requestId: this.requestId,
@@ -213,7 +218,13 @@ class StreamingPipeline {
           normalizedChunk.usage = this.extractUsage(parsed);
         }
         
-        sendMessage(this.webSocket, normalizedChunk);
+        // Send directly without any optimization layers for instant delivery
+        try {
+          const serialized = JSON.stringify(normalizedChunk);
+          this.webSocket.send(serialized);
+        } catch (error) {
+          console.error('Failed to send stream chunk:', error);
+        }
       }
       
     } catch (e) {
@@ -252,8 +263,17 @@ function init(env) {
   _initialized = true;
 }
 
-// Optimized serialization with caching
+// Optimized serialization with smart caching and stream chunk bypass
 function getSerializedMessage(message) {
+  // Skip caching for stream chunks - they're unique and won't be reused
+  if (message.type === 'stream_chunk') {
+    performanceMetrics.totalMessages++;
+    const serialized = JSON.stringify(message);
+    performanceMetrics.averageMessageSize = (performanceMetrics.averageMessageSize + serialized.length) / 2;
+    return serialized;
+  }
+  
+  // Use caching for reusable messages (auth, connection, etc.)
   const key = JSON.stringify(message);
   performanceMetrics.totalMessages++;
   
@@ -373,8 +393,9 @@ class CompressionChunker {
     const messageStr = JSON.stringify(message);
     const originalSize = encoder.encode(messageStr).byteLength;
     
-    // Step 2: Compress if beneficial (>1KB)
-    const shouldCompress = originalSize > 1024;
+    // Skip compression for stream chunks and small messages to reduce latency
+    const isStreamChunk = message.type === 'stream_chunk';
+    const shouldCompress = !isStreamChunk && originalSize > 2048; // Increased threshold to 2KB
     let compressed, compressedSize;
     
     if (shouldCompress) {
