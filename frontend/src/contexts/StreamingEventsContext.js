@@ -48,8 +48,12 @@ export const StreamingEventsProvider = ({ children }) => {
   const heartbeatIntervalRef = useRef(null);
   const heartbeatTimeoutRef = useRef(null);
   const lastPongRef = useRef(Date.now());
+  // Heartbeat configuration  
   const HEARTBEAT_INTERVAL = 30000; // 30 seconds
   const HEARTBEAT_TIMEOUT = 10000; // 10 seconds to wait for pong
+  
+  // Pre-serialized ping message for performance
+  const PING_MESSAGE = JSON.stringify({ type: 'ping' });
   
   // Message splitting for large outgoing messages
   const MESSAGE_CHUNK_SIZE = 800 * 1024; // 800KB chunks
@@ -98,9 +102,9 @@ export const StreamingEventsProvider = ({ children }) => {
     
     heartbeatIntervalRef.current = setInterval(() => {
       if (webSocketRef.current && connectionStateRef.current === 'connected') {
-        // Send ping
+        // Send ping with pre-serialized message
         try {
-          webSocketRef.current.send(JSON.stringify({ type: 'ping' }));
+          webSocketRef.current.send(PING_MESSAGE);
           console.log('Sent heartbeat ping');
           
           // Set timeout to wait for pong

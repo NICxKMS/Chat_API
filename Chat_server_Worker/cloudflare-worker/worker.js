@@ -168,13 +168,18 @@ class StreamingPipeline {
   
   processChunk(chunk, provider) {
     this.buffer += chunk;
-    const lines = this.buffer.split('\n');
-    this.buffer = lines.pop() || ''; // Keep incomplete line
     
-    for (const line of lines) {
+    // Process complete lines directly without splitting overhead for single lines
+    let newlineIndex = this.buffer.indexOf('\n');
+    while (newlineIndex !== -1) {
+      const line = this.buffer.slice(0, newlineIndex);
+      this.buffer = this.buffer.slice(newlineIndex + 1);
+      
       if (line.startsWith('data: ') && line !== 'data: [DONE]') {
         this.sendChunk(line.slice(6), provider);
       }
+      
+      newlineIndex = this.buffer.indexOf('\n');
     }
   }
   
@@ -199,32 +204,25 @@ class StreamingPipeline {
       }
       
       if (content) {
-        // Minimal processing for maximum speed - create normalized chunk directly
-        const normalizedChunk = {
-          type: 'stream_chunk',
-          requestId: this.requestId,
-          model: parsed.model || 'unknown',
-          provider: provider,
-          createdAt: new Date().toISOString(),
-          content: content,
-          usage: null, // Will be normalized later if needed
-          latency: 0,
-          finishReason: null,
-          raw: parsed
-        };
+        // Optimized: Build JSON string directly for stream chunks to avoid object creation overhead
+        const timestamp = new Date().toISOString();
+        const model = parsed.model || 'unknown';
         
-        // Apply usage normalization if available
-        if (parsed.usage || (parsed.usageMetadata)) {
-          normalizedChunk.usage = this.extractUsage(parsed);
+        // Build minimal JSON string directly for better performance
+        let serialized = `{"type":"stream_chunk","requestId":"${this.requestId}","model":"${model}","provider":"${provider}","createdAt":"${timestamp}","content":${JSON.stringify(content)},"usage":null,"latency":0,"finishReason":null`;
+        
+        // Add usage if available
+        if (parsed.usage || parsed.usageMetadata) {
+          const usage = this.extractUsage(parsed);
+          if (usage) {
+            serialized += `,"usage":{"promptTokens":${usage.promptTokens},"completionTokens":${usage.completionTokens},"totalTokens":${usage.totalTokens}}`;
+          }
         }
         
-        // Send directly without any optimization layers for instant delivery
-        try {
-          const serialized = JSON.stringify(normalizedChunk);
-          this.webSocket.send(serialized);
-        } catch (error) {
-          console.error('Failed to send stream chunk:', error);
-        }
+        serialized += '}';
+        
+        // Send directly for instant delivery
+        this.webSocket.send(serialized);
       }
       
     } catch (e) {
