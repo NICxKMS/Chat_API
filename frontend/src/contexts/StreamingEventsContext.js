@@ -54,35 +54,57 @@ export const StreamingEventsProvider = ({ children }) => {
   // Message splitting for large outgoing messages
   const MESSAGE_CHUNK_SIZE = 800 * 1024; // 800KB chunks
   
+  // Reusable encoder to avoid recreation overhead
+  const textEncoder = useMemo(() => new TextEncoder(), []);
+  
   // WebSocket optimization settings
   const WS_OPTIMIZATION = {
     binaryType: 'arraybuffer', // Use binary frames for better performance
     maxBackpressure: 16 * 1024, // 16KB backpressure limit
     compressionThreshold: 1024, // Compress messages > 1KB
-    batchingWindow: 3, // 3ms batching window for non-critical messages
+    batchingWindow: 1, // Reduced from 3ms to 1ms for faster non-critical messages
   };
 
-  // Adaptive debounced content updater
+  // Adaptive debounced content updater - optimized for streaming performance
   const debouncedUpdateChat = useMemo(() => {
     let lastUpdateTime = 0;
     let updateCount = 0;
+    let isInStream = false;
+    let consecutiveUpdates = 0;
     
     return debounce((content) => {
       const now = Date.now();
       const timeDelta = now - lastUpdateTime;
       updateCount++;
       
-      // Adaptive delay: faster for frequent updates, slower for large content
-      const baseDelay = Math.min(50, Math.max(5, content.length / 2000));
-      const frequencyBonus = updateCount > 10 && timeDelta < 100 ? 0.5 : 1;
-      const adaptiveDelay = baseDelay * frequencyBonus;
+      // Detect if we're in an active stream (frequent updates)
+      if (timeDelta < 100) {
+        consecutiveUpdates++;
+        isInStream = consecutiveUpdates > 3;
+      } else {
+        consecutiveUpdates = 0;
+        isInStream = false;
+      }
+      
+      // Stream-optimized delays: much faster during active streaming
+      let adaptiveDelay;
+      if (isInStream) {
+        // During active streaming: very fast updates (2-8ms)
+        adaptiveDelay = Math.min(8, Math.max(2, content.length / 5000));
+      } else {
+        // Non-streaming: slower, content-based delays (10-30ms)
+        adaptiveDelay = Math.min(30, Math.max(10, content.length / 1000));
+      }
       
       updateChatWithContent(content);
       lastUpdateTime = now;
       
       // Reset counter periodically
-      if (updateCount > 50) updateCount = 0;
-    }, 15); // Start with 15ms base, then adapt
+      if (updateCount > 100) {
+        updateCount = 0;
+        consecutiveUpdates = 0;
+      }
+    }, 8); // Reduced base delay from 15ms to 8ms for faster streaming
   }, [updateChatWithContent]);
 
   // WebSocket URL construction
@@ -287,9 +309,9 @@ export const StreamingEventsProvider = ({ children }) => {
     sendImmediate: async function(message) {
       if (webSocketRef.current && connectionStateRef.current === 'connected') {
         try {
-          // Check if message needs splitting
+          // Check if message needs splitting - use reusable encoder
           const messageStr = JSON.stringify(message);
-          const messageBytes = new TextEncoder().encode(messageStr);
+          const messageBytes = textEncoder.encode(messageStr);
           
           if (messageBytes.length > MESSAGE_CHUNK_SIZE) {
             await sendLargeMessage(message);
@@ -410,7 +432,7 @@ export const StreamingEventsProvider = ({ children }) => {
     return message;
   }, []);
 
-  // Optimized WebSocket message handler with single parse
+  // Optimized WebSocket message handler with fast paths
   const handleWebSocketMessage = useCallback((event) => {
     const startTime = performance.now();
     
@@ -430,13 +452,19 @@ export const StreamingEventsProvider = ({ children }) => {
       return;
     }
     
-    // Fast path for non-chunked messages
+    // OPTIMIZATION: Ultra-fast path for stream chunks (most common during streaming)
+    if (message.type === 'stream_chunk') {
+      processRegularMessage(message);
+      return;
+    }
+    
+    // Fast path for other non-chunked messages
     if (!message.type || !['chunk', 'complete', 'done'].includes(message.type)) {
       processRegularMessage(message);
       return;
     }
     
-    // Handle chunked messages
+    // Handle chunked messages (rare case)
     const reassembledMessage = handleMessageChunk(message);
     if (!reassembledMessage) return; // Still waiting for chunks
     

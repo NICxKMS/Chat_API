@@ -113,9 +113,10 @@ const wsOptimizer = new WebSocketOptimizer();
 
 // Optimized streaming pipeline for minimal latency
 class StreamingPipeline {
-  constructor(webSocket, requestId) {
+  constructor(webSocket, requestId, connectionId = null) {
     this.webSocket = webSocket;
     this.requestId = requestId;
+    this.connectionId = connectionId;
     this.buffer = '';
     this.chunkCount = 0;
     this.startTime = Date.now();
@@ -213,7 +214,7 @@ class StreamingPipeline {
           normalizedChunk.usage = this.extractUsage(parsed);
         }
         
-        sendMessage(this.webSocket, normalizedChunk);
+        sendMessage(this.webSocket, normalizedChunk, this.connectionId);
       }
       
     } catch (e) {
@@ -436,7 +437,19 @@ async function decompressData(compressedData) {
 }
 
 function sendMessage(webSocket, message, connectionId = null) {
-  // Use WebSocket optimizer for batching and efficiency
+  // OPTIMIZATION: Direct send for stream chunks to eliminate latency
+  if (message.type === 'stream_chunk') {
+    try {
+      const messageStr = getSerializedMessage(message);
+      webSocket.send(messageStr);
+      return;
+    } catch (error) {
+      console.error('Failed to send stream chunk directly:', error);
+      // Fall through to optimizer for error handling
+    }
+  }
+  
+  // Use WebSocket optimizer for batching and efficiency (non-streaming messages)
   if (connectionId && wsOptimizer) {
     wsOptimizer.optimizedSend(webSocket, message, connectionId);
     return;
@@ -818,7 +831,7 @@ async function handleChatMessage(webSocket, message, connection, env) {
     sendMessage(webSocket, {
       type: 'stream_start',
       requestId: requestId
-    });
+    }, connection.id);
     
     for await (const chunk of _chat.chatCompletionStream(chatBody)) {
       if (!chunk) continue;
@@ -871,15 +884,15 @@ async function handleChatMessage(webSocket, message, connection, env) {
       
       if (rawUsage) normalizedChunk.raw = rawUsage;
       
-      // Send chunk (will be split if too large)
-      sendMessage(webSocket, normalizedChunk);
+      // Send chunk (will be split if too large) - Pass connectionId for direct sending
+      sendMessage(webSocket, normalizedChunk, connection.id);
     }
     
     // Send completion message
     sendMessage(webSocket, {
       type: 'stream_complete',
       requestId: requestId
-    });
+    }, connection.id);
     
   } catch (error) {
     console.error('Chat streaming error:', error);
