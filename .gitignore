@@ -21,7 +21,7 @@ pids/
 *.pid
 *.seed
 *.pid.lock
-
+/ai-chatbot
 
 /plans
 # Coverage and test output
@@ -79,3 +79,6 @@ temp/
 .lock-wscript
 .grunt
 /Microservice/.cursor
+ai-chatbot
+ai-chatbot
+ai-chatbot
