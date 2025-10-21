@@ -109,7 +109,7 @@ const StreamingMessage = ({ content, isStreaming }) => {
     // Lazy-load Prism language definition on demand
     if (language && !registeredLanguages.has(language)) {
       import(
-        /* webpackChunkName: "prism-language-[request]" */
+        /* @vite-ignore */
         `react-syntax-highlighter/dist/esm/languages/prism/${language}.js`
       )
         .then(mod => {

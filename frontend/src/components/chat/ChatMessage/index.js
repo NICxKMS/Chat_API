@@ -10,7 +10,7 @@ import LazyMarkdownRenderer from '../../common/LazyMarkdownRenderer';
 const StreamingMessage = lazy(() => import(/* webpackChunkName: "streaming-message", webpackPrefetch: true */ './StreamingMessage'));
 
 // Add a module-level singleton for the TeX worker so we only load the worker script once
-import TexProcessorWorker from '../../../workers/texProcessor.js';
+import TexProcessorWorker from '../../../workers/texProcessor.js?worker';
 let texWorker; // Define texWorker here to be accessible in getTexWorker
 
 const getTexWorker = () => {

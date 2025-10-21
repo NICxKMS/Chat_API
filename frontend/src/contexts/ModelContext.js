@@ -5,8 +5,8 @@ import { useAuth } from './AuthContext';
 import { useCacheToggle } from '../hooks/useCacheToggle';
 import { useToast } from './ToastContext';
 import { useLoading } from './LoadingContext';
-// Inline model processing worker via worker-loader to avoid chunk loading issues
-import ModelProcessorWorker from '../workers/modelProcessor.js';
+// Import worker using Vite's worker syntax
+import ModelProcessorWorker from '../workers/modelProcessor.js?worker';
 // Cache expiry time in milliseconds (5 days)
 const CACHE_EXPIRY_TIME = 5 * 24 * 60 * 60 * 1000;
 
