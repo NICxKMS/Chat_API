@@ -28,7 +28,7 @@ pids/
 coverage/
 *.lcov
 .nyc_output
-
+/Deprecated
 # Build and compiled files
 build/
 Release/
